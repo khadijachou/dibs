@@ -1,0 +1,123 @@
+/* Dibs brand tokens (brand kit v1). Variable names kept from the first build:
+   navy = Ink, gold = Coral, ground = Cream, teal = Mint, orange = Butter. */
+:root {
+  --navy: #23212b;        /* Ink */
+  --navy-2: #35323f;      /* Ink, lighter surface */
+  --gold: #e8482a;        /* Coral: action and progress */
+  --gold-soft: #fde3dc;   /* Coral tint for hints */
+  --butter: #ffc94d;      /* Butter: highlight on ink or coral only */
+  --ground: #fff6ec;      /* Cream: app background */
+  --card: #ffffff;
+  --line: #e6dccf;
+  --muted: #5e5a66;
+  --teal: #15896a;        /* Mint: success, earning */
+  --teal-soft: #dcf3ea;
+  --orange: #ffc94d;      /* Butter (legacy name) */
+  --red: #b42318;
+  --red-soft: #fde8e6;
+  --radius: 12px;
+  --font-display: Poppins, system-ui, sans-serif;
+  --font-body: Inter, system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+html, body, #root { margin: 0; min-height: 100%; }
+body {
+  background: var(--ground);
+  color: var(--navy);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+button, input, textarea { font: inherit; color: inherit; }
+
+.app { max-width: 480px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
+
+/* Header */
+.header { display: flex; align-items: center; gap: 8px; padding: 12px 16px 6px 8px; }
+.header h1 { flex: 1; margin: 0; font-family: var(--font-display); font-size: 26px; font-weight: 700; letter-spacing: -0.012em; line-height: 1; }
+.header h1 .mark { color: var(--gold); }
+.icon-btn { width: 44px; height: 44px; border: 0; background: transparent; border-radius: 22px; display: grid; place-items: center; cursor: pointer; }
+.chip { font-size: 13px; font-weight: 700; background: var(--card); border-radius: 999px; padding: 7px 12px; box-shadow: 0 1px 3px rgba(31, 35, 72, 0.08); white-space: nowrap; }
+.badge-demo { font-size: 12px; font-weight: 600; background: var(--butter); color: var(--navy); border-radius: 999px; padding: 4px 10px; }
+
+/* Layout */
+.screen { flex: 1; display: flex; flex-direction: column; gap: 16px; padding: 4px 20px 24px; }
+.screen > .bottom { margin-top: auto; display: flex; flex-direction: column; gap: 10px; }
+.title { margin: 0; font-family: var(--font-display); font-size: 26px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.15; }
+.sub { margin: 0; font-size: 15px; line-height: 1.45; color: var(--muted); }
+.small { font-size: 13px; color: var(--muted); margin: 0; }
+.center { text-align: center; }
+
+.card { background: var(--card); border-radius: 20px; padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+.card-dark { background: var(--navy); color: var(--ground); border-radius: 20px; padding: 22px; }
+.card-dark .item { color: var(--butter); font-weight: 600; }
+.row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+
+/* Buttons */
+.btn { height: 56px; border: 0; border-radius: var(--radius); background: var(--gold); color: var(--ground); font-family: var(--font-display); font-size: 16px; font-weight: 600; cursor: pointer; padding: 0 18px; }
+.btn:disabled { opacity: 0.45; cursor: default; }
+.btn.gold { background: var(--gold); color: var(--ground); }
+.btn.ink { background: var(--navy); color: var(--ground); }
+.btn.ghost { background: var(--card); color: var(--navy); border: 1.5px solid var(--line); }
+.btn.small { height: 44px; font-size: 15px; }
+.pills { display: flex; gap: 8px; }
+.pill { flex: 1; height: 44px; border-radius: 12px; border: 1.5px solid var(--line); background: var(--card); font-size: 14px; font-weight: 700; cursor: pointer; }
+.pill.on { border-color: var(--navy); background: var(--navy); color: var(--ground); }
+
+/* Catalogue */
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.tile { background: var(--card); border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 10px; border: 2px solid transparent; text-align: left; cursor: pointer; }
+.tile.on { border-color: var(--gold); }
+.tile .ico { width: 40px; height: 40px; border-radius: 12px; background: #e3e4ee; display: grid; place-items: center; }
+.tile.on .ico { background: var(--gold); color: var(--ground); }
+.tile b { font-size: 15px; font-weight: 800; }
+.tile span { font-size: 13px; color: var(--muted); }
+
+/* Goal */
+.goal-head { display: flex; align-items: center; gap: 18px; }
+.ring-wrap { position: relative; width: 120px; height: 120px; flex-shrink: 0; }
+.ring-wrap .pct { position: absolute; inset: 0; display: grid; place-items: center; font-size: 26px; font-weight: 800; }
+.earn { font-size: 13px; font-weight: 600; color: var(--navy); background: var(--butter); border-radius: 999px; padding: 4px 10px; align-self: flex-start; }
+.amount { display: flex; align-items: baseline; gap: 8px; border-bottom: 2px solid var(--navy); padding-bottom: 6px; }
+.amount input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; font-size: 34px; font-weight: 800; }
+.amount span { font-size: 18px; font-weight: 800; }
+.note { display: flex; gap: 12px; align-items: flex-start; }
+.note .ico { width: 36px; height: 36px; flex-shrink: 0; border-radius: 10px; background: var(--teal-soft); color: var(--teal); display: grid; place-items: center; }
+.hint { background: var(--gold-soft); border-radius: 14px; padding: 14px; font-size: 15px; line-height: 1.4; }
+.list { display: flex; flex-direction: column; gap: 8px; font-size: 14px; }
+.list .row span:last-child { color: var(--muted); }
+
+/* Goal list */
+.goal-row { display: flex; align-items: center; gap: 14px; background: var(--card); border-radius: 18px; padding: 14px; border: 0; text-align: left; cursor: pointer; width: 100%; }
+.bar { height: 6px; border-radius: 3px; background: #e3e4ee; overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--gold); }
+.bar.full > i { background: var(--teal); }
+
+/* Steps */
+.steps { display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 12px; align-items: center; }
+.step .n { width: 32px; height: 32px; flex-shrink: 0; border-radius: 16px; background: #e3e4ee; font-weight: 800; display: grid; place-items: center; }
+.step.done .n { background: var(--teal); color: #fff; }
+.step.current .n { background: var(--gold); color: var(--ground); }
+
+/* Messages */
+.err { background: var(--red-soft); color: var(--red); border-radius: 12px; padding: 12px 14px; font-size: 14px; line-height: 1.4; }
+.ok { background: var(--teal-soft); color: var(--teal); border-radius: 12px; padding: 12px 14px; font-size: 14px; line-height: 1.4; }
+textarea.invoice { width: 100%; min-height: 96px; border-radius: 12px; border: 1.5px solid var(--line); padding: 12px; font-family: ui-monospace, Menlo, monospace; font-size: 13px; resize: vertical; background: var(--card); }
+.code-box { background: var(--navy-2); color: var(--ground); border-radius: 14px; padding: 16px; text-align: center; font-family: ui-monospace, Menlo, monospace; font-size: 20px; font-weight: 700; letter-spacing: 0.06em; word-break: break-all; }
+.done-ico { width: 64px; height: 64px; border-radius: 32px; background: var(--teal-soft); color: var(--teal); display: grid; place-items: center; margin: 0 auto; }
+
+/* Lab */
+.lab input, .lab textarea { width: 100%; border-radius: 10px; border: 1.5px solid var(--line); padding: 10px; background: #fff; }
+.lab h2 { margin: 0; font-size: 17px; }
+.lab .log { background: #0f1230; color: #d8dbf5; border-radius: 12px; padding: 12px; font-family: ui-monospace, Menlo, monospace; font-size: 12px; white-space: pre-wrap; word-break: break-all; max-height: 320px; overflow: auto; }
+.lab .btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.lab .btns .btn { flex: 1 1 140px; }
+
+/* Dibs! success band */
+.dibs-band { background: var(--teal); color: var(--ground); border-radius: 16px; padding: 18px 20px; display: flex; flex-direction: column; gap: 4px; }
+.dibs-band b { font-family: var(--font-display); font-size: 24px; font-weight: 700; }
+.countdown { font-variant-numeric: tabular-nums; }
+input.email { width: 100%; height: 48px; border-radius: 12px; border: 1.5px solid var(--line); padding: 0 12px; background: #fff; }

@@ -1,0 +1,146 @@
+[
+  {
+    "id": "steam-50",
+    "slug": "steam-usa",
+    "packageValue": "50",
+    "name": "Steam gift card",
+    "detail": "50 USD",
+    "icon": "game",
+    "fallbackUsd": 56.23
+  },
+  {
+    "id": "steam-20",
+    "slug": "steam-usa",
+    "packageValue": "20",
+    "name": "Steam gift card",
+    "detail": "20 USD",
+    "icon": "game",
+    "fallbackUsd": 22.48
+  },
+  {
+    "id": "steam-5",
+    "slug": "steam-usa",
+    "packageValue": "5",
+    "name": "Steam gift card",
+    "detail": "5 USD",
+    "icon": "game",
+    "fallbackUsd": 5.62
+  },
+  {
+    "id": "amazon_com-usa-10",
+    "slug": "amazon_com-usa",
+    "packageValue": "10",
+    "name": "Amazon gift card",
+    "detail": "10 USD",
+    "icon": "bag",
+    "fallbackUsd": 10.49
+  },
+  {
+    "id": "amazon_com-usa-20",
+    "slug": "amazon_com-usa",
+    "packageValue": "20",
+    "name": "Amazon gift card",
+    "detail": "20 USD",
+    "icon": "bag",
+    "fallbackUsd": 21
+  },
+  {
+    "id": "amazon_com-usa-50",
+    "slug": "amazon_com-usa",
+    "packageValue": "50",
+    "name": "Amazon gift card",
+    "detail": "50 USD",
+    "icon": "bag",
+    "fallbackUsd": 52.5
+  },
+  {
+    "id": "netflix-usa-60",
+    "slug": "netflix-usa",
+    "packageValue": "60",
+    "name": "Netflix",
+    "detail": "60 USD",
+    "icon": "play",
+    "fallbackUsd": 60
+  },
+  {
+    "id": "apple-usa-10",
+    "slug": "apple-usa",
+    "packageValue": "10",
+    "name": "Apple gift card",
+    "detail": "10 USD",
+    "icon": "bag",
+    "fallbackUsd": 10.49
+  },
+  {
+    "id": "apple-usa-25",
+    "slug": "apple-usa",
+    "packageValue": "25",
+    "name": "Apple gift card",
+    "detail": "25 USD",
+    "icon": "bag",
+    "fallbackUsd": 26.25
+  },
+  {
+    "id": "apple-usa-50",
+    "slug": "apple-usa",
+    "packageValue": "50",
+    "name": "Apple gift card",
+    "detail": "50 USD",
+    "icon": "bag",
+    "fallbackUsd": 52.5
+  },
+  {
+    "id": "sony-playstation-usa-50",
+    "slug": "sony-playstation-usa",
+    "packageValue": "50",
+    "name": "PlayStation Store",
+    "detail": "50 USD",
+    "icon": "game",
+    "fallbackUsd": 50
+  },
+  {
+    "id": "sony-playstation-usa-100",
+    "slug": "sony-playstation-usa",
+    "packageValue": "100",
+    "name": "PlayStation Store",
+    "detail": "100 USD",
+    "icon": "game",
+    "fallbackUsd": 100
+  },
+  {
+    "id": "netflix-eu-25",
+    "slug": "netflix-eu",
+    "packageValue": "25",
+    "name": "Netflix Europe",
+    "detail": "25 EUR",
+    "icon": "play",
+    "fallbackUsd": 28.12
+  },
+  {
+    "id": "netflix-eu-50",
+    "slug": "netflix-eu",
+    "packageValue": "50",
+    "name": "Netflix Europe",
+    "detail": "50 EUR",
+    "icon": "play",
+    "fallbackUsd": 56.25
+  },
+  {
+    "id": "uber-eats-usa-50",
+    "slug": "uber-eats-usa",
+    "packageValue": "50",
+    "name": "Uber Eats",
+    "detail": "50 USD",
+    "icon": "food",
+    "fallbackUsd": 50
+  },
+  {
+    "id": "uber-eats-usa-20",
+    "slug": "uber-eats-usa",
+    "packageValue": "20",
+    "name": "Uber Eats",
+    "detail": "20 USD",
+    "icon": "food",
+    "fallbackUsd": 20
+  }
+]
