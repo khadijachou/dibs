@@ -20,7 +20,7 @@ export function getGoal(address, id) {
   return read(address).find((g) => g.id === id) || null
 }
 
-export function createGoal(address, { item, targetNim, deadline }) {
+export function createGoal(address, { item, targetNim, deadline, brand = null, nimUsd = null }) {
   const goal = {
     id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
     itemId: item.id,
@@ -30,6 +30,10 @@ export function createGoal(address, { item, targetNim, deadline }) {
     faceValue: item.faceValue || null,
     targetNim,
     deadline,
+    brandKey: brand?.key || null,
+    brandName: brand?.name || null,
+    logo: brand?.logo || null,
+    nimUsdAtCreate: nimUsd,
     deposits: [],
     unlockSteps: [], // { step: 'deactivate'|'retire'|'remove', tx, at }
     status: 'saving', // saving -> unlocking -> ready -> redeemed

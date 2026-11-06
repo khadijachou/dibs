@@ -2,8 +2,9 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { connect, getBalanceNim, host, isDemo, listAccountsWithBalance } from './lib/nimiq.js'
 import { getPrices } from './lib/price.js'
 import { makeT } from './lib/i18n.js'
-import { adoptGoals, listGoals } from './lib/goals.js'
+import { adoptGoals } from './lib/goals.js'
 import { loadCatalog } from './lib/catalog.js'
+import { readSimulateParam } from './lib/errors.js'
 import Home from './screens/Home.jsx'
 import Catalog from './screens/Catalog.jsx'
 import Plan from './screens/Plan.jsx'
@@ -12,6 +13,8 @@ import Unlock from './screens/Unlock.jsx'
 import Redeem from './screens/Redeem.jsx'
 import Done from './screens/Done.jsx'
 import Lab from './screens/Lab.jsx'
+
+readSimulateParam()
 
 const AppCtx = createContext(null)
 export const useApp = () => useContext(AppCtx)
@@ -26,6 +29,8 @@ export default function App() {
   const [prices, setPrices] = useState(null)
   const [route, setRoute] = useState({ name: 'home', params: {} })
   const [history, setHistory] = useState([])
+  const [toastText, setToastText] = useState(null)
+  const toast = useCallback((text) => { setToastText(text); clearTimeout(window.__dibsToast); window.__dibsToast = setTimeout(() => setToastText(null), 4000) }, [])
   const [isLab, setIsLab] = useState(() => location.hash === '#lab')
   const lang = useMemo(() => host.language(), [ready])
   const t = useMemo(() => makeT(lang), [lang])
@@ -47,8 +52,8 @@ export default function App() {
       refreshBalance(addr)
       await loadCatalog()
       getPrices().then(setPrices)
-      // Returning users land on their goals, new users on the catalogue.
-      setRoute({ name: listGoals(addr).length ? 'home' : 'catalog', params: {} })
+      // Home shows the welcome screen to new users and the hub to returning ones (UI v2.2).
+      setRoute({ name: 'home', params: {} })
       setReady(true)
     } catch (e) {
       setFatal(e)
@@ -76,7 +81,7 @@ export default function App() {
   }, [])
   const reset = useCallback((name = 'home', params = {}) => { setHistory([]); setRoute({ name, params }) }, [])
 
-  const ctx = { t, lang, address, balance, refreshBalance, prices, demo: isDemo(), go, back, reset, canGoBack: history.length > 0 }
+  const ctx = { t, lang, address, balance, refreshBalance, prices, demo: isDemo(), go, back, reset, toast, canGoBack: history.length > 0 }
 
   if (fatal) {
     return (
@@ -96,7 +101,7 @@ export default function App() {
   const Screen = isLab ? Lab : SCREENS[route.name] || Home
   return (
     <AppCtx.Provider value={ctx}>
-      <div className="app"><Screen {...route.params} /></div>
+      <div className="app"><Screen {...route.params} />{toastText && <div className="toast" role="status"><i>i</i>{toastText}</div>}</div>
     </AppCtx.Provider>
   )
 }
