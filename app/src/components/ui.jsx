@@ -109,3 +109,28 @@ export function ErrorBox({ error }) {
   if (!error) return null
   return <div className="err" role="alert">{t('error', { msg: error.message || String(error) })}</div>
 }
+
+// One message component for every problem (error plan): what happened, is my NIM safe, what to do.
+// tone: info | wait | stop | ok
+export function Notice({ tone = 'info', title, sub, safe, safeTone = 'g', actions = [] }) {
+  const icon = { info: 'i', wait: '', stop: '!', ok: '✓' }[tone]
+  return (
+    <div className={`notice n-${tone}`} role={tone === 'stop' ? 'alert' : 'status'}>
+      <div className="ic" aria-hidden="true">{icon}</div>
+      <div>
+        <div className="nt">{title}</div>
+        {sub && <div className="ns">{sub}</div>}
+        {safe && <div className={`safe ${safeTone}`}>{safeTone === 'g' ? '● ' : ''}{safe}</div>}
+        {actions.length > 0 && (
+          <div className="nacts">
+            {actions.map((a, i) => <button type="button" key={a.label} className={`nbtn${i === 0 ? ' pri' : ''}`} onClick={a.onClick}>{a.label}</button>)}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+export function FieldError({ children }) {
+  return <p className="ferr" role="alert">{children}</p>
+}

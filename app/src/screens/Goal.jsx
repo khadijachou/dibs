@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useApp } from '../App.jsx'
-import { BrandLogo, ErrorBox, Header, Ring, WeekDots } from '../components/ui.jsx'
+import { BrandLogo, FieldError, Header, Notice, Ring, WeekDots } from '../components/ui.jsx'
+import { classify, lastLogText } from '../lib/errors.js'
 import { addDeposit, getGoal, progress, savedNim, stakedInGoals, stakerFlag } from '../lib/goals.js'
 import { planOf, shortAddress } from '../lib/pace.js'
 import { goalBrand, PaceLine } from './Home.jsx'
 import { config, MIN_NEW_STAKER_NIM, toNim } from '../lib/config.js'
-import { describeError, getStaker, stakeNim } from '../lib/nimiq.js'
+import { getStaker, stakeNim } from '../lib/nimiq.js'
 import { fmtDate, fmtNim, weeksUntil } from '../lib/format.js'
 
 const parseNim = (v) => Math.floor(Number(String(v).replace(/[^\d.]/g, ''))) || 0
@@ -15,11 +16,12 @@ const POOLS = { 'NQ15 HNAH YRVH DFVM YHAG BSXG 0QHK KA0Q XDR7': 'Garuda Pool' }
 
 
 export default function Goal({ goalId, created, amount: preset }) {
-  const { t, lang, address, balance, refreshBalance, back, canGoBack, go, reset } = useApp()
+  const { t, lang, address, balance, refreshBalance, back, canGoBack, go, reset, toast } = useApp()
   const [goal, setGoal] = useState(() => getGoal(address, goalId))
   const [hasStaker, setHasStaker] = useState(() => stakerFlag.get(address))
   const [busy, setBusy] = useState(false)
-  const [error, setError] = useState(null)
+  const [problem, setProblem] = useState(null) // ErrorKey shown as a Notice
+  const [slowWallet, setSlowWallet] = useState(false)
   const [flash, setFlash] = useState(null)
   const [earned, setEarned] = useState(0)
 
@@ -38,6 +40,12 @@ export default function Goal({ goalId, created, amount: preset }) {
     })
   }, [address])
 
+  useEffect(() => {
+    if (balance != null) { setSlowWallet(false); return }
+    const id = setTimeout(() => setSlowWallet(true), 30000)
+    return () => clearTimeout(id)
+  }, [balance])
+
   if (!goal) return null
   const reached = saved >= goal.targetNim
   const pct = progress(goal)
@@ -45,17 +53,18 @@ export default function Goal({ goalId, created, amount: preset }) {
   const p = planOf(goal)
   const brand = goalBrand(goal)
   const pool = POOLS[config.defaultValidator] || shortAddress(config.defaultValidator) || 'Nimiq staking'
-  const tooMuch = balance != null && balance > 0 && amountNim > balance
+  const tooMuch = balance != null && amountNim > balance
+  const underMin = !hasStaker && amountNim > 0 && amountNim < MIN_NEW_STAKER_NIM
+  const invalid = !amountNim || tooMuch || underMin
   // Quick picks scale with the goal: the weekly suggestion, a quarter of the target, everything left.
   const quick = [...new Set([suggested, Math.ceil(goal.targetNim / 4), remaining])]
     .filter((q) => q > 0 && q <= remaining)
     .map((q, i) => ({ value: q, label: q === remaining ? t('goal_rest') : i === 0 ? t('pill_week') : t('pill_quarter') }))
 
   const add = async () => {
-    setError(null)
+    setProblem(null)
     const nim = amountNim
-    if (!nim || nim <= 0) return
-    if (!hasStaker && nim < MIN_NEW_STAKER_NIM) { setError(new Error(t('goal_min'))); return }
+    if (invalid) return
     setBusy(true)
     try {
       const tx = await stakeNim({ nim, hasStaker })
@@ -66,11 +75,14 @@ export default function Goal({ goalId, created, amount: preset }) {
       setTimeout(() => setFlash(null), 6000)
       refreshBalance()
     } catch (e) {
-      setError(describeError(e))
+      const key = classify(e, 'deposit')
+      if (key === 'DEP_CANCELLED') toast(t('err_DEP_CANCELLED_toast'))
+      else setProblem(key)
     } finally {
       setBusy(false)
     }
   }
+
 
   return (
     <>
@@ -106,24 +118,37 @@ export default function Goal({ goalId, created, amount: preset }) {
         {goal.status === 'saving' && !reached && (
           <section className="card">
             <label htmlFor="amt" className="sub">{t('goal_add_label')}</label>
-            <div className="amount">
+            <div className={`amount${underMin || tooMuch ? ' bad' : ''}`}>
               <input id="amt" inputMode="numeric" value={amount} onChange={(e) => setAmount(e.target.value)} />
               <span>NIM</span>
             </div>
+            {underMin && <FieldError>{t('err_DEP_FIRST_UNDER_MIN_field', { min: MIN_NEW_STAKER_NIM })}</FieldError>}
+            {!underMin && tooMuch && <FieldError>{t('err_DEP_ABOVE_BALANCE_field', { amount: fmtNim(balance, lang) })}</FieldError>}
             <div className="pills">
+              {underMin && <button type="button" className="pill fix" onClick={() => setAmount(String(MIN_NEW_STAKER_NIM))}>{MIN_NEW_STAKER_NIM} NIM</button>}
+              {!underMin && tooMuch && balance >= (hasStaker ? 1 : MIN_NEW_STAKER_NIM) && <button type="button" className="pill fix" onClick={() => setAmount(String(Math.floor(balance)))}>{fmtNim(balance, lang)}</button>}
               {quick.map((q) => (
                 <button type="button" key={q.value} className={`pill${amountNim === q.value ? ' on' : ''}`} onClick={() => setAmount(String(q.value))}>{q.label}</button>
               ))}
             </div>
-            {balance > 0 && <p className="small">{t('goal_wallet', { nim: fmtNim(balance, lang) })}</p>}
-            {tooMuch && <p className="small" style={{ color: 'var(--red)' }}>{t('goal_too_much')}</p>}
-            {!hasStaker && <p className="small">{t('goal_min')}</p>}
+            <p className="small">{balance == null ? t('goal_reading') : t('goal_in_wallet', { amount: fmtNim(balance, lang) })}</p>
+            {!hasStaker && !underMin && <p className="small">{t('goal_first_note', { min: MIN_NEW_STAKER_NIM })}</p>}
           </section>
         )}
 
         {reached && goal.status === 'saving' && <div className="ok">{t('goal_reached')}</div>}
         {goal.status === 'ready' && <div className="ok">{t('goal_ready')}</div>}
-        <ErrorBox error={error} />
+        {slowWallet && (
+          <Notice tone="wait" title={t('err_ENV_NO_CONSENSUS_title')} sub={t('err_ENV_NO_CONSENSUS_sub')}
+            actions={[{ label: t('err_ENV_NO_CONSENSUS_action'), onClick: () => refreshBalance() }]} />
+        )}
+        {problem && (
+          <Notice tone="info" title={t('err_GENERIC_title')} sub={t('err_GENERIC_sub')} safe={t('safe_nothingSent')}
+            actions={[
+              { label: t('err_GENERIC_action'), onClick: () => { setProblem(null); add() } },
+              { label: t('err_GENERIC_action2'), onClick: () => { navigator.clipboard?.writeText(lastLogText()); toast(t('err_copied')) } },
+            ]} />
+        )}
 
         {goal.deposits.length > 0 && (
           <section className="card">
@@ -139,7 +164,7 @@ export default function Goal({ goalId, created, amount: preset }) {
 
         <div className="bottom">
           {goal.status === 'saving' && !reached && (
-            <button type="button" className={`btn tall${p.pace.kind === 'ahead' && !flash ? ' ghost' : ''}`} disabled={busy || !amountNim || balance == null} onClick={add}>
+            <button type="button" className={`btn tall${p.pace.kind === 'ahead' && !flash ? ' ghost' : ''}`} disabled={busy || invalid || balance == null} onClick={add}>
               {p.pace.kind === 'ahead' && !flash ? t('goal_add_more') : t('goal_add', { nim: fmtNim(amountNim, lang) })}
               <small>{balance == null ? t('goal_waiting_balance') : t('confirm_hint')}</small>
             </button>

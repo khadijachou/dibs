@@ -4,6 +4,7 @@
 // In a desktop browser (no provider) we fall back to a fake wallet ("demo mode")
 // so screens can be built and tested without a phone.
 import { init, NimiqProviderError, getHostLanguage, getHostNetwork, getHostFiat } from '@nimiq/mini-app-sdk'
+import { simulated } from './errors.js'
 import { config, toLuna, toNim } from './config.js'
 import { createMockProvider } from './mockProvider.js'
 
@@ -92,6 +93,7 @@ export async function getStaker(address) {
 // Adds NIM to the user's own staker. First deposit creates the staker
 // (100 NIM minimum), later deposits add to it.
 export async function stakeNim({ nim, hasStaker, validator = config.defaultValidator || (demo ? 'NQ00 DEMO VALIDATOR' : '') }) {
+  if (demo) simulated('deposit')
   const value = toLuna(nim)
   if (!hasStaker) {
     if (!validator) throw new Error('No validator configured (VITE_DEFAULT_VALIDATOR)')
@@ -101,15 +103,17 @@ export async function stakeNim({ nim, hasStaker, validator = config.defaultValid
 }
 
 // Unlock is three protocol steps. Waiting times between them are check 3.
+const sim = (fn) => (...a) => { if (demo) simulated('unlock'); return fn(...a) }
 export const unlock = {
   deactivate: (newActiveNim) => provider.sendSetActiveStakeTransaction({ newActiveBalance: toLuna(newActiveNim) }),
-  retire: (nim) => provider.sendRetireStakeTransaction({ retireStake: toLuna(nim) }),
+  retire: sim((nim) => provider.sendRetireStakeTransaction({ retireStake: toLuna(nim) })),
   remove: (nim) => provider.sendRemoveStakeTransaction({ value: toLuna(nim) }),
 }
 
 // Pays a fixed-amount BOLT11 invoice. The user picks NIM or USDT in Nimiq Pay.
 // Never retry after TRANSACTION_OUTCOME_UNKNOWN (see SDK README).
 export async function payInvoice(invoice) {
+  if (demo) simulated('pay')
   return provider.payLightningInvoice({ invoice: invoice.trim() })
 }
 

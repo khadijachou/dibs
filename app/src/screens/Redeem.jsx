@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useApp } from '../App.jsx'
-import { ErrorBox, Header } from '../components/ui.jsx'
+import { ErrorBox, Header, Notice } from '../components/ui.jsx'
+import { classify, lastLogText } from '../lib/errors.js'
 import { getGoal, updateGoal } from '../lib/goals.js'
 import { findItem } from '../lib/catalog.js'
-import { describeError, isDemo, payInvoice } from '../lib/nimiq.js'
+import { isDemo, payInvoice } from '../lib/nimiq.js'
 import { invoiceMatchesPrice, parseInvoice } from '../lib/invoice.js'
 import { usdToNim } from '../lib/price.js'
 import { config } from '../lib/config.js'
@@ -14,7 +15,7 @@ const EMAIL_KEY = 'dibs.email'
 const emailOk = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)
 
 export default function Redeem({ goalId }) {
-  const { t, lang, address, prices, refreshBalance, back, reset } = useApp()
+  const { t, lang, address, prices, refreshBalance, back, reset, toast } = useApp()
   const goal = getGoal(address, goalId)
   const item = goal && findItem(goal.itemId)
   const [email, setEmail] = useState(() => { try { return localStorage.getItem(EMAIL_KEY) || '' } catch { return '' } })
@@ -24,6 +25,7 @@ export default function Redeem({ goalId }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
   const [unknown, setUnknown] = useState(false)
+  const [problem, setProblem] = useState(null) // ErrorKey
 
   // Countdown to the invoice expiry (Bitrefill locks the price for 30 minutes).
   useEffect(() => {
@@ -54,12 +56,15 @@ export default function Redeem({ goalId }) {
     try {
       setOrder(await api.createOrder(item.id, email))
     } catch (e) {
-      if (isDemo()) {
+      const key = classify(e, 'invoice')
+      if (isDemo() && !e.apiError?.match(/^(SHOP_LIMIT|SRV_DOWN)$/)) {
         // Demo wallet with no Bitrefill credentials: fake a 30-minute invoice so the flow can be walked.
         const sats = Math.round((goal.usd / (prices?.btcUsd || 80000)) * 1e8)
         setOrder({ orderId: 'demo-' + Date.now(), invoice: 'lnbc' + sats * 10 + 'n1' + 'qpzry9x8gf2tvdw0s3jn54khce6mua7l'.repeat(3), sats, usd: goal.usd, expiresAt: new Date(Date.now() + 30 * 60_000).toISOString() })
+      } else if (key === 'RATE_LIMIT') {
+        toast(t('err_RATE_LIMIT_toast'))
       } else {
-        setError(e)
+        setProblem(key)
       }
     } finally {
       setBusy(false)
@@ -77,9 +82,18 @@ export default function Redeem({ goalId }) {
       refreshBalance()
       reset('done', { goalId: goal.id })
     } catch (e) {
-      const err = describeError(e)
-      if (err.type === 'TRANSACTION_OUTCOME_UNKNOWN') setUnknown(true)
-      setError(err)
+      const key = classify(e, 'pay')
+      if (key === 'PAY_CANCELLED') toast(t('err_PAY_CANCELLED_toast'))
+      else if (key === 'PAY_DUPLICATE') {
+        // Already paid: never pay again, go and wait for the code.
+        toast(t('err_PAY_DUPLICATE_toast'))
+        updateGoal(address, goal.id, { status: 'redeemed', payment: { orderId: order?.orderId || null, at: new Date().toISOString() } })
+        reset('done', { goalId: goal.id })
+      } else if (key === 'PAY_UNKNOWN') {
+        // Never call pay again for this invoice. Remember it so a reload keeps the lock.
+        setUnknown(true)
+        try { localStorage.setItem('dibs.pending', JSON.stringify({ kind: 'pay', goalId: goal.id, orderId: order?.orderId || null, outcome: 'unknown', at: new Date().toISOString() })) } catch { /* ignore */ }
+      } else setProblem(key)
     } finally {
       setBusy(false)
     }
@@ -109,7 +123,7 @@ export default function Redeem({ goalId }) {
               <>
                 <div className="ok">{t('redeem_ready', { sats: order.sats?.toLocaleString(lang) ?? '?' })}</div>
                 {left != null && !expired && <p className="small countdown">{t('redeem_expires', { time: mmss(left) })}</p>}
-                {expired && <div className="err">{t('redeem_expired')}</div>}
+                {expired && <Notice tone="info" title={t('err_PAY_EXPIRED_title')} sub={t('err_PAY_EXPIRED_sub')} safe={t('safe_nothingCharged')} />}
               </>
             )}
           </section>
@@ -131,16 +145,32 @@ export default function Redeem({ goalId }) {
           </div>
         )}
         {check && apiMode && !check.ok && <div className="err">{t('redeem_mismatch')}</div>}
-        {unknown && <div className="err" role="alert">{t('redeem_unknown')}</div>}
-        {!unknown && <ErrorBox error={error} />}
+        {unknown && (
+          <Notice tone="stop" title={t('err_PAY_UNKNOWN_title')} sub={t('err_PAY_UNKNOWN_sub')}
+            safe={order?.orderId ? t('err_PAY_UNKNOWN_safe', { order: order.orderId.slice(0, 8), seconds: 10 }) : null} safeTone="r"
+            actions={[
+              { label: t('err_PAY_UNKNOWN_action'), onClick: () => { updateGoal(address, goal.id, { status: 'redeemed', payment: { orderId: order?.orderId || null, at: new Date().toISOString(), outcome: 'unknown' } }); reset('done', { goalId: goal.id }) } },
+              ...(order?.orderId ? [{ label: t('err_PAY_UNKNOWN_action2'), onClick: () => { navigator.clipboard?.writeText(order.orderId); toast(t('err_copied')) } }] : []),
+            ]} />
+        )}
+        {problem === 'SHOP_LIMIT' || problem === 'SHOP_OUT_OF_STOCK' ? (
+          <Notice tone="info" title={t(`err_${problem}_title`)} sub={t(`err_${problem}_sub`)} safe={t('safe_nothingCharged')} />
+        ) : problem === 'SRV_DOWN' || problem === 'NO_CREDENTIALS' ? (
+          <Notice tone="info" title={t('err_NO_CREDENTIALS_title')} sub={t('err_NO_CREDENTIALS_sub')} safe={t('safe_nothingCharged')}
+            actions={[{ label: t('err_GENERIC_action'), onClick: () => { setProblem(null); getInvoice() } }]} />
+        ) : problem ? (
+          <Notice tone="info" title={t('err_GENERIC_title')} sub={t('err_GENERIC_sub')} safe={t('safe_nothingSent')}
+            actions={[{ label: t('err_GENERIC_action2'), onClick: () => { navigator.clipboard?.writeText(lastLogText()); toast(t('err_copied')) } }]} />
+        ) : null}
+        {!unknown && !problem && <ErrorBox error={error} />}
         <p className="small">{t('redeem_refund')}</p>
 
         <div className="bottom">
           {expired ? (
-            <button type="button" className="btn" disabled={busy} onClick={() => { setOrder(null); setLeft(null) }}>{t('redeem_new_invoice')}</button>
+            <button type="button" className="btn" disabled={busy} onClick={() => { setOrder(null); setLeft(null) }}>{t('err_PAY_EXPIRED_cta')}</button>
           ) : (
             <button type="button" className="btn" disabled={busy || !parsed || unknown || (check && !check.ok)} onClick={pay}>
-              {busy ? t('redeem_paying') : t('redeem_pay')}
+              {busy ? t('redeem_paying') : unknown ? t('err_PAY_UNKNOWN_cta') : t('redeem_pay')}
             </button>
           )}
         </div>

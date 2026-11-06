@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useApp } from '../App.jsx'
-import { ErrorBox, Header } from '../components/ui.jsx'
+import { Header, Notice } from '../components/ui.jsx'
+import { classify } from '../lib/errors.js'
 import { getGoal, savedNim, stakedInGoals, updateGoal } from '../lib/goals.js'
-import { describeError, getStaker, unlock } from '../lib/nimiq.js'
+import { getStaker, unlock } from '../lib/nimiq.js'
 import { toNim } from '../lib/config.js'
 import { fmtNim } from '../lib/format.js'
 
@@ -10,7 +11,7 @@ const STEPS = ['deactivate', 'retire', 'remove']
 const LABELS = { deactivate: 'unlock_s1', retire: 'unlock_s2', remove: 'unlock_s3' }
 
 export default function Unlock({ goalId }) {
-  const { t, lang, address, refreshBalance, back, reset } = useApp()
+  const { t, lang, address, refreshBalance, back, reset, toast } = useApp()
   const [goal, setGoal] = useState(() => getGoal(address, goalId))
   const [activeNow, setActiveNow] = useState(null)
   const [busy, setBusy] = useState(false)
@@ -42,7 +43,9 @@ export default function Unlock({ goalId }) {
       setGoal(g)
       if (last) { refreshBalance(); reset('goal', { goalId: goal.id }) }
     } catch (e) {
-      setError(describeError(e))
+      const key = classify(e, 'unlock')
+      if (e?.error?.type === 'PERMISSION_DENIED' || e?.type === 'PERMISSION_DENIED') toast(t('err_DEP_CANCELLED_toast'))
+      else setError(key)
     } finally {
       setBusy(false)
     }
@@ -68,8 +71,10 @@ export default function Unlock({ goalId }) {
             })}
           </div>
         </section>
-        <p className="small">{t('unlock_wait')}</p>
-        <ErrorBox error={error} />
+        {error === 'UNL_NOT_RELEASED'
+          ? <Notice tone="info" title={t('err_UNL_NOT_RELEASED_title')} sub={t('unlock_wait')} safe={t('err_UNL_VALIDATOR_JAILED_safe')} />
+          : error ? <Notice tone="info" title={t('err_GENERIC_title')} sub={t('err_GENERIC_sub')} safe={t('safe_nothingSent')} />
+          : <p className="small">{t('unlock_wait')}</p>}
         <div className="bottom">
           {current && (
             <button type="button" className="btn gold" disabled={busy || activeNow == null} onClick={run}>
