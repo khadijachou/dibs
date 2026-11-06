@@ -36,25 +36,58 @@ export function Logo({ size = 28, color = 'var(--gold)' }) {
   )
 }
 
-export function Wordmark() {
-  return (
-    <h1 aria-label="Dibs"><span className="mark">d</span>ibs</h1>
-  )
+export function Wordmark({ cream = false }) {
+  return <img className="wordmark" src={cream ? '/brand/wordmark-cream.png' : '/brand/wordmark-ink.png'} alt="Dibs" />
 }
 
-export function Header({ onBack }) {
-  const { t, balance, demo, lang } = useApp()
+// Brand logo for a catalogue brand (falls back to a letter tile).
+export function BrandLogo({ brand, className = '' }) {
+  if (!brand?.logo) return <div className={`blogo letter ${className}`} aria-hidden="true">{(brand?.name || '?')[0]}</div>
+  const light = ['amazon', 'playstation', 'googleplay'].includes(brand.key)
+  return <img className={`blogo${light ? ' light' : ''} ${className}`} src={brand.logo} alt="" />
+}
+
+export function Header({ onBack, onInk = false }) {
+  const { t, balance, demo, lang, reset } = useApp()
   return (
-    <header className="header">
+    <header className={`header${onInk ? ' on-ink' : ''}`}>
       {onBack ? (
         <button type="button" className="icon-btn" aria-label={t('back')} onClick={onBack}><Icon name="back" stroke={2.2} /></button>
       ) : (
         <div style={{ width: 8 }} aria-hidden="true" />
       )}
-      <Wordmark />
+      <div className="grow">
+        <button type="button" className="home-link" aria-label="Dibs" onClick={() => reset('home')}><Wordmark cream={onInk} /></button>
+      </div>
       {demo && <span className="badge-demo">{t('demo')}</span>}
-      {balance > 0 && <span className="chip">{fmtNim(balance, lang)} NIM</span>}
+      {balance == null
+        ? <span className="chip sk" aria-label={t('goal_reading')}>000,000 NIM</span>
+        : <span className="chip">{fmtNim(balance, lang)} NIM</span>}
     </header>
+  )
+}
+
+// One dot per week from the start to the deadline. done = weeks covered, now = current week index.
+export function WeekDots({ total, done = 0, now = -1, left, right, planMode = false }) {
+  const n = Math.max(1, Math.min(total, 13))
+  const scale = total / n
+  const dots = []
+  for (let i = 0; i < n; i++) {
+    const w = Math.round((i + 1) * scale) - 1
+    const ok = planMode ? false : w < done
+    let cls = 'd'
+    if (planMode && i === 0) cls += ' first'
+    else if (ok) cls += ' ok'
+    else if (!planMode && w === now) cls += ' now'
+    if (i === n - 1) cls += ' last' + (ok ? ' ok' : '')
+    dots.push(<div key={'d' + i} className={cls} />)
+    if (i < n - 1) dots.push(<div key={'l' + i} className={`ln${!planMode && Math.round((i + 2) * scale) - 1 < done ? ' ok' : ''}`} />)
+  }
+  return (
+    <div className="weeks">
+      <div className="dots">{dots}</div>
+      <div className="lab"><span>{left}</span>{right && <span>{right}</span>}</div>
+    </div>
   )
 }
 

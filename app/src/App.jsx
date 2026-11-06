@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { connect, getBalanceNim, host, isDemo, listAccountsWithBalance } from './lib/nimiq.js'
 import { getPrices } from './lib/price.js'
 import { makeT } from './lib/i18n.js'
-import { adoptGoals, listGoals } from './lib/goals.js'
+import { adoptGoals } from './lib/goals.js'
 import { loadCatalog } from './lib/catalog.js'
 import Home from './screens/Home.jsx'
 import Catalog from './screens/Catalog.jsx'
@@ -47,8 +47,8 @@ export default function App() {
       refreshBalance(addr)
       await loadCatalog()
       getPrices().then(setPrices)
-      // Returning users land on their goals, new users on the catalogue.
-      setRoute({ name: listGoals(addr).length ? 'home' : 'catalog', params: {} })
+      // Home shows the welcome screen to new users and the hub to returning ones (UI v2.2).
+      setRoute({ name: 'home', params: {} })
       setReady(true)
     } catch (e) {
       setFatal(e)
