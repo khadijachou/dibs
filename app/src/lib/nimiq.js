@@ -76,18 +76,29 @@ export async function getBlockNumber() {
   return provider.getBlockNumber()
 }
 
-// Staker read through the configured JSON-RPC endpoint.
-// Method name to confirm in the Lab (check 2). Returns null when no RPC is set
-// or the address has no staker.
-export async function getStaker(address) {
+// Staker read through the configured JSON-RPC endpoint (VITE_NIMIQ_RPC_URL; the SDK
+// sends these calls straight to that URL, not through Nimiq Pay).
+// readStaker: the staker object, or null when the chain says there is none.
+// It throws when the chain cannot be read (no RPC URL, network down), so callers
+// never mistake "can't read" for "no staker" before sending a transaction.
+export async function readStaker(address) {
   if (demo) return provider.mockStaker(address)
-  if (!config.rpcUrl) return null
+  if (!config.rpcUrl) throw new Error('No RPC URL configured (VITE_NIMIQ_RPC_URL)')
   try {
     const res = await provider.request({ method: 'getStakerByAddress', params: [address] })
-    return res?.data ?? res ?? null
-  } catch {
+    const st = res?.data ?? res
+    return st && typeof st === 'object' ? st : null
+  } catch (e) {
+    // fetch failed or the answer was not JSON: the chain was not read.
+    if (e instanceof TypeError || e instanceof SyntaxError) throw e
+    // The RPC answered with an error: for this method that means "no staker at this address".
     return null
   }
+}
+
+// Same read for display only: never throws, null when unknown.
+export async function getStaker(address) {
+  try { return await readStaker(address) } catch { return null }
 }
 
 // Adds NIM to the user's own staker. First deposit creates the staker
@@ -95,11 +106,12 @@ export async function getStaker(address) {
 export async function stakeNim({ nim, hasStaker, validator = config.defaultValidator || (demo ? 'NQ00 DEMO VALIDATOR' : '') }) {
   if (demo) simulated('deposit')
   const value = toLuna(nim)
-  if (!hasStaker) {
-    if (!validator) throw new Error('No validator configured (VITE_DEFAULT_VALIDATOR)')
-    return provider.sendNewStakerTransaction({ delegation: validator, value })
-  }
-  return provider.sendStakeTransaction({ value })
+  if (!hasStaker && !validator) throw new Error('No validator configured (VITE_DEFAULT_VALIDATOR)')
+  const tx = await (hasStaker
+    ? provider.sendStakeTransaction({ value })
+    : provider.sendNewStakerTransaction({ delegation: validator, value }))
+  if (demo) simulated('deposit-sent')
+  return tx
 }
 
 // Unlock is three protocol steps. Waiting times between them are check 3.

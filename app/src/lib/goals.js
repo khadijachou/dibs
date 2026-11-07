@@ -50,10 +50,10 @@ export function updateGoal(address, id, patch) {
   return goals.find((g) => g.id === id)
 }
 
-export function addDeposit(address, id, { nim, tx }) {
+export function addDeposit(address, id, { nim, tx, id: depositId = null }) {
   const g = getGoal(address, id)
   if (!g) return null
-  return updateGoal(address, id, { deposits: [...g.deposits, { nim, tx, at: new Date().toISOString() }] })
+  return updateGoal(address, id, { deposits: [...g.deposits, { id: depositId, nim, tx, at: new Date().toISOString() }] })
 }
 
 export const savedNim = (goal) => goal.deposits.reduce((s, d) => s + d.nim, 0)
