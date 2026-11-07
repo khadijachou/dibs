@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useApp } from '../App.jsx'
 import { config, toLuna, toNim } from '../lib/config.js'
-import { listAccountsWithBalance, connect, describeError, getBalanceNim, getBlockNumber, getStaker, host, isDemo, payInvoice, unlock } from '../lib/nimiq.js'
+import { listAccountsWithBalance, connect, describeError, getBalanceNim, getBlockNumber, getStaker, readStaker, host, isDemo, payInvoice, unlock } from '../lib/nimiq.js'
 import { parseInvoice } from '../lib/invoice.js'
 import { getPrices } from '../lib/price.js'
 import { api } from '../lib/api.js'
@@ -75,7 +75,7 @@ export default function Lab() {
       const o = await api.order(orderId)
       return { ...o, secondsSincePay: paidAt ? Math.round((Date.now() - paidAt) / 1000) : null }
     }),
-    staker: step('Read staker (RPC getStakerByAddress)', () => getStaker(address)),
+    staker: step('Read staker (RPC getStakerByAddress)', () => readStaker(address)),
     rpc: step('Raw RPC', async () => {
       const { provider } = await connect()
       if (rpcUrl.trim()) provider.setRPCUrl(rpcUrl.trim())
@@ -92,8 +92,9 @@ export default function Lab() {
     }),
     deactivate: step('sendSetActiveStakeTransaction (active minus amount)', async () => {
       const st = await getStaker(address)
-      if (!st || st.activeBalance == null) throw new Error('Need a staker read first (RPC) to know the active balance')
-      return unlock.deactivate(Math.max(0, toNim(st.activeBalance) - amount()))
+      const active = st?.balance ?? st?.activeBalance
+      if (active == null) throw new Error('Need a staker read first (RPC) to know the active balance')
+      return unlock.deactivate(Math.max(0, toNim(active) - amount()))
     }),
     retire: step('sendRetireStakeTransaction', () => unlock.retire(amount())),
     remove: step('sendRemoveStakeTransaction', () => unlock.remove(amount())),

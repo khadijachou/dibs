@@ -41,6 +41,8 @@ export function classify(err, ctx) {
 // Example: http://localhost:5173/?sim=PAY_UNKNOWN . ?sim=off clears it.
 const SIM = {
   DEP_CANCELLED: { ctx: 'deposit', type: 'PERMISSION_DENIED' },
+  // The deposit is sent, then Nimiq Pay reports an error anyway (BUG-01, Angelo's case).
+  DEP_SENT_ERROR: { ctx: 'deposit-sent', type: 'SOMETHING_NEW' },
   PAY_CANCELLED: { ctx: 'pay', type: 'PERMISSION_DENIED' },
   PAY_UNKNOWN: { ctx: 'pay', type: 'TRANSACTION_OUTCOME_UNKNOWN' },
   PAY_DUPLICATE: { ctx: 'pay', type: 'DUPLICATE_PAYMENT' },
