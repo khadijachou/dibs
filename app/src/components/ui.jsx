@@ -57,7 +57,7 @@ export function Header({ onBack, onInk = false }) {
         <div style={{ width: 8 }} aria-hidden="true" />
       )}
       <div className="grow">
-        <button type="button" className="home-link" aria-label="Dibs" onClick={() => reset('home')}><Wordmark cream={onInk} /></button>
+        <button type="button" className="home-link" aria-label="Dibs" onClick={() => reset('home')}><Wordmark cream /></button>
       </div>
       {demo && <span className="badge-demo">{t('demo')}</span>}
       {balance == null
