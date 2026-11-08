@@ -340,5 +340,149 @@
     "detail": "1 Year",
     "icon": "game",
     "fallbackUsd": 101.99
+  },
+  {
+    "id": "flightgift-usa-50",
+    "slug": "flightgift-usa",
+    "packageValue": "50",
+    "name": "Flightgift",
+    "detail": "50 USD",
+    "icon": "travel",
+    "fallbackUsd": 50
+  },
+  {
+    "id": "flightgift-usa-100",
+    "slug": "flightgift-usa",
+    "packageValue": "100",
+    "name": "Flightgift",
+    "detail": "100 USD",
+    "icon": "travel",
+    "fallbackUsd": 100.01
+  },
+  {
+    "id": "flightgift-usa-200",
+    "slug": "flightgift-usa",
+    "packageValue": "200",
+    "name": "Flightgift",
+    "detail": "200 USD",
+    "icon": "travel",
+    "fallbackUsd": 200
+  },
+  {
+    "id": "starbucks-usa-10",
+    "slug": "starbucks-usa",
+    "packageValue": "10",
+    "name": "Starbucks gift card",
+    "detail": "10 USD",
+    "icon": "food",
+    "fallbackUsd": 10
+  },
+  {
+    "id": "starbucks-usa-50",
+    "slug": "starbucks-usa",
+    "packageValue": "50",
+    "name": "Starbucks gift card",
+    "detail": "50 USD",
+    "icon": "food",
+    "fallbackUsd": 50
+  },
+  {
+    "id": "best-buy-usa-50",
+    "slug": "best-buy-usa",
+    "packageValue": "50",
+    "name": "Best Buy gift card",
+    "detail": "50 USD",
+    "icon": "bag",
+    "fallbackUsd": 50
+  },
+  {
+    "id": "best-buy-usa-100",
+    "slug": "best-buy-usa",
+    "packageValue": "100",
+    "name": "Best Buy gift card",
+    "detail": "100 USD",
+    "icon": "bag",
+    "fallbackUsd": 100.01
+  },
+  {
+    "id": "hotels_com-usa-50",
+    "slug": "hotels_com-usa",
+    "packageValue": "50",
+    "name": "Hotels.com gift card",
+    "detail": "50 USD",
+    "icon": "travel",
+    "fallbackUsd": 50
+  },
+  {
+    "id": "hotels_com-usa-100",
+    "slug": "hotels_com-usa",
+    "packageValue": "100",
+    "name": "Hotels.com gift card",
+    "detail": "100 USD",
+    "icon": "travel",
+    "fallbackUsd": 100.01
+  },
+  {
+    "id": "hotels_com-usa-200",
+    "slug": "hotels_com-usa",
+    "packageValue": "200",
+    "name": "Hotels.com gift card",
+    "detail": "200 USD",
+    "icon": "travel",
+    "fallbackUsd": 200
+  },
+  {
+    "id": "uber-usa-50",
+    "slug": "uber-usa",
+    "packageValue": "50",
+    "name": "Uber gift card",
+    "detail": "50 USD",
+    "icon": "travel",
+    "fallbackUsd": 50
+  },
+  {
+    "id": "uber-usa-100",
+    "slug": "uber-usa",
+    "packageValue": "100",
+    "name": "Uber gift card",
+    "detail": "100 USD",
+    "icon": "travel",
+    "fallbackUsd": 100.01
+  },
+  {
+    "id": "disney-usa-50",
+    "slug": "disney-usa",
+    "packageValue": "50",
+    "name": "Disney gift card",
+    "detail": "50 USD",
+    "icon": "play",
+    "fallbackUsd": 50
+  },
+  {
+    "id": "disney-usa-100",
+    "slug": "disney-usa",
+    "packageValue": "100",
+    "name": "Disney gift card",
+    "detail": "100 USD",
+    "icon": "play",
+    "fallbackUsd": 100.01
+  },
+  {
+    "id": "doordash-usa-50",
+    "slug": "doordash-usa",
+    "packageValue": "50",
+    "name": "DoorDash gift card",
+    "detail": "50 USD",
+    "icon": "food",
+    "fallbackUsd": 50
+  },
+  {
+    "id": "doordash-usa-100",
+    "slug": "doordash-usa",
+    "packageValue": "100",
+    "name": "DoorDash gift card",
+    "detail": "100 USD",
+    "icon": "food",
+    "fallbackUsd": 100.01
   }
 ]
