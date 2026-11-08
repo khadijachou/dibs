@@ -6,6 +6,7 @@ import { catalogBrands, brandOf } from '../lib/brands.js'
 import { findItem } from '../lib/catalog.js'
 import { planOf } from '../lib/pace.js'
 import { fmtDate, fmtNim } from '../lib/format.js'
+import { useCountUp } from '../lib/useCountUp.js'
 
 // "Call dibs. Save up." -> ["Call dibs.", "Save up."]
 const splitFirst = (s) => { const i = s.indexOf('. '); return i < 0 ? [s, ''] : [s.slice(0, i + 1), s.slice(i + 2)] }
@@ -178,6 +179,8 @@ function GoalHero({ goal }) {
   const pct = progress(goal)
   const brand = goalBrand(goal)
   const next = Math.max(1, Math.min(p.remaining, p.pace.amount || p.weekly))
+  const savedShown = useCountUp(p.saved)
+  const remainingShown = useCountUp(p.remaining)
   return (
       <section className="hero">
         <div className="top">
@@ -190,8 +193,8 @@ function GoalHero({ goal }) {
             <div className="pct">{Math.round(pct * 100)}%</div>
           </div>
           <div>
-            <div className="n">{fmtNim(p.saved, lang)} NIM</div>
-            <div className="m">{t('goal_of2', { target: fmtNim(goal.targetNim, lang) })} · {t('goal_to_go', { amount: fmtNim(p.remaining, lang) })}</div>
+            <div className="n">{fmtNim(Math.round(savedShown), lang)} NIM</div>
+            <div className="m">{t('goal_of2', { target: fmtNim(goal.targetNim, lang) })} · {t('goal_to_go', { amount: fmtNim(Math.round(remainingShown), lang) })}</div>
             <div className="earning">{t('goal_earning_soon')}</div>
           </div>
         </div>

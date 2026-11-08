@@ -1,5 +1,6 @@
 import { useApp } from '../App.jsx'
 import { fmtNim } from '../lib/format.js'
+import { useCountUp } from '../lib/useCountUp.js'
 
 const PATHS = {
   back: <path d="M15 5l-7 7 7 7" />,
@@ -49,6 +50,7 @@ export function BrandLogo({ brand, className = '' }) {
 
 export function Header({ onBack, onInk = false }) {
   const { t, balance, demo, lang, reset } = useApp()
+  const balanceShown = useCountUp(balance)
   return (
     <header className={`header${onInk ? ' on-ink' : ''}`}>
       {onBack ? (
@@ -62,7 +64,7 @@ export function Header({ onBack, onInk = false }) {
       {demo && <span className="badge-demo">{t('demo')}</span>}
       {balance == null
         ? <span className="chip sk" aria-label={t('goal_reading')}>000,000 NIM</span>
-        : <span className="chip">{fmtNim(balance, lang)} NIM</span>}
+        : <span className="chip">{fmtNim(Math.round(balanceShown), lang)} NIM</span>}
     </header>
   )
 }

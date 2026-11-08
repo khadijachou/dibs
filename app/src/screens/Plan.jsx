@@ -6,6 +6,7 @@ import { findItem } from '../lib/catalog.js'
 import { createGoal } from '../lib/goals.js'
 import { usdToNim } from '../lib/price.js'
 import { addDays, fmtDate, fmtNim, fmtUsd } from '../lib/format.js'
+import { useCountUp } from '../lib/useCountUp.js'
 
 const OPTIONS = [
   { key: 'plan_w2', days: 14 },
@@ -26,6 +27,8 @@ export default function Plan({ brandKey, itemId }) {
   useEffect(() => { const id = setInterval(() => setNow(Date.now()), 30000); return () => clearInterval(id) }, [])
 
   const item = amounts.find((i) => i.id === pickedId) || amounts[0]
+  // Display only: null until prices load, so the first real target appears without counting from 0.
+  const targetShown = useCountUp(item && prices ? usdToNim(item.usd, prices.nimUsd) : null)
   if (!item) return null
   if (!prices) {
     return <><Header onBack={back} /><main className="screen"><p className="sub">{t('loading')}</p></main></>
@@ -70,7 +73,7 @@ export default function Plan({ brandKey, itemId }) {
           )}
           <div>
             <span className="small">{t('plan_target2')}</span>
-            <div className="target-num" style={{ margin: '4px 0 6px' }}>{fmtNim(targetNim, lang)} NIM</div>
+            <div className="target-num" style={{ margin: '4px 0 6px' }}>{fmtNim(Math.round(targetShown), lang)} NIM</div>
             <div className={`rate${prices.live ? '' : ' off'}`}>
               {t(prices.live ? 'plan_rate_live' : 'plan_rate_off2', { rate: fmtUsd(prices.nimUsd, lang), ago })}
             </div>

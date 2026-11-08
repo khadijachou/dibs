@@ -9,6 +9,7 @@ import { config, MIN_NEW_STAKER_NIM, toNim } from '../lib/config.js'
 import { readStaker, stakeNim } from '../lib/nimiq.js'
 import { confirmPending, expired, pending, stakedLuna, startPending, waitForDeposit } from '../lib/deposit.js'
 import { fmtDate, fmtNim, weeksUntil } from '../lib/format.js'
+import { useCountUp } from '../lib/useCountUp.js'
 
 const parseNim = (v) => Math.floor(Number(String(v).replace(/[^\d.]/g, ''))) || 0
 
@@ -35,6 +36,8 @@ export default function Goal({ goalId, created, amount: preset }) {
 
   const saved = goal ? savedNim(goal) : 0
   const remaining = goal ? Math.max(0, goal.targetNim - saved) : 0
+  const savedShown = useCountUp(saved)
+  const remainingShown = useCountUp(remaining)
   const suggested = goal ? Math.min(remaining, Math.ceil(goal.targetNim / weeksUntil(goal.deadline))) : 0
   const [amount, setAmount] = useState(() => String(preset || Math.max(suggested, hasStaker ? 1 : MIN_NEW_STAKER_NIM)))
 
@@ -164,8 +167,8 @@ export default function Goal({ goalId, created, amount: preset }) {
               <div className="pct">{Math.round(pct * 100)}%</div>
             </div>
             <div>
-              <div className="n">{fmtNim(saved, lang)} NIM</div>
-              <div className="m">{t('goal_of2', { target: fmtNim(goal.targetNim, lang) })}<br />{t('goal_to_go', { amount: fmtNim(remaining, lang) })}</div>
+              <div className="n">{fmtNim(Math.round(savedShown), lang)} NIM</div>
+              <div className="m">{t('goal_of2', { target: fmtNim(goal.targetNim, lang) })}<br />{t('goal_to_go', { amount: fmtNim(Math.round(remainingShown), lang) })}</div>
               {(hasStaker || saved > 0) && <div className="earning">{earned > 0 ? t('goal_earning', { amount: fmtNim(earned, lang) }) : t('goal_earning_soon')}</div>}
             </div>
           </div>
