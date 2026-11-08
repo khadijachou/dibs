@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useApp } from '../App.jsx'
 import { BrandLogo, FieldError, Header, Notice, Ring, Stamp, WeekDots } from '../components/ui.jsx'
 import { classify, lastLogText } from '../lib/errors.js'
@@ -9,15 +9,22 @@ import { config, MIN_NEW_STAKER_NIM, toNim } from '../lib/config.js'
 import { readStaker, stakeNim } from '../lib/nimiq.js'
 import { confirmPending, expired, pending, stakedLuna, startPending, waitForDeposit } from '../lib/deposit.js'
 import { fmtDate, fmtNim, weeksUntil } from '../lib/format.js'
+import { DeleteSheet, ManageSheet, MoveSheet } from './GoalManage.jsx'
 import { useCountUp } from '../lib/useCountUp.js'
 
 const parseNim = (v) => Math.floor(Number(String(v).replace(/[^\d.]/g, ''))) || 0
 
 // Known pools, by validator address.
+// The pay lock Redeem keeps while a payment's outcome is unknown. Read only.
+// "A new goal" opens the Move sheet once, not again when this screen is revisited.
+const movesOpened = new Set()
+
+const payLocked = () => { try { return Boolean(localStorage.getItem('dibs.pending')) } catch { return false } }
+
 const POOLS = { 'NQ15 HNAH YRVH DFVM YHAG BSXG 0QHK KA0Q XDR7': 'Garuda Pool' }
 
 
-export default function Goal({ goalId, created, amount: preset }) {
+export default function Goal({ goalId, created, amount: preset, moveFrom = null }) {
   const { t, lang, address, balance, refreshBalance, back, canGoBack, go, reset, toast } = useApp()
   const [goal, setGoal] = useState(() => getGoal(address, goalId))
   const [hasStaker, setHasStaker] = useState(() => stakerFlag.get(address))
@@ -31,6 +38,15 @@ export default function Goal({ goalId, created, amount: preset }) {
   const [recovered, setRecovered] = useState(null) // { nim }: Nimiq Pay errored but the stake grew
   const [unseen, setUnseen] = useState(false)
   const [rpcDown, setRpcDown] = useState(false)
+  // Manage: null | 'manage' | 'move' | 'delete'. moveFrom (from "A new goal") opens Move from that goal into this one.
+  const [sheet, setSheet] = useState(null)
+  const [moveSrc, setMoveSrc] = useState(() => {
+    if (!moveFrom || movesOpened.has(goalId)) return null
+    movesOpened.add(goalId)
+    return getGoal(address, moveFrom)
+  })
+  const closeSheet = useCallback(() => setSheet(null), [])
+  const closeMoveSrc = useCallback(() => setMoveSrc(null), [])
   const alive = useRef(true)
   useEffect(() => { alive.current = true; return () => { alive.current = false } }, [])
 
@@ -106,6 +122,11 @@ export default function Goal({ goalId, created, amount: preset }) {
   const overBalance = !cantOpen && !underMin && tooMuch
   const invalid = !amountNim || tooMuch || underMin || cantOpen
   // Quick picks scale with the goal: the weekly suggestion, a quarter of the target, everything left.
+  const canManage = goal.status === 'saving' && !(pend && pend.goalId === goal.id) && !payLocked()
+  const empty = goal.status === 'saving' && saved === 0 && goal.deposits.length > 0
+  const withdrawing = goal.status === 'unlocking' && goal.unlockMode === 'withdraw'
+  const returned = goal.status === 'withdrawn' ? goal.deposits.filter((d) => d.kind === 'withdraw').reduce((s, d) => s - d.nim, 0) : 0
+  const rowLabel = (d) => d.kind === 'move' ? t(d.to ? 'row_moved_to' : 'row_moved_from', { name: d.name || '' }) : d.kind === 'withdraw' ? t('row_returned') : null
   const quick = [...new Set([suggested, Math.ceil(goal.targetNim / 4), remaining])]
     .filter((q) => q > 0 && q <= remaining)
     .map((q, i) => ({ value: q, label: q === remaining ? t('goal_rest') : i === 0 ? t('pill_week') : t('pill_quarter') }))
@@ -163,7 +184,8 @@ export default function Goal({ goalId, created, amount: preset }) {
         <section className="hero">
           <div className="top">
             <BrandLogo brand={brand} />
-            <div><div className="t1">{goal.itemName} · {goal.itemDetail}</div><div className="t2">{fmtDate(goal.deadline, lang)} · {t(p.daysLeft === 1 ? 'days_left_one' : 'days_left_other', { count: p.daysLeft })}</div></div>
+            <div className="grow"><div className="t1">{goal.itemName} · {goal.itemDetail}</div><div className="t2">{fmtDate(goal.deadline, lang)} · {t(p.daysLeft === 1 ? 'days_left_one' : 'days_left_other', { count: p.daysLeft })}</div></div>
+            {canManage && <button type="button" className="more-btn" aria-label={t('manage_btn')} aria-haspopup="dialog" onClick={() => setSheet('manage')}>⋯</button>}
           </div>
           <div className="mid">
             <div className="ring-wrap">
@@ -215,6 +237,15 @@ export default function Goal({ goalId, created, amount: preset }) {
 
         {reached && goal.status === 'saving' && <div className="ok">{t('goal_reached')}</div>}
         {goal.status === 'ready' && <div className="ok">{t('goal_ready')}</div>}
+        {empty && (
+          <div className="empty-row"><span>{t('goal_empty')}</span><button type="button" className="link-danger" onClick={() => setSheet('delete')}>{t('manage_delete')}</button></div>
+        )}
+        {goal.status === 'withdrawn' && (
+          <>
+            <div className="ok">{t('withdraw_returned_body', { nim: fmtNim(returned, lang), date: fmtDate(goal.withdrawnAt || goal.createdAt, lang) })}</div>
+            <div className="empty-row"><span>{t('withdraw_returned')}</span><button type="button" className="link-danger" onClick={() => setSheet('delete')}>{t('manage_delete')}</button></div>
+          </>
+        )}
         {slowWallet && (
           <Notice tone="wait" title={t('err_ENV_NO_CONSENSUS_title')} sub={t('err_ENV_NO_CONSENSUS_sub')}
             actions={[{ label: t('err_ENV_NO_CONSENSUS_action'), onClick: () => refreshBalance() }]} />
@@ -236,7 +267,7 @@ export default function Goal({ goalId, created, amount: preset }) {
             <div className="sec-head"><h3>{t('goal_deposits')}</h3><span className="small">{t('goal_count', { count: goal.deposits.length, total: fmtNim(saved, lang) })}</span></div>
             <div className="list">
               {goal.deposits.slice().reverse().map((d) => (
-                <div className="row" key={(d.id || d.tx) + d.at}><span>+{fmtNim(d.nim, lang)} NIM</span><span>{Date.now() - Date.parse(d.at) < 60_000 ? t('goal_just_now') : fmtDate(d.at, lang)}</span></div>
+                <div className={`row${d.kind ? ' ' + d.kind : ''}`} key={(d.id || d.tx) + d.at}><span>{d.nim < 0 ? '−' : '+'}{fmtNim(Math.abs(d.nim), lang)} NIM{rowLabel(d) && <small className="row-note">{rowLabel(d)}</small>}</span><span>{Date.now() - Date.parse(d.at) < 60_000 ? t('goal_just_now') : fmtDate(d.at, lang)}</span></div>
               ))}
               {earned > 0 && <div className="row"><span style={{ color: 'var(--teal)' }}>{t('goal_earned_row', { amount: fmtNim(earned, lang) })}</span><span>{t('goal_since', { date: fmtDate(goal.deposits[0].at, lang) })}</span></div>}
             </div>
@@ -250,7 +281,10 @@ export default function Goal({ goalId, created, amount: preset }) {
               {!pend && <small>{balance == null ? t('goal_waiting_balance') : cantOpen ? t('goal_add_min_sub', { amount: fmtNim(balance, lang) }) : t('confirm_hint')}</small>}
             </button>
           )}
-          {(goal.status === 'unlocking' || (goal.status === 'saving' && reached)) && (
+          {withdrawing && (
+            <button type="button" className="btn mint" onClick={() => go('unlock', { goalId: goal.id, mode: 'withdraw' })}>{t('manage_back')}</button>
+          )}
+          {((goal.status === 'unlocking' && !withdrawing) || (goal.status === 'saving' && reached)) && (
             <button type="button" className="btn gold" onClick={() => go('unlock', { goalId: goal.id })}>{t('goal_unlock')}</button>
           )}
           {goal.status === 'ready' && (
@@ -258,6 +292,15 @@ export default function Goal({ goalId, created, amount: preset }) {
           )}
         </div>
       </main>
+      {sheet === 'manage' && (
+        <ManageSheet goal={goal} onClose={closeSheet}
+          onMove={() => setSheet('move')}
+          onWithdraw={() => { setSheet(null); go('unlock', { goalId: goal.id, mode: 'withdraw' }) }}
+          onDelete={() => setSheet('delete')} />
+      )}
+      {sheet === 'move' && <MoveSheet goal={goal} onClose={closeSheet} onMoved={(r) => { setGoal(r.from); setSheet(null) }} />}
+      {sheet === 'delete' && <DeleteSheet goal={goal} onClose={closeSheet} />}
+      {moveSrc && <MoveSheet goal={moveSrc} preselect={goal.id} onClose={closeMoveSrc} onMoved={(r) => { setGoal(r.to); setMoveSrc(null) }} />}
     </>
   )
 }

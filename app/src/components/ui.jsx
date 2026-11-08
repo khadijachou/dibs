@@ -179,6 +179,25 @@ export function FieldError({ children }) {
   return <p className="ferr" role="alert">{children}</p>
 }
 
+// Bottom sheet: dimmed backdrop, panel from the bottom. Tap outside or Escape closes it.
+export function Sheet({ title, onClose, children }) {
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [onClose])
+  return createPortal(
+    <div className="sheet-bg" onClick={onClose}>
+      <div className="sheet" role="dialog" aria-modal="true" aria-label={title} onClick={(e) => e.stopPropagation()}>
+        <div className="sheet-grab" aria-hidden="true" />
+        {title && <h3 className="sheet-title">{title}</h3>}
+        {children}
+      </div>
+    </div>,
+    document.body,
+  )
+}
+
 // "Dibs!" stamp (M4). Decorative: fixed overlay, no pointer events, hidden from screen readers.
 // Portalled to <body> so the .screen enter transform cannot become its containing block. Unmounts after 2 s.
 export function Stamp() {

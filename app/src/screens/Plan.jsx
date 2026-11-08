@@ -15,7 +15,7 @@ const OPTIONS = [
 ]
 
 // Accepts { brandKey } (v2.2) or the old { itemId }.
-export default function Plan({ brandKey, itemId }) {
+export default function Plan({ brandKey, itemId, moveFrom = null }) {
   const { t, lang, address, prices, back, reset } = useApp()
   const fromItem = itemId ? findItem(itemId) : null
   const key = brandKey || brandOf(fromItem)?.key
@@ -44,7 +44,7 @@ export default function Plan({ brandKey, itemId }) {
 
   const create = () => {
     const goal = createGoal(address, { item, targetNim, deadline, brand: b, nimUsd: prices.nimUsd })
-    reset('goal', { goalId: goal.id, created: true })
+    reset('goal', { goalId: goal.id, created: true, moveFrom })
   }
 
   return (

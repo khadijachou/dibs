@@ -4,7 +4,8 @@ import { BrandLogo, Header, Icon } from '../components/ui.jsx'
 import { CHIPS, catalogBrands } from '../lib/brands.js'
 
 // One tile per brand; the amount is chosen on the Plan screen (UI v2.2).
-export default function Catalog() {
+// moveFrom: opened from Move > "A new goal"; passed on to Plan and then to the new goal.
+export default function Catalog({ moveFrom = null }) {
   const { t, go, back, canGoBack } = useApp()
   const brands = catalogBrands()
   const [chip, setChip] = useState('all')
@@ -42,7 +43,7 @@ export default function Catalog() {
         {shown.length > 6 && <div className="scroll-fade" aria-hidden="true" />}
         <div className="bottom">
           <p className="small center">{t('cat_footer2')}</p>
-          <button type="button" className="btn tall" disabled={!brand} onClick={() => go('plan', { brandKey: picked })}>
+          <button type="button" className="btn tall" disabled={!brand} onClick={() => go('plan', { brandKey: picked, moveFrom })}>
             {brand && t('cat_cta', { brand: brand.name })}<small>{t('cat_cta_sub')}</small>
           </button>
         </div>

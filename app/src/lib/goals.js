@@ -36,7 +36,7 @@ export function createGoal(address, { item, targetNim, deadline, brand = null, n
     nimUsdAtCreate: nimUsd,
     deposits: [],
     unlockSteps: [], // { step: 'deactivate'|'retire'|'remove', tx, at }
-    status: 'saving', // saving -> unlocking -> ready -> redeemed
+    status: 'saving', // saving -> unlocking -> ready -> redeemed, or saving -> unlocking -> withdrawn
     payment: null, // { hash, swapId, at, orderId }
     createdAt: new Date().toISOString(),
   }
@@ -54,6 +54,44 @@ export function addDeposit(address, id, { nim, tx, id: depositId = null }) {
   const g = getGoal(address, id)
   if (!g) return null
   return updateGoal(address, id, { deposits: [...g.deposits, { id: depositId, nim, tx, at: new Date().toISOString() }] })
+}
+
+const newId = () => (crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()))
+
+// Moves NIM between two goals in the ledger only. One staker holds both, so nothing moves on chain:
+// a negative entry on the source and the same positive entry on the target keep savedNim a plain sum.
+// `name` keeps the other goal's label so the row still reads well after that goal is deleted.
+export function moveNim(address, fromId, toId, nim) {
+  const goals = read(address)
+  const from = goals.find((g) => g.id === fromId)
+  const to = goals.find((g) => g.id === toId)
+  if (!from || !to || fromId === toId) throw new Error('Goal not found')
+  if (from.status !== 'saving' || to.status !== 'saving') throw new Error('Both goals must be saving')
+  if (!(nim > 0) || nim > savedNim(from)) throw new Error('Amount out of range')
+  const at = new Date().toISOString()
+  const label = (g) => `${g.itemName} · ${g.itemDetail}`
+  const next = goals.map((g) => {
+    if (g.id === fromId) return { ...g, deposits: [...g.deposits, { id: newId(), nim: -nim, kind: 'move', to: toId, name: label(to), at }] }
+    if (g.id === toId) return { ...g, deposits: [...g.deposits, { id: newId(), nim, kind: 'move', from: fromId, name: label(from), at }] }
+    return g
+  })
+  write(address, next)
+  return { from: next.find((g) => g.id === fromId), to: next.find((g) => g.id === toId) }
+}
+
+// Deletes an empty goal. Also clears copies kept under older addresses, or adoptGoals would bring it back.
+export function removeGoal(address, id) {
+  const g = getGoal(address, id)
+  if (!g) throw new Error('Goal not found')
+  if (savedNim(g) !== 0 || !['saving', 'redeemed', 'withdrawn'].includes(g.status)) throw new Error('Goal still holds NIM')
+  let keys = [key(address)]
+  try { keys = [...new Set([key(address), ...Object.keys(localStorage).filter((k) => k.startsWith('dibs.goals.'))])] } catch { /* storage blocked */ }
+  for (const k of keys) {
+    let list
+    try { list = JSON.parse(localStorage.getItem(k)) || [] } catch { continue }
+    if (!list.some((x) => x?.id === id)) continue
+    try { localStorage.setItem(k, JSON.stringify(list.filter((x) => x?.id !== id))) } catch { /* storage blocked */ }
+  }
 }
 
 export const savedNim = (goal) => goal.deposits.reduce((s, d) => s + d.nim, 0)

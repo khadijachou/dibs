@@ -75,9 +75,10 @@ function Welcome() {
 // Returning user: the active goal as a hero card, then past dibs and other brands.
 function Hub({ goals }) {
   const { t, lang, go } = useApp()
-  const live = goals.filter((g) => g.status !== 'redeemed')
+  const isPast = (g) => g.status === 'redeemed' || g.status === 'withdrawn'
+  const live = goals.filter((g) => !isPast(g))
   const active = live[0]
-  const past = goals.filter((g) => g.status === 'redeemed')
+  const past = goals.filter(isPast)
   const liveKeys = new Set(live.map((g) => goalBrand(g).key))
   const others = catalogBrands().filter((b) => !liveKeys.has(b.key)).slice(0, 4)
   return (
@@ -89,12 +90,15 @@ function Hub({ goals }) {
           <section style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <div className="sec-head"><h3>{t('home_past')}</h3></div>
             {past.map((g) => {
-              const days = Math.max(1, Math.ceil((Date.parse(g.payment?.at || g.createdAt) - Date.parse(g.createdAt)) / 864e5))
+              // Withdrawn goals reopen on the goal screen (with Delete); redeemed ones on Done.
+              const back = g.status === 'withdrawn'
+              const end = back ? g.withdrawnAt : g.payment?.at
+              const days = Math.max(1, Math.ceil((Date.parse(end || g.createdAt) - Date.parse(g.createdAt)) / 864e5))
               return (
-                <button type="button" key={g.id} className="past" onClick={() => go('done', { goalId: g.id })}>
+                <button type="button" key={g.id} className="past" onClick={() => go(back ? 'goal' : 'done', { goalId: g.id })}>
                   <BrandLogo brand={goalBrand(g)} />
-                  <div><b>{g.itemName} · {g.itemDetail}</b><span className="s">{fmtDate(g.payment?.at || g.createdAt, lang)} · {t(days === 1 ? 'done_stat_days_one' : 'done_stat_days_other', { count: days })}</span></div>
-                  <span className="code">{t('home_code')}</span>
+                  <div><b>{g.itemName} · {g.itemDetail}</b><span className="s">{fmtDate(end || g.createdAt, lang)} · {t(days === 1 ? 'done_stat_days_one' : 'done_stat_days_other', { count: days })}</span></div>
+                  <span className={`code${back ? ' returned' : ''}`}>{t(back ? 'withdraw_returned' : 'home_code')}</span>
                 </button>
               )
             })}
