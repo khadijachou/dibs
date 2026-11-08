@@ -20,6 +20,7 @@ export default function Lab() {
   const [rpcParams, setRpcParams] = useState('["$ADDRESS"]')
   const [email, setEmail] = useState(() => { try { return localStorage.getItem('dibs.email') || '' } catch { return '' } })
   const [orderId, setOrderId] = useState(null)
+  const [orderToken, setOrderToken] = useState(null)
   const [paidAt, setPaidAt] = useState(null)
 
   const write = (label, data) =>
@@ -64,6 +65,7 @@ export default function Lab() {
       const o = await api.createOrder('steam-5', email.trim())
       setInvoice(o.invoice)
       setOrderId(o.orderId)
+      setOrderToken(o.orderToken || null)
       return { orderId: o.orderId, sats: o.sats, usd: o.usd, expiresAt: o.expiresAt }
     }),
     pay: step('payLightningInvoice', async () => {
@@ -72,7 +74,7 @@ export default function Lab() {
       return res
     }),
     status: step('Bitrefill order status', async () => {
-      const o = await api.order(orderId)
+      const o = await api.order(orderId, orderToken)
       return { ...o, secondsSincePay: paidAt ? Math.round((Date.now() - paidAt) / 1000) : null }
     }),
     staker: step('Read staker (RPC getStakerByAddress)', () => readStaker(address)),

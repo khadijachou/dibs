@@ -28,7 +28,7 @@ export default function Redeem({ goalId }) {
   const item = goal && findItem(goal.itemId)
   const [email, setEmail] = useState(() => { try { return localStorage.getItem(EMAIL_KEY) || '' } catch { return '' } })
   // A pay lock left by an earlier session restores the locked state: order = { orderId } only, no invoice to pay.
-  const [order, setOrder] = useState(() => { const l = readPayLock(goalId); return l?.orderId ? { orderId: l.orderId } : null }) // { orderId, invoice, sats, usd, expiresAt }
+  const [order, setOrder] = useState(() => { const l = readPayLock(goalId); return l?.orderId ? { orderId: l.orderId, orderToken: l.orderToken || null } : null }) // { orderId, orderToken, invoice, sats, usd, expiresAt }
   const [invoice, setInvoice] = useState('')
   const [left, setLeft] = useState(null)
   const [busy, setBusy] = useState(false)
@@ -50,16 +50,17 @@ export default function Redeem({ goalId }) {
 
   // The shop is the truth: confirmed paid = goal redeemed, lock removed, go to Done.
   const lockedOrderId = unknown ? (readPayLock(goalId)?.orderId || order?.orderId || null) : null // the order paid with an unknown outcome
-  const confirmed = (orderId) => {
-    updateGoal(address, goalId, { status: 'redeemed', payment: { orderId, at: new Date().toISOString(), outcome: 'confirmed' } })
+  const lockedToken = unknown ? (readPayLock(goalId)?.orderToken || order?.orderToken || null) : null
+  const confirmed = (orderId, orderToken) => {
+    updateGoal(address, goalId, { status: 'redeemed', payment: { orderId, orderToken: orderToken || null, at: new Date().toISOString(), outcome: 'confirmed' } })
     clearPayLock(goalId)
     refreshBalance()
     reset('done', { goalId })
   }
-  const checkOrder = async (orderId, alive = () => true) => {
+  const checkOrder = async (orderId, orderToken, alive = () => true) => {
     try {
-      const o = await api.order(orderId)
-      if (alive() && (o?.status === 'complete' || o?.code)) { confirmed(orderId); return true }
+      const o = await api.order(orderId, orderToken)
+      if (alive() && (o?.status === 'complete' || o?.code)) { confirmed(orderId, orderToken); return true }
     } catch { /* not readable yet: keep the lock, try again */ }
     return false
   }
@@ -67,8 +68,8 @@ export default function Redeem({ goalId }) {
     if (!lockedOrderId) return
     let stop = false
     const alive = () => !stop
-    checkOrder(lockedOrderId, alive)
-    const id = setInterval(() => checkOrder(lockedOrderId, alive), POLL_MS)
+    checkOrder(lockedOrderId, lockedToken, alive)
+    const id = setInterval(() => checkOrder(lockedOrderId, lockedToken, alive), POLL_MS)
     return () => { stop = true; clearInterval(id) }
   }, [lockedOrderId]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -117,7 +118,7 @@ export default function Redeem({ goalId }) {
       // Demo wallet only: tells the fake wallet how much NIM to deduct.
       const toPay = isDemo() ? `${current}#nim=${usdToNim(goal.usd, prices?.nimUsd || config.fallbackNimUsd)}` : current
       const res = await payInvoice(toPay)
-      updateGoal(address, goal.id, { status: 'redeemed', payment: { ...res, orderId: order?.orderId || null, at: new Date().toISOString() } })
+      updateGoal(address, goal.id, { status: 'redeemed', payment: { ...res, orderId: order?.orderId || null, orderToken: order?.orderToken || null, at: new Date().toISOString() } })
       refreshBalance()
       reset('done', { goalId: goal.id })
     } catch (e) {
@@ -126,13 +127,13 @@ export default function Redeem({ goalId }) {
       else if (key === 'PAY_DUPLICATE') {
         // Already paid: never pay again, go and wait for the code.
         toast(t('err_PAY_DUPLICATE_toast'))
-        updateGoal(address, goal.id, { status: 'redeemed', payment: { orderId: order?.orderId || null, at: new Date().toISOString() } })
+        updateGoal(address, goal.id, { status: 'redeemed', payment: { orderId: order?.orderId || null, orderToken: order?.orderToken || null, at: new Date().toISOString() } })
         clearPayLock(goal.id)
         reset('done', { goalId: goal.id })
       } else if (key === 'PAY_UNKNOWN') {
         // Never call pay again for this invoice. Remember it so a reload keeps the lock.
         setUnknown(true)
-        try { localStorage.setItem('dibs.pending', JSON.stringify({ kind: 'pay', goalId: goal.id, orderId: order?.orderId || null, outcome: 'unknown', at: new Date().toISOString() })) } catch { /* ignore */ }
+        try { localStorage.setItem('dibs.pending', JSON.stringify({ kind: 'pay', goalId: goal.id, orderId: order?.orderId || null, orderToken: order?.orderToken || null, outcome: 'unknown', at: new Date().toISOString() })) } catch { /* ignore */ }
       } else setProblem(key)
     } finally {
       setBusy(false)

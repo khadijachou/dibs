@@ -12,7 +12,7 @@ async function call(path, opts = {}) {
   const timer = setTimeout(() => ctl.abort(), 8000)
   let r
   try {
-    r = await fetch(`${config.apiUrl}/api${path}`, { headers: { 'content-type': 'application/json' }, signal: ctl.signal, ...opts })
+    r = await fetch(`${config.apiUrl}/api${path}`, { ...opts, headers: { 'content-type': 'application/json', ...opts.headers }, signal: ctl.signal })
   } catch (e) {
     const err = new Error(e.message); err.apiError = 'SRV_DOWN'; throw err
   } finally { clearTimeout(timer) }
@@ -28,8 +28,8 @@ async function call(path, opts = {}) {
 export const api = {
   health: () => call('/health'),
   catalog: () => call('/catalog'),
-  // -> { orderId, invoice, sats, usd, expiresAt }
+  // -> { orderId, orderToken, invoice, sats, usd, expiresAt }. orderToken is needed to read the order later.
   createOrder: (itemId, email) => call('/redeem', { method: 'POST', body: JSON.stringify({ itemId, email }) }),
   // -> { status, code }
-  order: (orderId) => call(`/orders/${encodeURIComponent(orderId)}`),
+  order: (orderId, token) => call(`/orders/${encodeURIComponent(orderId)}`, { headers: { 'x-order-token': token || '' } }),
 }

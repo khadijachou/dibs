@@ -28,6 +28,7 @@ export default function Done({ goalId }) {
   const { t, lang, address, reset } = useApp()
   const goal = getGoal(address, goalId)
   const orderId = goal?.payment?.orderId
+  const orderToken = goal?.payment?.orderToken || null // orders made before the per-order token have none: stay in the waiting state
   // Kept on the goal once delivered, so Past dibs can reopen it. Never logged or sent anywhere.
   const [red, setRed] = useState(() => goal?.payment?.redemption || null)
   const [status, setStatus] = useState(null)
@@ -42,10 +43,11 @@ export default function Done({ goalId }) {
       setRed(r)
     }
     if (isDemo()) { const id = setTimeout(() => { setStatus('complete'); save(redemptionOf({ code: 'DEMO-CODE-0000' })) }, 3000); return () => clearTimeout(id) }
+    if (!orderToken) return
     let stop = false
     const tick = async () => {
       try {
-        const o = await api.order(orderId)
+        const o = await api.order(orderId, orderToken)
         if (stop) return
         setStatus(o.status)
         const r = redemptionOf(o)
@@ -62,6 +64,7 @@ export default function Done({ goalId }) {
   const code = red?.code || null
   const pin = red?.pin || null
   const link = red?.link || null
+  const safeLink = typeof link === 'string' && link.startsWith('https://') ? link : null // only https links are clickable
   const pinLabel = t('done_pin')
   const copyText = code ? (pin ? `${code} · ${pinLabel}${lang === 'fr' ? ' : ' : ': '}${pin}` : code) : pin || link
   const days = daysToYours(goal)
@@ -97,10 +100,11 @@ export default function Done({ goalId }) {
                     <div className="code-box">{show ? pin : '••••'}</div>
                   </>
                 )}
+                {link && !safeLink && <p className="small" style={{ wordBreak: 'break-all' }}>{link}</p>}
                 {red && (
                   <div className="pills">
                     {(code || pin) && <button type="button" className="btn ghost small" style={{ flex: 1 }} onClick={() => setShow(!show)}>{show ? t('done_hide') : t('done_show')}</button>}
-                    {link && <a className="btn ghost small" style={{ flex: 1 }} href={link} target="_blank" rel="noopener noreferrer">{t('done_open_link')}</a>}
+                    {safeLink && <a className="btn ghost small" style={{ flex: 1 }} href={safeLink} target="_blank" rel="noopener noreferrer">{t('done_open_link')}</a>}
                     <button type="button" className="btn ghost small" style={{ flex: 1 }} onClick={() => navigator.clipboard?.writeText(copyText)}>{t('done_copy')}</button>
                   </div>
                 )}

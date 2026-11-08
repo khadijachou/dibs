@@ -1,6 +1,7 @@
 // Error handling (error plan, 5 Nov). One classifier turns any failure into an ErrorKey,
 // the raw error goes to a small log (last 50, shown in the Lab), the user sees plain words.
 import { NimiqProviderError } from '@nimiq/mini-app-sdk'
+import { isDemo } from './nimiq.js'
 
 const LOG_KEY = 'dibs.log'
 const SIM_KEY = 'dibs.simulate'
@@ -37,7 +38,7 @@ export function classify(err, ctx) {
   return 'GENERIC'
 }
 
-// Demo only: open the app with ?sim=KEY to make the next matching call fail with that error.
+// Demo only (isDemo()): open the app with ?sim=KEY to make the next matching call fail with that error.
 // Example: http://localhost:5173/?sim=PAY_UNKNOWN . ?sim=off clears it.
 const SIM = {
   DEP_CANCELLED: { ctx: 'deposit', type: 'PERMISSION_DENIED' },
@@ -52,11 +53,13 @@ const SIM = {
   SRV_DOWN: { ctx: 'invoice', api: 'SRV_DOWN' },
 }
 export function readSimulateParam() {
+  if (!isDemo()) return // inside Nimiq Pay ?sim does nothing
   const m = location.search.match(/[?&]sim=([A-Z_]+|off)/)
   if (!m) return
   try { m[1] === 'off' ? localStorage.removeItem(SIM_KEY) : localStorage.setItem(SIM_KEY, m[1]) } catch { /* ignore */ }
 }
 export function simulated(ctx) {
+  if (!isDemo()) return
   let key
   try { key = localStorage.getItem(SIM_KEY) } catch { return }
   const s = SIM[key]

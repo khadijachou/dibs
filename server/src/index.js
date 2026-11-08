@@ -4,6 +4,7 @@ import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { serve } from '@hono/node-server'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { randomBytes, timingSafeEqual } from 'node:crypto'
 import { bitrefillEnabled, createLightningInvoice, getInvoice, getProduct } from './bitrefill.js'
 
 // What Dibs sells: server/catalog.json, managed with `npm run catalog`.
@@ -84,21 +85,32 @@ app.post('/api/redeem', async (c) => {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || ''))) return c.json({ error: 'A valid email is needed for the receipt' }, 400)
   try {
     const inv = await createLightningInvoice({ slug: item.slug, packageValue: item.packageValue, email, affiliateId: process.env.BITREFILL_AFFILIATE_ID || undefined })
-    invoices[inv.invoiceId] = { token: inv.accessToken, itemId, createdAt: new Date().toISOString() }
+    // orderToken: random per order, given to the app only. Needed to read the order (and its code) later.
+    const orderToken = randomBytes(16).toString('hex')
+    invoices[inv.invoiceId] = { token: inv.accessToken, orderToken, itemId, createdAt: new Date().toISOString() }
     await saveInvoices()
     const p = await priceFor(item)
-    return c.json({ orderId: inv.invoiceId, invoice: inv.invoice, sats: inv.sats, usd: p.usd, expiresAt: inv.expiresAt })
+    return c.json({ orderId: inv.invoiceId, orderToken, invoice: inv.invoice, sats: inv.sats, usd: p.usd, expiresAt: inv.expiresAt })
   } catch (e) {
     console.error('redeem failed:', e.message)
     return c.json({ error: 'Could not create the order' }, 502)
   }
 })
 
+// True when the x-order-token header matches the order's token. Constant-time compare.
+function tokenOk(rec, given) {
+  if (!rec?.orderToken || typeof given !== 'string') return false
+  const a = Buffer.from(given)
+  const b = Buffer.from(rec.orderToken)
+  return a.length === b.length && timingSafeEqual(a, b)
+}
+
 // Status of an invoice created here. The code is passed through once and never stored.
+// Needs the order's x-order-token: missing, wrong or unknown id all get the same 404.
 app.get('/api/orders/:id', async (c) => {
   const id = c.req.param('id')
-  const rec = invoices[id]
-  if (!rec) return c.json({ error: 'Unknown order' }, 404)
+  const rec = Object.hasOwn(invoices, id) ? invoices[id] : null
+  if (!rec || !tokenOk(rec, c.req.header('x-order-token'))) return c.json({ error: 'Unknown order' }, 404)
   try {
     const { status, code, pin, link, raw } = await getInvoice(id, rec.token)
     // ?raw=1 shows Bitrefill's full answer, only when called from this PC (debugging the code field).

@@ -16,7 +16,8 @@ import Lab from './screens/Lab.jsx'
 import Splash from './screens/Splash.jsx'
 import Onboarding from './screens/Onboarding.jsx'
 
-readSimulateParam()
+// The Lab (#lab) is a developer screen: only in demo mode or in a build made with VITE_LAB=1.
+const labAllowed = () => import.meta.env.VITE_LAB === '1' || isDemo()
 
 const LANGS = ['en', 'fr', 'es']
 const readLang = () => { try { const l = localStorage.getItem('dibs.lang'); return LANGS.includes(l) ? l : null } catch { return null } }
@@ -37,7 +38,8 @@ export default function App() {
   const [history, setHistory] = useState([])
   const [toastText, setToastText] = useState(null)
   const toast = useCallback((text) => { setToastText(text); clearTimeout(window.__dibsToast); window.__dibsToast = setTimeout(() => setToastText(null), 4000) }, [])
-  const [isLab, setIsLab] = useState(() => location.hash === '#lab')
+  const [labHash, setLabHash] = useState(() => location.hash === '#lab')
+  const isLab = labHash && labAllowed()
   // Language: the user's choice (dibs.lang) wins, else Nimiq Pay's language, else en.
   const [langPick, setLangPick] = useState(readLang)
   const lang = useMemo(() => langPick || hostLang(), [langPick, ready])
@@ -68,6 +70,7 @@ export default function App() {
     setFatal(null)
     try {
       await connect()
+      readSimulateParam() // ?sim works in demo mode only, so read it once we know the mode
       const accounts = await listAccountsWithBalance()
       const funded = accounts.filter((a) => a.nim > 0).sort((a, b) => b.nim - a.nim)
       const addr = (funded[0] || accounts[0]).address
@@ -86,7 +89,7 @@ export default function App() {
 
   useEffect(() => { start() }, [start])
   useEffect(() => {
-    const onHash = () => setIsLab(location.hash === '#lab')
+    const onHash = () => setLabHash(location.hash === '#lab')
     window.addEventListener('hashchange', onHash)
     return () => window.removeEventListener('hashchange', onHash)
   }, [])
