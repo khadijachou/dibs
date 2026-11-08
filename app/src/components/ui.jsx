@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useApp } from '../App.jsx'
 import { fmtNim } from '../lib/format.js'
@@ -50,7 +50,46 @@ export function BrandLogo({ brand, className = '' }) {
   return <img className={`blogo${light ? ' light' : ''} ${className}`} src={brand.logo} alt="" />
 }
 
-export function Header({ onBack, onInk = false }) {
+const LANGS = ['en', 'fr', 'es']
+
+// "EN · FR · ES" segmented control (onboarding, and inside the Home language chip).
+export function LangSwitch({ onPick }) {
+  const { t, lang, setLang } = useApp()
+  return (
+    <div className="lang-seg" role="group" aria-label={t('lang_label')}>
+      {LANGS.map((l) => (
+        <button type="button" key={l} lang={l} aria-pressed={l === lang} className={l === lang ? 'on' : ''}
+          onClick={() => { setLang(l); onPick?.(l) }}>{l.toUpperCase()}</button>
+      ))}
+    </div>
+  )
+}
+
+// Home header chip: shows the current language, opens the same three choices.
+export function LangChip() {
+  const { t, lang } = useApp()
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+  useEffect(() => {
+    if (!open) return
+    const onDown = (e) => { if (!ref.current?.contains(e.target)) setOpen(false) }
+    const onKey = (e) => { if (e.key === 'Escape') setOpen(false) }
+    document.addEventListener('pointerdown', onDown)
+    document.addEventListener('keydown', onKey)
+    return () => { document.removeEventListener('pointerdown', onDown); document.removeEventListener('keydown', onKey) }
+  }, [open])
+  return (
+    <div className="lang-chip" ref={ref}>
+      <button type="button" className="chip" aria-expanded={open} aria-label={`${t('lang_label')}: ${lang.toUpperCase()}`} onClick={() => setOpen((o) => !o)}>
+        <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 2.7 2.5 15.3 0 18M12 3c-2.5 2.7-2.5 15.3 0 18" /></svg>
+        {lang.toUpperCase()}
+      </button>
+      {open && <div className="lang-pop"><LangSwitch onPick={() => setOpen(false)} /></div>}
+    </div>
+  )
+}
+
+export function Header({ onBack, onInk = false, langChip = false }) {
   const { t, balance, demo, lang, reset } = useApp()
   const balanceShown = useCountUp(balance)
   return (
@@ -64,6 +103,7 @@ export function Header({ onBack, onInk = false }) {
         <button type="button" className="home-link" aria-label="Dibs" onClick={() => reset('home')}><Wordmark cream /></button>
       </div>
       {demo && <span className="badge-demo">{t('demo')}</span>}
+      {langChip && <LangChip />}
       {balance == null
         ? <span className="chip sk" aria-label={t('goal_reading')}>000,000 NIM</span>
         : <span className="chip">{fmtNim(Math.round(balanceShown), lang)} NIM</span>}

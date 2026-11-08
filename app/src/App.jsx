@@ -13,8 +13,14 @@ import Unlock from './screens/Unlock.jsx'
 import Redeem from './screens/Redeem.jsx'
 import Done from './screens/Done.jsx'
 import Lab from './screens/Lab.jsx'
+import Splash from './screens/Splash.jsx'
+import Onboarding from './screens/Onboarding.jsx'
 
 readSimulateParam()
+
+const LANGS = ['en', 'fr', 'es']
+const readLang = () => { try { const l = localStorage.getItem('dibs.lang'); return LANGS.includes(l) ? l : null } catch { return null } }
+const hostLang = () => { try { const l = String(host.language() || '').slice(0, 2).toLowerCase(); return LANGS.includes(l) ? l : 'en' } catch { return 'en' } }
 
 const AppCtx = createContext(null)
 export const useApp = () => useContext(AppCtx)
@@ -32,8 +38,26 @@ export default function App() {
   const [toastText, setToastText] = useState(null)
   const toast = useCallback((text) => { setToastText(text); clearTimeout(window.__dibsToast); window.__dibsToast = setTimeout(() => setToastText(null), 4000) }, [])
   const [isLab, setIsLab] = useState(() => location.hash === '#lab')
-  const lang = useMemo(() => host.language(), [ready])
+  // Language: the user's choice (dibs.lang) wins, else Nimiq Pay's language, else en.
+  const [langPick, setLangPick] = useState(readLang)
+  const lang = useMemo(() => langPick || hostLang(), [langPick, ready])
   const t = useMemo(() => makeT(lang), [lang])
+  const setLang = useCallback((l) => {
+    if (!LANGS.includes(l)) return
+    try { localStorage.setItem('dibs.lang', l) } catch { /* private mode */ }
+    setLangPick(l)
+  }, [])
+  useEffect(() => { document.documentElement.lang = lang }, [lang])
+
+  // Landing: splash at least 900 ms, onboarding on first run without waiting for the wallet.
+  const [onboarded, setOnboarded] = useState(() => { try { return localStorage.getItem('dibs.onboarded') === '1' } catch { return false } })
+  const [splashMin, setSplashMin] = useState(false)
+  useEffect(() => { const id = setTimeout(() => setSplashMin(true), 900); return () => clearTimeout(id) }, [])
+  const finishOnboarding = useCallback(() => {
+    try { localStorage.setItem('dibs.onboarded', '1') } catch { /* private mode */ }
+    setOnboarded(true)
+    window.scrollTo(0, 0)
+  }, [])
 
   const refreshBalance = useCallback(async (addr = address) => {
     if (!addr) return
@@ -81,8 +105,10 @@ export default function App() {
   }, [])
   const reset = useCallback((name = 'home', params = {}) => { setHistory([]); setRoute({ name, params }) }, [])
 
-  const ctx = { t, lang, address, balance, refreshBalance, prices, demo: isDemo(), go, back, reset, toast, canGoBack: history.length > 0 }
+  const ctx = { t, lang, setLang, address, balance, refreshBalance, prices, demo: isDemo(), go, back, reset, toast, canGoBack: history.length > 0 }
 
+  if (!splashMin) return <AppCtx.Provider value={ctx}><Splash /></AppCtx.Provider>
+  if (!onboarded && !isLab) return <AppCtx.Provider value={ctx}><Onboarding onDone={finishOnboarding} /></AppCtx.Provider>
   if (fatal) {
     return (
       <AppCtx.Provider value={ctx}>
@@ -95,7 +121,7 @@ export default function App() {
     )
   }
   if (!ready) {
-    return <div className="app"><div className="screen center" style={{ justifyContent: 'center' }}><p className="sub">{t('loading')}</p></div></div>
+    return <AppCtx.Provider value={ctx}><Splash /></AppCtx.Provider>
   }
 
   const Screen = isLab ? Lab : SCREENS[route.name] || Home

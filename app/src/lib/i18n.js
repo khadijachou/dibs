@@ -254,6 +254,20 @@ const en = {
   err_UNL_NOT_RELEASED_title: 'Not released yet',
   err_copied: 'Copied',
   err_copy: 'Copy',
+  splash_tag: "Call dibs. Save up. It's yours.",
+  splash_line: 'A Nimiq Pay mini app · Save',
+  lang_label: 'Language',
+  ob_skip: 'Skip',
+  ob_next: 'Next →',
+  ob_start: 'Get started →',
+  ob_trust: "You're in control · Approve every move in Nimiq Pay",
+  ob_gift: 'Gift card',
+  ob_1t: 'Pick something real.',
+  ob_1s: "A game, a month of Netflix, a hotel night. Priced live, in NIM.",
+  ob_2t: 'Save while it earns.',
+  ob_2s: 'Your NIM stays in your own account and earns on the way. Add any week.',
+  ob_3t: "One tap. It's yours.",
+  ob_3s: 'Paid in NIM over Lightning. The code lands in seconds.',
 }
 
 const fr = {
@@ -511,6 +525,20 @@ const fr = {
   err_UNL_NOT_RELEASED_title: 'Pas encore libéré',
   err_copied: 'Copié',
   err_copy: 'Copier',
+  splash_tag: "Réservez-le. Épargnez. C'est à vous.",
+  splash_line: 'Une mini-app Nimiq Pay · Épargne',
+  lang_label: 'Langue',
+  ob_skip: 'Passer',
+  ob_next: 'Suivant →',
+  ob_start: 'Commencer →',
+  ob_trust: "Vous gardez le contrôle · Vous approuvez chaque geste dans Nimiq Pay",
+  ob_gift: 'Carte-cadeau',
+  ob_1t: 'Choisissez du concret.',
+  ob_1s: "Un jeu, un mois de Netflix, une nuit d'hôtel. Prix en direct, en NIM.",
+  ob_2t: 'Épargnez pendant que ça rapporte.',
+  ob_2s: 'Vos NIM restent dans votre propre compte et rapportent en chemin. Ajoutez quand vous voulez.',
+  ob_3t: "Un toucher. C'est à vous.",
+  ob_3s: 'Payé en NIM par Lightning. Le code arrive en quelques secondes.',
 }
 
 const es = {
@@ -768,6 +796,20 @@ const es = {
   err_UNL_NOT_RELEASED_title: 'Aún no se libera',
   err_copied: 'Copiado',
   err_copy: 'Copiar',
+  splash_tag: "Resérvalo. Ahorra. Es tuyo.",
+  splash_line: 'Una mini app de Nimiq Pay · Ahorro',
+  lang_label: 'Idioma',
+  ob_skip: 'Omitir',
+  ob_next: 'Siguiente →',
+  ob_start: 'Empezar →',
+  ob_trust: "Tú tienes el control · Apruebas cada movimiento en Nimiq Pay",
+  ob_gift: 'Tarjeta de regalo',
+  ob_1t: 'Elige algo real.',
+  ob_1s: "Un juego, un mes de Netflix, una noche de hotel. Precio en vivo, en NIM.",
+  ob_2t: 'Ahorra mientras gana.',
+  ob_2s: 'Tus NIM se quedan en tu propia cuenta y ganan en el camino. Agrega cualquier semana.',
+  ob_3t: "Un toque. Es tuyo.",
+  ob_3s: 'Pagado en NIM por Lightning. El código llega en segundos.',
 }
 
 const DICTS = { en, fr, es }

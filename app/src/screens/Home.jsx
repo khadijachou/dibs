@@ -32,7 +32,7 @@ function Welcome() {
   return (
     <>
       <div className="welcome-hero">
-        <Header onInk />
+        <Header onInk langChip />
         <div className="big-ring" aria-hidden="true">
           <svg viewBox="0 0 156 156" width="156" height="156">
             <circle cx="78" cy="78" r="66" fill="none" stroke="#35323f" strokeWidth="12" />
@@ -82,7 +82,7 @@ function Hub({ goals }) {
   const others = catalogBrands().filter((b) => !liveKeys.has(b.key)).slice(0, 4)
   return (
     <>
-      <Header />
+      <Header langChip />
       <main className="screen">
         {live.length > 1 ? <GoalWallet goals={live} /> : active && <ActiveGoal goal={active} />}
         {past.length > 0 && (
