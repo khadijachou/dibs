@@ -104,7 +104,7 @@ input.email, textarea.invoice { background: var(--card); color: var(--cream); bo
 .toast i { background: var(--teal-deep); color: #fff; }
 
 /* Rings: a darker track everywhere */
-svg circle:first-child[stroke="#e6dccf"] { stroke: #2f2c38; }
+svg circle:first-child[stroke="#e6dccf"], svg circle:first-child[stroke="#35323f"] { stroke: #2f2c38; }
 
 /* Motion: all transform and opacity, nothing animates on reduced motion */
 .screen { animation: screen-in .32s cubic-bezier(.2, .8, .2, 1); }
