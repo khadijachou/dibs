@@ -42,7 +42,7 @@ export function Wordmark({ cream = false }) {
 
 // Brand logo for a catalogue brand (falls back to a letter tile).
 export function BrandLogo({ brand, className = '' }) {
-  if (!brand?.logo) return <div className={`blogo letter ${className}`} aria-hidden="true">{(brand?.name || '?')[0]}</div>
+  if (!brand?.logo) return <div className={`blogo letter ${className}`} style={brand?.tile ? { background: brand.tile.bg, color: brand.tile.fg } : undefined} aria-hidden="true">{brand?.tile?.letter || (brand?.name || '?')[0]}</div>
   const light = ['amazon', 'playstation', 'googleplay'].includes(brand.key)
   return <img className={`blogo${light ? ' light' : ''} ${className}`} src={brand.logo} alt="" />
 }
