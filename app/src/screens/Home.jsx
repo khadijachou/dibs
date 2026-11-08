@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useApp } from '../App.jsx'
 import { BrandLogo, Header, Ring } from '../components/ui.jsx'
 import { listGoals, progress } from '../lib/goals.js'
@@ -74,14 +74,16 @@ function Welcome() {
 // Returning user: the active goal as a hero card, then past dibs and other brands.
 function Hub({ goals }) {
   const { t, lang, go } = useApp()
-  const active = goals.find((g) => g.status !== 'redeemed')
+  const live = goals.filter((g) => g.status !== 'redeemed')
+  const active = live[0]
   const past = goals.filter((g) => g.status === 'redeemed')
-  const others = catalogBrands().filter((b) => !active || b.key !== goalBrand(active).key).slice(0, 4)
+  const liveKeys = new Set(live.map((g) => goalBrand(g).key))
+  const others = catalogBrands().filter((b) => !liveKeys.has(b.key)).slice(0, 4)
   return (
     <>
       <Header />
       <main className="screen">
-        {active && <ActiveGoal goal={active} />}
+        {live.length > 1 ? <GoalWallet goals={live} /> : active && <ActiveGoal goal={active} />}
         {past.length > 0 && (
           <section style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <div className="sec-head"><h3>{t('home_past')}</h3></div>
@@ -114,17 +116,69 @@ function Hub({ goals }) {
 }
 
 function ActiveGoal({ goal }) {
-  const { t, lang, go } = useApp()
+  const { t } = useApp()
   const p = planOf(goal)
   const pct = progress(goal)
-  const brand = goalBrand(goal)
-  const next = Math.max(1, Math.min(p.remaining, p.pace.amount || p.weekly))
   return (
     <>
       <div>
         <p className="small" style={{ color: 'var(--gold)', fontWeight: 600 }}>{t('home_pct', { pct: Math.round(pct * 100) })}</p>
         <h2 className="title">{goal.itemName}</h2>
       </div>
+      <GoalHero goal={goal} />
+      {p.pace.kind !== 'done' && <PaceLine pace={p.pace} />}
+    </>
+  )
+}
+
+// Several goals at once: a wallet of cards. Tabs to pick one, swipe between them,
+// each card keeps its own Add and Details. One staker underneath; goals are envelopes.
+function GoalWallet({ goals }) {
+  const { t } = useApp()
+  const [i, setI] = useState(0)
+  const ref = useRef(null)
+  const cur = goals[Math.min(i, goals.length - 1)]
+  const p = planOf(cur)
+  const pick = (k) => {
+    const el = ref.current
+    const card = el?.children[k]
+    if (card) el.scrollTo({ left: card.offsetLeft - el.offsetLeft - 20, behavior: 'smooth' })
+    setI(k)
+  }
+  const onScroll = () => {
+    const el = ref.current
+    if (!el || !el.children.length) return
+    const w = el.children[0].offsetWidth + 12
+    const k = Math.max(0, Math.min(goals.length - 1, Math.round(el.scrollLeft / w)))
+    if (k !== i) setI(k)
+  }
+  return (
+    <>
+      <div className="sec-head"><h2 className="title">{t('home_title')}</h2><span className="small">{i + 1} / {goals.length}</span></div>
+      <div className="gw-tabs" role="tablist">
+        {goals.map((g, k) => (
+          <button type="button" role="tab" aria-selected={k === i} key={g.id} className={`gw-tab${k === i ? ' on' : ''}`} onClick={() => pick(k)}>
+            <BrandLogo brand={goalBrand(g)} />
+            <span>{g.itemDetail}</span>
+            <b>{Math.round(progress(g) * 100)}%</b>
+          </button>
+        ))}
+      </div>
+      <div className="gwallet" ref={ref} onScroll={onScroll}>
+        {goals.map((g) => <div className="gw-card" key={g.id}><GoalHero goal={g} /></div>)}
+      </div>
+      {p.pace.kind !== 'done' && <PaceLine pace={p.pace} />}
+    </>
+  )
+}
+
+function GoalHero({ goal }) {
+  const { t, lang, go } = useApp()
+  const p = planOf(goal)
+  const pct = progress(goal)
+  const brand = goalBrand(goal)
+  const next = Math.max(1, Math.min(p.remaining, p.pace.amount || p.weekly))
+  return (
       <section className="hero">
         <div className="top">
           <BrandLogo brand={brand} />
@@ -148,8 +202,6 @@ function ActiveGoal({ goal }) {
           {pct < 1 && goal.status === 'saving' && <button type="button" className="btn outline" onClick={() => go('goal', { goalId: goal.id })}>{t('home_details')}</button>}
         </div>
       </section>
-      {p.pace.kind !== 'done' && <PaceLine pace={p.pace} />}
-    </>
   )
 }
 
