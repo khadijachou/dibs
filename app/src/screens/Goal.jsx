@@ -54,12 +54,12 @@ export default function Goal({ goalId, created, amount: preset }) {
   useEffect(() => {
     if (!pend) return
     let stop = false
-    waitForDeposit(pend, { untilMs: pend.deadline ?? pend.at + 10 * 60_000, isCancelled: () => stop || !alive.current }).then((r) => {
+    waitForDeposit(pend, { address, untilMs: pend.deadline ?? pend.at + 10 * 60_000, isCancelled: () => stop || !alive.current }).then((r) => {
       if (stop || !alive.current) return
       const p = pending.get(address)
       if (!p || p.id !== pend.id) return
       if (r === 'landed') {
-        const g = confirmPending(p)
+        const g = confirmPending(p, address)
         setPend(null)
         setHasStaker(true); stakerFlag.set(address)
         if (g && g.id === goalId) setGoal(g)

@@ -72,13 +72,21 @@ export const stakerFlag = {
   set: (address) => { try { localStorage.setItem(`dibs.hasStaker.${address}`, '1') } catch { /* ignore */ } },
 }
 
-// When the app switches account (see getAccount), carry over goals saved under another
-// shared account, so a goal is never lost because Nimiq Pay listed accounts differently.
-export function adoptGoals(address, otherAddresses) {
-  if (read(address).length) return
-  for (const other of otherAddresses) {
-    if (other === address) continue
-    const goals = read(other)
-    if (goals.length) { write(address, goals); return }
+// Goals are stored under the funded address, and that address can change: on 7 Nov, after
+// a Remove, Nimiq Pay stopped listing NQ80... and listed a new funded NQ64... instead.
+// So on start we merge goals saved under ANY address on this device into the current one
+// (the current copy wins when both have the same goal), and never lose a goal to a rotation.
+export function adoptGoals(address) {
+  let keys = []
+  try { keys = Object.keys(localStorage).filter((k) => k.startsWith('dibs.goals.') && k !== key(address)) } catch { return }
+  if (!keys.length) return
+  const mine = read(address)
+  const ids = new Set(mine.map((g) => g.id))
+  const extra = []
+  for (const k of keys) {
+    let goals = []
+    try { goals = JSON.parse(localStorage.getItem(k)) || [] } catch { /* skip */ }
+    for (const g of goals) if (g && g.id && !ids.has(g.id)) { ids.add(g.id); extra.push(g) }
   }
+  if (extra.length) write(address, [...mine, ...extra].sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt))))
 }

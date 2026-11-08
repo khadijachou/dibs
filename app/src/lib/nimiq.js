@@ -45,6 +45,7 @@ export function describeError(err) {
 export async function listAccountsWithBalance() {
   const accounts = await provider.listAccounts()
   if (!Array.isArray(accounts) || accounts.length === 0) throw new Error('No Nimiq account shared')
+  sharedAddresses = accounts.slice()
   const out = []
   for (const address of accounts) {
     let nim = null
@@ -78,21 +79,45 @@ export async function getBlockNumber() {
 
 // Staker read through the configured JSON-RPC endpoint (VITE_NIMIQ_RPC_URL; the SDK
 // sends these calls straight to that URL, not through Nimiq Pay).
-// readStaker: the staker object, or null when the chain says there is none.
-// It throws when the chain cannot be read (no RPC URL, network down), so callers
-// never mistake "can't read" for "no staker" before sending a transaction.
-export async function readStaker(address) {
-  if (demo) return provider.mockStaker(address)
-  if (!config.rpcUrl) throw new Error('No RPC URL configured (VITE_NIMIQ_RPC_URL)')
+//
+// Seen on mainnet (7 Nov): Nimiq Pay pays staking transactions from the funded address
+// (NQ80...) but the staker belongs to the other shared address (NQ20...). So we read
+// every shared address and merge what we find.
+//
+// readStaker: merged staker (balances summed, `address` = where it was found), or null
+// when every address answers "No staker with address". Any other failure throws, so a
+// caller never mistakes "can't read" for "no staker" before sending a transaction.
+let sharedAddresses = []
+const NO_STAKER = /no staker|not found/i
+
+async function readStakerAt(address) {
   try {
     const res = await provider.request({ method: 'getStakerByAddress', params: [address] })
     const st = res?.data ?? res
     return st && typeof st === 'object' ? st : null
   } catch (e) {
-    // fetch failed or the answer was not JSON: the chain was not read.
-    if (e instanceof TypeError || e instanceof SyntaxError) throw e
-    // The RPC answered with an error: for this method that means "no staker at this address".
-    return null
+    if (NO_STAKER.test(String(e?.message || ''))) return null
+    throw e
+  }
+}
+
+export async function readStaker(address) {
+  if (demo) return provider.mockStaker(address)
+  if (!config.rpcUrl) throw new Error('No RPC URL configured (VITE_NIMIQ_RPC_URL)')
+  const addresses = [address, ...sharedAddresses.filter((a) => a !== address)]
+  const found = []
+  for (const a of addresses) {
+    const st = await readStakerAt(a)
+    if (st) found.push({ ...st, address: st.address || a })
+  }
+  if (!found.length) return null
+  const sum = (k) => found.reduce((n, st) => n + Number(st[k] ?? 0), 0)
+  return {
+    ...found[0],
+    balance: found.reduce((n, st) => n + Number(st.balance ?? st.activeBalance ?? 0), 0),
+    inactiveBalance: sum('inactiveBalance'),
+    retiredBalance: sum('retiredBalance'),
+    stakers: found.map((st) => st.address),
   }
 }
 

@@ -47,7 +47,7 @@ export default function App() {
       const accounts = await listAccountsWithBalance()
       const funded = accounts.filter((a) => a.nim > 0).sort((a, b) => b.nim - a.nim)
       const addr = (funded[0] || accounts[0]).address
-      adoptGoals(addr, accounts.map((a) => a.address))
+      adoptGoals(addr)
       setAddress(addr)
       refreshBalance(addr)
       await loadCatalog()
