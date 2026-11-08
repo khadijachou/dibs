@@ -100,8 +100,11 @@ export default function Goal({ goalId, created, amount: preset }) {
   const brand = goalBrand(goal)
   const pool = POOLS[config.defaultValidator] || shortAddress(config.defaultValidator) || 'Nimiq staking'
   const tooMuch = balance != null && amountNim > balance
-  const underMin = !hasStaker && amountNim > 0 && amountNim < MIN_NEW_STAKER_NIM
-  const invalid = !amountNim || tooMuch || underMin
+  // BUG-12: no staker yet and the wallet can't cover the 100 NIM first deposit. One message, no pills, button off.
+  const cantOpen = !hasStaker && balance != null && balance < MIN_NEW_STAKER_NIM
+  const underMin = !cantOpen && !hasStaker && amountNim > 0 && amountNim < MIN_NEW_STAKER_NIM
+  const overBalance = !cantOpen && !underMin && tooMuch
+  const invalid = !amountNim || tooMuch || underMin || cantOpen
   // Quick picks scale with the goal: the weekly suggestion, a quarter of the target, everything left.
   const quick = [...new Set([suggested, Math.ceil(goal.targetNim / 4), remaining])]
     .filter((q) => q > 0 && q <= remaining)
@@ -183,21 +186,30 @@ export default function Goal({ goalId, created, amount: preset }) {
         {goal.status === 'saving' && !reached && (
           <section className="card">
             <label htmlFor="amt" className="sub">{t('goal_add_label')}</label>
-            <div className={`amount${underMin || tooMuch ? ' bad' : ''}`}>
+            <div className={`amount${cantOpen || underMin || tooMuch ? ' bad' : ''}`}>
               <input id="amt" inputMode="numeric" value={amount} onChange={(e) => setAmount(e.target.value)} />
               <span>NIM</span>
             </div>
-            {underMin && <FieldError>{t('err_DEP_FIRST_UNDER_MIN_field', { min: MIN_NEW_STAKER_NIM })}</FieldError>}
-            {!underMin && tooMuch && <FieldError>{t('err_DEP_ABOVE_BALANCE_field', { amount: fmtNim(balance, lang) })}</FieldError>}
-            <div className="pills">
-              {underMin && <button type="button" className="pill fix" onClick={() => setAmount(String(MIN_NEW_STAKER_NIM))}>{MIN_NEW_STAKER_NIM} NIM</button>}
-              {!underMin && tooMuch && balance >= (hasStaker ? 1 : MIN_NEW_STAKER_NIM) && <button type="button" className="pill fix" onClick={() => setAmount(String(Math.floor(balance)))}>{fmtNim(balance, lang)}</button>}
-              {quick.map((q) => (
-                <button type="button" key={q.value} className={`pill${amountNim === q.value ? ' on' : ''}`} onClick={() => setAmount(String(q.value))}>{q.label}</button>
-              ))}
-            </div>
-            <p className="small">{balance == null ? t('goal_reading') : t('goal_in_wallet', { amount: fmtNim(balance, lang) })}</p>
-            {!hasStaker && !underMin && <p className="small">{t('goal_first_note', { min: MIN_NEW_STAKER_NIM })}</p>}
+            {cantOpen ? (
+              <>
+                <FieldError>{t('err_DEP_NOT_ENOUGH_field', { amount: fmtNim(balance, lang) })}</FieldError>
+                <p className="small">{t('err_DEP_NOT_ENOUGH_hint')}</p>
+              </>
+            ) : (
+              <>
+                {underMin && <FieldError>{t('err_DEP_FIRST_UNDER_MIN_field', { min: MIN_NEW_STAKER_NIM })}</FieldError>}
+                {overBalance && <FieldError>{t('err_DEP_ABOVE_BALANCE_field', { amount: fmtNim(balance, lang) })}</FieldError>}
+                <div className="pills">
+                  {underMin && <button type="button" className="pill fix" onClick={() => setAmount(String(MIN_NEW_STAKER_NIM))}>{MIN_NEW_STAKER_NIM} NIM</button>}
+                  {overBalance && balance >= (hasStaker ? 1 : MIN_NEW_STAKER_NIM) && <button type="button" className="pill fix" onClick={() => setAmount(String(Math.floor(balance)))}>{fmtNim(balance, lang)}</button>}
+                  {quick.map((q) => (
+                    <button type="button" key={q.value} className={`pill${amountNim === q.value ? ' on' : ''}`} onClick={() => setAmount(String(q.value))}>{q.label}</button>
+                  ))}
+                </div>
+                <p className="small">{balance == null ? t('goal_reading') : t('goal_in_wallet', { amount: fmtNim(balance, lang) })}</p>
+                {!hasStaker && !underMin && !tooMuch && <p className="small">{t('goal_first_note', { min: MIN_NEW_STAKER_NIM })}</p>}
+              </>
+            )}
           </section>
         )}
 
@@ -234,8 +246,8 @@ export default function Goal({ goalId, created, amount: preset }) {
         <div className="bottom">
           {goal.status === 'saving' && !reached && (
             <button type="button" className={`btn tall${p.pace.kind === 'ahead' && !flash && !pend ? ' ghost' : ''}`} disabled={busy || !!pend || invalid || balance == null} onClick={add}>
-              {pend ? t('deposit_button_waiting') : p.pace.kind === 'ahead' && !flash ? t('goal_add_more') : t('goal_add', { nim: fmtNim(amountNim, lang) })}
-              {!pend && <small>{balance == null ? t('goal_waiting_balance') : t('confirm_hint')}</small>}
+              {pend ? t('deposit_button_waiting') : cantOpen ? t('goal_add_min', { min: MIN_NEW_STAKER_NIM }) : p.pace.kind === 'ahead' && !flash ? t('goal_add_more') : t('goal_add', { nim: fmtNim(amountNim, lang) })}
+              {!pend && <small>{balance == null ? t('goal_waiting_balance') : cantOpen ? t('goal_add_min_sub', { amount: fmtNim(balance, lang) }) : t('confirm_hint')}</small>}
             </button>
           )}
           {(goal.status === 'unlocking' || (goal.status === 'saving' && reached)) && (
