@@ -12,6 +12,14 @@ import { api } from '../lib/api.js'
 import { fmtUsd } from '../lib/format.js'
 
 const EMAIL_KEY = 'dibs.email'
+
+// BUG-03: a payment whose outcome is unknown stays locked across reloads until the shop confirms it.
+const PENDING_KEY = 'dibs.pending'
+const POLL_MS = 10_000
+const readPayLock = (goalId) => {
+  try { const p = JSON.parse(localStorage.getItem(PENDING_KEY)); return p?.kind === 'pay' && p.goalId === goalId ? p : null } catch { return null }
+}
+const clearPayLock = (goalId) => { try { if (readPayLock(goalId)) localStorage.removeItem(PENDING_KEY) } catch { /* ignore */ } }
 const emailOk = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)
 
 export default function Redeem({ goalId }) {
@@ -19,12 +27,13 @@ export default function Redeem({ goalId }) {
   const goal = getGoal(address, goalId)
   const item = goal && findItem(goal.itemId)
   const [email, setEmail] = useState(() => { try { return localStorage.getItem(EMAIL_KEY) || '' } catch { return '' } })
-  const [order, setOrder] = useState(null) // { orderId, invoice, sats, usd, expiresAt }
+  // A pay lock left by an earlier session restores the locked state: order = { orderId } only, no invoice to pay.
+  const [order, setOrder] = useState(() => { const l = readPayLock(goalId); return l?.orderId ? { orderId: l.orderId } : null }) // { orderId, invoice, sats, usd, expiresAt }
   const [invoice, setInvoice] = useState('')
   const [left, setLeft] = useState(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
-  const [unknown, setUnknown] = useState(false)
+  const [unknown, setUnknown] = useState(() => !!readPayLock(goalId))
   const [problem, setProblem] = useState(null) // ErrorKey
 
   // Countdown to the invoice expiry (Bitrefill locks the price for 30 minutes).
@@ -36,11 +45,39 @@ export default function Redeem({ goalId }) {
     return () => clearInterval(id)
   }, [order])
 
+  // The lock goes away once the goal is redeemed (only on a confirmed outcome or a redeemed goal).
+  useEffect(() => { if (goal?.status === 'redeemed') clearPayLock(goalId) }, [goal?.status, goalId])
+
+  // The shop is the truth: confirmed paid = goal redeemed, lock removed, go to Done.
+  const lockedOrderId = unknown ? (readPayLock(goalId)?.orderId || order?.orderId || null) : null // the order paid with an unknown outcome
+  const confirmed = (orderId) => {
+    updateGoal(address, goalId, { status: 'redeemed', payment: { orderId, at: new Date().toISOString(), outcome: 'confirmed' } })
+    clearPayLock(goalId)
+    refreshBalance()
+    reset('done', { goalId })
+  }
+  const checkOrder = async (orderId, alive = () => true) => {
+    try {
+      const o = await api.order(orderId)
+      if (alive() && (o?.status === 'complete' || o?.code)) { confirmed(orderId); return true }
+    } catch { /* not readable yet: keep the lock, try again */ }
+    return false
+  }
+  useEffect(() => {
+    if (!lockedOrderId) return
+    let stop = false
+    const alive = () => !stop
+    checkOrder(lockedOrderId, alive)
+    const id = setInterval(() => checkOrder(lockedOrderId, alive), POLL_MS)
+    return () => { stop = true; clearInterval(id) }
+  }, [lockedOrderId]) // eslint-disable-line react-hooks/exhaustive-deps
+
   if (!goal || !item) return null
   const apiMode = config.redeemMode === 'api'
   const current = apiMode ? order?.invoice || '' : invoice
   const parsed = parseInvoice(current)
-  const expired = apiMode && left === 0
+  const expired = apiMode && left === 0 && !unknown // while locked, a new price must not drop the order being checked
+  const locked = unknown || !!readPayLock(goal.id)
   // In API mode the server tells us the exact sats; in manual mode we compare with the BTC price.
   const check = parsed
     ? apiMode && order?.sats
@@ -72,6 +109,8 @@ export default function Redeem({ goalId }) {
   }
 
   const pay = async () => {
+    // Never pay while an earlier payment for this goal may have gone through, even with a new invoice.
+    if (readPayLock(goal.id)) { setUnknown(true); return }
     setError(null)
     setBusy(true)
     try {
@@ -88,6 +127,7 @@ export default function Redeem({ goalId }) {
         // Already paid: never pay again, go and wait for the code.
         toast(t('err_PAY_DUPLICATE_toast'))
         updateGoal(address, goal.id, { status: 'redeemed', payment: { orderId: order?.orderId || null, at: new Date().toISOString() } })
+        clearPayLock(goal.id)
         reset('done', { goalId: goal.id })
       } else if (key === 'PAY_UNKNOWN') {
         // Never call pay again for this invoice. Remember it so a reload keeps the lock.
@@ -119,10 +159,10 @@ export default function Redeem({ goalId }) {
                 <button type="button" className="btn ink small" disabled={busy} onClick={getInvoice}>{busy ? t('loading_short') : t('redeem_get_invoice')}</button>
               </>
             )}
-            {order && (
+            {order?.invoice && (
               <>
                 <div className="ok">{t('redeem_ready', { sats: order.sats?.toLocaleString(lang) ?? '?' })}</div>
-                {left != null && !expired && <p className="small countdown">{t('redeem_expires', { time: mmss(left) })}</p>}
+                {left != null && !expired && !unknown && <p className="small countdown">{t('redeem_expires', { time: mmss(left) })}</p>}
                 {expired && <Notice tone="info" title={t('err_PAY_EXPIRED_title')} sub={t('err_PAY_EXPIRED_sub')} safe={t('safe_nothingCharged')} />}
               </>
             )}
@@ -147,10 +187,14 @@ export default function Redeem({ goalId }) {
         {check && apiMode && !check.ok && <div className="err">{t('redeem_mismatch')}</div>}
         {unknown && (
           <Notice tone="stop" title={t('err_PAY_UNKNOWN_title')} sub={t('err_PAY_UNKNOWN_sub')}
-            safe={order?.orderId ? t('err_PAY_UNKNOWN_safe', { order: order.orderId.slice(0, 8), seconds: 10 }) : null} safeTone="r"
+            safe={lockedOrderId ? t('err_PAY_UNKNOWN_safe', { order: lockedOrderId.slice(0, 8), seconds: POLL_MS / 1000 }) : null} safeTone="r"
             actions={[
-              { label: t('err_PAY_UNKNOWN_action'), onClick: () => { updateGoal(address, goal.id, { status: 'redeemed', payment: { orderId: order?.orderId || null, at: new Date().toISOString(), outcome: 'unknown' } }); reset('done', { goalId: goal.id }) } },
-              ...(order?.orderId ? [{ label: t('err_PAY_UNKNOWN_action2'), onClick: () => { navigator.clipboard?.writeText(order.orderId); toast(t('err_copied')) } }] : []),
+              // Check now asks the shop. Without an order id (manual mode) there is nothing to poll: keep the old hand-off to Done.
+              { label: t('err_PAY_UNKNOWN_action'), onClick: () => {
+                if (lockedOrderId) { checkOrder(lockedOrderId); return }
+                updateGoal(address, goal.id, { status: 'redeemed', payment: { orderId: null, at: new Date().toISOString(), outcome: 'unknown' } }); clearPayLock(goal.id); reset('done', { goalId: goal.id })
+              } },
+              ...(lockedOrderId ? [{ label: t('err_PAY_UNKNOWN_action2'), onClick: () => { navigator.clipboard?.writeText(lockedOrderId); toast(t('err_copied')) } }] : []),
             ]} />
         )}
         {problem === 'SHOP_LIMIT' || problem === 'SHOP_OUT_OF_STOCK' ? (
@@ -169,8 +213,8 @@ export default function Redeem({ goalId }) {
           {expired ? (
             <button type="button" className="btn" disabled={busy} onClick={() => { setOrder(null); setLeft(null) }}>{t('err_PAY_EXPIRED_cta')}</button>
           ) : (
-            <button type="button" className="btn" disabled={busy || !parsed || unknown || (check && !check.ok)} onClick={pay}>
-              {busy ? t('redeem_paying') : unknown ? t('err_PAY_UNKNOWN_cta') : t('redeem_pay')}
+            <button type="button" className="btn" disabled={busy || !parsed || locked || (check && !check.ok)} onClick={pay}>
+              {busy ? t('redeem_paying') : locked ? t('err_PAY_UNKNOWN_cta') : t('redeem_pay')}
             </button>
           )}
         </div>
