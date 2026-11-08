@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useApp } from '../App.jsx'
-import { BrandLogo, FieldError, Header, Notice, Ring, WeekDots } from '../components/ui.jsx'
+import { BrandLogo, FieldError, Header, Notice, Ring, Stamp, WeekDots } from '../components/ui.jsx'
 import { classify, lastLogText } from '../lib/errors.js'
 import { getGoal, progress, savedNim, stakedInGoals, stakerFlag } from '../lib/goals.js'
 import { planOf, shortAddress } from '../lib/pace.js'
@@ -145,6 +145,7 @@ export default function Goal({ goalId, created, amount: preset }) {
     <>
       <Header onBack={canGoBack ? back : () => reset('home')} />
       <main className="screen">
+        {created && goal.deposits.length === 0 && <Stamp />}
         {created && goal.deposits.length === 0 && <div className="dibs-band"><b>Dibs!</b><span>{t('goal_created')}</span></div>}
         {flash && (
           <div className="flash" role="status"><i>✓</i><div>{t('deposit_done', { amount: fmtNim(flash.nim, lang) })}{flash.tx && <small>{t('goal_added_sub', { tx: flash.tx + '…', pool })}</small>}</div></div>

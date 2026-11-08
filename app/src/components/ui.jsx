@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useApp } from '../App.jsx'
 import { fmtNim } from '../lib/format.js'
 import { useCountUp } from '../lib/useCountUp.js'
@@ -135,4 +137,12 @@ export function Notice({ tone = 'info', title, sub, safe, safeTone = 'g', action
 
 export function FieldError({ children }) {
   return <p className="ferr" role="alert">{children}</p>
+}
+
+// "Dibs!" stamp (M4). Decorative: fixed overlay, no pointer events, hidden from screen readers.
+// Portalled to <body> so the .screen enter transform cannot become its containing block. Unmounts after 2 s.
+export function Stamp() {
+  const [on, setOn] = useState(true)
+  useEffect(() => { const id = setTimeout(() => setOn(false), 2000); return () => clearTimeout(id) }, [])
+  return on ? createPortal(<div className="stamp" aria-hidden="true">Dibs!</div>, document.body) : null
 }

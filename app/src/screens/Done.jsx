@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useApp } from '../App.jsx'
-import { Header } from '../components/ui.jsx'
+import { BrandLogo, Header } from '../components/ui.jsx'
+import { goalBrand } from './Home.jsx'
 import { getGoal } from '../lib/goals.js'
 import { api } from '../lib/api.js'
 import { config } from '../lib/config.js'
@@ -47,16 +48,28 @@ export default function Done({ goalId }) {
         </div>
 
         {config.redeemMode === 'api' && orderId ? (
-          <section className="card-dark" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <b>{t('done_code')}</b>
-            <div className="code-box">{code ? (show ? code : '•••• •••• ••••') : t('done_waiting')}</div>
-            {!code && <p className="small" style={{ color: 'var(--ground)', opacity: 0.8 }}>{t(`done_s${stepIdx}`)}</p>}
-            {code && (
-              <div className="pills">
-                <button type="button" className="btn ghost small" style={{ flex: 1 }} onClick={() => setShow(!show)}>{show ? t('done_hide') : t('done_show')}</button>
-                <button type="button" className="btn ghost small" style={{ flex: 1 }} onClick={() => navigator.clipboard?.writeText(code)}>{t('done_copy')}</button>
+          // M5: brand card flips once on mount (CSS only) to the code card. Reading, polling and buttons unchanged.
+          <section className="codecard">
+            <div className="faces">
+              <div className="face f" aria-hidden="true">
+                <BrandLogo brand={goalBrand(goal)} />
+                <div>
+                  <div className="cc-name">{goal.itemName}</div>
+                  <div className="cc-value">{goal.itemDetail}</div>
+                </div>
               </div>
-            )}
+              <div className="face b">
+                <div className="cc-label">{t('done_code')}</div>
+                <div className="code-box">{code ? (show ? code : '•••• •••• ••••') : t('done_waiting')}</div>
+                {!code && <p className="small">{t(`done_s${stepIdx}`)}</p>}
+                {code && (
+                  <div className="pills">
+                    <button type="button" className="btn ghost small" style={{ flex: 1 }} onClick={() => setShow(!show)}>{show ? t('done_hide') : t('done_show')}</button>
+                    <button type="button" className="btn ghost small" style={{ flex: 1 }} onClick={() => navigator.clipboard?.writeText(code)}>{t('done_copy')}</button>
+                  </div>
+                )}
+              </div>
+            </div>
           </section>
         ) : (
           <div className="ok">{t('done_manual')}</div>

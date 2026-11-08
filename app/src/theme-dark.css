@@ -112,3 +112,38 @@ svg circle:first-child[stroke="#e6dccf"], svg circle:first-child[stroke="#35323f
 .btn:active { transform: scale(.98); }
 .hero .ring-wrap circle:last-child { transition: stroke-dashoffset 1.1s cubic-bezier(.4, 0, .2, 1) !important; }
 @media (prefers-reduced-motion: reduce) { .screen, .big-ring .arc, .toast { animation: none; } }
+
+/* VF part 2 motion (kit animations.css M4, M5). Transform and opacity only. */
+
+/* M4 "Dibs!" stamp (Goal.jsx, when created) */
+.stamp { position: fixed; left: 50%; top: 42%; transform: translate(-50%, -50%) rotate(-12deg) scale(.5); opacity: 0;
+  font: 700 64px var(--font-display); color: #fff; background: var(--gold); padding: 4px 30px 8px; border-radius: 24px;
+  box-shadow: 0 30px 80px rgba(232, 72, 42, .5); z-index: 20; pointer-events: none;
+  animation: stamp-in .6s cubic-bezier(.34, 1.56, .64, 1) forwards, stamp-out .4s 1.5s ease forwards; }
+@keyframes stamp-in { to { transform: translate(-50%, -50%) rotate(-8deg) scale(1); opacity: 1; } }
+@keyframes stamp-out { to { opacity: 0; } }
+
+/* M5 code card flip (Done.jsx): <div class="codecard"><div class="faces"><div class="face f">brand</div><div class="face b">code</div></div></div> */
+.codecard { position: relative; height: 170px; perspective: 900px; }
+.codecard .faces { position: absolute; inset: 0; transform-style: preserve-3d; animation: flip 1s .7s cubic-bezier(.4, 0, .2, 1) forwards; }
+.codecard .face { position: absolute; inset: 0; border-radius: 24px; backface-visibility: hidden; padding: 18px; }
+.codecard .face.f { background: linear-gradient(145deg, #1b2838, #0f1b2b); box-shadow: 0 30px 60px rgba(0, 0, 0, .5); }
+.codecard .face.b { background: linear-gradient(145deg, #e8482a, #b8321a); transform: rotateY(180deg); box-shadow: 0 30px 60px rgba(0, 0, 0, .5); }
+@keyframes flip { to { transform: rotateY(180deg); } }
+
+/* M5 face contents (Dibs layout, not in the kit) */
+.codecard .face.f { pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; color: #fff; }
+.codecard .face.f .blogo { width: 48px; height: 48px; border-radius: 13px; }
+.codecard .face.f .cc-name { font: 600 18px var(--font-display); }
+.codecard .face.f .cc-value { font: 700 28px var(--font-display); line-height: 1; }
+.codecard .face.b { display: flex; flex-direction: column; gap: 10px; color: #fff; }
+.codecard .cc-label { font: 600 12px var(--font-body); letter-spacing: .12em; text-transform: uppercase; opacity: .8; }
+.codecard .face.b .code-box { background: none; padding: 0; text-align: left; font-size: 22px; }
+.codecard .face.b .small { color: #fff; opacity: .9; margin: 0; }
+.codecard .face.b .pills { margin-top: auto; }
+.codecard .face.b .btn.ghost { color: #fff; border-color: rgba(255, 255, 255, .55); }
+
+@media (prefers-reduced-motion: reduce) {
+  .stamp { animation: none; opacity: 1; transform: translate(-50%, -50%) rotate(-8deg); }
+  .codecard .faces { animation: none; transform: rotateY(180deg); }
+}
