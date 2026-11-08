@@ -124,9 +124,10 @@ svg circle:first-child[stroke="#e6dccf"], svg circle:first-child[stroke="#35323f
 @keyframes stamp-out { to { opacity: 0; } }
 
 /* M5 code card flip (Done.jsx): <div class="codecard"><div class="faces"><div class="face f">brand</div><div class="face b">code</div></div></div> */
-.codecard { position: relative; height: 170px; perspective: 900px; }
-.codecard .faces { position: absolute; inset: 0; transform-style: preserve-3d; animation: flip 1s .7s cubic-bezier(.4, 0, .2, 1) forwards; }
-.codecard .face { position: absolute; inset: 0; border-radius: 24px; backface-visibility: hidden; padding: 18px; }
+.codecard { position: relative; perspective: 900px; }
+/* Both faces sit in the same grid cell, so the card is as tall as its tallest face (code, PIN, link rows). */
+.codecard .faces { display: grid; transform-style: preserve-3d; animation: flip 1s .7s cubic-bezier(.4, 0, .2, 1) forwards; }
+.codecard .face { grid-area: 1 / 1; min-height: 170px; border-radius: 24px; backface-visibility: hidden; padding: 18px; box-sizing: border-box; }
 .codecard .face.f { background: linear-gradient(145deg, #1b2838, #0f1b2b); box-shadow: 0 30px 60px rgba(0, 0, 0, .5); }
 .codecard .face.b { background: linear-gradient(145deg, #e8482a, #b8321a); transform: rotateY(180deg); box-shadow: 0 30px 60px rgba(0, 0, 0, .5); }
 @keyframes flip { to { transform: rotateY(180deg); } }
@@ -141,6 +142,8 @@ svg circle:first-child[stroke="#e6dccf"], svg circle:first-child[stroke="#35323f
 .codecard .face.b .code-box { background: none; padding: 0; text-align: left; font-size: 22px; }
 .codecard .face.b .small { color: #fff; opacity: .9; margin: 0; }
 .codecard .face.b .pills { margin-top: auto; }
+.codecard .cc-sub { font: 600 12px var(--font-body); letter-spacing: .08em; text-transform: uppercase; opacity: .8; margin-top: 4px; }
+.codecard .face.b a.btn { display: flex; align-items: center; justify-content: center; text-decoration: none; }
 .codecard .face.b .btn.ghost { color: #fff; border-color: rgba(255, 255, 255, .55); }
 
 @media (prefers-reduced-motion: reduce) {

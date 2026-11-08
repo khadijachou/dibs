@@ -89,10 +89,11 @@ function Hub({ goals }) {
           <section style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <div className="sec-head"><h3>{t('home_past')}</h3></div>
             {past.map((g) => {
+              const days = Math.max(1, Math.ceil((Date.parse(g.payment?.at || g.createdAt) - Date.parse(g.createdAt)) / 864e5))
               return (
                 <button type="button" key={g.id} className="past" onClick={() => go('done', { goalId: g.id })}>
                   <BrandLogo brand={goalBrand(g)} />
-                  <div><b>{g.itemName} · {g.itemDetail}</b><span className="s">{fmtDate(g.payment?.at || g.createdAt, lang)}</span></div>
+                  <div><b>{g.itemName} · {g.itemDetail}</b><span className="s">{fmtDate(g.payment?.at || g.createdAt, lang)} · {t(days === 1 ? 'done_stat_days_one' : 'done_stat_days_other', { count: days })}</span></div>
                   <span className="code">{t('home_code')}</span>
                 </button>
               )

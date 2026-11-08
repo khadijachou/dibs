@@ -93,50 +93,71 @@ export async function createLightningInvoice({ slug, packageValue, email, refill
   }
 }
 
-// Returns { status, code, raw }. Status is Bitrefill's invoice status
+// Returns { status, code, pin, link, raw }. Status is Bitrefill's invoice status
 // (created, payment_detected, payment_confirmed, complete, blocked).
-// The code can sit in several places depending on the product, so we search for it.
-const CODE_KEYS = ['code', 'pin', 'claim_code', 'redemption_code', 'voucher', 'link', 'url']
+// The redemption info sits in several places depending on the product, so we search for it.
+// Separate keys: some cards deliver a card number + PIN, others a redemption link (eSIMs: an install link).
+// `code` keeps its old meaning (first value found, falling back to the PIN or the link) so older clients still work.
+const KINDS = {
+  code: ['code', 'claim_code', 'redemption_code', 'voucher', 'number'],
+  pin: ['pin'],
+  link: ['link', 'url'],
+}
 
-function findCode(node, inRedemption = false) {
-  if (!node || typeof node !== 'object') return null
+function kindOf(key) {
+  if (key.includes('esim') && key.includes('link')) return 'link'
+  for (const [kind, keys] of Object.entries(KINDS)) if (keys.includes(key)) return kind
+  return null
+}
+
+function findRedemption(node, out = {}, inRedemption = false) {
+  if (!node || typeof node !== 'object') return out
   if (Array.isArray(node)) {
-    for (const n of node) { const c = findCode(n, inRedemption); if (c) return c }
-    return null
+    for (const n of node) findRedemption(n, out, inRedemption)
+    return out
   }
   for (const [k, v] of Object.entries(node)) {
     const key = k.toLowerCase()
-    // eSIMs deliver an install link instead of a code.
-    if (key.includes('esim') && key.includes('link') && typeof v === 'string' && v.trim()) return v.trim()
-    if (key.includes('redemption') && v && typeof v === 'object') {
-      const c = findCode(v, true); if (c) return c
-    }
-    if (inRedemption && CODE_KEYS.includes(key) && typeof v === 'string' && v.trim()) return v.trim()
+    if (typeof v !== 'string' || !v.trim()) continue
+    const kind = kindOf(key)
+    // eSIM install links count anywhere; the other keys only inside a redemption block.
+    if (kind && !out[kind] && (inRedemption || (kind === 'link' && key.includes('esim')))) out[kind] = v.trim()
   }
-  for (const v of Object.values(node)) {
-    if (v && typeof v === 'object') { const c = findCode(v, inRedemption); if (c) return c }
+  for (const [k, v] of Object.entries(node)) {
+    if (!v || typeof v !== 'object') continue
+    findRedemption(v, out, inRedemption || k.toLowerCase().includes('redemption'))
   }
-  return null
+  return out
 }
+
+const result = (status, found, raw) => ({
+  status,
+  code: found.code || found.pin || found.link || null,
+  pin: found.pin || null,
+  link: found.link || null,
+  raw,
+})
 
 export async function getInvoice(invoiceId, accessToken) {
   const text = await callTool('get-invoice-by-id', { invoice_id: invoiceId, invoice_access_token: accessToken })
   let data = null
   try { data = JSON.parse(text) } catch { /* compact text */ }
   const res = data?.response || data
-  if (res && typeof res === 'object') {
-    return { status: res.status || 'unknown', code: findCode(res), raw: text }
-  }
+  if (res && typeof res === 'object') return result(res.status || 'unknown', findRedemption(res), text)
   // Compact text format: take the lines after the first "redemption" key.
   const status = /^\s*status: (.+)$/m.exec(text)?.[1]?.trim().replace(/^"|"$/g, '') || 'unknown'
-  let code = null
+  const found = {}
   const idx = text.search(/redemption/i)
   if (idx >= 0) {
     const tail = text.slice(idx)
-    const m = /^\s*(code|pin|claim_code|redemption_code|voucher|link|url): "?([^"\n]+)"?/m.exec(tail)
-    if (m) code = m[2].trim()
+    const re = /^\s*-?\s*([a-z_]+): "?([^"\n]+)"?/gim
+    let m
+    while ((m = re.exec(tail))) {
+      const kind = kindOf(m[1].toLowerCase())
+      if (kind && !found[kind] && m[2].trim()) found[kind] = m[2].trim()
+    }
   }
-  return { status, code, raw: text }
+  return result(status, found, text)
 }
 
 function splitCsv(line) {

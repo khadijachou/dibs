@@ -100,11 +100,11 @@ app.get('/api/orders/:id', async (c) => {
   const rec = invoices[id]
   if (!rec) return c.json({ error: 'Unknown order' }, 404)
   try {
-    const { status, code, raw } = await getInvoice(id, rec.token)
+    const { status, code, pin, link, raw } = await getInvoice(id, rec.token)
     // ?raw=1 shows Bitrefill's full answer, only when called from this PC (debugging the code field).
     const host = (c.req.header('host') || '').split(':')[0]
     if (c.req.query('raw') === '1' && (host === 'localhost' || host === '127.0.0.1')) return c.text(raw)
-    return c.json({ status, code })
+    return c.json({ status, code, pin, link })
   } catch (e) {
     console.error('order lookup failed:', e.message)
     return c.json({ error: 'Order lookup failed' }, 502)
