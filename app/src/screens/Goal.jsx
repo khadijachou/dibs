@@ -264,7 +264,7 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null 
 
         {goal.deposits.length > 0 && (
           <section className="card">
-            <div className="sec-head"><h3>{t('goal_deposits')}</h3><span className="small">{t('goal_count', { count: goal.deposits.length, total: fmtNim(saved, lang) })}</span></div>
+            <div className="sec-head"><h3>{t('goal_deposits')}</h3><span className="small">{t('goal_count', { count: goal.deposits.filter((d) => !d.kind).length, total: fmtNim(saved, lang) })}</span></div>
             <div className="list">
               {goal.deposits.slice().reverse().map((d) => (
                 <div className={`row${d.kind ? ' ' + d.kind : ''}`} key={(d.id || d.tx) + d.at}><span>{d.nim < 0 ? '−' : '+'}{fmtNim(Math.abs(d.nim), lang)} NIM{rowLabel(d) && <small className="row-note">{rowLabel(d)}</small>}</span><span>{Date.now() - Date.parse(d.at) < 60_000 ? t('goal_just_now') : fmtDate(d.at, lang)}</span></div>

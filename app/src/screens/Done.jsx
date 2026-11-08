@@ -114,7 +114,7 @@ export default function Done({ goalId }) {
         {red && (
           <div className="facts">
             <div className="fact"><b>{t(days === 1 ? 'done_stat_days_one' : 'done_stat_days_other', { count: days })}</b>{t('done_stat_days_sub')}</div>
-            <div className="fact"><b>{goal.deposits.length}</b>{t('done_stat_deposits')}</div>
+            <div className="fact"><b>{goal.deposits.filter((d) => !d.kind).length}</b>{t('done_stat_deposits')}</div>
           </div>
         )}
         {red && <p className="small">{t('done_kept')}</p>}

@@ -44,8 +44,10 @@ export default function Unlock({ goalId, mode: modeParam }) {
   const first = current === 'deactivate'
   const otherRelease = withdraw && first ? listGoals(address).find((g) => g.id !== goal.id && g.status === 'unlocking') : null
   const rest = activeNow == null ? null : activeNow - amount
+  // The chain holds less than this goal says (or no staker): the ledger and the stake disagree, send nothing.
+  const mismatch = withdraw && first && rest != null && rest < 0
   const underMin = withdraw && first && rest != null && rest > 0 && rest < MIN_NEW_STAKER_NIM
-  const blocked = Boolean(otherRelease) || underMin
+  const blocked = Boolean(otherRelease) || mismatch || underMin
 
   const run = async () => {
     if (blocked || busy) return
@@ -101,6 +103,7 @@ export default function Unlock({ goalId, mode: modeParam }) {
         {otherRelease && (
           <Notice tone="info" title={t('withdraw_busy_title')} sub={t('withdraw_busy_sub', { name: otherRelease.itemName })} safe={t('safe_nimSafe')} />
         )}
+        {!otherRelease && mismatch && <div className="band-warn">{t('withdraw_mismatch')}</div>}
         {!otherRelease && underMin && (
           <div className="band-warn">
             {t('withdraw_under_min', { rest: fmtNim(rest, lang) })}
