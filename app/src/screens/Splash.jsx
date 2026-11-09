@@ -1,18 +1,18 @@
 import { useEffect, useRef } from 'react'
 import { useApp } from '../App.jsx'
-import { BrandLogo, DibsMark } from '../components/ui.jsx'
+import { BrandLogo, DibsMark, Wordmark } from '../components/ui.jsx'
 import { detailText } from '../lib/itemName.js'
 
-// Logos are vector: the Dibs mark from the app icon (DibsMark) and the brand glyphs from simple-icons (BrandLogo,
-// Amazon keeps its PNG). The wordmark stays a PNG: there is no vector source for it in the repo.
+// Logos are vector: the Dibs mark and wordmark (DibsMark, Wordmark) and the brand glyphs from simple-icons
+// (BrandLogo; Amazon keeps its PNG, simple-icons has no Amazon).
 // VF screen 01: shown while start() connects (and at least 900 ms on launch).
 // The connecting status stays readable for screen readers.
 // The coral ring draws itself in a loop while connecting. When `done` turns true the ring
 // completes from wherever it is, the splash fades, then onGone() lets App show the next screen.
 // Reduced motion: a static full ring and a small "Loading" line, no fade.
 const CARDS = [
-  { key: 'steam', name: 'Steam', logo: '/logos/steam.png', price: '5 USD', x: '-14px', y: '10%', r: '-14deg', bg: 'linear-gradient(145deg, #1b2838, #0f1b2b)' },
-  { key: 'netflix', name: 'Netflix', logo: '/logos/netflix.png', price: '25 EUR', x: 'calc(100% - 118px)', y: '19%', r: '12deg', bg: 'linear-gradient(145deg, #3a0f12, #1d0a0c)' },
+  { key: 'steam', name: 'Steam', price: '5 USD', x: '-14px', y: '10%', r: '-14deg', bg: 'linear-gradient(145deg, #1b2838, #0f1b2b)' },
+  { key: 'netflix', name: 'Netflix', price: '25 EUR', x: 'calc(100% - 118px)', y: '19%', r: '12deg', bg: 'linear-gradient(145deg, #3a0f12, #1d0a0c)' },
   { key: 'amazon', name: 'Amazon', logo: '/logos/amazon.png', price: '10 USD', x: 'calc(100% - 168px)', y: '74%', r: '-6deg', bg: 'linear-gradient(145deg, #2a2733, #1c1a22)' },
 ]
 
@@ -72,7 +72,7 @@ export default function Splash({ done = false, onGone }) {
           <DibsMark className="splash-dmark" />
         </div>
         <p className="splash-loading" aria-hidden="true">{t('splash_loading')}</p>
-        <img className="splash-word" src="/brand/wordmark-cream.png" alt="Dibs" />
+        <Wordmark className="splash-word" />
         <p className="splash-tag">
           {tag.map((l, i) => <span key={i} className={i === tag.length - 1 ? 'last' : ''}>{l}</span>)}
         </p>

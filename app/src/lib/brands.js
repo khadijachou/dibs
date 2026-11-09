@@ -7,18 +7,18 @@ import { getCatalog } from './catalog.js'
 // curated order below.
 // Order = order on the "All" view. The first eight sit above the fold.
 // slugs marked "confirm" come from the shop site and must be checked on the server (`npm run catalog -- add <slug>`).
-// Logos: lib/brandIcons.js (simple-icons, by key) first; else logo (app/public/logos/<key>.png);
+// Logos: lib/brandIcons.js (simple-icons, by key) first; else logo (only Amazon: app/public/logos/amazon.png);
 // else tile: a letter tile in the brand's colour with a white letter. Used for Nintendo eShop, Xbox, Flightgift,
 // Best Buy and Disney, which simple-icons does not carry; the shop's catalogue data has no product image.
 export const BRANDS = [
-  { key: 'steam',       name: 'Steam',             chip: 'games',     logo: '/logos/steam.png',       slugs: ['steam-usa'], popular: true },
+  { key: 'steam',       name: 'Steam',             chip: 'games',     logo: null,                     slugs: ['steam-usa'], popular: true },
   { key: 'amazon',      name: 'Amazon',            chip: 'shopping',  logo: '/logos/amazon.png',      slugs: ['amazon_com-usa'], popular: true },
-  { key: 'apple',       name: 'Apple',             chip: 'shopping',  logo: '/logos/apple.png',       slugs: ['apple-usa'], popular: true },
-  { key: 'netflix',     name: 'Netflix',           chip: 'streaming', logo: '/logos/netflix.png',     slugs: ['netflix-usa', 'netflix-eu'] },
-  { key: 'airbnb',      name: 'Airbnb',            chip: 'travel',    logo: '/logos/airbnb.png',      slugs: ['airbnb-usa'] },
-  { key: 'googleplay',  name: 'Google Play',       chip: 'games',     logo: '/logos/googleplay.png',  slugs: ['google-play-usa'] },
-  { key: 'playstation', name: 'PlayStation Store', chip: 'games',     logo: '/logos/playstation.png', slugs: ['sony-playstation-usa'] },
-  { key: 'ubereats',    name: 'Uber Eats',         chip: 'food',      logo: '/logos/ubereats.png',    slugs: ['uber-eats-usa'] },
+  { key: 'apple',       name: 'Apple',             chip: 'shopping',  logo: null,                     slugs: ['apple-usa'], popular: true },
+  { key: 'netflix',     name: 'Netflix',           chip: 'streaming', logo: null,                     slugs: ['netflix-usa', 'netflix-eu'] },
+  { key: 'airbnb',      name: 'Airbnb',            chip: 'travel',    logo: null,                     slugs: ['airbnb-usa'] },
+  { key: 'googleplay',  name: 'Google Play',       chip: 'games',     logo: null,                     slugs: ['google-play-usa'] },
+  { key: 'playstation', name: 'PlayStation Store', chip: 'games',     logo: null,                     slugs: ['sony-playstation-usa'] },
+  { key: 'ubereats',    name: 'Uber Eats',         chip: 'food',      logo: null,                     slugs: ['uber-eats-usa'] },
   // below the fold
   { key: 'nintendo',    name: 'Nintendo eShop',    chip: 'games',     logo: null, tile: { bg: '#E60012', fg: '#fff', letter: 'N' }, slugs: ['nintendo-eshop-usa'] },            // confirm
   { key: 'roblox',      name: 'Roblox',            chip: 'games',     logo: null, tile: { bg: '#1b1b1f', fg: '#fff', letter: 'R' }, slugs: ['roblox-usa'] },              // confirm

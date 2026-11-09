@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { useApp } from '../App.jsx'
 import { detailText, fromText, itemLabel, itemName } from '../lib/itemName.js'
-import { BrandLogo, Header, Ring } from '../components/ui.jsx'
+import { BrandLogo, Header, Ring, DibsMark } from '../components/ui.jsx'
 import { listGoals, progress } from '../lib/goals.js'
 import { catalogBrands, brandOf } from '../lib/brands.js'
 import { findItem } from '../lib/catalog.js'
@@ -50,7 +50,7 @@ function Welcome() {
             <circle cx="78" cy="78" r="66" fill="none" stroke="#35323f" strokeWidth="12" />
             <circle className="arc" cx="78" cy="78" r="66" fill="none" stroke="#E8482A" strokeWidth="12" strokeLinecap="round" transform="rotate(-90 78 78)" />
           </svg>
-          <img src="/brand/mark-cream.png" alt="" />
+          <DibsMark className="big-mark" />
         </div>
         <Hello onInk />
         <p className="tl">{splitFirst(t('welcome_t1'))[0]} <span className="dim">{splitFirst(t('welcome_t1'))[1]}</span><br /><span className="last">{t('welcome_t2')}</span></p>

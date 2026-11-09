@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { useApp } from '../App.jsx'
-import { Icon, LangSwitch, Wordmark } from '../components/ui.jsx'
+import { BrandLogo, Icon, LangSwitch, Wordmark } from '../components/ui.jsx'
 import { NAME_MAX, setName } from '../lib/name.js'
 import { fmtNim, fmtPct } from '../lib/format.js'
 
@@ -101,7 +101,7 @@ function CardIll() {
     <div className="ill-card">
       <i className="coin c1">NIM</i>
       <div className="gcard">
-        <img src="/logos/steam.png" alt="" />
+        <BrandLogo brand={{ key: 'steam' }} />
         <span className="gc-label">{t('ob_gift')}</span>
         <b className="gc-value">5 USD</b>
         <span className="gc-name">Steam</span>
@@ -137,7 +137,7 @@ function CodeIll() {
   const { t } = useApp()
   return (
     <div className="ill-code">
-      <div className="gcard back"><img src="/logos/steam.png" alt="" /></div>
+      <div className="gcard back"><BrandLogo brand={{ key: 'steam' }} /></div>
       <div className="ccard">
         <span className="cc-label">{t('done_code')}</span>
         <b>7KQ4N-M2P8V-R9T3W</b>
