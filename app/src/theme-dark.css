@@ -508,3 +508,47 @@ svg circle:first-child[stroke="#e6dccf"], svg circle:first-child[stroke="#35323f
 .grid.cat-grid { grid-auto-rows: 1fr; }
 /* Dark brand tiles (Steam, Apple, Uber): a hairline so the dark plate still reads on the dark card. */
 .blogo.si.dark { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .16); }
+
+/* Round 2B. Goal status dot (components/GoalStatus.jsx GoalDot): 10 px, a 2 px ring in the card colour so it reads
+   on the coral glow. pin = top right of the Home goal card; inline = start of the Details pace band. */
+.goal-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; box-sizing: content-box;
+  border: 2px solid var(--card); background: var(--teal); flex-shrink: 0; }
+.goal-dot.behind { background: #FFC94D; }
+.goal-dot.late { background: var(--red); }
+.hero > .goal-dot.pin { position: absolute; top: 14px; right: 14px; z-index: 1; }
+.hero.has-dot > .top { padding-right: 18px; }
+.goal-dot.inline { margin-top: 3px; }
+
+/* Pace band with its dot (Goal Details); the late one is red with Move / Get my NIM back. */
+.pace-band { display: flex; align-items: flex-start; gap: 10px; }
+.pace-body { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.band-red { background: var(--red-soft); color: var(--red); border-radius: 12px; padding: 10px 12px; font-size: 13px; font-weight: 500; }
+.band-red .goal-dot { border-color: var(--red-soft); }
+.band-mint .goal-dot { border-color: var(--teal-soft); }
+.band-warn .goal-dot { border-color: #3a2a1c; }
+.band-acts { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn-sm { height: 32px; padding: 0 14px; border-radius: 999px; border: 1.5px solid currentColor; background: transparent; color: inherit;
+  font: 600 13px var(--font-body); cursor: pointer; }
+.btn-sm:disabled { opacity: .45; cursor: default; }
+
+/* Carousel indicator (Home goal wallet): 6 px dots, the current one an 18 x 6 px coral pill. */
+.cdots { display: inline-flex; align-items: center; gap: 6px; }
+.cdots i { display: block; width: 6px; height: 6px; border-radius: 3px; background: #4a4652; transition: width 200ms ease, background-color 200ms ease; }
+.cdots i.on { width: 18px; background: #E8482A; }
+@media (prefers-reduced-motion: reduce) { .cdots i { transition: none; } }
+
+/* Add screen: the compact hero. */
+.hero.add-hero { padding: 14px 16px; }
+
+/* About this card (Goal Details). */
+.about-card h3 { margin: 0; font-size: 16px; }
+.about-card .about-item { margin: 0; color: var(--cream); font-weight: 600; font-size: 14.5px; }
+.about-facts { margin: 0; display: flex; flex-direction: column; gap: 6px; }
+.about-facts > div { display: flex; justify-content: space-between; gap: 12px; font-size: 13.5px; }
+.about-facts dt { color: var(--muted); }
+.about-facts dd { margin: 0; color: var(--cream); font-weight: 600; text-align: right; }
+.about-card .small { margin: 0; }
+.about-card .price-chip { align-self: flex-start; display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px 3px 4px; border: 0;
+  border-radius: 999px; background: rgba(255, 246, 236, .1); color: var(--cream); font: 600 11px var(--font-body); white-space: nowrap; cursor: pointer; }
+.about-card .price-chip > i { width: 14px; height: 14px; border-radius: 50%; display: grid; place-items: center; background: rgba(255, 246, 236, .22);
+  font: 700 9px/1 var(--font-body); font-style: normal; }

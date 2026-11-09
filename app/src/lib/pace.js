@@ -18,6 +18,8 @@ export function planOf(goal, now = Date.now()) {
   const weeksLeft = Math.max(1, Math.ceil((end - now) / WEEK))
   const daysLeft = Math.max(0, Math.ceil((end - now) / DAY))
   const weeksDone = Math.min(totalWeeks, Math.floor(saved / weekly))
+  // Whole weeks of plan not covered yet; 0 during the first week. 1 = behind, 2 or more = late (Home dot, Details band).
+  const lagWeeks = Math.max(0, weekIdx - Math.floor(saved / weekly))
   let pace
   if (saved >= goal.targetNim) pace = { kind: 'done' }
   else if (saved >= dueByWeekEnd) {
@@ -26,9 +28,9 @@ export function planOf(goal, now = Date.now()) {
   } else if (saved >= 0.9 * weekly * weekIdx) {
     pace = { kind: 'onTrack', amount: dueByWeekEnd - saved, date: weekEnd }
   } else {
-    pace = { kind: 'behind', amount: Math.ceil(remaining / weeksLeft), date: new Date(end) }
+    pace = { kind: lagWeeks >= 2 ? 'late' : 'behind', amount: Math.ceil(remaining / weeksLeft), date: new Date(end) }
   }
-  return { totalWeeks, weekly, saved, remaining, weekIdx, weeksLeft, daysLeft, weeksDone, pace }
+  return { totalWeeks, weekly, saved, remaining, weekIdx, weeksLeft, daysLeft, weeksDone, lagWeeks, pace }
 }
 
 // Known pools, by validator address. Plan and Goal both show this name.

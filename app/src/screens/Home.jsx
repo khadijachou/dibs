@@ -12,7 +12,7 @@ import { useCountUp } from '../lib/useCountUp.js'
 import { useEarned } from '../lib/earned.js'
 import { getName } from '../lib/name.js'
 import { MilestoneLine, useGoalMilestone } from '../components/Milestone.jsx'
-import { GoalStatus } from '../components/GoalStatus.jsx'
+import { GoalDot, GoalStatus, goalPace } from '../components/GoalStatus.jsx'
 
 // "Hi Sam" when the user gave a name during onboarding or in More; nothing otherwise.
 function Hello({ onInk = false }) {
@@ -133,7 +133,7 @@ export function PastList({ goals, title }) {
         const end = back ? g.withdrawnAt : g.payment?.at
         const days = Math.max(1, Math.ceil((Date.parse(end || g.createdAt) - Date.parse(g.createdAt)) / 864e5))
         return (
-          <button type="button" key={g.id} className="past" onClick={() => go(back ? 'goal' : 'done', { goalId: g.id })}>
+          <button type="button" key={g.id} className="past" onClick={() => go(back ? 'goal' : 'done', { goalId: g.id, mode: 'details' })}>
             <BrandLogo brand={goalBrand(g)} />
             <div><b>{itemLabel(t, g)}</b><span className="s">{fmtDate(end || g.createdAt, lang)} · {t(days === 1 ? 'done_stat_days_one' : 'done_stat_days_other', { count: days })}</span></div>
             <span className={`code${back ? ' returned' : ''}`}>{t(back ? 'withdraw_returned' : 'home_code')}</span>
@@ -146,7 +146,6 @@ export function PastList({ goals, title }) {
 
 function ActiveGoal({ goal, earned }) {
   const { t } = useApp()
-  const p = planOf(goal)
   const pct = progress(goal)
   return (
     <>
@@ -155,7 +154,6 @@ function ActiveGoal({ goal, earned }) {
         <h2 className="title">{itemName(t, goal, { title: true })}</h2>
       </div>
       <GoalHero goal={goal} earned={earned} />
-      {p.pace.kind !== 'done' && <PaceLine pace={p.pace} />}
     </>
   )
 }
@@ -166,8 +164,7 @@ function GoalWallet({ goals, earned }) {
   const { t } = useApp()
   const [i, setI] = useState(0)
   const ref = useRef(null)
-  const cur = goals[Math.min(i, goals.length - 1)]
-  const p = planOf(cur)
+  const cur = Math.min(i, goals.length - 1)
   const pick = (k) => {
     const el = ref.current
     const card = el?.children[k]
@@ -183,7 +180,7 @@ function GoalWallet({ goals, earned }) {
   }
   return (
     <>
-      <div className="sec-head"><h2 className="title">{t('home_title')}</h2><span className="small">{i + 1} / {goals.length}</span></div>
+      <div className="sec-head"><h2 className="title">{t('home_title')}</h2><CarouselDots count={goals.length} current={cur} /></div>
       <div className="gw-tabs" role="tablist">
         {goals.map((g, k) => (
           <button type="button" role="tab" aria-selected={k === i} key={g.id} className={`gw-tab${k === i ? ' on' : ''}`} onClick={() => pick(k)}>
@@ -196,8 +193,17 @@ function GoalWallet({ goals, earned }) {
       <div className="gwallet" ref={ref} onScroll={onScroll}>
         {goals.map((g) => <div className="gw-card" key={g.id}><GoalHero goal={g} earned={earned} /></div>)}
       </div>
-      {p.pace.kind !== 'done' && <PaceLine pace={p.pace} />}
     </>
+  )
+}
+
+// Where the wallet is: one dot per goal, the current one a coral pill.
+function CarouselDots({ count, current }) {
+  const { t } = useApp()
+  return (
+    <span className="cdots" role="img" aria-label={t('carousel_dot', { i: current + 1, n: count })}>
+      {Array.from({ length: count }, (_, k) => <i key={k} className={k === current ? 'on' : undefined} />)}
+    </span>
   )
 }
 
@@ -212,7 +218,8 @@ function GoalHero({ goal, earned }) {
   const savedShown = useCountUp(p.saved)
   const remainingShown = useCountUp(p.remaining)
   return (
-      <section className="hero">
+      <section className={`hero${goalPace(goal) ? ' has-dot' : ''}`}>
+        <GoalDot goal={goal} />
         <div className="top">
           <BrandLogo brand={brand} />
           <div><div className="t1">{itemLabel(t, goal)}</div><div className="t2">{fmtDate(goal.deadline, lang)} · {t(p.daysLeft === 1 ? 'days_left_one' : 'days_left_other', { count: p.daysLeft })}</div></div>
@@ -232,17 +239,28 @@ function GoalHero({ goal, earned }) {
         <CardIssue goal={goal} />
         <div className="acts">
           {pct < 1 && goal.status === 'saving'
-            ? <button type="button" className="btn" onClick={() => go('goal', { goalId: goal.id, amount: next })}>{t('goal_add', { nim: fmtNim(next, lang) })}</button>
-            : <button type="button" className="btn" onClick={() => go('goal', { goalId: goal.id })}>{t('home_details')}</button>}
-          {pct < 1 && goal.status === 'saving' && <button type="button" className="btn outline" onClick={() => go('goal', { goalId: goal.id })}>{t('home_details')}</button>}
+            ? <button type="button" className="btn" onClick={() => go('goal', { goalId: goal.id, mode: 'add', amount: next })}>{t('goal_add', { nim: fmtNim(next, lang) })}</button>
+            : <button type="button" className="btn" onClick={() => go('goal', { goalId: goal.id, mode: 'details' })}>{t('home_details')}</button>}
+          {pct < 1 && goal.status === 'saving' && <button type="button" className="btn outline" onClick={() => go('goal', { goalId: goal.id, mode: 'details' })}>{t('home_details')}</button>}
         </div>
       </section>
   )
 }
 
-export function PaceLine({ pace }) {
+// The pace band (Goal Details). dot: the status dot at its start; children: the late band's actions.
+export function PaceLine({ pace, lagWeeks = 0, dot = null, children = null }) {
   const { t, lang } = useApp()
-  if (pace.kind === 'behind') return <div className="band-warn">{t('goal_pace_behind', { amount: fmtNim(pace.amount, lang), date: fmtDate(pace.date, lang) })}</div>
-  if (pace.kind === 'ahead') return <div className="band-mint">{t('goal_pace_ahead', { date: fmtDate(pace.date, lang) })}</div>
-  return <div className="band-mint">{t('goal_pace_on', { amount: fmtNim(pace.amount, lang), date: fmtDate(pace.date, lang) })}</div>
+  const amount = fmtNim(pace.amount, lang)
+  const date = fmtDate(pace.date, lang)
+  const [tone, text] = pace.kind === 'late' ? ['band-red', t('goal_pace_late', { n: lagWeeks, amount, date })]
+    : pace.kind === 'behind' ? ['band-warn', t('goal_pace_behind', { amount, date })]
+    : pace.kind === 'ahead' ? ['band-mint', t('goal_pace_ahead', { date })]
+    : ['band-mint', t('goal_pace_on', { amount, date })]
+  if (!dot && !children) return <div className={tone}>{text}</div>
+  return (
+    <div className={`${tone} pace-band`}>
+      {dot}
+      <div className="pace-body"><span>{text}</span>{children}</div>
+    </div>
+  )
 }

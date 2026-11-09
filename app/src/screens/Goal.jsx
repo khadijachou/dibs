@@ -9,7 +9,8 @@ import { goalBrand, PaceLine } from './Home.jsx'
 import { MIN_NEW_STAKER_NIM } from '../lib/config.js'
 import { readStaker, stakeNim } from '../lib/nimiq.js'
 import { confirmPending, expired, pending, stakedLuna, startPending, waitForDeposit } from '../lib/deposit.js'
-import { fmtDate, fmtNim, weeksUntil } from '../lib/format.js'
+import { fmtDate, fmtNim, fmtUsd, weeksUntil } from '../lib/format.js'
+import { findItem } from '../lib/catalog.js'
 import { DeleteSheet, ManageSheet, MoveSheet } from './GoalManage.jsx'
 import { useCountUp } from '../lib/useCountUp.js'
 import { CardFlip, GiftFace, useCardFlip } from '../components/CardFlip.jsx'
@@ -17,7 +18,7 @@ import { CardIssue } from '../components/CardIssue.jsx'
 import { goalCardIssue } from '../lib/availability.js'
 import { stakeSummary } from '../lib/earned.js'
 import { MilestoneLine, useGoalMilestone } from '../components/Milestone.jsx'
-import { GoalStatus } from '../components/GoalStatus.jsx'
+import { GoalDot, GoalStatus } from '../components/GoalStatus.jsx'
 
 const parseNim = (v) => Math.floor(Number(String(v).replace(/[^\d.]/g, ''))) || 0
 
@@ -29,7 +30,9 @@ const payLocked = () => { try { return Boolean(localStorage.getItem('dibs.pendin
 
 
 
-export default function Goal({ goalId, created, amount: preset, moveFrom = null }) {
+// mode: 'details' (hero, pace band, About this card, history) or 'add' (amount and the Add button).
+// Without a mode: a new goal (created) opens on Add, anything else on Details.
+export default function Goal({ goalId, created, amount: preset, moveFrom = null, mode: modeParam }) {
   const { t, lang, address, balance, refreshBalance, back, canGoBack, go, reset, toast } = useApp()
   const [goal, setGoal] = useState(() => getGoal(address, goalId))
   const [hasStaker, setHasStaker] = useState(() => stakerFlag.get(address))
@@ -62,6 +65,14 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null 
   const remainingShown = useCountUp(remaining)
   const suggested = goal ? Math.min(remaining, Math.ceil(goal.targetNim / weeksUntil(goal.deadline))) : 0
   const [amount, setAmount] = useState(() => String(preset || Math.max(suggested, hasStaker ? 1 : MIN_NEW_STAKER_NIM)))
+  const mode = modeParam || (created ? 'add' : 'details')
+  // Details -> Add reuses this screen: start the field from the preset or the weekly suggestion again.
+  const lastMode = useRef(mode)
+  useEffect(() => {
+    if (lastMode.current === mode) return
+    lastMode.current = mode
+    if (mode === 'add') setAmount(String(preset || Math.max(suggested, hasStaker ? 1 : MIN_NEW_STAKER_NIM)))
+  }, [mode, preset]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     // The chain decides whether the next deposit opens a staker (E2 needs 100 NIM) or adds to it.
@@ -137,6 +148,9 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null 
   // Quick picks scale with the goal: the weekly suggestion, a quarter of the target, everything left.
   const canManage = goal.status === 'saving' && !(pend && pend.goalId === goal.id) && !payLocked()
   const empty = goal.status === 'saving' && saved === 0 && goal.deposits.length > 0
+  // Add only while there is something to add; a goal at 100 % or past saving shows Details.
+  const adding = mode === 'add' && goal.status === 'saving' && !reached
+  const withdraw = () => { setSheet(null); go('unlock', { goalId: goal.id, mode: 'withdraw' }) }
   const withdrawing = goal.status === 'unlocking' && goal.unlockMode === 'withdraw'
   const returned = goal.status === 'withdrawn' ? goal.deposits.filter((d) => d.kind === 'withdraw').reduce((s, d) => s - d.nim, 0) : 0
   const rowLabel = (d) => d.kind === 'move' ? t(d.to ? 'row_moved_to' : 'row_moved_from', { name: localName(t, d.name || '', { title: true }) }) : d.kind === 'withdraw' ? t('row_returned') : null
@@ -178,51 +192,79 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null 
   }
 
 
-  return (
+  // Notices about a deposit in flight or just landed: shown on both Details and Add.
+  const depositNotices = (
     <>
-      <Header onBack={canGoBack ? back : () => reset('home')} />
-      <main className="screen">
-        {created && goal.deposits.length === 0 && <Stamp />}
-        {created && goal.deposits.length === 0 && <div className="dibs-band"><b>Dibs!</b><span>{t('goal_created')}</span></div>}
-        {flash && (
-          <div className="flash" role="status"><i>✓</i><div>{t('deposit_done', { amount: fmtNim(flash.nim, lang) })}{flash.tx && <small>{t('goal_added_sub', { tx: flash.tx + '…', pool })}</small>}</div></div>
-        )}
-        {recovered && (
-          <Notice tone="info" title={t('deposit_recovered_title')} sub={t('deposit_recovered_body', { amount: fmtNim(recovered.nim, lang) })} safe={t('safe_nimSafe')} />
-        )}
-        {pend && pend.goalId === goal.id && pend.walletError !== 'DEP_CANCELLED' && (
-          <Notice tone="wait" title={t('deposit_pending_title', { amount: fmtNim(pend.nim, lang) })} sub={t('deposit_pending_body')} />
-        )}
-        {unseen && <Notice tone="info" title={t('deposit_unseen_title')} sub={t('deposit_unseen_body')} />}
-        <CardFlip flip={flip} back={<GiftFace brand={brand} label={t('flip_gift')} title={t('flip_face', { brand: brandName, amount: detailText(t, goal, { short: true }) })} />}>
-        <section className="hero">
-          <div className="top">
-            <BrandLogo brand={brand} />
-            <div className="grow"><div className="t1">{itemLabel(t, goal)}</div><div className="t2">{fmtDate(goal.deadline, lang)} · {t(p.daysLeft === 1 ? 'days_left_one' : 'days_left_other', { count: p.daysLeft })}</div></div>
-            {canManage && <button type="button" className="more-btn" aria-label={t('manage_btn')} aria-haspopup="dialog" onClick={() => setSheet('manage')}>⋯</button>}
-          </div>
-          <div className="mid">
-            <div className={`ring-wrap${milestone ? ' ms-pulse' : ''}`}>
-              <Ring value={pct} size={100} label={`${Math.round(pct * 100)}%`} track="#35323f" color={pct >= 1 ? '#15896A' : '#E8482A'} />
-              <div className="pct">{Math.round(pct * 100)}%</div>
-            </div>
-            <div>
-              <div className="n">{fmtNim(Math.round(savedShown), lang)} NIM</div>
-              <div className="m">{t('goal_of2', { target: fmtNim(goal.targetNim, lang) })}<br />{t('goal_to_go', { amount: fmtNim(Math.round(remainingShown), lang) })}</div>
-              <GoalStatus goal={goal} earned={earned} />
-            </div>
-          </div>
-          <WeekDots total={p.totalWeeks} done={done100 && reached ? p.totalWeeks : p.weeksDone} now={p.weekIdx}
-            left={done100 ? null : t('week_of', { n: Math.min(p.totalWeeks, p.weekIdx + 1), total: p.totalWeeks })}
-            right={done100 ? null : t('goal_this_week', { amount: fmtNim(Math.min(remaining, p.pace.amount || p.weekly), lang) })} />
-          <MilestoneLine milestone={milestone} />
-          {saved > 0 && stakerAddress && <div className="acct">{t('goal_account', { address: '' }).trim()} <b>{shortAddress(stakerAddress)}</b><span className="pool">● {pool}</span></div>}
-        </section>
-        </CardFlip>
-        <CardIssue goal={goal} />
-        {goal.status === 'saving' && !reached && <PaceLine pace={p.pace} />}
+      {flash && (
+        <div className="flash" role="status"><i>✓</i><div>{t('deposit_done', { amount: fmtNim(flash.nim, lang) })}{flash.tx && <small>{t('goal_added_sub', { tx: flash.tx + '…', pool })}</small>}</div></div>
+      )}
+      {recovered && (
+        <Notice tone="info" title={t('deposit_recovered_title')} sub={t('deposit_recovered_body', { amount: fmtNim(recovered.nim, lang) })} safe={t('safe_nimSafe')} />
+      )}
+      {pend && pend.goalId === goal.id && pend.walletError !== 'DEP_CANCELLED' && (
+        <Notice tone="wait" title={t('deposit_pending_title', { amount: fmtNim(pend.nim, lang) })} sub={t('deposit_pending_body')} />
+      )}
+      {unseen && <Notice tone="info" title={t('deposit_unseen_title')} sub={t('deposit_unseen_body')} />}
+    </>
+  )
+  const problemNotices = (
+    <>
+      {slowWallet && (
+        <Notice tone="wait" title={t('err_ENV_NO_CONSENSUS_title')} sub={t('err_ENV_NO_CONSENSUS_sub')}
+          actions={[{ label: t('err_ENV_NO_CONSENSUS_action'), onClick: () => refreshBalance() }]} />
+      )}
+      {rpcDown && (
+        <Notice tone="info" title={t('err_NET_RPC_DOWN_title')} sub={t('err_NET_RPC_DOWN_sub')}
+          actions={[{ label: t('err_NET_RPC_DOWN_action'), onClick: () => add() }]} />
+      )}
+      {problem && (
+        <Notice tone="info" title={t('err_GENERIC_title')} sub={t('err_GENERIC_sub')} safe={t('safe_nothingSent')}
+          actions={[
+            { label: t('err_GENERIC_action'), onClick: () => { setProblem(null); add() } },
+            { label: t('err_GENERIC_action2'), onClick: () => { navigator.clipboard?.writeText(lastLogText()); toast(t('err_copied')) } },
+          ]} />
+      )}
+    </>
+  )
+  const sheets = (
+    <>
+      {sheet === 'manage' && (
+        <ManageSheet goal={goal} onClose={closeSheet}
+          onMove={() => setSheet('move')}
+          onWithdraw={withdraw}
+          onDelete={() => setSheet('delete')} />
+      )}
+      {sheet === 'move' && <MoveSheet goal={goal} onClose={closeSheet} onMoved={(r) => { setGoal(r.from); setSheet(null) }} />}
+      {sheet === 'delete' && <DeleteSheet goal={goal} onClose={closeSheet} />}
+      {moveSrc && <MoveSheet goal={moveSrc} preselect={goal.id} onClose={closeMoveSrc} onMoved={(r) => { setGoal(r.to); setMoveSrc(null) }} />}
+    </>
+  )
+  const onBack = canGoBack ? back : () => reset('home')
+  const createdBand = created && goal.deposits.length === 0 && (
+    <>
+      <Stamp />
+      <div className="dibs-band"><b>Dibs!</b><span>{t('goal_created')}</span></div>
+    </>
+  )
 
-        {goal.status === 'saving' && !reached && (
+  // Add: a compact hero, the amount card and the Add button. The deposit itself is unchanged.
+  if (adding) {
+    return (
+      <>
+        <Header onBack={onBack} />
+        <main className="screen">
+          {createdBand}
+          {depositNotices}
+          <section className="hero add-hero">
+            <div className="top">
+              <BrandLogo brand={brand} />
+              <div className="grow">
+                <div className="t1">{itemLabel(t, goal)}</div>
+                <div className="t2">{t('add_hero_line', { pct: Math.round(pct * 100), saved: fmtNim(Math.round(savedShown), lang), target: fmtNim(goal.targetNim, lang) })}</div>
+              </div>
+            </div>
+          </section>
+
           <section className="card">
             <label htmlFor="amt" className="sub">{t('goal_add_label')}</label>
             <div className={`amount${cantOpen || underMin || tooMuch ? ' bad' : ''}`}>
@@ -250,7 +292,66 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null 
               </>
             )}
           </section>
+          {problemNotices}
+
+          <div className="bottom">
+            <button type="button" className={`btn tall${p.pace.kind === 'ahead' && !flash && !pend ? ' ghost' : ''}`} disabled={busy || !!pend || invalid || balance == null} onClick={add}>
+              {pend ? t('deposit_button_waiting') : cantOpen ? t('goal_add_min', { min: MIN_NEW_STAKER_NIM }) : p.pace.kind === 'ahead' && !flash ? t('goal_add_more') : t('goal_add', { nim: fmtNim(amountNim, lang) })}
+              {!pend && <small>{balance == null ? t('goal_waiting_balance') : cantOpen ? t('goal_add_min_sub', { amount: fmtNim(balance, lang) }) : t('confirm_hint')}</small>}
+            </button>
+          </div>
+        </main>
+        {sheets}
+      </>
+    )
+  }
+
+  // Details: the hero, the pace band, About this card, then the history. No amount field here.
+  return (
+    <>
+      <Header onBack={onBack} />
+      <main className="screen">
+        {createdBand}
+        {depositNotices}
+        <CardFlip flip={flip} back={<GiftFace brand={brand} label={t('flip_gift')} title={t('flip_face', { brand: brandName, amount: detailText(t, goal, { short: true }) })} />}>
+        <section className="hero">
+          <div className="top">
+            <BrandLogo brand={brand} />
+            <div className="grow"><div className="t1">{itemLabel(t, goal)}</div><div className="t2">{fmtDate(goal.deadline, lang)} · {t(p.daysLeft === 1 ? 'days_left_one' : 'days_left_other', { count: p.daysLeft })}</div></div>
+            {canManage && <button type="button" className="more-btn" aria-label={t('manage_btn')} aria-haspopup="dialog" onClick={() => setSheet('manage')}>⋯</button>}
+          </div>
+          <div className="mid">
+            <div className={`ring-wrap${milestone ? ' ms-pulse' : ''}`}>
+              <Ring value={pct} size={100} label={`${Math.round(pct * 100)}%`} track="#35323f" color={pct >= 1 ? '#15896A' : '#E8482A'} />
+              <div className="pct">{Math.round(pct * 100)}%</div>
+            </div>
+            <div>
+              <div className="n">{fmtNim(Math.round(savedShown), lang)} NIM</div>
+              <div className="m">{t('goal_of2', { target: fmtNim(goal.targetNim, lang) })}<br />{t('goal_to_go', { amount: fmtNim(Math.round(remainingShown), lang) })}</div>
+              <GoalStatus goal={goal} earned={earned} />
+            </div>
+          </div>
+          <WeekDots total={p.totalWeeks} done={done100 && reached ? p.totalWeeks : p.weeksDone} now={p.weekIdx}
+            left={done100 ? null : t('week_of', { n: Math.min(p.totalWeeks, p.weekIdx + 1), total: p.totalWeeks })}
+            right={done100 ? null : t('goal_this_week', { amount: fmtNim(Math.min(remaining, p.pace.amount || p.weekly), lang) })} />
+          <MilestoneLine milestone={milestone} />
+          {saved > 0 && stakerAddress && <div className="acct">{t('goal_account', { address: '' }).trim()} <b>{shortAddress(stakerAddress)}</b><span className="pool">● {pool}</span></div>}
+        </section>
+        </CardFlip>
+        {goal.status === 'saving' && !reached && (
+          <PaceLine pace={p.pace} lagWeeks={p.lagWeeks} dot={<GoalDot goal={goal} inline />}>
+            {p.pace.kind === 'late' && canManage && (
+              <div className="band-acts">
+                <button type="button" className="btn-sm" disabled={saved <= 0} onClick={() => setSheet('move')}>{t('late_move')}</button>
+                {saved > 0
+                  ? <button type="button" className="btn-sm" onClick={withdraw}>{t('manage_back')}</button>
+                  : <button type="button" className="btn-sm" onClick={() => setSheet('delete')}>{t('manage_delete')}</button>}
+              </div>
+            )}
+          </PaceLine>
         )}
+        <AboutCard goal={goal} brand={brand} />
+        <CardIssue goal={goal} />
 
         {reached && goal.status === 'saving' && <div className="ok">{t('goal_reached')}</div>}
         {goal.status === 'ready' && <div className="ok">{t('goal_ready')}</div>}
@@ -263,21 +364,7 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null 
             <div className="empty-row"><span>{t('withdraw_returned')}</span><button type="button" className="link-danger" onClick={() => setSheet('delete')}>{t('manage_delete')}</button></div>
           </>
         )}
-        {slowWallet && (
-          <Notice tone="wait" title={t('err_ENV_NO_CONSENSUS_title')} sub={t('err_ENV_NO_CONSENSUS_sub')}
-            actions={[{ label: t('err_ENV_NO_CONSENSUS_action'), onClick: () => refreshBalance() }]} />
-        )}
-        {rpcDown && (
-          <Notice tone="info" title={t('err_NET_RPC_DOWN_title')} sub={t('err_NET_RPC_DOWN_sub')}
-            actions={[{ label: t('err_NET_RPC_DOWN_action'), onClick: () => add() }]} />
-        )}
-        {problem && (
-          <Notice tone="info" title={t('err_GENERIC_title')} sub={t('err_GENERIC_sub')} safe={t('safe_nothingSent')}
-            actions={[
-              { label: t('err_GENERIC_action'), onClick: () => { setProblem(null); add() } },
-              { label: t('err_GENERIC_action2'), onClick: () => { navigator.clipboard?.writeText(lastLogText()); toast(t('err_copied')) } },
-            ]} />
-        )}
+        {problemNotices}
 
         {goal.deposits.length > 0 && (
           <section className="card">
@@ -293,10 +380,7 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null 
 
         <div className="bottom">
           {goal.status === 'saving' && !reached && (
-            <button type="button" className={`btn tall${p.pace.kind === 'ahead' && !flash && !pend ? ' ghost' : ''}`} disabled={busy || !!pend || invalid || balance == null} onClick={add}>
-              {pend ? t('deposit_button_waiting') : cantOpen ? t('goal_add_min', { min: MIN_NEW_STAKER_NIM }) : p.pace.kind === 'ahead' && !flash ? t('goal_add_more') : t('goal_add', { nim: fmtNim(amountNim, lang) })}
-              {!pend && <small>{balance == null ? t('goal_waiting_balance') : cantOpen ? t('goal_add_min_sub', { amount: fmtNim(balance, lang) }) : t('confirm_hint')}</small>}
-            </button>
+            <button type="button" className="btn tall" onClick={() => go('goal', { goalId: goal.id, mode: 'add' })}>{t('goal_add_nim')}</button>
           )}
           {withdrawing && (
             <button type="button" className="btn mint" onClick={() => go('unlock', { goalId: goal.id, mode: 'withdraw' })}>{t('manage_back')}</button>
@@ -309,15 +393,35 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null 
           )}
         </div>
       </main>
-      {sheet === 'manage' && (
-        <ManageSheet goal={goal} onClose={closeSheet}
-          onMove={() => setSheet('move')}
-          onWithdraw={() => { setSheet(null); go('unlock', { goalId: goal.id, mode: 'withdraw' }) }}
-          onDelete={() => setSheet('delete')} />
-      )}
-      {sheet === 'move' && <MoveSheet goal={goal} onClose={closeSheet} onMoved={(r) => { setGoal(r.from); setSheet(null) }} />}
-      {sheet === 'delete' && <DeleteSheet goal={goal} onClose={closeSheet} />}
-      {moveSrc && <MoveSheet goal={moveSrc} preselect={goal.id} onClose={closeMoveSrc} onMoved={(r) => { setGoal(r.to); setMoveSrc(null) }} />}
+      {sheets}
     </>
+  )
+}
+
+// About this card (Details): what the card is, where it works, how the shop delivers it, and its price under the
+// same rule as the catalogue tiles (the live price, or "Price confirmed at checkout" when the shop gave none).
+function AboutCard({ goal, brand }) {
+  const { t, lang, toast } = useApp()
+  const item = findItem(goal.itemId)
+  const regions = (brand.region || []).map((r) => t(`region_${r}`))
+  const region = regions.length > 1 ? t('region_join', { a: regions[0], b: regions[1] }) : regions[0]
+  const estimated = item?.live === false
+  return (
+    <section className="card about-card">
+      <h3>{t('about_title')}</h3>
+      <p className="about-item">{itemLabel(t, goal)}</p>
+      {(region || brand.delivers) && (
+        <dl className="about-facts">
+          {region && <div><dt>{t('about_region')}</dt><dd>{region}</dd></div>}
+          {brand.delivers && <div><dt>{t('about_delivered')}</dt><dd>{t(`delivers_${brand.delivers}`)}</dd></div>}
+        </dl>
+      )}
+      {brand.about && <p className="small">{t(brand.about)}</p>}
+      {estimated ? (
+        <button type="button" className="price-chip" onClick={() => toast(t('price_checkout_info'))}>
+          <i aria-hidden="true">i</i>{t('price_checkout')}
+        </button>
+      ) : item?.usd != null && <p className="small about-price">{t('plan_price', { usd: fmtUsd(item.usd, lang) })}</p>}
+    </section>
   )
 }

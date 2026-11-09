@@ -3,6 +3,7 @@ import { useApp } from '../App.jsx'
 import { savedNim } from '../lib/goals.js'
 import { getStaker } from '../lib/nimiq.js'
 import { fmtDate, fmtNim } from '../lib/format.js'
+import { planOf } from '../lib/pace.js'
 import { chainReleaseAt, ReleaseClock } from './ReleaseClock.jsx'
 
 // Where a goal is, from the ledger it already has (no new storage):
@@ -31,6 +32,26 @@ export function GoalStatus({ goal, earned }) {
     withdrawn: t('status_withdrawn'),
   }[state]
   return <div className={`goal-status ${state}`}>{text}</div>
+}
+
+// Pace of a saving goal for the status dot and the Details band: 'on' (on track or ahead), 'behind' (one week),
+// 'late' (two weeks or more). null at 100 % or once the goal is past saving.
+export function goalPace(goal, now = Date.now()) {
+  if (!goal || goalState(goal) !== 'saving') return null
+  const p = planOf(goal, now)
+  const tone = p.pace.kind === 'late' ? 'late' : p.pace.kind === 'behind' ? 'behind' : 'on'
+  return { tone, lagWeeks: p.lagWeeks, plan: p }
+}
+
+// The status dot: top right of the goal card on Home (pin), or at the start of the Details band (inline).
+export function GoalDot({ goal, inline = false }) {
+  const { t } = useApp()
+  const pace = goalPace(goal)
+  if (!pace) return null
+  const label = pace.tone === 'on' ? t('dot_on')
+    : pace.tone === 'behind' ? t('dot_behind_one')
+    : t('dot_behind_other', { n: pace.lagWeeks })
+  return <span className={`goal-dot ${pace.tone}${inline ? ' inline' : ' pin'}`} role="img" aria-label={label} />
 }
 
 // The shared release clock, fed with the chain's estimate when it can be read (display only).
