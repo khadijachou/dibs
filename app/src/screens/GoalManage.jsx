@@ -10,6 +10,14 @@ const parseNim = (v) => Math.floor(Number(String(v).replace(/[^\d.]/g, ''))) || 
 // title: at the start of a line or title; false inside a sentence.
 export const goalLabel = (g, t, title = false) => itemLabel(t, g, { title })
 
+// Stroke icons for the Manage sheet (text glyphs like ↩ turn into emoji on iOS).
+const Icon = ({ children }) => (
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{children}</svg>
+)
+const IconMove = () => <Icon><path d="M4 8h15M15 4l4 4-4 4M20 16H5M9 12l-4 4 4 4" /></Icon>
+const IconBack = () => <Icon><path d="M9 14 4 9l5-5" /><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" /></Icon>
+const IconDelete = () => <Icon><path d="M6 6l12 12M18 6 6 18" /></Icon>
+
 // Frame 2: Move, Get my NIM back, Delete (off while the goal still holds NIM).
 export function ManageSheet({ goal, onClose, onMove, onWithdraw, onDelete }) {
   const { t, lang } = useApp()
@@ -18,16 +26,16 @@ export function ManageSheet({ goal, onClose, onMove, onWithdraw, onDelete }) {
     <Sheet title={t('manage_title')} onClose={onClose}>
       <div className="sheet-list">
         <button type="button" className="sheet-row" disabled={saved <= 0} onClick={onMove}>
-          <span className="si move" aria-hidden="true">⇄</span>
+          <span className="si move" aria-hidden="true"><IconMove /></span>
           <span><b>{t('manage_move')}</b><small>{t('manage_move_sub')}</small></span>
         </button>
         <button type="button" className="sheet-row" disabled={saved <= 0} onClick={onWithdraw}>
-          <span className="si back" aria-hidden="true">↩</span>
+          <span className="si back" aria-hidden="true"><IconBack /></span>
           <span><b>{t('manage_back')}</b><small>{t('manage_back_sub')}</small></span>
         </button>
         <button type="button" className="sheet-row danger" disabled={saved > 0} onClick={onDelete}>
-          <span className="si del" aria-hidden="true">✕</span>
-          <span><b>{t('manage_delete')}</b>{saved > 0 && <small>{t('manage_delete_blocked', { nim: fmtNim(saved, lang) })}</small>}</span>
+          <span className="si del" aria-hidden="true"><IconDelete /></span>
+          <span><b>{t('manage_delete')}</b><small>{saved > 0 ? t('manage_delete_blocked', { nim: fmtNim(saved, lang) }) : t('manage_delete_empty')}</small></span>
         </button>
       </div>
       <button type="button" className="btn ghost" onClick={onClose}>{t('manage_cancel')}</button>

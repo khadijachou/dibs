@@ -17,6 +17,9 @@ import { useCountUp } from '../lib/useCountUp.js'
 const SAFETY_MARGIN = 0.1
 const targetUsdOf = (item) => (item.live === false ? item.usd * (1 + SAFETY_MARGIN) : item.usd)
 
+// "add about **4,273 NIM** a week" -> text with the ** parts in <b>. Text nodes only, never HTML.
+const Bold = ({ text }) => text.split('**').map((part, i) => (i % 2 ? <b key={i}>{part}</b> : part))
+
 const OPTIONS = [
   { key: 'plan_w2', days: 14 },
   { key: 'plan_m2', days: 61 },
@@ -83,7 +86,7 @@ export default function Plan({ brandKey, itemId, moveFrom = null, changeFor = nu
         <section className="card">
           {amounts.length > 1 && (
             <>
-              <span className="small">{t('plan_card_value')}</span>
+              <span className="plan-label">{t('plan_card_value')}</span>
               <div className="pills" role="group" aria-label={t('plan_card_value')}>
                 {amounts.map((a) => (
                   <button type="button" key={a.id} className={`pill tall${a.id === item.id ? ' on' : ''}`} aria-pressed={a.id === item.id} onClick={() => setPickedId(a.id)}>
@@ -95,18 +98,19 @@ export default function Plan({ brandKey, itemId, moveFrom = null, changeFor = nu
           )}
           <p className="small plan-note">{amounts.length > 1 ? t('plan_price_note') : estimated ? `${t('price_checkout')}.` : !isAmountDetail(item) ? `${detailText(t, item)}. ${t('plan_price_note')}` : `${t('plan_price', { usd: fmtUsd(item.usd, lang) })}. ${t('plan_price_note')}`}</p>
           <div>
-            <span className="small">{t('plan_target2')}</span>
+            <span className="plan-label target">{t('plan_target2')}</span>
             <div className="target-num" style={{ margin: '4px 0 6px' }}>{fmtNim(Math.round(targetShown), lang)} NIM</div>
             {estimated && <p className="plan-margin">{t('price_checkout')} · {t('plan_margin')}</p>}
             <div className={`rate${prices.live ? '' : ' off'}`}>
-              {t(prices.live ? 'plan_rate_live' : 'plan_rate_off2', { rate: fmtUsd(prices.nimUsd, lang), ago })}
+              <span>{t('plan_rate_val', { rate: fmtUsd(prices.nimUsd, lang) })}</span>
+              <span className="rate-ago">{' · '}{prices.live ? t('plan_rate_ago', { ago }) : t('plan_rate_off3')}</span>
             </div>
             <p className="small plan-note">{t('plan_target_note')}</p>
           </div>
           {changing ? (
             <div className="hint">{t('change_summary', { saved: fmtNim(savedNim(changing), lang), target: fmtNim(targetNim, lang) })}</div>
           ) : (<>
-          <span className="small">{t('plan_by')}</span>
+          <span className="plan-label">{t('plan_by')}</span>
           <div className="pills" role="group" aria-label={t('plan_by')}>
             {OPTIONS.map((o) => (
               <button type="button" key={o.key} className={`pill${o.days === days ? ' on' : ''}`} aria-pressed={o.days === days} onClick={() => setDays(o.days)}>{t(o.key)}</button>
@@ -114,12 +118,12 @@ export default function Plan({ brandKey, itemId, moveFrom = null, changeFor = nu
           </div>
           <WeekDots total={weeks} planMode left={t('plan_today')} right={fmtDate(deadline, lang)} />
           <p className="small center" style={{ marginTop: -6 }}>{t('plan_weeks_each', { weeks, amount: fmtNim(weekly, lang) })}</p>
-          <div className="hint">{t('plan_suggest2', { amount: fmtNim(weekly, lang), date: fmtDate(deadline, lang) })}</div>
+          <div className="hint"><Bold text={t('plan_suggest2', { amount: fmtNim(weekly, lang), date: fmtDate(deadline, lang) })} /></div>
           </>)}
         </section>
         <div className="facts">
           <div className="fact"><b className="dot">{t('plan_earns_t')}</b>{t('plan_earns_b', { validator: poolName() })}</div>
-          <div className="fact"><b>{t('plan_wait_t', { min: 12, max: 24 })}</b>{t('plan_wait_b')}</div>
+          <div className="fact"><b className="dot red">{t('plan_wait_t', { min: 12, max: 24 })}</b>{t('plan_wait_b')}</div>
         </div>
         <div className="bottom">
           {changing

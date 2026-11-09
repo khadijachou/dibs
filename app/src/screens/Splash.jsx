@@ -11,10 +11,18 @@ import { detailText } from '../lib/itemName.js'
 // completes from wherever it is, the splash fades, then onGone() lets App show the next screen.
 // Reduced motion: a static full ring and a small "Loading" line, no fade.
 const CARDS = [
-  { key: 'steam', name: 'Steam', price: '5 USD', x: '-14px', y: '10%', r: '-14deg', bg: 'linear-gradient(145deg, #1b2838, #0f1b2b)' },
-  { key: 'netflix', name: 'Netflix', price: '25 EUR', x: 'calc(100% - 118px)', y: '19%', r: '12deg', bg: 'linear-gradient(145deg, #3a0f12, #1d0a0c)' },
-  { key: 'amazon', name: 'Amazon', logo: '/logos/amazon.png', price: '10 USD', x: 'calc(100% - 168px)', y: '74%', r: '-6deg', bg: 'linear-gradient(145deg, #2a2733, #1c1a22)' },
+  { key: 'steam', name: 'Steam', price: '5 USD', x: '-14px', y: '10%', r: '-14deg', dur: '5.5s', bg: 'linear-gradient(145deg, #1b2838, #0f1b2b)' },
+  { key: 'netflix', name: 'Netflix', price: '25 EUR', x: 'calc(100% - 118px)', y: '19%', r: '12deg', dur: '6.5s', bg: 'linear-gradient(145deg, #3a0f12, #1d0a0c)' },
+  { key: 'apple', name: 'Apple', price: '10 USD', x: '-10px', y: '56%', r: '8deg', dur: '6s', bg: 'linear-gradient(145deg, #2a2733, #1c1a22)' },
+  { key: 'amazon', name: 'Amazon', logo: '/logos/amazon.png', price: '10 USD', x: 'calc(100% - 168px)', y: '74%', r: '-6deg', dur: '7s', bg: 'linear-gradient(145deg, #2a2733, #1c1a22)' },
 ]
+
+// The official Nimiq logo, path copied unchanged from @nimiq/style 0.8.5 (src/icons/hexagon.svg). Never redraw it.
+const NimiqHex = () => (
+  <svg className="splash-nq" viewBox="0 0 27 24" width="14" height="14" aria-hidden="true">
+    <path fill="currentColor" d="M26.6991 10.875L21.0741 1.125C20.6691 0.4275 19.9266 0 19.1241 0H7.87414C7.07164 0 6.32914 0.4275 5.92789 1.125L0.302891 10.875C-0.0983594 11.5725 -0.0983594 12.4275 0.302891 13.125L5.92789 22.875C6.32914 23.5725 7.07164 24 7.87414 24H19.1241C19.9266 24 20.6691 23.5725 21.0704 22.875L26.6954 13.125C27.1004 12.4275 27.1004 11.5725 26.6991 10.875Z" />
+  </svg>
+)
 
 const R = 66
 const C = 2 * Math.PI * R
@@ -55,7 +63,7 @@ export default function Splash({ done = false, onGone }) {
       <p className="sr-only" role="status">{t('loading')}</p>
       <div className="splash-cards" aria-hidden="true">
         {CARDS.map((c, i) => (
-          <div key={c.key} className="fc" style={{ '--x': c.x, '--y': c.y, '--r': c.r, '--d': `${i * -1.3}s`, background: c.bg }}>
+          <div key={c.key} className="fc" style={{ '--x': c.x, '--y': c.y, '--r': c.r, '--d': `${i * -1.3}s`, '--dur': c.dur, background: c.bg }}>
             <BrandLogo brand={c} />
             <b>{c.name}</b>
             <span>{t('cat_from', { price: detailText(t, { detail: c.price }) })}</span>
@@ -77,7 +85,7 @@ export default function Splash({ done = false, onGone }) {
           {tag.map((l, i) => <span key={i} className={i === tag.length - 1 ? 'last' : ''}>{l}</span>)}
         </p>
       </div>
-      <p className="splash-line">{t('splash_line')}</p>
+      <p className="splash-line"><NimiqHex />{t('splash_line')}</p>
     </div>
   )
 }

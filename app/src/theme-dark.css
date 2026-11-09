@@ -70,7 +70,7 @@ h1, h2, h3, .title, .tile b, .btile b, .pick b, .past b, .sec-head h3 { color: v
 .trust i, .note .ico { background: var(--teal-soft); color: var(--teal); }
 .earning, .acct .pool { color: var(--teal); }
 .earning::before, .fact b.dot::before { background: var(--teal); }
-.rate { color: var(--muted); } .rate::before { background: var(--muted); }
+.rate { color: var(--teal); } .rate::before { background: var(--teal); } .rate .rate-ago { color: var(--muted); }
 .rate.off { color: var(--muted); } .rate.off::before { background: #6f6c7b; }
 .amount { border-bottom-color: #3a3744; } .amount input { color: var(--cream); }
 .amount.bad { border-bottom-color: var(--red); }
@@ -149,17 +149,17 @@ svg circle:first-child[stroke="#e6dccf"], svg circle:first-child[stroke="#35323f
 
 /* M6 floating brand cards (kit animations.css) */
 .fc { position: absolute; left: var(--x); top: var(--y); width: 150px; height: 96px; border-radius: 18px; padding: 12px; opacity: .85; box-sizing: border-box;
-  transform: rotate(var(--r)); box-shadow: 0 20px 40px rgba(0, 0, 0, .45); animation: drift 4s ease-in-out infinite alternate; animation-delay: var(--d, 0s); pointer-events: none;
+  transform: rotate(var(--r)); box-shadow: 0 20px 40px rgba(0, 0, 0, .45); animation: drift var(--dur, 6s) ease-in-out infinite alternate; animation-delay: var(--d, 0s); pointer-events: none;
   display: flex; flex-direction: column; gap: 2px; color: var(--cream); border: 1px solid rgba(255, 255, 255, .06); }
 .fc .blogo { width: 28px; height: 28px; border-radius: 8px; margin-bottom: 4px; }
 .fc b { font: 600 14px var(--font-display); } .fc span { font-size: 11.5px; color: #c9c6d0; }
-@keyframes drift { to { transform: rotate(var(--r)) translateY(6px); } }
+@keyframes drift { from { transform: translateY(-8px) rotate(calc(var(--r) - 1.5deg)); } to { transform: translateY(8px) rotate(calc(var(--r) + 1.5deg)); } }
 
 /* Splash */
 .splash { position: relative; overflow: hidden; justify-content: center; align-items: center; min-height: 100vh; min-height: 100dvh; padding: 24px 20px; box-sizing: border-box;
   background: radial-gradient(90% 55% at 50% 32%, #2f2338 0%, #15141a 72%); }
 .splash-cards { position: absolute; inset: 0; }
-.splash-mid { position: relative; display: flex; flex-direction: column; align-items: center; gap: 18px; animation: splash-in .6s cubic-bezier(.2, .8, .2, 1) both; }
+.splash-mid { position: relative; display: flex; flex-direction: column; align-items: center; gap: 0; animation: splash-in .6s cubic-bezier(.2, .8, .2, 1) both; }
 .splash-mark { position: relative; width: 132px; height: 132px; }
 .splash-mark svg { position: absolute; inset: 0; }
 .splash-track { stroke: rgba(232, 72, 42, .16); }
@@ -167,12 +167,13 @@ svg circle:first-child[stroke="#e6dccf"], svg circle:first-child[stroke="#35323f
 .splash-arc { stroke-dashoffset: 0; animation: splash-draw 1.8s cubic-bezier(.45, 0, .25, 1) infinite; }
 @keyframes splash-draw { 0% { stroke-dashoffset: var(--c); } 55% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: calc(var(--c) * -1); } }
 .splash.out { opacity: 0; transition: opacity .3s ease-out; }
-.splash-loading { display: none; margin: -6px 0 0; font-size: 13px; color: var(--muted); }
+.splash-loading { display: none; margin: 12px 0 0; font-size: 13px; color: var(--muted); }
 .splash-mark .splash-dmark { position: absolute; left: 50%; top: 50%; width: 52px; height: 66.6px; transform: translate(calc(-50% - 2px), -50%); }
-.splash-word { height: 34px; }
-.splash-tag { margin: 4px 0 0; display: flex; flex-direction: column; align-items: center; font: 700 34px/1.12 var(--font-display); letter-spacing: -.01em; text-align: center; }
-.splash-tag .last { color: var(--butter); }
-.splash-line { position: absolute; left: 20px; right: 20px; bottom: calc(28px + env(safe-area-inset-bottom, 0px)); margin: 0; text-align: center; font-size: 13px; color: var(--muted); }
+.splash-word { height: 34px; margin-top: 24px; } /* 24 px mark to wordmark, 40 px wordmark to slogan */
+.splash-tag { margin: 40px 0 0; display: flex; flex-direction: column; align-items: center; font: 700 34px/1.12 var(--font-display); letter-spacing: -.01em; text-align: center; }
+.splash-tag .last { color: var(--teal); }
+.splash-line { position: absolute; left: 20px; right: 20px; bottom: calc(28px + env(safe-area-inset-bottom, 0px)); margin: 0; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 13px; color: var(--muted); }
+.splash-nq { flex-shrink: 0; width: 14px; height: 14px; }
 @keyframes splash-in { from { opacity: 0; transform: translateY(12px) scale(.97); } }
 
 /* Onboarding */
@@ -399,6 +400,11 @@ svg circle:first-child[stroke="#e6dccf"], svg circle:first-child[stroke="#35323f
 
 /* Plan: price and target notes. */
 .plan-note { font-size: 12px; line-height: 1.45; margin-top: 6px; }
+.plan-label { display: block; font: 600 18px/1.3 var(--font-body); color: var(--cream); }
+.plan-label.target { color: #E8482A; }
+.facts .fact { flex: 1 1 0; min-width: 0; } /* equal columns; a long title wraps instead of pushing the row off screen */
+.facts .fact b { white-space: normal; font-size: 12px; }
+.fact b.dot.red::before { background: var(--red); }
 
 /* Pills never wrap or get cut: the row scrolls, text stays at 12px or more. */
 .pills .pill.tall { white-space: nowrap; padding: 9px 12px; }
