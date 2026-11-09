@@ -73,7 +73,9 @@ export default function More() {
   )
 }
 
-// Prefilled with the newest transaction hash on this device and the last logged error. Copy only, nothing is sent.
+// Prefilled with the newest transaction hash on this device and the last logged error. Nothing is sent by the app:
+// the user copies the text or opens their own mail app with it.
+const REPORT_TO = 'khadijachourou123@gmail.com'
 function ReportSheet({ onClose }) {
   const { t, lang, address, demo, toast } = useApp()
   const [text, setText] = useState(() => {
@@ -92,7 +94,8 @@ function ReportSheet({ onClose }) {
     <Sheet title={t('more_report')} onClose={onClose}>
       <label htmlFor="report" className="small">{t('report_hint')}</label>
       <textarea id="report" className="report-text" rows={8} value={text} onChange={(e) => setText(e.target.value)} />
-      <button type="button" className="btn" onClick={copy}>{t('report_copy')}</button>
+      <a className="btn link-btn" href={`mailto:${REPORT_TO}?subject=${encodeURIComponent('Dibs report')}&body=${encodeURIComponent(text)}`}>{t('report_email')}</a>
+      <button type="button" className="btn ghost" onClick={copy}>{t('report_copy')}</button>
       <button type="button" className="btn ghost" onClick={onClose}>{t('manage_cancel')}</button>
     </Sheet>
   )

@@ -6,6 +6,7 @@ import { getGoal, listGoals, savedNim, stakedInGoals, updateGoal } from '../lib/
 import { getStaker, readStaker, unlock } from '../lib/nimiq.js'
 import { MIN_NEW_STAKER_NIM, toNim } from '../lib/config.js'
 import { fmtNim } from '../lib/format.js'
+import { chainReleaseAt, ReleaseClock } from '../components/ReleaseClock.jsx'
 
 const STEPS = ['deactivate', 'retire', 'remove']
 const LABELS = { deactivate: 'unlock_s1', retire: 'unlock_s2', remove: 'unlock_s3' }
@@ -35,6 +36,17 @@ export default function Unlock({ goalId, mode: modeParam }) {
       setActiveNow(st ? activeOf(st) : stakedInGoals(address))
     })
   }, [address, withdraw])
+
+  // Release clock (display only): shown while step 1 is done and step 2 isn't. Reads the chain on its own,
+  // so the steps, checks and money calls below are unchanged.
+  const waiting = Boolean(goal) && goal.unlockSteps.some((s) => s.step === 'deactivate') && !goal.unlockSteps.some((s) => s.step === 'retire')
+  const [releaseAt, setReleaseAt] = useState(null)
+  useEffect(() => {
+    if (!waiting) return
+    let live = true
+    readStaker(address).then(chainReleaseAt).then((at) => { if (live) setReleaseAt(at) }).catch(() => {})
+    return () => { live = false }
+  }, [address, waiting])
 
   if (!goal) return null
   const amount = savedNim(goal)
@@ -117,6 +129,7 @@ export default function Unlock({ goalId, mode: modeParam }) {
           ? <Notice tone="info" title={t('err_UNL_NOT_RELEASED_title')} sub={t('unlock_wait')} safe={t('err_UNL_VALIDATOR_JAILED_safe')} />
           : error ? <Notice tone="info" title={t('err_GENERIC_title')} sub={t('err_GENERIC_sub')} safe={t('safe_nothingSent')} />
           : !blocked && <p className="small">{t('unlock_wait')}</p>}
+        {waiting && <section className="card unstake"><ReleaseClock goal={goal} chainAt={releaseAt} /></section>}
         <div className="bottom">
           {current && (
             <button type="button" className={`btn ${withdraw ? 'mint' : 'gold'}`} disabled={busy || activeNow == null || blocked} onClick={run}>
