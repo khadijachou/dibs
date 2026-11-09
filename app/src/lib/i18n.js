@@ -392,6 +392,13 @@ const en = {
   prof_since: "Saving since",
   prof_empty: "Your stats start with your first dibs.",
   prof_empty_cta: "Go to Goals",
+  status_saving: "Staked · earning",
+  status_reached: "Goal reached · still earning until you unlock",
+  status_ready: "Released · ready to buy your card",
+  status_bought: "Bought on {date}",
+  status_withdrawn: "Withdrawn · NIM back in your wallet",
+  plan_price_note: "That's the shop's price for the card. Dibs adds no fee.",
+  plan_target_note: "Your target is set at today's NIM price. If the price moves, you may need a little more or less at the end.",
 }
 
 const fr = {
@@ -787,6 +794,13 @@ const fr = {
   prof_since: "Épargne depuis le",
   prof_empty: "Vos statistiques commencent avec votre premier dibs.",
   prof_empty_cta: "Aller aux objectifs",
+  status_saving: "En staking · ça rapporte",
+  status_reached: "Objectif atteint · ça rapporte jusqu'au déblocage",
+  status_ready: "Libérés · vous pouvez acheter votre carte",
+  status_bought: "Achetée le {date}",
+  status_withdrawn: "Retirés · NIM de retour dans votre portefeuille",
+  plan_price_note: "C'est le prix de la boutique pour la carte. Dibs n'ajoute pas de frais.",
+  plan_target_note: "Votre cible est fixée au cours du NIM d'aujourd'hui. Si le cours bouge, il vous faudra peut-être un peu plus ou un peu moins à la fin.",
 }
 
 const es = {
@@ -1182,6 +1196,13 @@ const es = {
   prof_since: "Ahorrando desde el",
   prof_empty: "Tus estadísticas empiezan con tu primer dibs.",
   prof_empty_cta: "Ir a Metas",
+  status_saving: "En staking · ganando",
+  status_reached: "Meta alcanzada · sigue ganando hasta que desbloquees",
+  status_ready: "Liberados · ya puedes comprar tu tarjeta",
+  status_bought: "Comprada el {date}",
+  status_withdrawn: "Retirados · NIM de vuelta en tu billetera",
+  plan_price_note: "Es el precio de la tienda por la tarjeta. Dibs no cobra comisión.",
+  plan_target_note: "Tu meta se fija al precio del NIM de hoy. Si el precio cambia, puede que necesites un poco más o un poco menos al final.",
 }
 
 const DICTS = { en, fr, es }

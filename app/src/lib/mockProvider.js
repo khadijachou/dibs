@@ -39,7 +39,7 @@ export function createMockProvider() {
     async getBlockNumber() { s.block += 1; return s.block },
     async sign(message) { await wait(300); return { publicKey: 'demo', signature: 'demo:' + String(message).length } },
     mockStaker() {
-      return s.staker ? { ...s.staker } : null
+      return s.staker ? { ...s.staker, address: s.staker.address || ADDRESS } : null
     },
     sendNewStakerTransaction({ delegation, value }) {
       if (s.staker) fail('INVALID_TRANSACTION', 'Staker already exists')

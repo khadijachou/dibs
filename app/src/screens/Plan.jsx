@@ -74,12 +74,14 @@ export default function Plan({ brandKey, itemId, moveFrom = null }) {
               </div>
             </>
           )}
+          <p className="small plan-note">{amounts.length > 1 ? t('plan_price_note') : `${t('plan_price', { usd: fmtUsd(item.usd, lang) })}. ${t('plan_price_note')}`}</p>
           <div>
             <span className="small">{t('plan_target2')}</span>
             <div className="target-num" style={{ margin: '4px 0 6px' }}>{fmtNim(Math.round(targetShown), lang)} NIM</div>
             <div className={`rate${prices.live ? '' : ' off'}`}>
               {t(prices.live ? 'plan_rate_live' : 'plan_rate_off2', { rate: fmtUsd(prices.nimUsd, lang), ago })}
             </div>
+            <p className="small plan-note">{t('plan_target_note')}</p>
           </div>
           <span className="small">{t('plan_by')}</span>
           <div className="pills" role="group" aria-label={t('plan_by')}>

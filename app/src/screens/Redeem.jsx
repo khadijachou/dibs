@@ -9,7 +9,7 @@ import { invoiceMatchesPrice, parseInvoice } from '../lib/invoice.js'
 import { usdToNim } from '../lib/price.js'
 import { config } from '../lib/config.js'
 import { api } from '../lib/api.js'
-import { fmtUsd } from '../lib/format.js'
+import { fmtInt, fmtUsd } from '../lib/format.js'
 
 const EMAIL_KEY = 'dibs.email'
 
@@ -162,7 +162,7 @@ export default function Redeem({ goalId }) {
             )}
             {order?.invoice && (
               <>
-                <div className="ok">{t('redeem_ready', { sats: order.sats?.toLocaleString(lang) ?? '?' })}</div>
+                <div className="ok">{t('redeem_ready', { sats: order.sats != null ? fmtInt(order.sats, lang) : '?' })}</div>
                 {left != null && !expired && !unknown && <p className="small countdown">{t('redeem_expires', { time: mmss(left) })}</p>}
                 {expired && <Notice tone="info" title={t('err_PAY_EXPIRED_title')} sub={t('err_PAY_EXPIRED_sub')} safe={t('safe_nothingCharged')} />}
               </>

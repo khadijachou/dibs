@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { useApp } from '../App.jsx'
 import { Icon, LangSwitch, Wordmark } from '../components/ui.jsx'
 import { NAME_MAX, setName } from '../lib/name.js'
+import { fmtNim, fmtPct } from '../lib/format.js'
 
 // VF screens 02 to 04: three slides on first run. App.jsx shows them without
 // waiting for the wallet; onDone stores dibs.onboarded. On first run a name step follows the
@@ -124,8 +125,8 @@ function RingIll() {
           strokeDasharray={c.toFixed(1)} strokeDashoffset={(c * 0.32).toFixed(1)} transform="rotate(-90 100 100)" />
       </svg>
       <div className="ir-mid">
-        <b>{new Intl.NumberFormat(lang, { style: 'percent' }).format(0.68)}</b>
-        <span>{t('goal_earned_row', { amount: new Intl.NumberFormat(lang, { minimumFractionDigits: 1 }).format(35.4) })}</span>
+        <b>{fmtPct(0.68, lang)}</b>
+        <span>{t('goal_earned_row', { amount: fmtNim(35, lang) })}</span>
       </div>
     </div>
   )

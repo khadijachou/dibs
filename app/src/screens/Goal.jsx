@@ -13,6 +13,7 @@ import { DeleteSheet, ManageSheet, MoveSheet } from './GoalManage.jsx'
 import { useCountUp } from '../lib/useCountUp.js'
 import { stakeSummary } from '../lib/earned.js'
 import { MilestoneLine, useGoalMilestone } from '../components/Milestone.jsx'
+import { GoalStatus } from '../components/GoalStatus.jsx'
 
 const parseNim = (v) => Math.floor(Number(String(v).replace(/[^\d.]/g, ''))) || 0
 
@@ -33,6 +34,7 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null 
   const [slowWallet, setSlowWallet] = useState(false)
   const [flash, setFlash] = useState(null)
   const [earned, setEarned] = useState(0)
+  const [stakerAddress, setStakerAddress] = useState(null) // BUG-15: the account line shows the staker, not the funded address
   // BUG-01: a deposit waiting for the chain (survives reloads), and the outcomes it can end in.
   const [pend, setPend] = useState(() => pending.get(address))
   const [recovered, setRecovered] = useState(null) // { nim }: Nimiq Pay errored but the stake grew
@@ -62,6 +64,7 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null 
     readStaker(address).then((st) => {
       if (!st) { setHasStaker(false); return }
       setHasStaker(true); stakerFlag.set(address)
+      setStakerAddress(st.address || null)
       setEarned(stakeSummary(st, address).byGoal[goalId] ?? 0) // this goal's share of Stake's figure
     }).catch(() => { /* chain unreadable: keep the last known flag */ })
   }, [address, goalId])
@@ -195,14 +198,14 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null 
             <div>
               <div className="n">{fmtNim(Math.round(savedShown), lang)} NIM</div>
               <div className="m">{t('goal_of2', { target: fmtNim(goal.targetNim, lang) })}<br />{t('goal_to_go', { amount: fmtNim(Math.round(remainingShown), lang) })}</div>
-              {(hasStaker || saved > 0) && <div className="earning">{earned > 0 ? t('goal_earning', { amount: fmtNim(earned, lang) }) : t('goal_earning_soon')}</div>}
+              <GoalStatus goal={goal} earned={earned} />
             </div>
           </div>
           <WeekDots total={p.totalWeeks} done={p.weeksDone} now={p.weekIdx}
             left={t('week_of', { n: Math.min(p.totalWeeks, p.weekIdx + 1), total: p.totalWeeks })}
             right={reached ? null : t('goal_this_week', { amount: fmtNim(Math.min(remaining, p.pace.amount || p.weekly), lang) })} />
           <MilestoneLine milestone={milestone} />
-          {saved > 0 && <div className="acct">{t('goal_account', { address: '' }).trim()} <b>{shortAddress(address)}</b><span className="pool">● {pool}</span></div>}
+          {saved > 0 && stakerAddress && <div className="acct">{t('goal_account', { address: '' }).trim()} <b>{shortAddress(stakerAddress)}</b><span className="pool">● {pool}</span></div>}
         </section>
         {goal.status === 'saving' && !reached && <PaceLine pace={p.pace} />}
 

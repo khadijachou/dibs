@@ -10,6 +10,7 @@ import { useCountUp } from '../lib/useCountUp.js'
 import { useEarned } from '../lib/earned.js'
 import { getName } from '../lib/name.js'
 import { MilestoneLine, useGoalMilestone } from '../components/Milestone.jsx'
+import { GoalStatus } from '../components/GoalStatus.jsx'
 
 // "Hi Sam" when the user gave a name during onboarding or in More; nothing otherwise.
 function Hello({ onInk = false }) {
@@ -220,9 +221,7 @@ function GoalHero({ goal, earned }) {
           <div>
             <div className="n">{fmtNim(Math.round(savedShown), lang)} NIM</div>
             <div className="m">{t('goal_of2', { target: fmtNim(goal.targetNim, lang) })} · {t('goal_to_go', { amount: fmtNim(Math.round(remainingShown), lang) })}</div>
-            {earned?.byGoal[goal.id] > 0
-              ? <div className="earned-chip">{t('home_earned_chip', { amount: fmtNim(earned.byGoal[goal.id], lang) })}</div>
-              : <div className="earning">{t('goal_earning_soon')}</div>}
+            <GoalStatus goal={goal} earned={earned?.byGoal[goal.id]} />
           </div>
         </div>
         <MilestoneLine milestone={milestone} />

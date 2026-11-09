@@ -6,7 +6,7 @@ import { profileStats } from '../lib/stats.js'
 import { stakeSummary } from '../lib/earned.js'
 import { readStaker } from '../lib/nimiq.js'
 import { NAME_MAX, getName, setName } from '../lib/name.js'
-import { fmtDateYear, fmtNim } from '../lib/format.js'
+import { fmtDateYear, fmtNim, fmtUsd } from '../lib/format.js'
 
 // Profile: a greeting and six numbers, all from data the app already has (goal ledger, staker, dibs.name).
 export default function Profile() {
@@ -23,8 +23,8 @@ export default function Profile() {
 
   const s = profileStats(listGoals(address))
   const empty = s.totalSaved === 0 && s.activeGoals === 0 && s.cardsBought === 0
-  // Rounded to cents: a stat, not a price quote. Hidden while prices load and when nothing is saved.
-  const usd = prices && s.totalSaved > 0 ? new Intl.NumberFormat(lang, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(s.totalSaved * prices.nimUsd) : null
+  // Same USD format as everywhere (format.js). Hidden while prices load and when nothing is saved.
+  const usd = prices && s.totalSaved > 0 ? fmtUsd(s.totalSaved * prices.nimUsd, lang) : null
   const earnedText = earned === undefined ? '…' : earned === null ? '-' : `+${fmtNim(earned, lang)}`
 
   const stats = [
