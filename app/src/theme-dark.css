@@ -369,14 +369,6 @@ svg circle:first-child[stroke="#e6dccf"], svg circle:first-child[stroke="#35323f
 
 /* Wave 2B: Profile tab */
 .prof-head { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
-.prof-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.prof-stat { background: var(--card); border: 1px solid #2b2834; border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.prof-stat b { font: 600 26px/1.1 var(--font-display); color: var(--cream); overflow-wrap: anywhere; }
-.prof-stat b small { font: 600 13px var(--font-body); color: var(--muted); }
-.prof-stat b.mint { color: var(--teal); }
-.prof-stat b.date { font-size: 20px; }
-.prof-stat span { font-size: 12.5px; color: var(--muted); }
-.prof-stat em { font-style: normal; font-size: 12px; color: var(--muted); }
 .prof-empty { display: flex; flex-direction: column; gap: 12px; text-align: center; padding: 8px 0; }
 .prof-empty p { margin: 0; color: var(--muted); }
 
@@ -608,3 +600,44 @@ svg circle:first-child[stroke="#e6dccf"], svg circle:first-child[stroke="#35323f
 .bs-values .price-chip > i { width: 14px; height: 14px; border-radius: 50%; display: grid; place-items: center; background: rgba(255, 246, 236, .22);
   font: 700 9px/1 var(--font-body); font-style: normal; }
 .bs-note { margin: 0; }
+
+/* Round 2F: Goals greeting row, Profile name, Total saved hero and stat tiles. */
+.greet-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.greet-row .hello { min-width: 0; }
+.greet-row .cdots { flex-shrink: 0; }
+
+.prof-who { display: flex; align-items: center; gap: 10px; }
+.prof-avatar { width: 36px; height: 36px; flex-shrink: 0; border-radius: 50%; background: #E8482A; color: #fff; display: grid; place-items: center; font: 700 16px var(--font-display); }
+.prof-name { min-width: 0; font: 600 20px var(--font-display); color: var(--cream); overflow-wrap: anywhere; }
+
+.prof-hero { display: flex; flex-direction: column; align-items: flex-start; border-radius: 22px; padding: 18px; border: 1px solid #3a2a2e;
+  background: radial-gradient(120% 140% at 100% 0%, rgba(232, 72, 42, .38), transparent 60%), linear-gradient(160deg, #2a2230, #1d1b23); }
+.prof-hero-head { display: flex; align-items: center; gap: 10px; font: 600 14px var(--font-body); color: #d9d4df; }
+.prof-total { margin-top: 12px; font: 700 36px/1.1 var(--font-display); color: var(--cream); overflow-wrap: anywhere; }
+.prof-total small { font: 600 15px var(--font-body); color: #c9c3d1; }
+.prof-usd { margin-top: 4px; font-size: 13px; color: #c9c3d1; }
+.prof-pill { margin-top: 10px; display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 999px;
+  background: rgba(43, 196, 143, .14); color: var(--teal); font: 600 13px var(--font-body); max-width: 100%; }
+.prof-pill > i { width: 8px; height: 8px; flex-shrink: 0; border-radius: 50%; background: var(--teal); box-shadow: 0 0 0 4px rgba(43, 196, 143, .18); }
+
+.prof-ic { width: 34px; height: 34px; flex-shrink: 0; border-radius: 11px; display: grid; place-items: center; }
+.prof-ic.coral { background: rgba(232, 72, 42, .18); color: #ff7a5c; }
+.prof-ic.mint { background: rgba(43, 196, 143, .16); color: var(--teal); }
+.prof-ic.butter { background: rgba(255, 201, 77, .16); color: #FFC94D; }
+.prof-ic.cream { background: rgba(255, 246, 236, .09); color: #e9e2d8; }
+
+.prof-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.prof-tile { position: relative; overflow: hidden; isolation: isolate; min-width: 0; display: flex; flex-direction: column; gap: 6px;
+  background: var(--card); border: 1px solid #2b2834; border-radius: 18px; padding: 14px; }
+.prof-tile::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: radial-gradient(90% 80% at 0% 0%, var(--tint), transparent 70%); }
+.prof-tile.coral { --tint: rgba(232, 72, 42, .16); }
+.prof-tile.mint { --tint: rgba(43, 196, 143, .14); }
+.prof-tile.butter { --tint: rgba(255, 201, 77, .13); }
+.prof-tile.cream { --tint: rgba(255, 246, 236, .06); }
+.prof-tile b { margin-top: 6px; font: 700 28px/1.1 var(--font-display); overflow-wrap: anywhere; }
+.prof-tile b.date { font-size: 19px; }
+.prof-tile.coral b { color: #ff7a5c; }
+.prof-tile.mint b { color: var(--teal); }
+.prof-tile.butter b { color: #FFC94D; }
+.prof-tile.cream b { color: var(--cream); }
+.prof-label { font-size: 12.5px; color: var(--muted); }

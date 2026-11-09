@@ -1,7 +1,7 @@
 import { CardIssue } from '../components/CardIssue.jsx'
 import { useRef, useState } from 'react'
 import { useApp } from '../App.jsx'
-import { detailText, fromText, itemLabel, itemName } from '../lib/itemName.js'
+import { detailText, fromText, itemLabel } from '../lib/itemName.js'
 import { BrandLogo, Header, Ring, DibsMark } from '../components/ui.jsx'
 import { listGoals, progress } from '../lib/goals.js'
 import { BRANDS, catalogBrands, brandOf } from '../lib/brands.js'
@@ -14,11 +14,18 @@ import { getName } from '../lib/name.js'
 import { MilestoneLine, useGoalMilestone } from '../components/Milestone.jsx'
 import { GoalDot, GoalStatus, goalPace } from '../components/GoalStatus.jsx'
 
-// "Hi Sam" when the user gave a name during onboarding or in More; nothing otherwise.
-function Hello({ onInk = false }) {
+// Welcome screen (no goal yet): "Welcome, Sam" when the user gave a name during onboarding or in More; nothing otherwise.
+function Hello() {
   const { t } = useApp()
   const name = getName()
-  return name ? <p className={`hello${onInk ? ' on-ink' : ''}`}>{t('home_hi', { name })}</p> : null
+  return name ? <p className="hello on-ink">{t('greet_first', { name })}</p> : null
+}
+
+// Hub: "Welcome back, Sam", or "Welcome back" when no name is saved.
+function Greeting() {
+  const { t } = useApp()
+  const name = getName()
+  return <p className="hello">{name ? t('greet_back', { name }) : t('greet_back_anon')}</p>
 }
 
 // "Call dibs. Save up." -> ["Call dibs.", "Save up."]
@@ -55,7 +62,7 @@ function Welcome() {
           </svg>
           <DibsMark className="big-mark" />
         </div>
-        <Hello onInk />
+        <Hello />
         <p className="tl">{splitFirst(t('welcome_t1'))[0]} <span className="dim">{splitFirst(t('welcome_t1'))[1]}</span><br /><span className="last">{t('welcome_t2')}</span></p>
         <p className="sub">{t('welcome_sub')}</p>
       </div>
@@ -104,8 +111,9 @@ function Hub({ goals }) {
     <>
       <Header langChip />
       <main className="screen">
-        <Hello />
-        {live.length > 1 ? <GoalWallet goals={live} earned={earned} /> : active && <ActiveGoal goal={active} earned={earned} />}
+        <h2 className="title">{t('tab_goals')}</h2>
+        {/* Several goals: the greeting shares its row with the carousel dots (GoalWallet). One goal: greeting, then the card. */}
+        {live.length > 1 ? <GoalWallet goals={live} earned={earned} /> : <><Greeting />{active && <GoalHero goal={active} earned={earned} />}</>}
         {past.length > 0 && <PastList goals={past.slice(0, 3)} title={t('home_past')} />}
         {past.length > 3 && (
           <button type="button" className="see-all-link" onClick={() => { reset('history', { focus: 'cards' }); window.scrollTo(0, 0) }}>{t('home_see_all', { n: past.length })}</button>
@@ -149,20 +157,6 @@ export function PastList({ goals, title }) {
   )
 }
 
-function ActiveGoal({ goal, earned }) {
-  const { t } = useApp()
-  const pct = progress(goal)
-  return (
-    <>
-      <div>
-        <p className="small" style={{ color: 'var(--gold)', fontWeight: 600 }}>{t('home_pct', { pct: Math.round(pct * 100) })}</p>
-        <h2 className="title">{itemName(t, goal, { title: true })}</h2>
-      </div>
-      <GoalHero goal={goal} earned={earned} />
-    </>
-  )
-}
-
 // Several goals at once: a wallet of cards. Tabs to pick one, swipe between them,
 // each card keeps its own Add and Details. One staker underneath; goals are envelopes.
 function GoalWallet({ goals, earned }) {
@@ -185,7 +179,7 @@ function GoalWallet({ goals, earned }) {
   }
   return (
     <>
-      <div className="sec-head"><h2 className="title">{t('home_title')}</h2><CarouselDots count={goals.length} current={cur} /></div>
+      <div className="greet-row"><Greeting /><CarouselDots count={goals.length} current={cur} /></div>
       <div className="gw-tabs" role="tablist">
         {goals.map((g, k) => (
           <button type="button" role="tab" aria-selected={k === i} key={g.id} className={`gw-tab${k === i ? ' on' : ''}`} onClick={() => pick(k)}>
