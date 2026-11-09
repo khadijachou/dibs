@@ -5,6 +5,8 @@ import { brandOf, catalogBrands, pickAmounts } from '../lib/brands.js'
 import { findItem } from '../lib/catalog.js'
 import { createGoal } from '../lib/goals.js'
 import { usdToNim } from '../lib/price.js'
+import { poolName } from '../lib/pace.js'
+import { playPop } from '../lib/sound.js'
 import { addDays, fmtDate, fmtNim, fmtUsd } from '../lib/format.js'
 import { useCountUp } from '../lib/useCountUp.js'
 
@@ -43,6 +45,7 @@ export default function Plan({ brandKey, itemId, moveFrom = null }) {
   const b = brand || brandOf(item)
 
   const create = () => {
+    playPop() // the Dibs! stamp, from this tap
     const goal = createGoal(address, { item, targetNim, deadline, brand: b, nimUsd: prices.nimUsd })
     reset('goal', { goalId: goal.id, created: true, moveFrom })
   }
@@ -89,7 +92,7 @@ export default function Plan({ brandKey, itemId, moveFrom = null }) {
           <div className="hint">{t('plan_suggest2', { amount: fmtNim(weekly, lang), date: fmtDate(deadline, lang) })}</div>
         </section>
         <div className="facts">
-          <div className="fact"><b className="dot">{t('plan_earns_t')}</b>{t('plan_earns_b')}</div>
+          <div className="fact"><b className="dot">{t('plan_earns_t')}</b>{t('plan_earns_b', { validator: poolName() })}</div>
           <div className="fact"><b>{t('plan_wait_t', { min: 12, max: 24 })}</b>{t('plan_wait_b')}</div>
         </div>
         <div className="bottom">

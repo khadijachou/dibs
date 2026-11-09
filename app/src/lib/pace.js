@@ -1,5 +1,6 @@
 // Saving plan maths shared by the Plan and Goal screens (UI v2.2).
 import { savedNim } from './goals.js'
+import { config } from './config.js'
 
 const DAY = 864e5
 const WEEK = 7 * DAY
@@ -29,6 +30,10 @@ export function planOf(goal, now = Date.now()) {
   }
   return { totalWeeks, weekly, saved, remaining, weekIdx, weeksLeft, daysLeft, weeksDone, pace }
 }
+
+// Known pools, by validator address. Plan and Goal both show this name.
+const POOLS = { 'NQ15 HNAH YRVH DFVM YHAG BSXG 0QHK KA0Q XDR7': 'Garuda Pool' }
+export const poolName = () => POOLS[config.defaultValidator] || shortAddress(config.defaultValidator) || 'Nimiq staking'
 
 export const shortAddress = (a) => {
   if (!a) return ''

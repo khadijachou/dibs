@@ -233,11 +233,11 @@ input.email { width: 100%; height: 48px; border-radius: 12px; border: 1.5px soli
 .pill.tall { height: auto; padding: 9px 4px; }
 .target-num { font: 600 30px/1 var(--font-display); }
 .rate { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
-.rate::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--teal); }
+.rate::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
 .rate.off::before { background: #b9b6c2; }
 .facts { display: flex; gap: 8px; }
-.fact { flex: 1; background: var(--card); border-radius: 12px; padding: 10px 12px; font-size: 12px; color: var(--muted); line-height: 1.4; }
-.fact b { display: block; color: var(--navy); font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+.fact { flex: 1; background: var(--card); border-radius: 12px; padding: 10px; font-size: 11.5px; color: var(--muted); line-height: 1.4; }
+.fact b { display: block; color: var(--navy); font-size: 12.5px; white-space: nowrap; font-weight: 600; margin-bottom: 2px; }
 .fact b.dot::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--teal); margin-right: 6px; }
 /* Main action stays reachable on long screens (Plan, Goal). */
 .screen > .bottom { position: sticky; bottom: 0; padding-top: 14px; padding-bottom: 4px; background: linear-gradient(rgba(255,246,236,0), var(--ground) 14px); z-index: 2; }

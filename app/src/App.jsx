@@ -54,6 +54,8 @@ export default function App() {
   // Landing: splash at least 900 ms, onboarding on first run without waiting for the wallet.
   const [onboarded, setOnboarded] = useState(() => { try { return localStorage.getItem('dibs.onboarded') === '1' } catch { return false } })
   const [splashMin, setSplashMin] = useState(false)
+  const [splashGone, setSplashGone] = useState(false)
+  const hideSplash = useCallback(() => setSplashGone(true), [])
   useEffect(() => { const id = setTimeout(() => setSplashMin(true), 900); return () => clearTimeout(id) }, [])
   const finishOnboarding = useCallback(() => {
     try { localStorage.setItem('dibs.onboarded', '1') } catch { /* private mode */ }
@@ -110,7 +112,9 @@ export default function App() {
 
   const ctx = { t, lang, setLang, address, balance, refreshBalance, prices, demo: isDemo(), go, back, reset, toast, canGoBack: history.length > 0 }
 
-  if (!splashMin) return <AppCtx.Provider value={ctx}><Splash /></AppCtx.Provider>
+  // The launch splash leaves (ring completes, then fades) once the next screen is ready to show.
+  const splashDone = splashMin && (ready || Boolean(fatal) || (!onboarded && !isLab))
+  if (!splashGone) return <AppCtx.Provider value={ctx}><Splash done={splashDone} onGone={hideSplash} /></AppCtx.Provider>
   if (!onboarded && !isLab) return <AppCtx.Provider value={ctx}><Onboarding onDone={finishOnboarding} /></AppCtx.Provider>
   if (fatal) {
     return (

@@ -3,9 +3,9 @@ import { useApp } from '../App.jsx'
 import { BrandLogo, FieldError, Header, Notice, Ring, Stamp, WeekDots } from '../components/ui.jsx'
 import { classify, lastLogText } from '../lib/errors.js'
 import { getGoal, progress, savedNim, stakedInGoals, stakerFlag } from '../lib/goals.js'
-import { planOf, shortAddress } from '../lib/pace.js'
+import { planOf, poolName, shortAddress } from '../lib/pace.js'
 import { goalBrand, PaceLine } from './Home.jsx'
-import { config, MIN_NEW_STAKER_NIM, toNim } from '../lib/config.js'
+import { MIN_NEW_STAKER_NIM, toNim } from '../lib/config.js'
 import { readStaker, stakeNim } from '../lib/nimiq.js'
 import { confirmPending, expired, pending, stakedLuna, startPending, waitForDeposit } from '../lib/deposit.js'
 import { fmtDate, fmtNim, weeksUntil } from '../lib/format.js'
@@ -14,14 +14,12 @@ import { useCountUp } from '../lib/useCountUp.js'
 
 const parseNim = (v) => Math.floor(Number(String(v).replace(/[^\d.]/g, ''))) || 0
 
-// Known pools, by validator address.
 // The pay lock Redeem keeps while a payment's outcome is unknown. Read only.
 // "A new goal" opens the Move sheet once, not again when this screen is revisited.
 const movesOpened = new Set()
 
 const payLocked = () => { try { return Boolean(localStorage.getItem('dibs.pending')) } catch { return false } }
 
-const POOLS = { 'NQ15 HNAH YRVH DFVM YHAG BSXG 0QHK KA0Q XDR7': 'Garuda Pool' }
 
 
 export default function Goal({ goalId, created, amount: preset, moveFrom = null }) {
@@ -114,7 +112,7 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null 
   const amountNim = parseNim(amount)
   const p = planOf(goal)
   const brand = goalBrand(goal)
-  const pool = POOLS[config.defaultValidator] || shortAddress(config.defaultValidator) || 'Nimiq staking'
+  const pool = poolName()
   const tooMuch = balance != null && amountNim > balance
   // BUG-12: no staker yet and the wallet can't cover the 100 NIM first deposit. One message, no pills, button off.
   const cantOpen = !hasStaker && balance != null && balance < MIN_NEW_STAKER_NIM
@@ -199,7 +197,7 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null 
             </div>
           </div>
           <WeekDots total={p.totalWeeks} done={p.weeksDone} now={p.weekIdx}
-            left={t('weeks_done', { done: p.weeksDone, total: p.totalWeeks })}
+            left={t('week_of', { n: Math.min(p.totalWeeks, p.weekIdx + 1), total: p.totalWeeks })}
             right={reached ? null : t('goal_this_week', { amount: fmtNim(Math.min(remaining, p.pace.amount || p.weekly), lang) })} />
           {saved > 0 && <div className="acct">{t('goal_account', { address: '' }).trim()} <b>{shortAddress(address)}</b><span className="pool">● {pool}</span></div>}
         </section>
@@ -220,7 +218,7 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null 
             ) : (
               <>
                 {underMin && <FieldError>{t('err_DEP_FIRST_UNDER_MIN_field', { min: MIN_NEW_STAKER_NIM })}</FieldError>}
-                {overBalance && <FieldError>{t('err_DEP_ABOVE_BALANCE_field', { amount: fmtNim(balance, lang) })}</FieldError>}
+                {overBalance && <FieldError>{t('err_DEP_ABOVE_BALANCE_field', { nim: fmtNim(balance, lang) })}</FieldError>}
                 <div className="pills">
                   {underMin && <button type="button" className="pill fix" onClick={() => setAmount(String(MIN_NEW_STAKER_NIM))}>{MIN_NEW_STAKER_NIM} NIM</button>}
                   {overBalance && balance >= (hasStaker ? 1 : MIN_NEW_STAKER_NIM) && <button type="button" className="pill fix" onClick={() => setAmount(String(Math.floor(balance)))}>{fmtNim(balance, lang)}</button>}

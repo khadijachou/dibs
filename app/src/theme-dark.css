@@ -69,8 +69,9 @@ h1, h2, h3, .title, .tile b, .btile b, .pick b, .past b, .sec-head h3 { color: v
 .fact b { color: var(--cream); }
 .hint { background: var(--gold-soft); color: var(--cream); }
 .trust i, .note .ico { background: var(--teal-soft); color: var(--teal); }
-.earning, .rate, .acct .pool { color: var(--teal); }
-.earning::before, .rate::before, .fact b.dot::before { background: var(--teal); }
+.earning, .acct .pool { color: var(--teal); }
+.earning::before, .fact b.dot::before { background: var(--teal); }
+.rate { color: var(--muted); } .rate::before { background: var(--muted); }
 .rate.off { color: var(--muted); } .rate.off::before { background: #6f6c7b; }
 .amount { border-bottom-color: #3a3744; } .amount input { color: var(--cream); }
 .amount.bad { border-bottom-color: var(--red); }
@@ -171,6 +172,12 @@ svg circle:first-child[stroke="#e6dccf"], svg circle:first-child[stroke="#35323f
 .splash-mid { position: relative; display: flex; flex-direction: column; align-items: center; gap: 18px; animation: splash-in .6s cubic-bezier(.2, .8, .2, 1) both; }
 .splash-mark { position: relative; width: 132px; height: 132px; }
 .splash-mark svg { position: absolute; inset: 0; }
+.splash-track { stroke: rgba(232, 72, 42, .16); }
+/* The ring draws itself, then clears from its start, in a loop while Dibs connects. */
+.splash-arc { stroke-dashoffset: 0; animation: splash-draw 1.8s cubic-bezier(.45, 0, .25, 1) infinite; }
+@keyframes splash-draw { 0% { stroke-dashoffset: var(--c); } 55% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: calc(var(--c) * -1); } }
+.splash.out { opacity: 0; transition: opacity .3s ease-out; }
+.splash-loading { display: none; margin: -6px 0 0; font-size: 13px; color: var(--muted); }
 .splash-mark img { position: absolute; left: 50%; top: 50%; width: 52px; transform: translate(calc(-50% - 2px), -50%); }
 .splash-word { height: 34px; }
 .splash-tag { margin: 4px 0 0; display: flex; flex-direction: column; align-items: center; font: 700 34px/1.12 var(--font-display); letter-spacing: -.01em; text-align: center; }
@@ -191,7 +198,7 @@ svg circle:first-child[stroke="#e6dccf"], svg circle:first-child[stroke="#35323f
 .ob-dots { display: flex; justify-content: center; gap: 6px; }
 .ob-dots i { width: 8px; height: 8px; border-radius: 4px; background: #3a3744; }
 .ob-dots i.on { width: 28px; background: var(--gold); }
-.ob-trust { align-self: center; display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 10px; margin: 0; padding: 9px 16px; border-radius: 18px;
+.ob-trust { align-self: center; display: flex; flex-direction: column; align-items: center; gap: 3px; max-width: 100%; box-sizing: border-box; margin: 0; padding: 9px 16px; border-radius: 18px;
   background: var(--card); border: 1px solid #2f2c38; font-size: 13px; color: #cfcad8; text-align: center; }
 .ob-trust b { display: inline-flex; align-items: center; gap: 5px; color: var(--teal); font-weight: 600; }
 
@@ -250,7 +257,9 @@ svg circle:first-child[stroke="#e6dccf"], svg circle:first-child[stroke="#35323f
 @keyframes pop-in { from { opacity: 0; transform: translateY(-4px) scale(.96); } }
 
 @media (prefers-reduced-motion: reduce) {
-  .fc, .splash-mid, .gcard, .coin, .ccard, .lang-pop { animation: none; }
+  .fc, .splash-mid, .gcard, .coin, .ccard, .lang-pop, .splash-arc { animation: none; }
+  .splash-arc { stroke-dashoffset: 0; }
+  .splash-loading { display: block; }
   .ob-track, .ob-slide .ob-ill > * { transition: none; }
   .ob-slide .ob-ill > .ill-ring { transform: none; }
 }
