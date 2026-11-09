@@ -95,6 +95,7 @@ export default function Catalog({ moveFrom = null }) {
               <BrandLogo brand={b} />
               <b>{b.name}</b>
               <span>{t('cat_from', { price: b.from })}</span>
+              {b.estimated && <span className="btile-est">{t('price_checkout')}</span>}
             </button>
           ))}
         </div>

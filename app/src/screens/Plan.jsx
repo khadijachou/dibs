@@ -11,6 +11,11 @@ import { playPop } from '../lib/sound.js'
 import { addDays, fmtDate, fmtNim, fmtUsd } from '../lib/format.js'
 import { useCountUp } from '../lib/useCountUp.js'
 
+// BUG-17: an item with live: false has no shop quote; its usd is the catalogue's stored placeholder.
+// Its target gets a 10 % safety margin so the user does not fall short when the shop confirms the price.
+const SAFETY_MARGIN = 0.1
+const targetUsdOf = (item) => (item.live === false ? item.usd * (1 + SAFETY_MARGIN) : item.usd)
+
 const OPTIONS = [
   { key: 'plan_w2', days: 14 },
   { key: 'plan_m2', days: 61 },
@@ -31,13 +36,14 @@ export default function Plan({ brandKey, itemId, moveFrom = null }) {
 
   const item = amounts.find((i) => i.id === pickedId) || amounts[0]
   // Display only: null until prices load, so the first real target appears without counting from 0.
-  const targetShown = useCountUp(item && prices ? usdToNim(item.usd, prices.nimUsd) : null)
+  const targetShown = useCountUp(item && prices ? usdToNim(targetUsdOf(item), prices.nimUsd) : null)
   if (!item) return null
   if (!prices) {
     return <><Header onBack={back} /><main className="screen"><p className="sub">{t('loading')}</p></main></>
   }
 
-  const targetNim = usdToNim(item.usd, prices.nimUsd)
+  const estimated = item.live === false
+  const targetNim = usdToNim(targetUsdOf(item), prices.nimUsd)
   const deadline = addDays(days)
   const weeks = Math.max(1, Math.ceil(days / 7))
   const weekly = Math.ceil(targetNim / weeks)
@@ -69,16 +75,17 @@ export default function Plan({ brandKey, itemId, moveFrom = null }) {
               <div className="pills" role="group" aria-label={t('plan_card_value')}>
                 {amounts.map((a) => (
                   <button type="button" key={a.id} className={`pill tall${a.id === item.id ? ' on' : ''}`} aria-pressed={a.id === item.id} onClick={() => setPickedId(a.id)}>
-                    {a.detail}<small>{t('plan_you_pay', { price: fmtUsd(a.usd, lang) })}</small>
+                    {a.detail}<small>{t('plan_you_pay', { price: (a.live === false ? '≈ ' : '') + fmtUsd(a.usd, lang) })}</small>
                   </button>
                 ))}
               </div>
             </>
           )}
-          <p className="small plan-note">{amounts.length > 1 ? t('plan_price_note') : `${t('plan_price', { usd: fmtUsd(item.usd, lang) })}. ${t('plan_price_note')}`}</p>
+          <p className="small plan-note">{amounts.length > 1 ? t('plan_price_note') : estimated ? `${t('price_checkout')}.` : `${t('plan_price', { usd: fmtUsd(item.usd, lang) })}. ${t('plan_price_note')}`}</p>
           <div>
             <span className="small">{t('plan_target2')}</span>
             <div className="target-num" style={{ margin: '4px 0 6px' }}>{fmtNim(Math.round(targetShown), lang)} NIM</div>
+            {estimated && <p className="plan-margin">{t('price_checkout')} · {t('plan_margin')}</p>}
             <div className={`rate${prices.live ? '' : ' off'}`}>
               {t(prices.live ? 'plan_rate_live' : 'plan_rate_off2', { rate: fmtUsd(prices.nimUsd, lang), ago })}
             </div>

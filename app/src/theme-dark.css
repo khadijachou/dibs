@@ -492,3 +492,7 @@ svg circle:first-child[stroke="#e6dccf"], svg circle:first-child[stroke="#35323f
   .btile-glow { display: none; }
   .cat-ind.ready i { transition: none; }
 }
+
+/* BUG-17: values without a live shop quote (live: false). Butter is for ink or coral grounds only, so this is muted cream. */
+.btile .btile-est { font-size: 11px; color: var(--cream); opacity: .78; margin-top: 4px; }
+.plan-margin { margin: -2px 0 6px; font-size: 12.5px; font-weight: 600; color: var(--cream); }

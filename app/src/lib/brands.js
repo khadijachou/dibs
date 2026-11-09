@@ -63,7 +63,9 @@ export function catalogBrands() {
     .map((b) => {
       const items = b.items.slice().sort((x, y) => Number(x.faceValue || 0) - Number(y.faceValue || 0))
       const min = items[0]
-      return { ...b, items, from: `${min.faceValue || ''} ${currencyOf(min)}`.trim() }
+      // estimated: at least one value has no live shop quote (live: false), so its price is the catalogue's
+      // stored placeholder (server fallbackUsd) and is only confirmed at checkout.
+      return { ...b, items, from: `${min.faceValue || ''} ${currencyOf(min)}`.trim(), estimated: items.some((i) => i.live === false) }
     })
     .sort((a, b) => order(a.key) - order(b.key))
 }

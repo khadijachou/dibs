@@ -419,6 +419,8 @@ const en = {
   status_bought: "Bought on {date}",
   status_withdrawn: "Withdrawn · NIM back in your wallet",
   plan_price_note: "That's the shop's price for the card. Dibs adds no fee.",
+  price_checkout: 'Price confirmed at checkout',
+  plan_margin: 'Includes a 10% safety margin',
   plan_target_note: "Your target is set at today's NIM price. If the price moves, you may need a little more or less at the end.",
 }
 
@@ -843,6 +845,8 @@ const fr = {
   status_bought: "Achetée le {date}",
   status_withdrawn: "Retirés · NIM de retour dans votre portefeuille",
   plan_price_note: "C'est le prix de la boutique pour la carte. Dibs n'ajoute pas de frais.",
+  price_checkout: 'Prix confirmé au paiement',
+  plan_margin: 'Marge de sécurité de 10 % incluse',
   plan_target_note: "Votre cible est fixée au cours du NIM d'aujourd'hui. Si le cours bouge, il vous faudra peut-être un peu plus ou un peu moins à la fin.",
 }
 
@@ -1267,6 +1271,8 @@ const es = {
   status_bought: "Comprada el {date}",
   status_withdrawn: "Retirados · NIM de vuelta en tu billetera",
   plan_price_note: "Es el precio de la tienda por la tarjeta. Dibs no cobra comisión.",
+  price_checkout: 'Precio confirmado al pagar',
+  plan_margin: 'Incluye un margen de seguridad del 10 %',
   plan_target_note: "Tu meta se fija al precio del NIM de hoy. Si el precio cambia, puede que necesites un poco más o un poco menos al final.",
 }
 
