@@ -31,6 +31,17 @@ export const BRAND_ICONS = {
 
 export const brandIcon = (key) => BRAND_ICONS[key] || null
 
+// Brands whose simple-icons colour is black or near black: drawn like their real app icons instead of a black glyph
+// on a white plate. Everything else keeps the brand-coloured glyph on white.
+//   Steam: white logo on Steam's dark navy #171A21. Apple, Uber: white logo on black.
+//   Roblox stays black on white (its app icon is the dark tilted square on a light ground).
+//   Google Play stays on white (#414141 glyph; the real icon is multicolour, never dark).
+export const DARK_TILES = {
+  steam: { bg: '#171A21', fg: '#FFFFFF' },
+  apple: { bg: '#000000', fg: '#FFFFFF' },
+  uber: { bg: '#000000', fg: '#FFFFFF' },
+}
+
 // Tint for the tile and the press glow. Brands whose official colour is black or near-black would vanish on
 // the dark card: Steam uses its official light blue, the others a neutral silver.
 const NEUTRAL = '#C9C6D2'

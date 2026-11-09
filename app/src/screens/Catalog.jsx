@@ -46,7 +46,7 @@ function useChipSlide(active, reduced) {
 // moveFrom: opened from Move > "A new goal"; passed on to Plan and then to the new goal.
 // changeFor: a goal id whose card is no longer available (components/CardIssue.jsx); Plan then swaps that goal's card.
 export default function Catalog({ moveFrom = null, changeFor = null }) {
-  const { t, go, back, canGoBack } = useApp()
+  const { t, go, back, canGoBack, toast } = useApp()
   const reduced = useReducedMotion()
   const brands = catalogBrands()
   const [chip, setChip] = useState('all')
@@ -83,9 +83,10 @@ export default function Catalog({ moveFrom = null, changeFor = null }) {
           {usedChips.map((c) => chipBtn(c, t('chip_' + c)))}
         </div>
         {/* key: a new grid per category, so the entrance plays on first load and on each switch, never on scroll. */}
-        <div className={`grid${reduced ? '' : ' enter'}`} key={chip}>
+        <div className={`grid cat-grid${reduced ? '' : ' enter'}`} key={chip}>
           {shown.map((b, i) => (
             <button type="button" key={b.key} className={`btile${b.key === picked ? ' on' : ''}`} aria-pressed={b.key === picked}
+              aria-describedby={b.estimated ? `est-${b.key}` : undefined}
               style={{ '--brand': brandColor(b), '--delay': `${Math.min(i * STAGGER_MS, STAGGER_MAX_MS)}ms` }}
               onClick={() => pick(b.key)}>
               {glow?.key === b.key && <i className="btile-glow" key={glow.n} aria-hidden="true" onAnimationEnd={() => setGlow(null)} />}
@@ -95,7 +96,13 @@ export default function Catalog({ moveFrom = null, changeFor = null }) {
               <BrandLogo brand={b} />
               <b>{b.name}</b>
               <span>{fromText(t, b)}</span>
-              {b.estimated && <span className="btile-est">{t('price_checkout')}</span>}
+              {b.estimated && (
+                // One-line chip; a tap shows the full explanation (the tile itself still picks the brand elsewhere).
+                <span className="price-chip" onClick={(e) => { e.stopPropagation(); toast(t('price_checkout_info')) }}>
+                  <i aria-hidden="true">i</i>{t('price_chip')}
+                  <span className="sr-only" id={`est-${b.key}`}>{t('price_checkout_info')}</span>
+                </span>
+              )}
             </button>
           ))}
         </div>

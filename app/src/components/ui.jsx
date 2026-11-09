@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { useApp } from '../App.jsx'
 import { fmtNim } from '../lib/format.js'
 import { useCountUp } from '../lib/useCountUp.js'
-import { brandIcon } from '../lib/brandIcons.js'
+import { brandIcon, DARK_TILES } from '../lib/brandIcons.js'
 
 const PATHS = {
   back: <path d="M15 5l-7 7 7 7" />,
@@ -103,6 +103,7 @@ export function Wordmark({ cream = true, color, className = '' }) {
 // flip face, Stake, sheets, splash, onboarding). Always the same box: a div.blogo tile that clips its content
 // (overflow hidden), with one glyph inside (.blogo-glyph):
 //   si:     the brand's simple-icons glyph, inline SVG in its official colour, contained at 64 % on a white plate
+//           (si dark: brands whose colour is black, drawn like their app icon, lib/brandIcons.js DARK_TILES)
 //   img:    the brand PNG (Amazon only), contained with padding on a white plate
 //   letter: the brand's letter in white on the brand colour
 // Containers only set the tile's size and radius (.ut-logo .blogo { width: 68px }); the glyph rules are specific
@@ -110,9 +111,10 @@ export function Wordmark({ cream = true, color, className = '' }) {
 export function BrandLogo({ brand, className = '' }) {
   const icon = brandIcon(brand?.key)
   if (icon) {
+    const dark = DARK_TILES[brand.key] // black-logo brands drawn like their app icons (Steam: white on #171A21)
     return (
-      <div className={`blogo si ${className}`} aria-hidden="true">
-        <svg className="blogo-glyph" viewBox="0 0 24 24" fill={`#${icon.hex}`}><path d={icon.path} /></svg>
+      <div className={`blogo si${dark ? ' dark' : ''} ${className}`} style={dark ? { background: dark.bg } : undefined} aria-hidden="true">
+        <svg className="blogo-glyph" viewBox="0 0 24 24" fill={dark ? dark.fg : `#${icon.hex}`}><path d={icon.path} /></svg>
       </div>
     )
   }

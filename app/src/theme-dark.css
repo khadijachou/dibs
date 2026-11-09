@@ -480,7 +480,11 @@ svg circle:first-child[stroke="#e6dccf"], svg circle:first-child[stroke="#35323f
 }
 
 /* BUG-17: values without a live shop quote (live: false). Butter is for ink or coral grounds only, so this is muted cream. */
-.btile .btile-est { font-size: 11px; color: var(--cream); opacity: .78; margin-top: 4px; }
+/* Compact one-line chip under the price; tap = full explanation (toast). */
+.btile .price-chip { align-self: flex-start; display: inline-flex; align-items: center; gap: 5px; margin-top: 6px; padding: 3px 8px 3px 4px;
+  border-radius: 999px; background: rgba(255, 246, 236, .1); color: var(--cream); font-size: 11px; font-weight: 600; white-space: nowrap; max-width: 100%; }
+.btile .price-chip > i { width: 14px; height: 14px; border-radius: 50%; display: grid; place-items: center; background: rgba(255, 246, 236, .22);
+  font: 700 9px/1 var(--font-body); font-style: normal; flex-shrink: 0; }
 .plan-margin { margin: -2px 0 6px; font-size: 12.5px; font-weight: 600; color: var(--cream); }
 
 /* Letter tiles (brands with no logo source): brand colour, white Poppins letter, same box and radius as the
@@ -493,3 +497,8 @@ svg circle:first-child[stroke="#e6dccf"], svg circle:first-child[stroke="#35323f
 /* Deposit rows (Goal.jsx): the date never breaks ("7 novembre" on one line); only the note under the amount wraps. */
 .list .row > span:last-child { white-space: nowrap; flex-shrink: 0; }
 .list .row > span:first-child { min-width: 0; }
+
+/* Catalogue: every tile the same height (rows share the tallest tile). */
+.grid.cat-grid { grid-auto-rows: 1fr; }
+/* Dark brand tiles (Steam, Apple, Uber): a hairline so the dark plate still reads on the dark card. */
+.blogo.si.dark { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .16); }
