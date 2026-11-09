@@ -12,7 +12,8 @@
   "dependencies": {
     "@nimiq/mini-app-sdk": "0.2.4",
     "react": "19.3.1",
-    "react-dom": "19.3.1"
+    "react-dom": "19.3.1",
+    "simple-icons": "16.36.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "6.1.2",

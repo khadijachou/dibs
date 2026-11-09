@@ -135,6 +135,9 @@ input.email { width: 100%; height: 48px; border-radius: 12px; border: 1.5px soli
 .sec-label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin: 0; }
 .blogo { width: 40px; height: 40px; border-radius: 11px; object-fit: cover; display: block; flex-shrink: 0; }
 .blogo.light { background: #fff; border: 1px solid var(--line); object-fit: contain; }
+/* simple-icons glyph: white plate, glyph at 64 % so every brand sits in the same optical box */
+.blogo.si { display: grid; place-items: center; background: #fff; }
+.blogo.si svg { width: 64%; height: 64%; display: block; }
 .blogo.letter { display: grid; place-items: center; background: var(--navy); color: var(--ground); font: 700 17px var(--font-display); }
 
 /* Welcome */

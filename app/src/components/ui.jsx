@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { useApp } from '../App.jsx'
 import { fmtNim } from '../lib/format.js'
 import { useCountUp } from '../lib/useCountUp.js'
+import { brandIcon } from '../lib/brandIcons.js'
 
 const PATHS = {
   back: <path d="M15 5l-7 7 7 7" />,
@@ -73,8 +74,17 @@ export function Wordmark({ cream = false }) {
   return <img className="wordmark" src={cream ? '/brand/wordmark-cream.png' : '/brand/wordmark-ink.png'} alt="Dibs" />
 }
 
-// Brand logo for a catalogue brand (falls back to a letter tile).
+// Brand logo for a catalogue brand or a goal. Order: the brand's simple-icons glyph (inline SVG in its
+// official colour on a white plate, sharp at any density), else the PNG in public/logos, else a letter tile.
 export function BrandLogo({ brand, className = '' }) {
+  const icon = brandIcon(brand?.key)
+  if (icon) {
+    return (
+      <div className={`blogo si ${className}`} aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill={`#${icon.hex}`}><path d={icon.path} /></svg>
+      </div>
+    )
+  }
   if (!brand?.logo) return <div className={`blogo letter ${className}`} style={brand?.tile ? { background: brand.tile.bg, color: brand.tile.fg } : undefined} aria-hidden="true">{brand?.tile?.letter || (brand?.name || '?')[0]}</div>
   const light = ['amazon', 'playstation', 'googleplay'].includes(brand.key)
   return <img className={`blogo${light ? ' light' : ''} ${className}`} src={brand.logo} alt="" />

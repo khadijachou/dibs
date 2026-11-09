@@ -5,7 +5,8 @@ import { getCatalog } from './catalog.js'
 
 // Order = order on the "All" view. The first eight sit above the fold.
 // slugs marked "confirm" come from the shop site and must be checked on the server (`npm run catalog -- add <slug>`).
-// logo: app/public/logos/<key>.png. tile: letter fallback (brand colours) until the logo exists.
+// Logos: lib/brandIcons.js (simple-icons, by key) first; else logo (app/public/logos/<key>.png);
+// else tile (letter fallback in brand colours). The shop's catalogue data has no product image.
 export const BRANDS = [
   { key: 'steam',       name: 'Steam',             chip: 'games',     logo: '/logos/steam.png',       slugs: ['steam-usa'] },
   { key: 'amazon',      name: 'Amazon',            chip: 'shopping',  logo: '/logos/amazon.png',      slugs: ['amazon_com-usa'], popular: true },
