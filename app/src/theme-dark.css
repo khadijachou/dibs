@@ -349,7 +349,6 @@ svg circle:first-child[stroke="#e6dccf"], svg circle:first-child[stroke="#35323f
 .switch i { position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: var(--cream); transition: transform .15s; }
 .switch.on { background: var(--teal-deep); }
 .switch.on i { transform: translateX(20px); }
-.report-text { width: 100%; background: var(--card); color: var(--cream); border: 1.5px solid #2b2834; border-radius: 12px; padding: 12px; font-size: 13.5px; resize: vertical; }
 @media (prefers-reduced-motion: reduce) { .countdown-row .spin { animation: none; } .switch, .switch i { transition: none; } }
 
 /* Wave 2B: name, earned chip, milestones */
@@ -360,7 +359,6 @@ svg circle:first-child[stroke="#e6dccf"], svg circle:first-child[stroke="#35323f
 .name-input { width: 100%; height: 52px; box-sizing: border-box; background: var(--card); color: var(--cream); border: 1.5px solid #2b2834; border-radius: 14px; padding: 0 14px; font: 500 17px var(--font-body); outline: none; }
 .name-input:focus { border-color: #E8482A; }
 .name-input::placeholder { color: var(--muted); }
-.name-input.small-field { width: 55%; height: 40px; font-size: 15px; text-align: right; }
 .earned-chip { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; padding: 4px 10px; border-radius: 999px; background: var(--teal-soft); color: var(--teal); font-size: 12px; font-weight: 600; white-space: nowrap; }
 .earned-chip::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--teal); }
 .ms-line { margin: 10px 0 0; font: 600 15px var(--font-display); color: var(--butter); text-align: center; animation: ms-in .5s ease-out; }
@@ -371,10 +369,6 @@ svg circle:first-child[stroke="#e6dccf"], svg circle:first-child[stroke="#35323f
 
 /* Wave 2B: Profile tab */
 .prof-head { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
-.link-btn-inline { background: none; border: 0; padding: 2px 0; color: var(--gold); font: 600 14px var(--font-body); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
-.prof-name { width: 100%; display: flex; flex-direction: column; gap: 10px; }
-.prof-name-acts { display: flex; gap: 8px; }
-.prof-name-acts .btn { flex: 1; }
 .prof-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .prof-stat { background: var(--card); border: 1px solid #2b2834; border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .prof-stat b { font: 600 26px/1.1 var(--font-display); color: var(--cream); overflow-wrap: anywhere; }
@@ -552,3 +546,27 @@ svg circle:first-child[stroke="#e6dccf"], svg circle:first-child[stroke="#35323f
   border-radius: 999px; background: rgba(255, 246, 236, .1); color: var(--cream); font: 600 11px var(--font-body); white-space: nowrap; cursor: pointer; }
 .about-card .price-chip > i { width: 14px; height: 14px; border-radius: 50%; display: grid; place-items: center; background: rgba(255, 246, 236, .22);
   font: 700 9px/1 var(--font-body); font-style: normal; }
+
+/* Round 2C: History cards and empty state, name row, Need help */
+.hist-empty { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; padding: 28px 12px 8px; }
+.hist-empty-ic { width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; background: #2a2733; color: var(--muted); margin-bottom: 4px; }
+.hist-empty b { font: 600 17px var(--font-display); color: var(--cream); max-width: 300px; }
+.hist-empty p { margin: 0; font-size: 14px; line-height: 1.5; color: var(--muted); max-width: 320px; }
+.name-row { cursor: pointer; position: relative; }
+.name-row > label { flex-shrink: 0; cursor: pointer; }
+.name-slot { flex: 1; min-width: 0; display: flex; justify-content: flex-end; }
+.name-val { display: flex; align-items: center; gap: 10px; min-width: 0; background: none; border: 0; padding: 0; color: var(--cream); font: 600 15.5px var(--font-body); cursor: pointer; }
+.name-val span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.name-val.empty { color: var(--muted); font-weight: 500; }
+.name-val .chev { color: var(--muted); font-size: 20px; font-weight: 400; }
+/* At rest the field stays mounted and focusable (iOS opens the keyboard only for a focus inside the tap), just invisible. */
+.name-row:not(.editing) .name-edit { position: absolute; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none; }
+.name-edit { position: relative; width: 100%; max-width: 230px; }
+.name-edit input { width: 100%; height: 34px; box-sizing: border-box; background: var(--ground); color: var(--cream); border: 1.5px solid #E8482A; border-radius: 12px; padding: 0 38px 0 12px; font: 500 15.5px var(--font-body); text-align: left; outline: none; }
+.name-edit input::placeholder { color: var(--muted); }
+.name-clear { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 24px; height: 24px; border-radius: 50%; border: 0; background: #3a3744; color: var(--cream); font: 600 15px/1 var(--font-body); display: grid; place-items: center; cursor: pointer; padding: 0; }
+.help-card { background: var(--card); border: 1px solid #2b2834; border-radius: 14px; padding: 16px 14px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.help-card h3 { margin: 0; font: 600 16px var(--font-display); color: var(--cream); }
+.help-card p { margin: 0; font-size: 14px; line-height: 1.5; color: var(--muted); }
+.help-email { max-width: 100%; overflow-wrap: anywhere; text-align: left; background: #2a2733; color: var(--cream); border: 1px solid #3a3744; border-radius: 999px; padding: 8px 14px; font: 600 14px var(--font-body); cursor: pointer; }
+.help-email:active { background: #34303f; }

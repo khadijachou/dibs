@@ -40,7 +40,7 @@ Env (never commit real values; `.env` files and `server/data/` are git-ignored):
 
 ## Shop (Bitrefill MCP)
 
-Server only (`server/src/mcp.js`, `server/src/bitrefill.js`). Client credentials from dynamic registration (`POST https://api.bitrefill.com/oauth/mcp/register`), 6 h bearer renewed automatically. Tools: `search-products` (needs `intent`), `get-product-details` (compact text), `buy-products` (lightning, `return_payment_link: false`, email required), `get-invoice-by-id` (needs the invoice access token, which never leaves the server). Statuses seen: `created` → `complete`; the code is found by a recursive search (code, pin, link…). No-account limits for the whole app: 15 cards + 2 top-ups a day, 500 USD a day, 1,000 USD a month. The UI never names the supplier: say "the shop".
+Server only (`server/src/mcp.js`, `server/src/bitrefill.js`). Client credentials from dynamic registration (`POST https://api.bitrefill.com/oauth/mcp/register`), 6 h bearer renewed automatically. Tools: `search-products` (needs `intent`), `get-product-details` (compact text), `buy-products` (lightning, `return_payment_link: false`, email required), `get-invoice-by-id` (needs the invoice access token, which never leaves the server). Statuses seen: `created` → `complete`; the code is found by a recursive search (code, pin, link…). No-account limits for the whole app: 15 cards + 2 top-ups a day, 500 USD a day, 1,000 USD a month. Bitrefill is named in the FAQ only (More > FAQ); everywhere else the UI says "the shop".
 
 ## Rules for code and copy
 

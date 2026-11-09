@@ -1,17 +1,22 @@
 import { useApp } from '../App.jsx'
 import { itemLabel, localName } from '../lib/itemName.js'
-import { Header } from '../components/ui.jsx'
+import { BrandLogo, Header, Icon } from '../components/ui.jsx'
 import { listGoals } from '../lib/goals.js'
+import { boughtGoals } from '../lib/stats.js'
 import { buildTimeline, shortHash } from '../lib/history.js'
 import { fmtDate, fmtNim } from '../lib/format.js'
+import { goalBrand } from './Home.jsx'
 
 const ICON = { deposit: '+', move: '⇄', unlock: '↧', withdraw: '↩', purchase: '✓' }
 const EXPLORER = 'https://nimiq.watch/#'
 const STEP = { deactivate: 'unlock_s1', retire: 'unlock_s2', remove: 'unlock_s3' }
 
 export default function History() {
-  const { t, lang, address, toast } = useApp()
-  const events = buildTimeline(listGoals(address), (g) => itemLabel(t, g), (s) => localName(t, s, { title: true }))
+  const { t, lang, address, toast, go } = useApp()
+  const goals = listGoals(address)
+  // Newest purchase first, like the timeline.
+  const cards = boughtGoals(goals).sort((a, b) => String(b.payment?.at || b.createdAt).localeCompare(String(a.payment?.at || a.createdAt)))
+  const events = buildTimeline(goals, (g) => itemLabel(t, g), (s) => localName(t, s, { title: true }))
 
   const title = (e) => {
     if (e.type === 'deposit') return t('hist_deposit')
@@ -29,8 +34,26 @@ export default function History() {
       <Header />
       <main className="screen">
         <h2 className="title">{t('tab_history')}</h2>
+
+        <section className="more-sec">
+          <div className="sec-head"><h3>{t('hist_cards')}</h3></div>
+          {cards.length === 0 ? (
+            <p className="small">{t('hist_cards_empty')}</p>
+          ) : cards.map((g) => (
+            <button type="button" key={g.id} className="past" onClick={() => go('done', { goalId: g.id, mode: 'details' })}>
+              <BrandLogo brand={goalBrand(g)} />
+              <div><b>{itemLabel(t, g)}</b><span className="s">{fmtDate(g.payment?.at || g.createdAt, lang)}</span></div>
+              <span className="code">{t('home_code')}</span>
+            </button>
+          ))}
+        </section>
+
         {events.length === 0 ? (
-          <p className="sub">{t('hist_empty')}</p>
+          <section className="hist-empty">
+            <span className="hist-empty-ic" aria-hidden="true"><Icon name="tabHistory" size={28} /></span>
+            <b>{t('hist_empty_title')}</b>
+            <p>{t('hist_empty_body')}</p>
+          </section>
         ) : (
           <ol className="timeline">
             {events.map((e) => (

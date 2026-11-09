@@ -5,14 +5,13 @@ import { listGoals } from '../lib/goals.js'
 import { profileStats } from '../lib/stats.js'
 import { stakeSummary } from '../lib/earned.js'
 import { readStaker } from '../lib/nimiq.js'
-import { NAME_MAX, getName, setName } from '../lib/name.js'
+import { getName } from '../lib/name.js'
 import { fmtDateYear, fmtNim, fmtUsd } from '../lib/format.js'
 
 // Profile: a greeting and six numbers, all from data the app already has (goal ledger, staker, dibs.name).
 export default function Profile() {
   const { t, lang, address, prices, reset } = useApp()
-  const [name, setNameState] = useState(getName)
-  const [editing, setEditing] = useState(false)
+  const name = getName() // changed only in More > Settings
   // Earned from staking: the Stake tab's own figure. undefined while reading, null when the chain is unreadable.
   const [earned, setEarned] = useState(undefined)
   useEffect(() => {
@@ -42,10 +41,7 @@ export default function Profile() {
       <main className="screen">
         <section className="prof-head">
           <h2 className="title">{name ? t('home_hi', { name }) : t('prof_title_anon')}</h2>
-          {!editing && (
-            <button type="button" className="link-btn-inline" onClick={() => setEditing(true)}>{t(name ? 'prof_edit_name' : 'prof_add_name')}</button>
-          )}
-          {editing && <NameForm initial={name} onDone={(v) => { if (v !== undefined) setNameState(v); setEditing(false) }} />}
+          <p className="sub">{t('prof_intro')}</p>
         </section>
 
         <section className="prof-grid">
@@ -66,24 +62,5 @@ export default function Profile() {
         )}
       </main>
     </>
-  )
-}
-
-// The same dibs.name as onboarding and More > Settings. onDone(value) after Save, onDone() after Cancel.
-function NameForm({ initial, onDone }) {
-  const { t } = useApp()
-  const [value, setValue] = useState(initial)
-  const save = (e) => { e.preventDefault(); onDone(setName(value)) }
-  return (
-    <form className="prof-name" onSubmit={save}>
-      <label htmlFor="prof-name" className="sr-only">{t('name_label')}</label>
-      <input id="prof-name" className="name-input" type="text" autoComplete="given-name" autoCapitalize="words" autoFocus maxLength={NAME_MAX}
-        placeholder={t('name_placeholder')} value={value} onChange={(e) => setValue(e.target.value)} />
-      <div className="prof-name-acts">
-        <button type="submit" className="btn small">{t('prof_save')}</button>
-        <button type="button" className="btn small ghost" onClick={() => onDone()}>{t('manage_cancel')}</button>
-      </div>
-      <p className="small">{t('name_device')}</p>
-    </form>
   )
 }

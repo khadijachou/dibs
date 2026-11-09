@@ -1,40 +1,45 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useApp } from '../App.jsx'
-import { Header, LangSwitch, Sheet } from '../components/ui.jsx'
-import { listGoals } from '../lib/goals.js'
-import { boughtGoals } from '../lib/stats.js'
-import { lastTxHash } from '../lib/history.js'
-import { readLog } from '../lib/errors.js'
-import { host } from '../lib/nimiq.js'
-import { PastList } from './Home.jsx'
+import { Header, LangSwitch } from '../components/ui.jsx'
 import { NAME_MAX, getName, setName } from '../lib/name.js'
 
-const FAQ = [1, 2, 3, 4]
+const FAQ = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+const HELP_EMAIL = 'calldibs.contact@gmail.com'
 const soundOn = () => { try { return localStorage.getItem('dibs.sound') !== 'off' } catch { return true } }
 
+// Clipboard API first; the hidden textarea covers webviews where it is missing or refused.
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); return true } catch { /* fall back */ }
+  try {
+    const ta = document.createElement('textarea')
+    ta.value = text
+    ta.setAttribute('readonly', '')
+    ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;'
+    document.body.appendChild(ta)
+    ta.select()
+    ta.setSelectionRange(0, text.length)
+    const ok = document.execCommand('copy')
+    document.body.removeChild(ta)
+    return ok
+  } catch { return false }
+}
+
 export default function More() {
-  const { t, address, showHowTo } = useApp()
+  const { t, showHowTo, toast } = useApp()
   const [sound, setSound] = useState(soundOn)
-  const [report, setReport] = useState(false)
-  const [name, setNameField] = useState(getName)
-  const bought = boughtGoals(listGoals(address))
 
   const toggleSound = () => {
     const next = !sound
     try { localStorage.setItem('dibs.sound', next ? 'on' : 'off') } catch { /* private mode */ }
     setSound(next)
   }
+  const copyEmail = async () => { if (await copyText(HELP_EMAIL)) toast(t('help_copied')) }
 
   return (
     <>
       <Header />
       <main className="screen">
         <h2 className="title">{t('tab_more')}</h2>
-
-        <section className="more-sec">
-          <div className="sec-head"><h3>{t('more_cards')}</h3></div>
-          {bought.length ? <PastList goals={bought} /> : <p className="small">{t('more_cards_empty')}</p>}
-        </section>
 
         <section className="more-sec">
           <button type="button" className="sheet-row" onClick={showHowTo}>
@@ -48,7 +53,7 @@ export default function More() {
           <div className="sec-head"><h3>{t('more_faq')}</h3></div>
           {FAQ.map((n) => (
             <details key={n} className="faq">
-              <summary>{t(`faq_${n}q`)}</summary>
+              <summary>{`${n}. ${t(`faq_${n}q`)}`}</summary>
               <p>{t(`faq_${n}a`)}</p>
             </details>
           ))}
@@ -56,12 +61,7 @@ export default function More() {
 
         <section className="more-sec">
           <div className="sec-head"><h3>{t('more_settings')}</h3></div>
-          <div className="set-row">
-            <label htmlFor="set-name">{t('name_label')}</label>
-            <input id="set-name" className="name-input small-field" type="text" autoComplete="given-name" maxLength={NAME_MAX}
-              placeholder={t('name_placeholder')} value={name}
-              onChange={(e) => { setNameField(e.target.value); setName(e.target.value) }} onBlur={() => setNameField(setName(name))} />
-          </div>
+          <NameRow />
           <p className="small">{t('name_device')}</p>
           <div className="set-row"><span>{t('lang_label')}</span><LangSwitch /></div>
           <div className="set-row">
@@ -70,43 +70,78 @@ export default function More() {
           </div>
         </section>
 
-        <section className="more-sec">
-          <button type="button" className="sheet-row" onClick={() => setReport(true)}>
-            <span className="si" aria-hidden="true">!</span>
-            <span><b>{t('more_report')}</b><small>{t('more_report_sub')}</small></span>
-            <span className="chev" aria-hidden="true">›</span>
-          </button>
+        <section className="help-card">
+          <h3>{t('help_title')}</h3>
+          <p>{t('help_body')}</p>
+          <button type="button" className="help-email" aria-label={t('help_email')} onClick={copyEmail}>{HELP_EMAIL}</button>
         </section>
       </main>
-      {report && <ReportSheet onClose={() => setReport(false)} />}
     </>
   )
 }
 
-// Prefilled with the newest transaction hash on this device and the last logged error. Nothing is sent by the app:
-// the user copies the text or opens their own mail app with it.
-const REPORT_TO = 'khadijachourou123@gmail.com'
-function ReportSheet({ onClose }) {
-  const { t, lang, address, demo, toast } = useApp()
-  const [text, setText] = useState(() => {
-    const err = readLog().slice(-1)[0]
-    return [
-      '',
-      '',
-      '---',
-      `${t('report_last_tx')}: ${lastTxHash(listGoals(address)) || '-'}`,
-      `Dibs · ${demo ? 'demo' : host.network()} · ${lang}`,
-      err ? `${t('report_last_error')}: ${err.ctx} ${err.type} ${err.at}` : null,
-    ].filter((l) => l != null).join('\n')
-  })
-  const copy = () => { navigator.clipboard?.writeText(text); toast(t('err_copied')) }
+// Your name: one row at rest, an inline field while editing. Same dibs.name as onboarding.
+// Saves on blur or Enter, Escape cancels.
+function NameRow() {
+  const { t } = useApp()
+  const [name, setNameState] = useState(getName)
+  const [draft, setDraft] = useState(null) // null = resting
+  const input = useRef(null)
+  const cancelled = useRef(false)
+  const clearing = useRef(false) // the × was pressed: the blur it causes must not close the field
+
+  const open = () => {
+    if (draft !== null) return
+    cancelled.current = false
+    setDraft(name)
+    // iOS only opens the keyboard for a focus made inside the tap itself: the input is always mounted
+    // (invisible but focusable at rest, see .name-row in theme-dark.css), so focus it here, synchronously, then put the cursor at the end.
+    const el = input.current
+    if (el) {
+      el.value = name
+      el.focus()
+      const end = el.value.length
+      try { el.setSelectionRange(end, end) } catch { /* some input types refuse it */ }
+    }
+  }
+  const finish = () => {
+    if (clearing.current) return
+    if (!cancelled.current) setNameState(setName(input.current?.value ?? draft ?? ''))
+    cancelled.current = false
+    setDraft(null)
+  }
+  const onKey = (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); input.current?.blur() }
+    if (e.key === 'Escape') { e.preventDefault(); cancelled.current = true; input.current?.blur() }
+  }
+  const clear = (e) => {
+    e.stopPropagation()
+    clearing.current = false
+    setDraft('')
+    input.current?.focus() // inside the tap, so the keyboard stays open
+  }
+
+  const editing = draft !== null
   return (
-    <Sheet title={t('more_report')} onClose={onClose}>
-      <label htmlFor="report" className="small">{t('report_hint')}</label>
-      <textarea id="report" className="report-text" rows={8} value={text} onChange={(e) => setText(e.target.value)} />
-      <a className="btn link-btn" href={`mailto:${REPORT_TO}?subject=${encodeURIComponent('Dibs report')}&body=${encodeURIComponent(text)}`}>{t('report_email')}</a>
-      <button type="button" className="btn ghost" onClick={copy}>{t('report_copy')}</button>
-      <button type="button" className="btn ghost" onClick={onClose}>{t('manage_cancel')}</button>
-    </Sheet>
+    <div className={`set-row name-row${editing ? ' editing' : ''}`} onClick={open}>
+      <label htmlFor="set-name">{t('name_label')}</label>
+      <div className="name-slot">
+        {!editing && (
+          <button type="button" className={`name-val${name ? '' : ' empty'}`}>
+            <span>{name || t('prof_add_name')}</span>
+            <span className="chev" aria-hidden="true">›</span>
+          </button>
+        )}
+        <div className="name-edit">
+          <input ref={input} id="set-name" type="text" autoComplete="given-name" autoCapitalize="words" enterKeyHint="done" maxLength={NAME_MAX}
+            placeholder={t('name_placeholder')} value={draft ?? ''} tabIndex={editing ? 0 : -1}
+            onChange={(e) => setDraft(e.target.value)} onBlur={finish} onKeyDown={onKey} />
+          {editing && draft && (
+            <button type="button" className="name-clear" aria-label={t('name_clear')} 
+              onPointerDown={() => { clearing.current = true }} onPointerCancel={() => { clearing.current = false }} onMouseDown={(e) => e.preventDefault()} onClick={clear}>×</button>
+          )}
+        </div>
+      </div>
+    </div>
   )
 }
