@@ -489,6 +489,13 @@ const en = {
   brand_about_disney: "Disney+ subscriptions, Disney parks and shopDisney in the US.",
   brand_about_starbucks: "Coffee and food at Starbucks.",
   brand_about_doordash: "Food and grocery delivery with DoorDash.",
+  browse_title: "What Dibs covers",
+  browse_sub: "{count} brands, gift cards in 170+ countries. Browse here; start a goal from the Goals tab.",
+  browse_more: "Browse the catalogue",
+  browse_more_sub: "{count} brands, what each one gives you and how it's delivered",
+  brand_info: "About {brand}",
+  brand_prices_note: "Prices from the shop, paid in NIM",
+  brand_you_pay: "you pay {price} USD",
 }
 
 const fr = {
@@ -982,6 +989,13 @@ const fr = {
   brand_about_disney: "Abonnements Disney+, parcs Disney et shopDisney aux États-Unis.",
   brand_about_starbucks: "Café et nourriture chez Starbucks.",
   brand_about_doordash: "Livraison de repas et d’épicerie avec DoorDash.",
+  browse_title: "Ce que Dibs couvre",
+  browse_sub: "{count} marques, des cartes-cadeaux dans plus de 170 pays. Parcourez-les ici; créez un objectif depuis l’onglet Objectifs.",
+  browse_more: "Parcourir le catalogue",
+  browse_more_sub: "{count} marques, ce que chacune offre et comment elle est livrée",
+  brand_info: "À propos de la marque {brand}",
+  brand_prices_note: "Prix de la boutique, payés en NIM",
+  brand_you_pay: "vous payez {price} USD",
 }
 
 const es = {
@@ -1475,6 +1489,13 @@ const es = {
   brand_about_disney: "Suscripciones a Disney+, parques Disney y shopDisney en EE. UU.",
   brand_about_starbucks: "Café y comida en Starbucks.",
   brand_about_doordash: "Comida y supermercado a domicilio con DoorDash.",
+  browse_title: "Lo que cubre Dibs",
+  browse_sub: "{count} marcas, tarjetas de regalo en más de 170 países. Explora aquí; crea una meta desde la pestaña Metas.",
+  browse_more: "Explorar el catálogo",
+  browse_more_sub: "{count} marcas, qué te da cada una y cómo se entrega",
+  brand_info: "Acerca de {brand}",
+  brand_prices_note: "Precios de la tienda, pagados en NIM",
+  brand_you_pay: "pagas {price} USD",
 }
 
 const DICTS = { en, fr, es }

@@ -84,3 +84,9 @@ export function pickAmounts(items) {
 export function brandLogo(item) {
   return brandOf(item)?.logo || null
 }
+
+// Where a brand's card works, in the user's language: "USA", "USA and Europe". Empty when unknown.
+export function regionText(t, brand) {
+  const regions = (brand?.region || []).map((r) => t(`region_${r}`))
+  return regions.length > 1 ? t('region_join', { a: regions[0], b: regions[1] }) : regions[0] || ''
+}

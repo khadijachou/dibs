@@ -5,6 +5,7 @@ import { CHIPS, catalogBrands } from '../lib/brands.js'
 import { brandColor } from '../lib/brandIcons.js'
 import { fromText } from '../lib/itemName.js'
 import { useReducedMotion } from '../components/UnlockTimer.jsx'
+import BrandSheet from '../components/BrandSheet.jsx'
 
 // Entrance stagger: 40 ms per tile, never more than 400 ms for the last one.
 const STAGGER_MS = 40
@@ -14,7 +15,7 @@ const STAGGER_MAX_MS = 400
 // whatever the fonts, language or screen width; nothing is measured ahead of time. On a switch it slides from the
 // previous chip with a transform-only Web Animation (FLIP: both rects read at tap time). Reduced motion: no slide.
 const SLIDE_MS = 280
-function useChipSlide(active, reduced) {
+export function useChipSlide(active, reduced) {
   const hl = useRef(null)
   const from = useRef(null)
   const remember = () => { from.current = hl.current?.getBoundingClientRect() || null }
@@ -52,6 +53,7 @@ export default function Catalog({ moveFrom = null, changeFor = null }) {
   const [chip, setChip] = useState('all')
   const [picked, setPicked] = useState(brands[0]?.key)
   const [glow, setGlow] = useState(null) // { key, n }: the tile whose release glow is playing
+  const [info, setInfo] = useState(null) // brand key whose About sheet is open (never changes the pick)
   const shown = chip === 'all' ? brands : brands.filter((b) => b.chip === chip)
   const usedChips = CHIPS.filter((c) => brands.some((b) => b.chip === c))
   const brand = brands.find((b) => b.key === picked)
@@ -85,9 +87,10 @@ export default function Catalog({ moveFrom = null, changeFor = null }) {
         {/* key: a new grid per category, so the entrance plays on first load and on each switch, never on scroll. */}
         <div className={`grid cat-grid${reduced ? '' : ' enter'}`} key={chip}>
           {shown.map((b, i) => (
-            <button type="button" key={b.key} className={`btile${b.key === picked ? ' on' : ''}`} aria-pressed={b.key === picked}
+            // The "i" is a sibling of the tile button (no button inside a button); it opens the brand sheet only.
+            <div className="btile-wrap" key={b.key} style={{ '--brand': brandColor(b), '--delay': `${Math.min(i * STAGGER_MS, STAGGER_MAX_MS)}ms` }}>
+            <button type="button" className={`btile${b.key === picked ? ' on' : ''}`} aria-pressed={b.key === picked}
               aria-describedby={b.estimated ? `est-${b.key}` : undefined}
-              style={{ '--brand': brandColor(b), '--delay': `${Math.min(i * STAGGER_MS, STAGGER_MAX_MS)}ms` }}
               onClick={() => pick(b.key)}>
               {glow?.key === b.key && <i className="btile-glow" key={glow.n} aria-hidden="true" onAnimationEnd={() => setGlow(null)} />}
               {b.key === picked
@@ -104,6 +107,9 @@ export default function Catalog({ moveFrom = null, changeFor = null }) {
                 </span>
               )}
             </button>
+            <button type="button" className="btile-info" aria-label={t('brand_info', { brand: b.name })} aria-haspopup="dialog"
+              onClick={() => setInfo(b.key)}><i aria-hidden="true">i</i></button>
+            </div>
           ))}
         </div>
         {shown.length > 6 && <div className="scroll-fade" aria-hidden="true" />}
@@ -114,6 +120,7 @@ export default function Catalog({ moveFrom = null, changeFor = null }) {
           </button>
         </div>
       </main>
+      {info && brands.find((b) => b.key === info) && <BrandSheet brand={brands.find((b) => b.key === info)} onClose={() => setInfo(null)} />}
     </>
   )
 }

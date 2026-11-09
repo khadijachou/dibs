@@ -573,3 +573,38 @@ svg circle:first-child[stroke="#e6dccf"], svg circle:first-child[stroke="#35323f
 /* Home: Recent dibs, link to History */
 .see-all-link { align-self: flex-end; margin-top: -4px; background: none; border: 0; padding: 4px 2px; color: var(--gold); font: 600 13.5px var(--font-body); cursor: pointer; }
 .hist-cards { scroll-margin-top: 12px; }
+
+/* Round 2D: Browse the catalogue, brand sheet, "i" on catalogue tiles. */
+.btile-wrap { position: relative; display: flex; min-width: 0; }
+.btile-wrap > .btile { flex: 1; min-width: 0; }
+.grid.enter .btile-wrap { animation: btile-in 320ms cubic-bezier(.2, .8, .2, 1) var(--delay, 0ms) backwards; }
+.grid.enter .btile-wrap > .btile { animation: none; }
+.btile-info { position: absolute; top: 4px; left: 4px; z-index: 2; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 50%;
+  display: grid; place-items: center; background: #2a2733; box-shadow: 0 0 0 2px var(--card); color: var(--cream); cursor: pointer;
+  -webkit-tap-highlight-color: transparent; }
+.btile-info > i { font: 700 12px/1 var(--font-body); font-style: normal; }
+.btile-info::after { content: ""; position: absolute; inset: -8px; } /* 40 px touch target */
+.btile-info:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .grid.enter .btile-wrap { animation: none; } }
+
+.browse-list { display: flex; flex-direction: column; gap: 8px; }
+.browse-row .blogo { width: 40px; height: 40px; border-radius: 11px; }
+.browse-row .blogo.si { background: #fff; } /* not the round .sheet-row .si icon chip; dark logos keep their inline background */
+.browse-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-top: 6px; }
+.dlv-badge { display: inline-block; padding: 2px 8px; border-radius: 999px; background: rgba(255, 246, 236, .1); color: var(--cream); font-size: 11px; font-weight: 600; white-space: nowrap; }
+.browse-region { color: var(--muted); font-size: 12px; }
+
+.bs-head { display: flex; align-items: center; gap: 12px; }
+.bs-head .blogo { width: 44px; height: 44px; border-radius: 12px; }
+.bs-about { margin: 0; color: var(--cream); font-size: 14.5px; line-height: 1.45; }
+.bs-values { display: flex; flex-direction: column; gap: 6px; }
+.bs-values ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.bs-values li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 0; border-top: 1px solid #2b2834; font-size: 14px; }
+.bs-values li:first-child { border-top: 0; }
+.bs-values li b { color: var(--cream); font-weight: 600; white-space: nowrap; }
+.bs-values li > span { color: var(--muted); font-size: 13px; text-align: right; }
+.bs-values .price-chip { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px 3px 4px; border: 0; border-radius: 999px;
+  background: rgba(255, 246, 236, .1); color: var(--cream); font: 600 11px var(--font-body); white-space: nowrap; cursor: pointer; }
+.bs-values .price-chip > i { width: 14px; height: 14px; border-radius: 50%; display: grid; place-items: center; background: rgba(255, 246, 236, .22);
+  font: 700 9px/1 var(--font-body); font-style: normal; }
+.bs-note { margin: 0; }

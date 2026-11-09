@@ -274,7 +274,8 @@ export function FieldError({ children }) {
 }
 
 // Bottom sheet: dimmed backdrop, panel from the bottom. Tap outside or Escape closes it.
-export function Sheet({ title, onClose, children }) {
+// label: the dialog's accessible name when the sheet draws its own heading (no title).
+export function Sheet({ title, label, onClose, children }) {
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') onClose() }
     document.addEventListener('keydown', onKey)
@@ -282,7 +283,7 @@ export function Sheet({ title, onClose, children }) {
   }, [onClose])
   return createPortal(
     <div className="sheet-bg" onClick={onClose}>
-      <div className="sheet" role="dialog" aria-modal="true" aria-label={title} onClick={(e) => e.stopPropagation()}>
+      <div className="sheet" role="dialog" aria-modal="true" aria-label={label || title} onClick={(e) => e.stopPropagation()}>
         <div className="sheet-grab" aria-hidden="true" />
         {title && <h3 className="sheet-title">{title}</h3>}
         {children}
