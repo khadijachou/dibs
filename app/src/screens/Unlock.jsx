@@ -8,16 +8,28 @@ import { readStaker, unlock } from '../lib/nimiq.js'
 import { confirms, stageOf, STEPS } from '../lib/unlockStage.js'
 import { MIN_NEW_STAKER_NIM, toNim } from '../lib/config.js'
 import { fmtNim } from '../lib/format.js'
-import { chainReleaseAt, ReleaseClock } from '../components/ReleaseClock.jsx'
+import { chainRelease, leftText, ReleaseClock, timeText } from '../components/ReleaseClock.jsx'
+import { UnlockTimer, usePageVisible } from '../components/UnlockTimer.jsx'
+import { goalBrand } from './Home.jsx'
+import { BLOCK_MS, clockOf, earliestStepBlockOf } from '../lib/release.js'
 
 const LABELS = { deactivate: 'unlock_s1', retire: 'unlock_s2', remove: 'unlock_s3' }
 const POLL_MS = 3000
+// While the page is open and nothing is pending, the staker is read again this often (release switch, no reload).
+const WATCH_MS = 30_000
+const EXPLORER = 'https://nimiq.watch/#'
 // How long a sent step may take to show on the chain before it counts as not accepted (blocks are ~1 s).
 const CONFIRM_MS = 90_000
 
 // readStaker sums `balance` (the chain's active stake); the demo staker calls it activeBalance.
 const activeOf = (st) => toNim(st.balance ?? st.activeBalance ?? 0)
 const hashOf = (tx) => (typeof tx === 'string' ? tx : tx?.hash || tx?.transactionHash || '')
+// "14:05" today, "9 Nov, 14:05" another day.
+const whenText = (iso, lang) => {
+  const d = new Date(iso)
+  const today = d.toDateString() === new Date().toDateString()
+  return new Intl.DateTimeFormat(lang, today ? { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' } : { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(d)
+}
 
 // The steps come from the staker read (lib/unlockStage.js), never from saved flags. A sent step is kept as a
 // pointer (goal.unlockPending) and only joins goal.unlockSteps once a later read confirms it.
@@ -32,7 +44,7 @@ export default function Unlock({ goalId, mode: modeParam }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
   const [refused, setRefused] = useState(null) // step the chain did not show in time
-  const [releaseAt, setReleaseAt] = useState(null)
+  const [rel, setRel] = useState(null) // chainRelease(): release figures from inactiveFrom and the block height
   const alive = useRef(true)
   useEffect(() => { alive.current = true; return () => { alive.current = false } }, [])
 
@@ -43,7 +55,7 @@ export default function Unlock({ goalId, mode: modeParam }) {
     if (!alive.current) return
     setRpcDown(false)
     setSt(read)
-    chainReleaseAt(read).then((at) => { if (alive.current) setReleaseAt(at) }).catch(() => {})
+    chainRelease(read).then((r) => { if (alive.current) setRel(r) }).catch(() => {})
     let g = getGoal(address, goalId)
     if (!g) return
     const amount = savedNim(g)
@@ -74,14 +86,25 @@ export default function Unlock({ goalId, mode: modeParam }) {
     setGoal(g)
   }, [address, goalId, withdraw])
 
-  // First read on open; while a step is pending, read again every few seconds until it shows or expires.
+  // Read on open and whenever the page comes back into view; while a step is pending every few seconds until
+  // it shows or expires, otherwise every 30 s. Nothing runs while the page is hidden.
   const pendingAt = goal?.unlockPending?.at
+  const visible = usePageVisible()
   useEffect(() => {
+    if (!visible) return undefined
     check()
-    if (!pendingAt) return undefined
-    const id = setInterval(check, POLL_MS)
+    const id = setInterval(check, pendingAt ? POLL_MS : WATCH_MS)
     return () => clearInterval(id)
-  }, [check, pendingAt])
+  }, [check, pendingAt, visible])
+  // One extra read just after the estimated release, so the switch does not wait for the next 30 s read.
+  const relAt = rel && !rel.released ? rel.at : null
+  useEffect(() => {
+    if (!visible || relAt == null) return undefined
+    const ms = relAt - Date.now() + 2000
+    if (ms <= 0 || ms > WATCH_MS) return undefined
+    const id = setTimeout(check, ms)
+    return () => clearTimeout(id)
+  }, [check, relAt, visible])
 
   useBlockBack(busy) // Android back waits while Nimiq Pay has the unlock step open
 
@@ -100,10 +123,25 @@ export default function Unlock({ goalId, mode: modeParam }) {
   const mismatch = (withdraw && first && rest != null && rest < 0) || Boolean(stage?.noStaker)
   const underMin = withdraw && first && rest != null && rest > 0 && rest < MIN_NEW_STAKER_NIM
   const blocked = Boolean(otherRelease) || mismatch || underMin
+  // Step 2 waits for the release block. Known only from the chain (inactiveFrom + block height); when it cannot
+  // be read the button stays as before and the chain's own refusal is handled after sending.
+  const relKnown = current === 'retire' && rel ? rel : null
+  const early = Boolean(relKnown && !relKnown.released)
+  const step1 = goal.unlockSteps.find((x) => x.step === 'deactivate')
+  const startMs = step1 ? Date.parse(step1.at) : relKnown ? relKnown.at - (relKnown.releaseBlock - earliestStepBlockOf(relKnown.inactiveFrom)) * BLOCK_MS : null
 
   const run = async () => {
     const step = current
     if (!step || blocked || busy || pend || !st) return
+    if (step === 'retire' && early) {
+      // Too early: nothing is sent. Say when, and read again in case the release just passed.
+      const clock = clockOf(relKnown.at - Date.now())
+      toast(clock.due
+        ? `${t('err_UNL_NOT_RELEASED_title')}. ${t('stake_release_due')}.`
+        : t('err_UNL_NOT_RELEASED_toast', { time: timeText(relKnown.at, lang), duration: leftText(t, clock) }))
+      check()
+      return
+    }
     setError(null); setRefused(null)
     setBusy(true)
     try {
@@ -130,15 +168,31 @@ export default function Unlock({ goalId, mode: modeParam }) {
       <main className="screen">
         <h2 className="title">{t(withdraw ? 'withdraw_title' : 'unlock_title')}</h2>
         <p className="sub">{t(withdraw ? 'withdraw_intro' : 'unlock_intro')}</p>
+        {relKnown && startMs != null && <UnlockTimer brand={goalBrand(goal)} startMs={startMs} releaseMs={relKnown.at} released={relKnown.released} />}
         <section className="card">
           <div className="row"><span className="sub">{itemName(t, goal, { title: true })}</span><b>{fmtNim(amount, lang)} NIM</b></div>
           <div className={`steps${withdraw ? ' mint' : ''}`}>
             {STEPS.map((s, i) => {
-              const state = done.includes(s) ? 'done' : s === current ? (pend ? 'current pending' : 'current') : ''
+              const isDone = done.includes(s)
+              const isNext = s === current
+              const wait = isNext && s === 'retire' && early
+              const state = isDone ? 'done' : wait ? 'wait' : isNext ? (pend ? 'current pending' : 'current') : ''
+              const rec = isDone ? goal.unlockSteps.find((x) => x.step === s) : null
+              const hash = rec && typeof rec.tx === 'string' ? rec.tx : ''
               return (
                 <div key={s} className={`step ${state}`}>
                   <div className="n">{i + 1}</div>
-                  <span style={{ fontWeight: 700 }}>{t(LABELS[s])}</span>
+                  <div className="step-txt">
+                    <span style={{ fontWeight: 700 }}>{t(LABELS[s])}</span>
+                    <span className="step-sub">
+                      {isDone
+                        ? <>{rec?.at ? t('unl_row_done_at', { time: whenText(rec.at, lang) }) : t('unl_row_done')}
+                            {hash && <> · <a href={`${EXPLORER}${hash}`} target="_blank" rel="noopener noreferrer">{t('hist_view_tx')}</a></>}</>
+                        : wait ? t('unl_row_wait', { left: leftText(t, clockOf(relKnown.at - Date.now())) })
+                        : isNext ? t(pend ? 'unl_row_checking' : 'unl_row_next')
+                        : t('unl_row_after', { n: i })}
+                    </span>
+                  </div>
                 </div>
               )
             })}
@@ -165,12 +219,12 @@ export default function Unlock({ goalId, mode: modeParam }) {
         {error === 'UNL_NOT_RELEASED'
           ? <Notice tone="info" title={t('err_UNL_NOT_RELEASED_title')} sub={t('unlock_wait')} safe={t('err_UNL_VALIDATOR_JAILED_safe')} />
           : error ? <Notice tone="info" title={t('err_GENERIC_title')} sub={t('err_GENERIC_sub')} safe={t('safe_nothingSent')} />
-          : !blocked && !pend && !refused && <p className="small">{t('unlock_wait')}</p>}
-        {current === 'retire' && <section className="card unstake"><ReleaseClock goal={goal} chainAt={releaseAt} retired={false} /></section>}
+          : !blocked && !pend && !refused && !relKnown && <p className="small">{t('unlock_wait')}</p>}
+        {current === 'retire' && !relKnown && <section className="card unstake"><ReleaseClock goal={goal} chainAt={null} retired={false} /></section>}
         <div className="bottom">
           {current && (
-            <button type="button" className={`btn ${withdraw ? 'mint' : 'gold'}`} disabled={busy || Boolean(pend) || !st || blocked} onClick={run}>
-              {t('unlock_go', { n: stepN(current) })}
+            <button type="button" className={`btn ${early ? 'waiting' : withdraw ? 'mint' : 'gold'}`} disabled={busy || Boolean(pend) || !st || blocked} onClick={run}>
+              {early ? t('unl_retire_wait', { time: timeText(relKnown.at, lang) }) : t('unlock_go', { n: stepN(current) })}
             </button>
           )}
         </div>

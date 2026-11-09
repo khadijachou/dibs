@@ -22,6 +22,9 @@ function save(s) {
   try { localStorage.setItem(KEY, JSON.stringify(s)) } catch { /* ignore */ }
 }
 const wait = (ms) => new Promise((r) => setTimeout(r, ms))
+// A seeded wallet can carry `clock` (ms): its height then moves one block per second from `block` at that time,
+// so a seeded staker crosses its release while the page is open. Without it, the height only moves on calls.
+const height = (s) => s.block + (s.clock ? Math.max(0, Math.floor((Date.now() - s.clock) / 1000)) : 0)
 const fakeHash = () => Array.from(crypto.getRandomValues(new Uint8Array(32)), (b) => b.toString(16).padStart(2, '0')).join('')
 
 export function createMockProvider() {
@@ -38,7 +41,7 @@ export function createMockProvider() {
   return {
     async listAccounts() { return [ADDRESS] },
     async getBalance() { return s.balance },
-    async getBlockNumber() { s.block += 1; return s.block },
+    async getBlockNumber() { s.block += 1; return height(s) },
     async sign(message) { await wait(300); return { publicKey: 'demo', signature: 'demo:' + String(message).length } },
     mockStaker() {
       return s.staker ? { ...s.staker, address: s.staker.address || ADDRESS } : null
@@ -66,7 +69,7 @@ export function createMockProvider() {
       if (!st || retireStake > st.inactiveBalance) fail('INVALID_TRANSACTION', 'Not enough inactive stake')
       // Like mainnet: before the release Nimiq Pay still returns a hash, but the chain refuses it (nothing moves).
       // Only a seeded staker carries inactiveFrom; the demo's own unlock has none and releases at once.
-      if (st.inactiveFrom && s.block < releaseBlockOf(st.inactiveFrom)) return tx(() => {})
+      if (st.inactiveFrom && height(s) < releaseBlockOf(st.inactiveFrom)) return tx(() => {})
       return tx(() => { st.inactiveBalance -= retireStake; st.retiredBalance += retireStake })
     },
     sendRemoveStakeTransaction({ value }) {

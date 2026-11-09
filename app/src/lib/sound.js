@@ -1,15 +1,19 @@
 // The "Dibs!" stamp pop: a short synthesised sound, no audio file.
 // Call it only from the user's tap (browsers, iOS above all, need a gesture to start audio).
 // Silent under reduced motion or when localStorage dibs.sound === 'off'. Never throws.
-export function playPop() {
+// ifUnlocked: for a pop that is not started by a tap (e.g. the release arriving while the page is open).
+// Plays only when an earlier tap already unlocked audio for this page; otherwise stays silent.
+export function playPop({ ifUnlocked = false } = {}) {
   try {
     try { if (localStorage.getItem('dibs.sound') === 'off') return } catch { /* private mode: play */ }
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
     // 'ambient' follows the iPhone silent switch and mixes with other audio.
     if (navigator.audioSession) { try { navigator.audioSession.type = 'ambient' } catch { /* older Safari */ } }
+    if (ifUnlocked && navigator.userActivation && !navigator.userActivation.hasBeenActive) return
     const AC = window.AudioContext || window.webkitAudioContext
     if (!AC) return
     const ctx = new AC()
+    if (ifUnlocked && ctx.state !== 'running') { ctx.close?.().catch?.(() => {}); return }
     const t0 = ctx.currentTime + 0.01
     const osc = ctx.createOscillator()
     const gain = ctx.createGain()

@@ -281,3 +281,59 @@ input.email { width: 100%; height: 48px; border-radius: 12px; border: 1.5px soli
 .gwallet { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; margin: 0 -20px; padding: 2px 20px 6px; }
 .gw-card { flex: 0 0 calc(100% - 24px); scroll-snap-align: center; display: flex; }
 .gw-card > .hero { flex: 1; }
+
+/* Unlock step 2 timer (components/UnlockTimer.jsx). Loops use transform and opacity only; they pause while the
+   page is hidden (.paused) and stop under reduced motion (.still, plus the media query). */
+.card.ut { position: relative; overflow: hidden; isolation: isolate; align-items: center; text-align: center; gap: 0; padding: 26px 18px 22px;
+  color: #fff6ec; background: linear-gradient(160deg, #2c2535 0%, #1a1822 60%, #15141a 100%); border: 1px solid rgba(255, 255, 255, .08); }
+.ut-glow { position: absolute; z-index: -1; left: -15%; top: -40%; width: 130%; aspect-ratio: 1; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(closest-side, rgba(232, 72, 42, .26), rgba(232, 72, 42, 0)); animation: ut-drift 20s ease-in-out infinite alternate; }
+@keyframes ut-drift { 0% { transform: translate(-12%, 0) scale(1); } 50% { transform: translate(10%, 8%) scale(1.08); } 100% { transform: translate(-4%, 18%) scale(.95); } }
+.ut-ring { position: relative; width: 176px; height: 176px; margin-bottom: 14px; }
+.ut-ring svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.ut-track { stroke: #2f2c38; }
+.ut-arc { stroke: var(--gold); }
+.ut.released .ut-arc { stroke: #2bc48f; transition: stroke-dashoffset .6s cubic-bezier(.3, .7, .3, 1), stroke .3s ease .1s; }
+.ut-tip { position: absolute; inset: 0; pointer-events: none; transition: transform 1s linear; }
+.ut-tip i { position: absolute; left: 50%; top: 7.69%; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; background: #fff6ec; box-shadow: 0 0 0 3px var(--gold); }
+.ut-tip i::after { content: ''; position: absolute; inset: -11px; border-radius: 50%; background: radial-gradient(closest-side, rgba(255, 128, 98, .85), rgba(232, 72, 42, 0)); animation: ut-breathe 2.5s ease-in-out infinite; }
+@keyframes ut-breathe { 0%, 100% { opacity: .3; transform: scale(.75); } 50% { opacity: 1; transform: scale(1.2); } }
+.ut-logo { position: absolute; inset: 0; display: grid; place-items: center; }
+.ut-logo .blogo { width: 72px; height: 72px; border-radius: 18px; }
+.ut-logo .blogo.letter { font-size: 30px; }
+.ut-burst { position: absolute; left: 50%; top: 50%; width: 0; height: 0; pointer-events: none; }
+.ut-burst i { position: absolute; width: 8px; height: 8px; margin: -4px; border-radius: 50%; background: #2bc48f; opacity: 0; animation: ut-pop .8s cubic-bezier(.15, .7, .3, 1) var(--d) both; }
+.ut-burst i.b { width: 6px; height: 6px; margin: -3px; background: var(--butter); }
+@keyframes ut-pop {
+  0% { opacity: 1; transform: translate(calc(var(--x) * .7), calc(var(--y) * .7)) scale(.5); }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--x), var(--y)) scale(1); }
+}
+.ut-count { margin: 0; font: 700 46px/1.05 var(--font-display); letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+.ut-digits { display: inline-flex; align-items: baseline; }
+.ut-d { display: inline-block; overflow: hidden; vertical-align: bottom; }
+.ut-d > span { display: inline-block; }
+.ut-d > .roll { animation: ut-roll .3s cubic-bezier(.2, .8, .2, 1) both; }
+@keyframes ut-roll { from { opacity: 0; transform: translateY(70%); } }
+.ut-u { font-size: 24px; font-weight: 600; color: #c9c3d3; margin-left: 1px; }
+.ut-due { margin: 0; font: 700 22px/1.25 var(--font-display); }
+.ut-ready { margin: 10px 0 0; font-size: 15px; font-weight: 600; }
+.ut-close { margin: 4px 0 0; font-size: 13px; color: #9b97a6; max-width: 32ch; }
+.ut-done { margin: 0; font: 700 22px/1.25 var(--font-display); color: #2bc48f; }
+.ut.paused *, .ut.paused *::after { animation-play-state: paused !important; }
+.ut.still .ut-glow, .ut.still .ut-tip i::after, .ut.still .ut-d > .roll { animation: none; }
+.ut.still .ut-arc, .ut.still .ut-tip { transition: none; }
+@media (prefers-reduced-motion: reduce) {
+  .ut-glow, .ut-tip i::after, .ut-d > .roll, .ut-burst { animation: none; }
+  .ut-burst { display: none; }
+  .ut-arc, .ut.released .ut-arc, .ut-tip { transition: none; }
+}
+
+/* Unlock step rows: what each step is waiting for */
+.step-txt { display: flex; flex-direction: column; min-width: 0; }
+.step-sub { font-size: 12.5px; color: var(--muted); }
+.step-sub a { color: inherit; }
+.step.done .step-sub { color: var(--teal); }
+.step.current .step-sub { color: var(--gold); font-weight: 600; }
+.step.wait .n { background: transparent; color: var(--gold); box-shadow: inset 0 0 0 2px var(--gold); }
+.btn.waiting { background: #2f2c38; color: #b9b4c4; }
