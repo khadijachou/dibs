@@ -15,6 +15,10 @@ import Done from './screens/Done.jsx'
 import Lab from './screens/Lab.jsx'
 import Splash from './screens/Splash.jsx'
 import Onboarding from './screens/Onboarding.jsx'
+import Stake from './screens/Stake.jsx'
+import History from './screens/History.jsx'
+import More from './screens/More.jsx'
+import { TabBar, TAB_ROUTES } from './components/ui.jsx'
 
 // The Lab (#lab) is a developer screen: only in demo mode or in a build made with VITE_LAB=1.
 const labAllowed = () => import.meta.env.VITE_LAB === '1' || isDemo()
@@ -26,7 +30,7 @@ const hostLang = () => { try { const l = String(host.language() || '').slice(0, 
 const AppCtx = createContext(null)
 export const useApp = () => useContext(AppCtx)
 
-const SCREENS = { home: Home, catalog: Catalog, plan: Plan, goal: Goal, unlock: Unlock, redeem: Redeem, done: Done }
+const SCREENS = { home: Home, catalog: Catalog, plan: Plan, goal: Goal, unlock: Unlock, redeem: Redeem, done: Done, stake: Stake, history: History, more: More }
 
 export default function App() {
   const [ready, setReady] = useState(false)
@@ -62,6 +66,10 @@ export default function App() {
     setOnboarded(true)
     window.scrollTo(0, 0)
   }, [])
+  // More > How it works: the same three slides, reopened over the app.
+  const [howTo, setHowTo] = useState(false)
+  const showHowTo = useCallback(() => { setHowTo(true); window.scrollTo(0, 0) }, [])
+  const closeHowTo = useCallback(() => { setHowTo(false); window.scrollTo(0, 0) }, [])
 
   const refreshBalance = useCallback(async (addr = address) => {
     if (!addr) return
@@ -110,7 +118,7 @@ export default function App() {
   }, [])
   const reset = useCallback((name = 'home', params = {}) => { setHistory([]); setRoute({ name, params }) }, [])
 
-  const ctx = { t, lang, setLang, address, balance, refreshBalance, prices, demo: isDemo(), go, back, reset, toast, canGoBack: history.length > 0 }
+  const ctx = { t, lang, setLang, address, balance, refreshBalance, prices, demo: isDemo(), go, back, reset, toast, showHowTo, canGoBack: history.length > 0 }
 
   // The launch splash leaves (ring completes, then fades) once the next screen is ready to show.
   const splashDone = splashMin && (ready || Boolean(fatal) || (!onboarded && !isLab))
@@ -131,10 +139,14 @@ export default function App() {
     return <AppCtx.Provider value={ctx}><Splash /></AppCtx.Provider>
   }
 
+  if (howTo && !isLab) return <AppCtx.Provider value={ctx}><Onboarding replay onDone={closeHowTo} /></AppCtx.Provider>
+
   const Screen = isLab ? Lab : SCREENS[route.name] || Home
+  // Tab bar on the four top-level screens only, never on flows (Plan, Goal, Unlock, Redeem, Done) or the Lab.
+  const tabs = !isLab && TAB_ROUTES.includes(route.name)
   return (
     <AppCtx.Provider value={ctx}>
-      <div className="app"><Screen {...route.params} />{toastText && <div className="toast" role="status"><i>i</i>{toastText}</div>}</div>
+      <div className={`app${tabs ? ' with-tabs' : ''}`}><Screen {...route.params} />{tabs && <TabBar current={route.name} />}{toastText && <div className="toast" role="status"><i>i</i>{toastText}</div>}</div>
     </AppCtx.Provider>
   )
 }

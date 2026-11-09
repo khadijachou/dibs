@@ -86,24 +86,7 @@ function Hub({ goals }) {
       <Header langChip />
       <main className="screen">
         {live.length > 1 ? <GoalWallet goals={live} /> : active && <ActiveGoal goal={active} />}
-        {past.length > 0 && (
-          <section style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div className="sec-head"><h3>{t('home_past')}</h3></div>
-            {past.map((g) => {
-              // Withdrawn goals reopen on the goal screen (with Delete); redeemed ones on Done.
-              const back = g.status === 'withdrawn'
-              const end = back ? g.withdrawnAt : g.payment?.at
-              const days = Math.max(1, Math.ceil((Date.parse(end || g.createdAt) - Date.parse(g.createdAt)) / 864e5))
-              return (
-                <button type="button" key={g.id} className="past" onClick={() => go(back ? 'goal' : 'done', { goalId: g.id })}>
-                  <BrandLogo brand={goalBrand(g)} />
-                  <div><b>{g.itemName} · {g.itemDetail}</b><span className="s">{fmtDate(end || g.createdAt, lang)} · {t(days === 1 ? 'done_stat_days_one' : 'done_stat_days_other', { count: days })}</span></div>
-                  <span className={`code${back ? ' returned' : ''}`}>{t(back ? 'withdraw_returned' : 'home_code')}</span>
-                </button>
-              )
-            })}
-          </section>
-        )}
+        {past.length > 0 && <PastList goals={past} title={t('home_past')} />}
         <section style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div className="sec-head"><h3>{t('home_else')}</h3></div>
           <div className="bchips">
@@ -118,6 +101,28 @@ function Hub({ goals }) {
         </div>
       </main>
     </>
+  )
+}
+
+// Past dibs: redeemed goals open Done (the code), withdrawn ones the goal screen (with Delete).
+export function PastList({ goals, title }) {
+  const { t, lang, go } = useApp()
+  return (
+    <section style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {title && <div className="sec-head"><h3>{title}</h3></div>}
+      {goals.map((g) => {
+        const back = g.status === 'withdrawn'
+        const end = back ? g.withdrawnAt : g.payment?.at
+        const days = Math.max(1, Math.ceil((Date.parse(end || g.createdAt) - Date.parse(g.createdAt)) / 864e5))
+        return (
+          <button type="button" key={g.id} className="past" onClick={() => go(back ? 'goal' : 'done', { goalId: g.id })}>
+            <BrandLogo brand={goalBrand(g)} />
+            <div><b>{g.itemName} · {g.itemDetail}</b><span className="s">{fmtDate(end || g.createdAt, lang)} · {t(days === 1 ? 'done_stat_days_one' : 'done_stat_days_other', { count: days })}</span></div>
+            <span className={`code${back ? ' returned' : ''}`}>{t(back ? 'withdraw_returned' : 'home_code')}</span>
+          </button>
+        )
+      })}
+    </section>
   )
 }
 

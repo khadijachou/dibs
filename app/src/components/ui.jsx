@@ -17,6 +17,34 @@ const PATHS = {
   food: <><path d="M6 3v8a2 2 0 0 0 4 0V3M8 11v10" /><path d="M16 21V3c2 1 3 4 3 7h-3" /></>,
   travel: <><path d="M3 15l7-2 4-9 2 1-2 8 6-1 1 2-7 3-4 4H7l2-4-6 1z" /></>,
   check: <path d="M5 12.5l4.5 4.5L19 7.5" />,
+  tabGoals: <><circle cx="12" cy="12" r="8.5" /><circle cx="12" cy="12" r="4" /></>,
+  tabStake: <><ellipse cx="12" cy="6.5" rx="7" ry="3" /><path d="M5 6.5v5c0 1.7 3.1 3 7 3s7-1.3 7-3v-5" /><path d="M5 11.5v5c0 1.7 3.1 3 7 3s7-1.3 7-3v-5" /></>,
+  tabHistory: <><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></>,
+  tabMore: <><circle cx="5.5" cy="12" r="1.2" /><circle cx="12" cy="12" r="1.2" /><circle cx="18.5" cy="12" r="1.2" /></>,
+}
+
+// Bottom tab bar on the four top-level screens (App.jsx decides where it shows).
+const TABS = [
+  { route: 'home', icon: 'tabGoals', label: 'tab_goals' },
+  { route: 'stake', icon: 'tabStake', label: 'tab_stake' },
+  { route: 'history', icon: 'tabHistory', label: 'tab_history' },
+  { route: 'more', icon: 'tabMore', label: 'tab_more' },
+]
+export const TAB_ROUTES = TABS.map((x) => x.route)
+
+export function TabBar({ current }) {
+  const { t, reset } = useApp()
+  return (
+    <nav className="tabbar" aria-label={t('tabs_label')}>
+      {TABS.map((x) => (
+        <button type="button" key={x.route} className={`tab${x.route === current ? ' on' : ''}`} aria-current={x.route === current ? 'page' : undefined}
+          onClick={() => { if (x.route !== current) { reset(x.route); window.scrollTo(0, 0) } }}>
+          <Icon name={x.icon} size={22} stroke={x.icon === 'tabMore' ? 2.6 : 1.9} />
+          <span>{t(x.label)}</span>
+        </button>
+      ))}
+    </nav>
+  )
 }
 
 export function Icon({ name, size = 22, stroke = 2 }) {

@@ -10,7 +10,7 @@ const SLIDES = [
   { key: 3, Ill: CodeIll },
 ]
 
-export default function Onboarding({ onDone }) {
+export default function Onboarding({ onDone, replay = false }) {
   const { t } = useApp()
   const [i, setI] = useState(0)
   const last = i === SLIDES.length - 1
@@ -34,7 +34,7 @@ export default function Onboarding({ onDone }) {
       <header className="header ob-top">
         <div className="grow"><Wordmark cream /></div>
         <LangSwitch />
-        <button type="button" className="ob-skip" onClick={onDone}>{t('ob_skip')}</button>
+        <button type="button" className="ob-skip" onClick={onDone}>{t(replay ? 'ob_close' : 'ob_skip')}</button>
       </header>
       <main className="screen ob">
         <div className="ob-view" onPointerDown={onPointerDown} onPointerUp={onPointerUp} onPointerCancel={() => { start.current = null }}>
@@ -52,7 +52,7 @@ export default function Onboarding({ onDone }) {
         <p className="ob-trust"><b><Icon name="check" size={14} stroke={2.6} />{trust[0]}</b>{trust[1] && <span>{trust[1]}</span>}</p>
         <div className="bottom">
           <button type="button" className={`btn ${last ? '' : 'ink'}`} onClick={() => (last ? onDone() : goTo(i + 1))}>
-            {last ? t('ob_start') : t('ob_next')}
+            {last ? t(replay ? 'ob_done' : 'ob_start') : t('ob_next')}
           </button>
         </div>
       </main>
