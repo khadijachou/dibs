@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { useApp } from '../App.jsx'
 import { BrandLogo, Header, Ring } from '../components/ui.jsx'
-import { listGoals, progress, savedNim } from '../lib/goals.js'
+import { listGoals, progress } from '../lib/goals.js'
 import { catalogBrands, brandOf } from '../lib/brands.js'
 import { findItem } from '../lib/catalog.js'
 import { planOf } from '../lib/pace.js'
@@ -196,7 +196,7 @@ function GoalWallet({ goals, earned }) {
   )
 }
 
-// earned: the staker's rewards (same figure as the goal screen), null while unknown.
+// earned: stakeSummary() (same figures as Stake and the goal screen), null while unknown. The chip shows this goal's share.
 function GoalHero({ goal, earned }) {
   const { t, lang, go } = useApp()
   const milestone = useGoalMilestone(goal)
@@ -220,8 +220,8 @@ function GoalHero({ goal, earned }) {
           <div>
             <div className="n">{fmtNim(Math.round(savedShown), lang)} NIM</div>
             <div className="m">{t('goal_of2', { target: fmtNim(goal.targetNim, lang) })} · {t('goal_to_go', { amount: fmtNim(Math.round(remainingShown), lang) })}</div>
-            {earned > 0 && savedNim(goal) > 0
-              ? <div className="earned-chip">{t('home_earned_chip', { amount: fmtNim(earned, lang) })}</div>
+            {earned?.byGoal[goal.id] > 0
+              ? <div className="earned-chip">{t('home_earned_chip', { amount: fmtNim(earned.byGoal[goal.id], lang) })}</div>
               : <div className="earning">{t('goal_earning_soon')}</div>}
           </div>
         </div>

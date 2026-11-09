@@ -5,7 +5,7 @@ import { NAME_MAX, setName } from '../lib/name.js'
 
 // VF screens 02 to 04: three slides on first run. App.jsx shows them without
 // waiting for the wallet; onDone stores dibs.onboarded. On first run a name step follows the
-// last slide (Wave 2B); the replay from More skips it.
+// last slide (Wave 2B); the header Skip and the replay from More go straight to the app.
 const SLIDES = [
   { key: 1, Ill: CardIll },
   { key: 2, Ill: RingIll },
@@ -39,7 +39,7 @@ export default function Onboarding({ onDone, replay = false }) {
       <header className="header ob-top">
         <div className="grow"><Wordmark cream /></div>
         <LangSwitch />
-        <button type="button" className="ob-skip" onClick={finishSlides}>{t(replay ? 'ob_close' : 'ob_skip')}</button>
+        <button type="button" className="ob-skip" onClick={onDone}>{t(replay ? 'ob_close' : 'ob_skip')}</button>
       </header>
       <main className="screen ob">
         <div className="ob-view" onPointerDown={onPointerDown} onPointerUp={onPointerUp} onPointerCancel={() => { start.current = null }}>

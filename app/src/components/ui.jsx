@@ -20,6 +20,7 @@ const PATHS = {
   tabGoals: <><circle cx="12" cy="12" r="8.5" /><circle cx="12" cy="12" r="4" /></>,
   tabStake: <><ellipse cx="12" cy="6.5" rx="7" ry="3" /><path d="M5 6.5v5c0 1.7 3.1 3 7 3s7-1.3 7-3v-5" /><path d="M5 11.5v5c0 1.7 3.1 3 7 3s7-1.3 7-3v-5" /></>,
   tabHistory: <><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></>,
+  tabProfile: <><circle cx="12" cy="8.5" r="3.8" /><path d="M4.8 20c.9-3.6 3.7-5.6 7.2-5.6s6.3 2 7.2 5.6" /></>,
   tabMore: <><circle cx="5.5" cy="12" r="1.2" /><circle cx="12" cy="12" r="1.2" /><circle cx="18.5" cy="12" r="1.2" /></>,
 }
 
@@ -28,6 +29,7 @@ const TABS = [
   { route: 'home', icon: 'tabGoals', label: 'tab_goals' },
   { route: 'stake', icon: 'tabStake', label: 'tab_stake' },
   { route: 'history', icon: 'tabHistory', label: 'tab_history' },
+  { route: 'profile', icon: 'tabProfile', label: 'tab_profile' },
   { route: 'more', icon: 'tabMore', label: 'tab_more' },
 ]
 export const TAB_ROUTES = TABS.map((x) => x.route)

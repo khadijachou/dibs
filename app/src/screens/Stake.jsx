@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useApp } from '../App.jsx'
 import { BrandLogo, Header, Notice } from '../components/ui.jsx'
-import { listGoals, savedNim, stakedInGoals } from '../lib/goals.js'
+import { listGoals, savedNim } from '../lib/goals.js'
 import { readStaker } from '../lib/nimiq.js'
-import { toNim } from '../lib/config.js'
+import { stakeSummary } from '../lib/earned.js'
 import { poolName } from '../lib/pace.js'
 import { fmtNim } from '../lib/format.js'
 import { goalBrand } from './Home.jsx'
@@ -31,8 +31,7 @@ export default function Stake() {
     body = <Notice tone="wait" title={t('stake_reading')} />
   } else {
     const st = state.staker
-    const total = st ? toNim(Number(st.balance ?? st.activeBalance ?? 0) + Number(st.inactiveBalance ?? 0) + Number(st.retiredBalance ?? 0)) : 0
-    const earned = Math.max(0, Math.floor(total - stakedInGoals(address)))
+    const { total, earned } = stakeSummary(st, address)
     body = (
       <>
         <section className="hero stake-hero">

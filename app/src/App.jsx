@@ -18,6 +18,7 @@ import Onboarding from './screens/Onboarding.jsx'
 import Stake from './screens/Stake.jsx'
 import History from './screens/History.jsx'
 import More from './screens/More.jsx'
+import Profile from './screens/Profile.jsx'
 import { TabBar, TAB_ROUTES } from './components/ui.jsx'
 
 // The Lab (#lab) is a developer screen: only in demo mode or in a build made with VITE_LAB=1.
@@ -30,7 +31,7 @@ const hostLang = () => { try { const l = String(host.language() || '').slice(0, 
 const AppCtx = createContext(null)
 export const useApp = () => useContext(AppCtx)
 
-const SCREENS = { home: Home, catalog: Catalog, plan: Plan, goal: Goal, unlock: Unlock, redeem: Redeem, done: Done, stake: Stake, history: History, more: More }
+const SCREENS = { home: Home, catalog: Catalog, plan: Plan, goal: Goal, unlock: Unlock, redeem: Redeem, done: Done, stake: Stake, history: History, profile: Profile, more: More }
 
 export default function App() {
   const [ready, setReady] = useState(false)

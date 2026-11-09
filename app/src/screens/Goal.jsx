@@ -11,7 +11,7 @@ import { confirmPending, expired, pending, stakedLuna, startPending, waitForDepo
 import { fmtDate, fmtNim, weeksUntil } from '../lib/format.js'
 import { DeleteSheet, ManageSheet, MoveSheet } from './GoalManage.jsx'
 import { useCountUp } from '../lib/useCountUp.js'
-import { earnedNim } from '../lib/earned.js'
+import { stakeSummary } from '../lib/earned.js'
 import { MilestoneLine, useGoalMilestone } from '../components/Milestone.jsx'
 
 const parseNim = (v) => Math.floor(Number(String(v).replace(/[^\d.]/g, ''))) || 0
@@ -62,9 +62,9 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null 
     readStaker(address).then((st) => {
       if (!st) { setHasStaker(false); return }
       setHasStaker(true); stakerFlag.set(address)
-      setEarned(earnedNim(st, address))
+      setEarned(stakeSummary(st, address).byGoal[goalId] ?? 0) // this goal's share of Stake's figure
     }).catch(() => { /* chain unreadable: keep the last known flag */ })
-  }, [address])
+  }, [address, goalId])
 
   // Watches the pending deposit until the chain shows it or its deadline passes.
   // Runs on any goal screen, so reopening Dibs mid-deposit resumes here.

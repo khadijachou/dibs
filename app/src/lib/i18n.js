@@ -378,6 +378,20 @@ const en = {
   ms_50_name: "Halfway, {name}.",
   ms_75: "Three quarters there.",
   ms_75_name: "Three quarters there, {name}.",
+  tab_profile: "Profile",
+  prof_title_anon: "Your Dibs",
+  prof_add_name: "Add your name",
+  prof_edit_name: "Change your name",
+  prof_save: "Save",
+  prof_saved: "Total saved",
+  prof_usd: "about {usd} USD",
+  prof_done: "Goals done",
+  prof_cards: "Cards bought",
+  prof_earned: "NIM earned from staking",
+  prof_active: "Active goals",
+  prof_since: "Saving since",
+  prof_empty: "Your stats start with your first dibs.",
+  prof_empty_cta: "Go to Goals",
 }
 
 const fr = {
@@ -759,6 +773,20 @@ const fr = {
   ms_50_name: "À mi-chemin, {name}.",
   ms_75: "Les trois quarts du chemin.",
   ms_75_name: "Les trois quarts du chemin, {name}.",
+  tab_profile: "Profil",
+  prof_title_anon: "Votre Dibs",
+  prof_add_name: "Ajouter votre nom",
+  prof_edit_name: "Changer votre nom",
+  prof_save: "Enregistrer",
+  prof_saved: "Total épargné",
+  prof_usd: "environ {usd} USD",
+  prof_done: "Objectifs atteints",
+  prof_cards: "Cartes-cadeaux achetées",
+  prof_earned: "NIM gagnés en staking",
+  prof_active: "Objectifs en cours",
+  prof_since: "Épargne depuis le",
+  prof_empty: "Vos statistiques commencent avec votre premier dibs.",
+  prof_empty_cta: "Aller aux objectifs",
 }
 
 const es = {
@@ -1140,6 +1168,20 @@ const es = {
   ms_50_name: "A mitad de camino, {name}.",
   ms_75: "Ya llevas tres cuartos.",
   ms_75_name: "Ya llevas tres cuartos, {name}.",
+  tab_profile: "Perfil",
+  prof_title_anon: "Tu Dibs",
+  prof_add_name: "Agrega tu nombre",
+  prof_edit_name: "Cambia tu nombre",
+  prof_save: "Guardar",
+  prof_saved: "Total ahorrado",
+  prof_usd: "unos {usd} USD",
+  prof_done: "Metas cumplidas",
+  prof_cards: "Tarjetas compradas",
+  prof_earned: "NIM ganados con staking",
+  prof_active: "Metas activas",
+  prof_since: "Ahorrando desde el",
+  prof_empty: "Tus estadísticas empiezan con tu primer dibs.",
+  prof_empty_cta: "Ir a Metas",
 }
 
 const DICTS = { en, fr, es }

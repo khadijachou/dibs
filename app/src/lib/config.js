@@ -1,6 +1,6 @@
 // All settings come from Vite env vars (see .env.example). Nothing secret lives here:
 // everything in this file ends up in the browser bundle.
-const env = import.meta.env
+const env = import.meta.env || {} // {} under node --test
 
 export const config = {
   defaultValidator: (env.VITE_DEFAULT_VALIDATOR || '').trim(),

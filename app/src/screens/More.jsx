@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useApp } from '../App.jsx'
 import { Header, LangSwitch, Sheet } from '../components/ui.jsx'
 import { listGoals } from '../lib/goals.js'
+import { boughtGoals } from '../lib/stats.js'
 import { lastTxHash } from '../lib/history.js'
 import { readLog } from '../lib/errors.js'
 import { host } from '../lib/nimiq.js'
@@ -16,7 +17,7 @@ export default function More() {
   const [sound, setSound] = useState(soundOn)
   const [report, setReport] = useState(false)
   const [name, setNameField] = useState(getName)
-  const bought = listGoals(address).filter((g) => g.status === 'redeemed')
+  const bought = boughtGoals(listGoals(address))
 
   const toggleSound = () => {
     const next = !sound
