@@ -413,3 +413,8 @@ svg circle:first-child[stroke="#e6dccf"], svg circle:first-child[stroke="#35323f
 /* Pills never wrap or get cut: the row scrolls, text stays at 12px or more. */
 .pills .pill.tall { white-space: nowrap; padding: 9px 12px; }
 .pill small, .btile .pop { font-size: 12px; }
+
+/* Pay screen: the amount just above the pay button, and the email field error. */
+.pay-sum { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border-radius: 12px; background: var(--card-2); }
+.pay-sum b { font-size: 15px; font-weight: 600; color: var(--cream); }
+.email.bad { border-color: var(--red); }

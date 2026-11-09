@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useApp } from '../App.jsx'
-import { ErrorBox, Header, Notice } from '../components/ui.jsx'
+import { ErrorBox, FieldError, Header, Notice } from '../components/ui.jsx'
 import { classify, lastLogText } from '../lib/errors.js'
 import { getGoal, updateGoal } from '../lib/goals.js'
 import { findItem } from '../lib/catalog.js'
@@ -9,7 +9,7 @@ import { invoiceMatchesPrice, parseInvoice } from '../lib/invoice.js'
 import { usdToNim } from '../lib/price.js'
 import { config } from '../lib/config.js'
 import { api } from '../lib/api.js'
-import { fmtInt, fmtUsd } from '../lib/format.js'
+import { fmtInt, fmtNim, fmtUsd } from '../lib/format.js'
 
 const EMAIL_KEY = 'dibs.email'
 
@@ -20,13 +20,15 @@ const readPayLock = (goalId) => {
   try { const p = JSON.parse(localStorage.getItem(PENDING_KEY)); return p?.kind === 'pay' && p.goalId === goalId ? p : null } catch { return null }
 }
 const clearPayLock = (goalId) => { try { if (readPayLock(goalId)) localStorage.removeItem(PENDING_KEY) } catch { /* ignore */ } }
-const emailOk = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)
+// Same rule as the server (server/src/index.js, POST /api/redeem).
+const emailOk = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(e || ''))
 
 export default function Redeem({ goalId }) {
   const { t, lang, address, prices, refreshBalance, back, reset, toast } = useApp()
   const goal = getGoal(address, goalId)
   const item = goal && findItem(goal.itemId)
   const [email, setEmail] = useState(() => { try { return localStorage.getItem(EMAIL_KEY) || '' } catch { return '' } })
+  const [emailTouched, setEmailTouched] = useState(false) // the field error waits for the first blur
   // A pay lock left by an earlier session restores the locked state: order = { orderId } only, no invoice to pay.
   const [order, setOrder] = useState(() => { const l = readPayLock(goalId); return l?.orderId ? { orderId: l.orderId, orderToken: l.orderToken || null } : null }) // { orderId, orderToken, invoice, sats, usd, expiresAt }
   const [invoice, setInvoice] = useState('')
@@ -85,10 +87,15 @@ export default function Redeem({ goalId }) {
       ? { ok: Math.abs(parsed.sats - order.sats) <= 1, invoiceUsd: order.usd }
       : prices?.btcUsd ? invoiceMatchesPrice({ sats: parsed.sats, btcUsd: prices.btcUsd, expectedUsd: goal.usd }) : null
     : null
+  // BUG-08a, display only: the invoice's own USD (the server's quote for this invoice, or its sats at the BTC price
+  // in manual mode), in NIM at today's rate. Nimiq Pay does the real conversion, so it reads "about".
+  const invoiceUsd = apiMode ? order?.usd ?? null : check?.invoiceUsd ?? null
+  const payNim = parsed && invoiceUsd != null && prices?.nimUsd ? usdToNim(invoiceUsd, prices.nimUsd) : null
+  const emailBad = !emailOk(email)
 
   const getInvoice = async () => {
     setError(null)
-    if (!emailOk(email)) { setError(new Error(t('redeem_email_bad'))); return }
+    if (emailBad) { setEmailTouched(true); return }
     try { localStorage.setItem(EMAIL_KEY, email) } catch { /* ignore */ }
     setBusy(true)
     try {
@@ -152,18 +159,21 @@ export default function Redeem({ goalId }) {
         {apiMode ? (
           <section className="card">
             <div className="row"><span className="sub">{goal.itemName} · {goal.itemDetail}</span><b>{fmtUsd(order?.usd ?? goal.usd, lang)} USD</b></div>
+            <p className="small plan-note">{t('plan_price_note')}</p>
             {!order && (
               <>
                 <label htmlFor="email" className="sub">{t('redeem_email')}</label>
-                <input id="email" className="email" type="email" inputMode="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
+                <input id="email" className={`email${emailTouched && emailBad ? ' bad' : ''}`} type="email" inputMode="email" autoComplete="email" value={email}
+                  aria-invalid={emailTouched && emailBad} aria-describedby={emailTouched && emailBad ? 'email-err' : undefined}
+                  onChange={(e) => setEmail(e.target.value)} onBlur={() => setEmailTouched(true)} placeholder="you@example.com" />
+                {emailTouched && emailBad && <div id="email-err"><FieldError>{t('redeem_email_bad')}</FieldError></div>}
                 <p className="small">{t('redeem_email_why')}</p>
-                <button type="button" className="btn ink small" disabled={busy} onClick={getInvoice}>{busy ? t('loading_short') : t('redeem_get_invoice')}</button>
+                <button type="button" className="btn ink small" disabled={busy || emailBad} onClick={getInvoice}>{busy ? t('loading_short') : t('redeem_get_invoice')}</button>
               </>
             )}
             {order?.invoice && (
               <>
                 <div className="ok">{t('redeem_ready', { sats: order.sats != null ? fmtInt(order.sats, lang) : '?' })}</div>
-                {left != null && !expired && !unknown && <p className="small countdown">{t('redeem_expires', { time: mmss(left) })}</p>}
                 {expired && <Notice tone="info" title={t('err_PAY_EXPIRED_title')} sub={t('err_PAY_EXPIRED_sub')} safe={t('safe_nothingCharged')} />}
               </>
             )}
@@ -210,6 +220,12 @@ export default function Redeem({ goalId }) {
         {!unknown && !problem && <ErrorBox error={error} />}
         <p className="small">{t('redeem_refund')}</p>
 
+        {payNim != null && !expired && !locked && (!check || check.ok) && (
+          <div className="pay-sum" role="status">
+            <b>{t('redeem_pay_about', { nim: fmtNim(payNim, lang), usd: fmtUsd(invoiceUsd, lang) })}</b>
+            {apiMode && left != null && <span className="small countdown">{t('redeem_expires', { time: mmss(left) })}</span>}
+          </div>
+        )}
         <div className="bottom">
           {expired ? (
             <button type="button" className="btn" disabled={busy} onClick={() => { setOrder(null); setLeft(null) }}>{t('err_PAY_EXPIRED_cta')}</button>
