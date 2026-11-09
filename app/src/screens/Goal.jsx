@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useApp, useBlockBack } from '../App.jsx'
-import { itemLabel, itemName, localName } from '../lib/itemName.js'
+import { detailText, itemLabel, itemName, localName } from '../lib/itemName.js'
 import { BrandLogo, FieldError, Header, Notice, Ring, Stamp, WeekDots } from '../components/ui.jsx'
 import { classify, lastLogText } from '../lib/errors.js'
 import { getGoal, progress, savedNim, stakerFlag } from '../lib/goals.js'
@@ -192,7 +192,7 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null 
           <Notice tone="wait" title={t('deposit_pending_title', { amount: fmtNim(pend.nim, lang) })} sub={t('deposit_pending_body')} />
         )}
         {unseen && <Notice tone="info" title={t('deposit_unseen_title')} sub={t('deposit_unseen_body')} />}
-        <CardFlip flip={flip} back={<GiftFace brand={brand} label={t('flip_gift')} title={t('flip_face', { brand: brandName, amount: goal.itemDetail })} />}>
+        <CardFlip flip={flip} back={<GiftFace brand={brand} label={t('flip_gift')} title={t('flip_face', { brand: brandName, amount: detailText(t, goal, { short: true }) })} />}>
         <section className="hero">
           <div className="top">
             <BrandLogo brand={brand} />

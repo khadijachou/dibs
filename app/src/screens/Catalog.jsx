@@ -3,6 +3,7 @@ import { useApp } from '../App.jsx'
 import { BrandLogo, Header, Icon } from '../components/ui.jsx'
 import { CHIPS, catalogBrands } from '../lib/brands.js'
 import { brandColor } from '../lib/brandIcons.js'
+import { fromText } from '../lib/itemName.js'
 import { useReducedMotion } from '../components/UnlockTimer.jsx'
 
 // Entrance stagger: 40 ms per tile, never more than 400 ms for the last one.
@@ -92,7 +93,7 @@ export default function Catalog({ moveFrom = null }) {
                 : b.popular && <span className="pop">{t('cat_popular')}</span>}
               <BrandLogo brand={b} />
               <b>{b.name}</b>
-              <span>{t('cat_from', { price: b.from })}</span>
+              <span>{fromText(t, b)}</span>
               {b.estimated && <span className="btile-est">{t('price_checkout')}</span>}
             </button>
           ))}

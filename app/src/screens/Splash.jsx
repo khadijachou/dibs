@@ -1,6 +1,10 @@
 import { useEffect, useRef } from 'react'
 import { useApp } from '../App.jsx'
+import { BrandLogo, DibsMark } from '../components/ui.jsx'
+import { detailText } from '../lib/itemName.js'
 
+// Logos are vector: the Dibs mark from the app icon (DibsMark) and the brand glyphs from simple-icons (BrandLogo,
+// Amazon keeps its PNG). The wordmark stays a PNG: there is no vector source for it in the repo.
 // VF screen 01: shown while start() connects (and at least 900 ms on launch).
 // The connecting status stays readable for screen readers.
 // The coral ring draws itself in a loop while connecting. When `done` turns true the ring
@@ -52,9 +56,9 @@ export default function Splash({ done = false, onGone }) {
       <div className="splash-cards" aria-hidden="true">
         {CARDS.map((c, i) => (
           <div key={c.key} className="fc" style={{ '--x': c.x, '--y': c.y, '--r': c.r, '--d': `${i * -1.3}s`, background: c.bg }}>
-            <img src={c.logo} alt="" />
+            <BrandLogo brand={c} />
             <b>{c.name}</b>
-            <span>{t('cat_from', { price: c.price })}</span>
+            <span>{t('cat_from', { price: detailText(t, { detail: c.price }) })}</span>
           </div>
         ))}
       </div>
@@ -65,7 +69,7 @@ export default function Splash({ done = false, onGone }) {
             <circle ref={arc} className="splash-arc" cx="78" cy="78" r={R} fill="none" stroke="#E8482A" strokeWidth="12" strokeLinecap="round"
               strokeDasharray={C.toFixed(1)} transform="rotate(-90 78 78)" style={{ '--c': `${C.toFixed(1)}px` }} />
           </svg>
-          <img src="/brand/mark-cream.png" alt="" />
+          <DibsMark className="splash-dmark" />
         </div>
         <p className="splash-loading" aria-hidden="true">{t('splash_loading')}</p>
         <img className="splash-word" src="/brand/wordmark-cream.png" alt="Dibs" />

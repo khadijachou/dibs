@@ -152,7 +152,7 @@ svg circle:first-child[stroke="#e6dccf"], svg circle:first-child[stroke="#35323f
 .fc { position: absolute; left: var(--x); top: var(--y); width: 150px; height: 96px; border-radius: 18px; padding: 12px; opacity: .85; box-sizing: border-box;
   transform: rotate(var(--r)); box-shadow: 0 20px 40px rgba(0, 0, 0, .45); animation: drift 4s ease-in-out infinite alternate; animation-delay: var(--d, 0s); pointer-events: none;
   display: flex; flex-direction: column; gap: 2px; color: var(--cream); border: 1px solid rgba(255, 255, 255, .06); }
-.fc img { width: 28px; height: 28px; border-radius: 8px; margin-bottom: 4px; }
+.fc .blogo { width: 28px; height: 28px; border-radius: 8px; margin-bottom: 4px; }
 .fc b { font: 600 14px var(--font-display); } .fc span { font-size: 11.5px; color: #c9c6d0; }
 @keyframes drift { to { transform: rotate(var(--r)) translateY(6px); } }
 
@@ -169,7 +169,7 @@ svg circle:first-child[stroke="#e6dccf"], svg circle:first-child[stroke="#35323f
 @keyframes splash-draw { 0% { stroke-dashoffset: var(--c); } 55% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: calc(var(--c) * -1); } }
 .splash.out { opacity: 0; transition: opacity .3s ease-out; }
 .splash-loading { display: none; margin: -6px 0 0; font-size: 13px; color: var(--muted); }
-.splash-mark img { position: absolute; left: 50%; top: 50%; width: 52px; transform: translate(calc(-50% - 2px), -50%); }
+.splash-mark .splash-dmark { position: absolute; left: 50%; top: 50%; width: 52px; height: 66.6px; transform: translate(calc(-50% - 2px), -50%); }
 .splash-word { height: 34px; }
 .splash-tag { margin: 4px 0 0; display: flex; flex-direction: column; align-items: center; font: 700 34px/1.12 var(--font-display); letter-spacing: -.01em; text-align: center; }
 .splash-tag .last { color: var(--butter); }

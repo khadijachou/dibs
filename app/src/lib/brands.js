@@ -47,9 +47,6 @@ export function brandOf(item) {
     || { key: slug || item.id, name: item.name.replace(/ gift card$/i, ''), chip: 'shopping', logo: null, slugs: [slug] }
 }
 
-// Currency of a card value, from the item detail ("50 USD", "25 EUR").
-const currencyOf = (item) => (String(item.detail).match(/[A-Z]{3}/) || ['USD'])[0]
-
 // Brands that have at least one item in the live catalogue, with their items sorted by value.
 export function catalogBrands() {
   const map = new Map()
@@ -63,10 +60,10 @@ export function catalogBrands() {
   return [...map.values()]
     .map((b) => {
       const items = b.items.slice().sort((x, y) => Number(x.faceValue || 0) - Number(y.faceValue || 0))
-      const min = items[0]
       // estimated: at least one value has no live shop quote (live: false), so its price is the catalogue's
       // stored placeholder (server fallbackUsd) and is only confirmed at checkout.
-      return { ...b, items, from: `${min.faceValue || ''} ${currencyOf(min)}`.trim(), estimated: items.some((i) => i.live === false) }
+      // Price line: lib/itemName.js fromText() formats items[0] in the user's language.
+      return { ...b, items, estimated: items.some((i) => i.live === false) }
     })
     .sort((a, b) => order(a.key) - order(b.key))
 }

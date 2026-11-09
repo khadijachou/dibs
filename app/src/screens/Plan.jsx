@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useApp } from '../App.jsx'
-import { itemName } from '../lib/itemName.js'
+import { detailText, isAmountDetail, itemName } from '../lib/itemName.js'
 import { BrandLogo, Header, WeekDots } from '../components/ui.jsx'
 import { brandOf, catalogBrands, pickAmounts } from '../lib/brands.js'
 import { findItem } from '../lib/catalog.js'
@@ -75,13 +75,13 @@ export default function Plan({ brandKey, itemId, moveFrom = null }) {
               <div className="pills" role="group" aria-label={t('plan_card_value')}>
                 {amounts.map((a) => (
                   <button type="button" key={a.id} className={`pill tall${a.id === item.id ? ' on' : ''}`} aria-pressed={a.id === item.id} onClick={() => setPickedId(a.id)}>
-                    {a.detail}<small>{t('plan_you_pay', { price: (a.live === false ? '≈ ' : '') + fmtUsd(a.usd, lang) })}</small>
+                    {detailText(t, a, { short: true })}<small>{t('plan_you_pay', { price: (a.live === false ? '≈ ' : '') + fmtUsd(a.usd, lang) })}</small>
                   </button>
                 ))}
               </div>
             </>
           )}
-          <p className="small plan-note">{amounts.length > 1 ? t('plan_price_note') : estimated ? `${t('price_checkout')}.` : `${t('plan_price', { usd: fmtUsd(item.usd, lang) })}. ${t('plan_price_note')}`}</p>
+          <p className="small plan-note">{amounts.length > 1 ? t('plan_price_note') : estimated ? `${t('price_checkout')}.` : !isAmountDetail(item) ? `${detailText(t, item)}. ${t('plan_price_note')}` : `${t('plan_price', { usd: fmtUsd(item.usd, lang) })}. ${t('plan_price_note')}`}</p>
           <div>
             <span className="small">{t('plan_target2')}</span>
             <div className="target-num" style={{ margin: '4px 0 6px' }}>{fmtNim(Math.round(targetShown), lang)} NIM</div>

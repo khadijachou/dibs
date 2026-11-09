@@ -70,6 +70,17 @@ export function Logo({ size = 28, color = 'var(--gold)' }) {
   )
 }
 
+// The Dibs mark exactly as in the app icon (public/favicon.svg, the 1024 vector master): a lowercase d whose
+// stem ends in a bookmark notch. Vector, so it is sharp at any density.
+export function DibsMark({ className = '', color = '#FFF6EC' }) {
+  return (
+    <svg className={className} aria-hidden="true" viewBox="0 0 192 246" fill={color}>
+      <path fillRule="evenodd" d="M0 153.5a96 96 0 1 0 192 0a96 96 0 1 0-192 0ZM57.5 153a38.5 38.5 0 1 0 77 0a38.5 38.5 0 1 0-77 0Z" />
+      <polygon points="135,0 163.5,28.5 192,0 192,246 135,246" />
+    </svg>
+  )
+}
+
 export function Wordmark({ cream = false }) {
   return <img className="wordmark" src={cream ? '/brand/wordmark-cream.png' : '/brand/wordmark-ink.png'} alt="Dibs" />
 }

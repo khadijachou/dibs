@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { useApp } from '../App.jsx'
-import { itemLabel, itemName } from '../lib/itemName.js'
+import { detailText, fromText, itemLabel, itemName } from '../lib/itemName.js'
 import { BrandLogo, Header, Ring } from '../components/ui.jsx'
 import { listGoals, progress } from '../lib/goals.js'
 import { catalogBrands, brandOf } from '../lib/brands.js'
@@ -63,7 +63,7 @@ function Welcome() {
             <button type="button" key={b.key} className={`pick${b.key === picked ? ' on' : ''}`} aria-pressed={b.key === picked} onClick={() => setPicked(b.key)}>
               <BrandLogo brand={b} />
               <b>{b.name}</b>
-              <span>{t('cat_from', { price: b.from })}</span>
+              <span>{fromText(t, b)}</span>
             </button>
           ))}
         </div>
@@ -185,7 +185,7 @@ function GoalWallet({ goals, earned }) {
         {goals.map((g, k) => (
           <button type="button" role="tab" aria-selected={k === i} key={g.id} className={`gw-tab${k === i ? ' on' : ''}`} onClick={() => pick(k)}>
             <BrandLogo brand={goalBrand(g)} />
-            <span>{g.itemDetail}</span>
+            <span>{detailText(t, g, { short: true })}</span>
             <b>{Math.round(progress(g) * 100)}%</b>
           </button>
         ))}

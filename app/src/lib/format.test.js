@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { fmtNim, fmtPct, fmtUsd } from './format.js'
+import { fmtAmount, fmtNim, fmtPct, fmtUsd } from './format.js'
 
 const NNBSP = String.fromCharCode(0x202f)
 const NBSP = String.fromCharCode(0xa0)
@@ -26,4 +26,12 @@ test('no narrow no-break space in any output', () => {
 
 test('NIM is a whole number', () => {
   assert.equal(fmtNim(1234.9, 'en'), '1,234')
+})
+
+test('card face values: whole stays whole, decimals in the language', () => {
+  assert.equal(fmtAmount('50', 'en'), '50')
+  assert.equal(fmtAmount('9.99', 'en'), '9.99')
+  assert.equal(fmtAmount('9.99', 'fr'), '9,99')
+  assert.equal(fmtAmount('9.99', 'es'), '9,99')
+  assert.equal(fmtAmount('1000', 'fr'), `1${NBSP}000`)
 })

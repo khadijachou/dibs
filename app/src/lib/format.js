@@ -16,6 +16,10 @@ export const fmtUsd = (n, lang = 'en') =>
     ? { minimumFractionDigits: 2, maximumFractionDigits: 2 }
     : { minimumSignificantDigits: 3, maximumSignificantDigits: 3 }, n)
 
+// A card's face value ("50", "9.99"): whole numbers stay whole (50), others get 2 decimals (9.99, fr 9,99).
+export const fmtAmount = (n, lang = 'en') =>
+  num(lang, Number.isInteger(Number(n)) ? { maximumFractionDigits: 0 } : { minimumFractionDigits: 2, maximumFractionDigits: 2 }, Number(n))
+
 // Share of 1 as a percentage (0.68 -> "68%", fr "68 %").
 export const fmtPct = (x, lang = 'en') => num(lang, { style: 'percent', maximumFractionDigits: 0 }, x)
 
