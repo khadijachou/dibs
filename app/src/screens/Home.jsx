@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { useApp } from '../App.jsx'
+import { itemLabel, itemName } from '../lib/itemName.js'
 import { BrandLogo, Header, Ring } from '../components/ui.jsx'
 import { listGoals, progress } from '../lib/goals.js'
 import { catalogBrands, brandOf } from '../lib/brands.js'
@@ -131,7 +132,7 @@ export function PastList({ goals, title }) {
         return (
           <button type="button" key={g.id} className="past" onClick={() => go(back ? 'goal' : 'done', { goalId: g.id })}>
             <BrandLogo brand={goalBrand(g)} />
-            <div><b>{g.itemName} · {g.itemDetail}</b><span className="s">{fmtDate(end || g.createdAt, lang)} · {t(days === 1 ? 'done_stat_days_one' : 'done_stat_days_other', { count: days })}</span></div>
+            <div><b>{itemLabel(t, g)}</b><span className="s">{fmtDate(end || g.createdAt, lang)} · {t(days === 1 ? 'done_stat_days_one' : 'done_stat_days_other', { count: days })}</span></div>
             <span className={`code${back ? ' returned' : ''}`}>{t(back ? 'withdraw_returned' : 'home_code')}</span>
           </button>
         )
@@ -148,7 +149,7 @@ function ActiveGoal({ goal, earned }) {
     <>
       <div>
         <p className="small" style={{ color: 'var(--gold)', fontWeight: 600 }}>{t('home_pct', { pct: Math.round(pct * 100) })}</p>
-        <h2 className="title">{goal.itemName}</h2>
+        <h2 className="title">{itemName(t, goal, { title: true })}</h2>
       </div>
       <GoalHero goal={goal} earned={earned} />
       {p.pace.kind !== 'done' && <PaceLine pace={p.pace} />}
@@ -211,7 +212,7 @@ function GoalHero({ goal, earned }) {
       <section className="hero">
         <div className="top">
           <BrandLogo brand={brand} />
-          <div><div className="t1">{goal.itemName} · {goal.itemDetail}</div><div className="t2">{fmtDate(goal.deadline, lang)} · {t(p.daysLeft === 1 ? 'days_left_one' : 'days_left_other', { count: p.daysLeft })}</div></div>
+          <div><div className="t1">{itemLabel(t, goal)}</div><div className="t2">{fmtDate(goal.deadline, lang)} · {t(p.daysLeft === 1 ? 'days_left_one' : 'days_left_other', { count: p.daysLeft })}</div></div>
         </div>
         <div className="mid">
           <div className={`ring-wrap${milestone ? ' ms-pulse' : ''}`}>

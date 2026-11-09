@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import { useApp } from '../App.jsx'
+import { itemLabel } from '../lib/itemName.js'
 import { BrandLogo, FieldError, Sheet } from '../components/ui.jsx'
 import { listGoals, moveNim, progress, removeGoal, savedNim } from '../lib/goals.js'
 import { goalBrand } from './Home.jsx'
 import { fmtNim } from '../lib/format.js'
 
 const parseNim = (v) => Math.floor(Number(String(v).replace(/[^\d.]/g, ''))) || 0
-export const goalLabel = (g) => `${g.itemName} · ${g.itemDetail}`
+// title: at the start of a line or title; false inside a sentence.
+export const goalLabel = (g, t, title = false) => itemLabel(t, g, { title })
 
 // Frame 2: Move, Get my NIM back, Delete (off while the goal still holds NIM).
 export function ManageSheet({ goal, onClose, onMove, onWithdraw, onDelete }) {
@@ -50,7 +52,7 @@ export function MoveSheet({ goal, preselect = null, onClose, onMoved }) {
     if (!ok) return
     try {
       const r = moveNim(address, goal.id, target.id, nim)
-      toast(t('move_done', { nim: fmtNim(nim, lang), name: goalLabel(target) }))
+      toast(t('move_done', { nim: fmtNim(nim, lang), name: goalLabel(target, t) }))
       onMoved(r)
     } catch {
       toast(t('move_fail'))
@@ -59,7 +61,7 @@ export function MoveSheet({ goal, preselect = null, onClose, onMoved }) {
 
   return (
     <Sheet title={t('move_title')} onClose={onClose}>
-      <p className="small">{t('move_from', { name: goalLabel(goal), nim: fmtNim(saved, lang) })}</p>
+      <p className="small">{t('move_from', { name: goalLabel(goal, t), nim: fmtNim(saved, lang) })}</p>
       <span className="small sheet-label">{t('move_to')}</span>
       <div className="sheet-list" role="radiogroup" aria-label={t('move_to')}>
         {targets.map((g) => {
@@ -67,7 +69,7 @@ export function MoveSheet({ goal, preselect = null, onClose, onMoved }) {
           return (
             <button type="button" key={g.id} role="radio" aria-checked={g.id === to} className={`sheet-row pick-goal${g.id === to ? ' on' : ''}`} onClick={() => setTo(g.id)}>
               <BrandLogo brand={goalBrand(g)} />
-              <span><b>{goalLabel(g)}</b><small>{t('move_goal_meta', { pct: Math.round(progress(g) * 100), nim: fmtNim(left, lang) })}</small></span>
+              <span><b>{goalLabel(g, t, true)}</b><small>{t('move_goal_meta', { pct: Math.round(progress(g) * 100), nim: fmtNim(left, lang) })}</small></span>
               <span className="radio" aria-hidden="true" />
             </button>
           )
@@ -93,7 +95,7 @@ export function MoveSheet({ goal, preselect = null, onClose, onMoved }) {
         </>
       )}
       <button type="button" className="btn tall" disabled={!ok} onClick={move}>
-        {target ? t('move_cta', { nim: fmtNim(nim, lang), name: goalLabel(target) }) : t('move_pick')}
+        {target ? t('move_cta', { nim: fmtNim(nim, lang), name: goalLabel(target, t) }) : t('move_pick')}
         <small>{t('move_cta_sub')}</small>
       </button>
     </Sheet>
@@ -114,7 +116,7 @@ export function DeleteSheet({ goal, onClose }) {
     }
   }
   return (
-    <Sheet title={t('delete_title', { name: goalLabel(goal) })} onClose={onClose}>
+    <Sheet title={t('delete_title', { name: goalLabel(goal, t) })} onClose={onClose}>
       <p className="small">{t('delete_sub')}</p>
       <button type="button" className="btn danger" onClick={del}>{t('delete_cta')}</button>
       <button type="button" className="btn ghost" onClick={onClose}>{t('manage_cancel')}</button>

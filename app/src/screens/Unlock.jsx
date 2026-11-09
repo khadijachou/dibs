@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useApp, useBlockBack } from '../App.jsx'
+import { itemName } from '../lib/itemName.js'
 import { Header, Notice } from '../components/ui.jsx'
 import { classify } from '../lib/errors.js'
 import { getGoal, listGoals, savedNim, stakedInGoals, updateGoal } from '../lib/goals.js'
@@ -101,7 +102,7 @@ export default function Unlock({ goalId, mode: modeParam }) {
         <h2 className="title">{t(withdraw ? 'withdraw_title' : 'unlock_title')}</h2>
         <p className="sub">{t(withdraw ? 'withdraw_intro' : 'unlock_intro')}</p>
         <section className="card">
-          <div className="row"><span className="sub">{goal.itemName}</span><b>{fmtNim(amount, lang)} NIM</b></div>
+          <div className="row"><span className="sub">{itemName(t, goal, { title: true })}</span><b>{fmtNim(amount, lang)} NIM</b></div>
           <div className={`steps${withdraw ? ' mint' : ''}`}>
             {STEPS.map((s, i) => {
               const state = doneSteps.includes(s) ? 'done' : s === current ? 'current' : ''
@@ -115,7 +116,7 @@ export default function Unlock({ goalId, mode: modeParam }) {
           </div>
         </section>
         {otherRelease && (
-          <Notice tone="info" title={t('withdraw_busy_title')} sub={t('withdraw_busy_sub', { name: otherRelease.itemName })} safe={t('safe_nimSafe')} />
+          <Notice tone="info" title={t('withdraw_busy_title')} sub={t('withdraw_busy_sub', { name: itemName(t, otherRelease, { title: true }) })} safe={t('safe_nimSafe')} />
         )}
         {!otherRelease && mismatch && <div className="band-warn">{t('withdraw_mismatch')}</div>}
         {!otherRelease && underMin && (

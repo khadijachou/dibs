@@ -1,4 +1,5 @@
 import { useApp } from '../App.jsx'
+import { itemLabel, localName } from '../lib/itemName.js'
 import { Header } from '../components/ui.jsx'
 import { listGoals } from '../lib/goals.js'
 import { buildTimeline, shortHash } from '../lib/history.js'
@@ -10,7 +11,7 @@ const STEP = { deactivate: 'unlock_s1', retire: 'unlock_s2', remove: 'unlock_s3'
 
 export default function History() {
   const { t, lang, address, toast } = useApp()
-  const events = buildTimeline(listGoals(address))
+  const events = buildTimeline(listGoals(address), (g) => itemLabel(t, g), (s) => localName(t, s, { title: true }))
 
   const title = (e) => {
     if (e.type === 'deposit') return t('hist_deposit')

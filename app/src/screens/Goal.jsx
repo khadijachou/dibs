@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useApp, useBlockBack } from '../App.jsx'
+import { itemLabel, itemName, localName } from '../lib/itemName.js'
 import { BrandLogo, FieldError, Header, Notice, Ring, Stamp, WeekDots } from '../components/ui.jsx'
 import { classify, lastLogText } from '../lib/errors.js'
 import { getGoal, progress, savedNim, stakerFlag } from '../lib/goals.js'
@@ -11,6 +12,7 @@ import { confirmPending, expired, pending, stakedLuna, startPending, waitForDepo
 import { fmtDate, fmtNim, weeksUntil } from '../lib/format.js'
 import { DeleteSheet, ManageSheet, MoveSheet } from './GoalManage.jsx'
 import { useCountUp } from '../lib/useCountUp.js'
+import { CardFlip, GiftFace, useCardFlip } from '../components/CardFlip.jsx'
 import { stakeSummary } from '../lib/earned.js'
 import { MilestoneLine, useGoalMilestone } from '../components/Milestone.jsx'
 import { GoalStatus } from '../components/GoalStatus.jsx'
@@ -110,6 +112,8 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null 
   }, [balance])
 
   const milestone = useGoalMilestone(goal)
+  // Get my card: the card flips (display only), then the pay screen opens exactly as before.
+  const flip = useCardFlip(() => go('redeem', { goalId }))
   useBlockBack(busy) // Android back waits while Nimiq Pay has the deposit open
 
   if (!goal) return null
@@ -118,6 +122,9 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null 
   const amountNim = parseNim(amount)
   const p = planOf(goal)
   const brand = goalBrand(goal)
+  const brandName = (goal.brandName || brand.name || '').replace(/ gift card$/i, '')
+  // Week n of total: hidden once the goal is at 100 % or past saving (unlocking, ready, bought, withdrawn).
+  const done100 = reached || goal.status !== 'saving'
   const pool = poolName()
   const tooMuch = balance != null && amountNim > balance
   // BUG-12: no staker yet and the wallet can't cover the 100 NIM first deposit. One message, no pills, button off.
@@ -130,7 +137,7 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null 
   const empty = goal.status === 'saving' && saved === 0 && goal.deposits.length > 0
   const withdrawing = goal.status === 'unlocking' && goal.unlockMode === 'withdraw'
   const returned = goal.status === 'withdrawn' ? goal.deposits.filter((d) => d.kind === 'withdraw').reduce((s, d) => s - d.nim, 0) : 0
-  const rowLabel = (d) => d.kind === 'move' ? t(d.to ? 'row_moved_to' : 'row_moved_from', { name: d.name || '' }) : d.kind === 'withdraw' ? t('row_returned') : null
+  const rowLabel = (d) => d.kind === 'move' ? t(d.to ? 'row_moved_to' : 'row_moved_from', { name: localName(t, d.name || '', { title: true }) }) : d.kind === 'withdraw' ? t('row_returned') : null
   const quick = [...new Set([suggested, Math.ceil(goal.targetNim / 4), remaining])]
     .filter((q) => q > 0 && q <= remaining)
     .map((q, i) => ({ value: q, label: q === remaining ? t('goal_rest') : i === 0 ? t('pill_week') : t('pill_quarter') }))
@@ -185,10 +192,11 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null 
           <Notice tone="wait" title={t('deposit_pending_title', { amount: fmtNim(pend.nim, lang) })} sub={t('deposit_pending_body')} />
         )}
         {unseen && <Notice tone="info" title={t('deposit_unseen_title')} sub={t('deposit_unseen_body')} />}
+        <CardFlip flip={flip} back={<GiftFace brand={brand} label={t('flip_gift')} title={t('flip_face', { brand: brandName, amount: goal.itemDetail })} />}>
         <section className="hero">
           <div className="top">
             <BrandLogo brand={brand} />
-            <div className="grow"><div className="t1">{goal.itemName} · {goal.itemDetail}</div><div className="t2">{fmtDate(goal.deadline, lang)} · {t(p.daysLeft === 1 ? 'days_left_one' : 'days_left_other', { count: p.daysLeft })}</div></div>
+            <div className="grow"><div className="t1">{itemLabel(t, goal)}</div><div className="t2">{fmtDate(goal.deadline, lang)} · {t(p.daysLeft === 1 ? 'days_left_one' : 'days_left_other', { count: p.daysLeft })}</div></div>
             {canManage && <button type="button" className="more-btn" aria-label={t('manage_btn')} aria-haspopup="dialog" onClick={() => setSheet('manage')}>⋯</button>}
           </div>
           <div className="mid">
@@ -202,12 +210,13 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null 
               <GoalStatus goal={goal} earned={earned} />
             </div>
           </div>
-          <WeekDots total={p.totalWeeks} done={p.weeksDone} now={p.weekIdx}
-            left={t('week_of', { n: Math.min(p.totalWeeks, p.weekIdx + 1), total: p.totalWeeks })}
-            right={reached ? null : t('goal_this_week', { amount: fmtNim(Math.min(remaining, p.pace.amount || p.weekly), lang) })} />
+          <WeekDots total={p.totalWeeks} done={done100 && reached ? p.totalWeeks : p.weeksDone} now={p.weekIdx}
+            left={done100 ? null : t('week_of', { n: Math.min(p.totalWeeks, p.weekIdx + 1), total: p.totalWeeks })}
+            right={done100 ? null : t('goal_this_week', { amount: fmtNim(Math.min(remaining, p.pace.amount || p.weekly), lang) })} />
           <MilestoneLine milestone={milestone} />
           {saved > 0 && stakerAddress && <div className="acct">{t('goal_account', { address: '' }).trim()} <b>{shortAddress(stakerAddress)}</b><span className="pool">● {pool}</span></div>}
         </section>
+        </CardFlip>
         {goal.status === 'saving' && !reached && <PaceLine pace={p.pace} />}
 
         {goal.status === 'saving' && !reached && (
@@ -293,7 +302,7 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null 
             <button type="button" className="btn gold" onClick={() => go('unlock', { goalId: goal.id })}>{t('goal_unlock')}</button>
           )}
           {goal.status === 'ready' && (
-            <button type="button" className="btn gold" onClick={() => go('redeem', { goalId: goal.id })}>{t('goal_buy', { name: goal.itemName })}</button>
+            <button type="button" className="btn gold" onClick={flip.start}>{t('goal_buy', { name: itemName(t, goal) })}</button>
           )}
         </div>
       </main>

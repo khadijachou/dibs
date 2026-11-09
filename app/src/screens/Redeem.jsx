@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useApp, useBlockBack } from '../App.jsx'
+import { itemLabel, itemName } from '../lib/itemName.js'
 import { ErrorBox, FieldError, Header, Notice } from '../components/ui.jsx'
 import { classify, lastLogText } from '../lib/errors.js'
 import { getGoal, updateGoal } from '../lib/goals.js'
@@ -156,11 +157,11 @@ export default function Redeem({ goalId }) {
     <>
       <Header onBack={back} />
       <main className="screen">
-        <h2 className="title">{t('redeem_title', { name: goal.itemName })}</h2>
+        <h2 className="title">{t('redeem_title', { name: itemName(t, goal) })}</h2>
 
         {apiMode ? (
           <section className="card">
-            <div className="row"><span className="sub">{goal.itemName} · {goal.itemDetail}</span><b>{fmtUsd(order?.usd ?? goal.usd, lang)} USD</b></div>
+            <div className="row"><span className="sub">{itemLabel(t, goal)}</span><b>{fmtUsd(order?.usd ?? goal.usd, lang)} USD</b></div>
             <p className="small plan-note">{t('plan_price_note')}</p>
             {!order && (
               <>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useApp } from '../App.jsx'
+import { itemName } from '../lib/itemName.js'
 import { BrandLogo, Header, WeekDots } from '../components/ui.jsx'
 import { brandOf, catalogBrands, pickAmounts } from '../lib/brands.js'
 import { findItem } from '../lib/catalog.js'
@@ -58,7 +59,7 @@ export default function Plan({ brandKey, itemId, moveFrom = null }) {
           <BrandLogo brand={b} />
           <div>
             <p className="small">{t('plan_label')}</p>
-            <h2 className="title">{item.name}</h2>
+            <h2 className="title">{itemName(t, item, { title: true })}</h2>
           </div>
         </div>
         <section className="card">

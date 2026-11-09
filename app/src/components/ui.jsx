@@ -142,25 +142,41 @@ export function Header({ onBack, onInk = false, langChip = false }) {
 }
 
 // One dot per week from the start to the deadline. done = weeks covered, now = current week index.
+// One dot per week, sized to always fit the card (CSS var --n). Above BAR_WEEKS weeks a continuous bar instead.
+// Done dots use the class "done", never "ok": .ok is the global mint notice band and its padding inflated them.
+const BAR_WEEKS = 20
 export function WeekDots({ total, done = 0, now = -1, left, right, planMode = false }) {
-  const n = Math.max(1, Math.min(total, 13))
-  const scale = total / n
+  const n = Math.max(1, total)
+  const lab = (left || right) && <div className="lab"><span>{left}</span>{right && <span>{right}</span>}</div>
+  if (n > BAR_WEEKS) {
+    const pct = planMode ? 0 : Math.min(100, (done / n) * 100)
+    const nowPct = planMode || now < 0 ? null : Math.min(100, ((now + 0.5) / n) * 100)
+    return (
+      <div className="weeks">
+        <div className="wbar" role="img" aria-label={left || undefined}>
+          <i className="fill" style={{ width: `${pct}%` }} />
+          {nowPct != null && now >= done && <i className="mark" style={{ left: `${nowPct}%` }} />}
+          <i className={`end${pct >= 100 ? ' done' : ''}`} />
+        </div>
+        {lab}
+      </div>
+    )
+  }
   const dots = []
   for (let i = 0; i < n; i++) {
-    const w = Math.round((i + 1) * scale) - 1
-    const ok = planMode ? false : w < done
+    const ok = !planMode && i < done
     let cls = 'd'
     if (planMode && i === 0) cls += ' first'
-    else if (ok) cls += ' ok'
-    else if (!planMode && w === now) cls += ' now'
-    if (i === n - 1) cls += ' last' + (ok ? ' ok' : '')
+    else if (ok) cls += ' done'
+    else if (!planMode && i === now) cls += ' now'
+    if (i === n - 1) cls += ' last'
     dots.push(<div key={'d' + i} className={cls} />)
-    if (i < n - 1) dots.push(<div key={'l' + i} className={`ln${!planMode && Math.round((i + 2) * scale) - 1 < done ? ' ok' : ''}`} />)
+    if (i < n - 1) dots.push(<div key={'l' + i} className={`ln${!planMode && i + 1 < done ? ' done' : ''}`} />)
   }
   return (
     <div className="weeks">
-      <div className="dots">{dots}</div>
-      <div className="lab"><span>{left}</span>{right && <span>{right}</span>}</div>
+      <div className="dots" style={{ '--n': n }}>{dots}</div>
+      {lab}
     </div>
   )
 }

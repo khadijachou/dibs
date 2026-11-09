@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useApp } from '../App.jsx'
+import { itemLabel, itemName } from '../lib/itemName.js'
 import { BrandLogo, Header } from '../components/ui.jsx'
 import { goalBrand } from './Home.jsx'
 import { getGoal, updateGoal } from '../lib/goals.js'
@@ -75,7 +76,7 @@ export default function Done({ goalId }) {
         <div className="dibs-band">
           <b>Dibs!</b>
           <span>{red ? t('done_title') : t('done_paid')}</span>
-          <span style={{ opacity: 0.9 }}>{goal.itemName} · {goal.itemDetail}</span>
+          <span style={{ opacity: 0.9 }}>{itemLabel(t, goal)}</span>
         </div>
 
         {config.redeemMode === 'api' && orderId ? (
@@ -85,7 +86,7 @@ export default function Done({ goalId }) {
               <div className="face f" aria-hidden="true">
                 <BrandLogo brand={goalBrand(goal)} />
                 <div>
-                  <div className="cc-name">{goal.itemName}</div>
+                  <div className="cc-name">{itemName(t, goal, { title: true })}</div>
                   <div className="cc-value">{goal.itemDetail}</div>
                 </div>
               </div>

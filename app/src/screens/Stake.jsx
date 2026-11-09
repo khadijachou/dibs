@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useApp } from '../App.jsx'
+import { itemLabel } from '../lib/itemName.js'
 import { BrandLogo, Header, Notice } from '../components/ui.jsx'
 import { listGoals, savedNim } from '../lib/goals.js'
 import { readStaker } from '../lib/nimiq.js'
@@ -67,7 +68,7 @@ function UnstakingCard({ goal, chainAt }) {
     <section className="card unstake">
       <div className="unstake-top">
         <BrandLogo brand={goalBrand(goal)} />
-        <div className="grow"><b>{goal.itemName} · {goal.itemDetail}</b><span className="small">{t('stake_unstaking', { nim: fmtNim(savedNim(goal), lang) })}</span></div>
+        <div className="grow"><b>{itemLabel(t, goal)}</b><span className="small">{t('stake_unstaking', { nim: fmtNim(savedNim(goal), lang) })}</span></div>
       </div>
       <ReleaseClock goal={goal} chainAt={chainAt} />
       <button type="button" className={`btn small ${withdraw ? 'mint' : 'gold'}`} onClick={() => go('unlock', { goalId: goal.id, mode: withdraw ? 'withdraw' : undefined })}>{t('stake_open_unlock')}</button>

@@ -418,3 +418,46 @@ svg circle:first-child[stroke="#e6dccf"], svg circle:first-child[stroke="#35323f
 .pay-sum { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border-radius: 12px; background: var(--card-2); }
 .pay-sum b { font-size: 15px; font-weight: 600; color: var(--cream); }
 .email.bad { border-color: var(--red); }
+
+/* Week dots always fit the card: dot size shrinks with the number of weeks (--n), a bar above 20 weeks. */
+.weeks .dots { width: 100%; min-width: 0; }
+.weeks .d { width: min(11px, calc(100% / var(--n, 13) / 1.7)); height: auto; aspect-ratio: 1; min-width: 4px; flex: 0 1 auto; }
+.weeks .d.last, .hero .weeks .d.last { width: min(14px, calc(100% / var(--n, 13) / 1.4)); height: auto; aspect-ratio: 1; box-sizing: border-box; }
+.weeks .ln { flex: 1 1 0; min-width: 2px; }
+.weeks .d.now { box-shadow: 0 0 0 2px rgba(232, 72, 42, .25); }
+.weeks .d.done, .weeks .ln.done, .hero .weeks .d.done, .hero .weeks .ln.done, .hero .weeks .d.last.done { background: var(--teal); }
+.wbar { position: relative; height: 8px; border-radius: 4px; background: #2f2c38; margin: 3px 7px 3px 0; }
+.wbar .fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: var(--teal); }
+.wbar .mark { position: absolute; top: 50%; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 2px rgba(232, 72, 42, .25); }
+.wbar .end { position: absolute; right: -7px; top: 50%; width: 14px; height: 14px; margin-top: -7px; border-radius: 50%; background: #2f2c38; border: 2px solid var(--butter); box-sizing: border-box; }
+.wbar .end.done { background: var(--teal); border-color: var(--teal); }
+
+/* CardFlip (components/CardFlip.jsx): lift 150 ms, turn 700 ms ease-in-out, hold while the sheen sweeps. */
+.flip-scene { perspective: 1200px; }
+.flip-card { position: relative; transform-style: preserve-3d; -webkit-transform-style: preserve-3d; border-radius: 20px; }
+.flip-face { backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 20px; }
+.flip-face.front > * { height: 100%; box-sizing: border-box; }
+.flip-face.back { position: absolute; inset: 0; transform: rotateY(180deg); pointer-events: none; }
+.flip-card.go { animation: dibs-flip 1050ms forwards; }
+@keyframes dibs-flip {
+  0% { transform: none; box-shadow: 0 0 0 rgba(0, 0, 0, 0); animation-timing-function: ease-out; }
+  14% { transform: scale(1.03); box-shadow: 0 18px 40px rgba(0, 0, 0, .45); animation-timing-function: ease-in-out; }
+  81%, 100% { transform: scale(1.03) rotateY(180deg); box-shadow: 0 18px 40px rgba(0, 0, 0, .45); }
+}
+.gift-face { position: relative; height: 100%; overflow: hidden; border-radius: 20px; background: linear-gradient(135deg, #E8482A 0%, #c9381d 100%);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 16px; box-sizing: border-box; text-align: center; color: var(--cream); }
+.gift-face .gift-logo { width: 84px; height: 84px; border-radius: 22px; object-fit: contain; background: #fff; padding: 12px; box-sizing: border-box; box-shadow: 0 8px 22px rgba(35, 33, 43, .3); font: 700 36px var(--font-display); display: grid; place-items: center; }
+.gift-face .gift-label { font: 600 12px var(--font-body); letter-spacing: .08em; text-transform: uppercase; color: var(--butter); }
+.gift-face .gift-title { font: 600 22px/1.2 var(--font-display); }
+.gift-face::after { content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 60%; transform: translateX(-180%) skewX(-18deg);
+  background: linear-gradient(90deg, rgba(255, 246, 236, 0), rgba(255, 246, 236, .38), rgba(255, 246, 236, 0)); }
+.flip-card.go:not(.rm) .gift-face::after { animation: dibs-sheen 450ms 600ms ease-out forwards; }
+@keyframes dibs-sheen { to { transform: translateX(260%) skewX(-18deg); } }
+/* Reduced motion: no turn, a 200 ms crossfade to the back face. */
+.flip-card.rm .flip-face.back { transform: none; opacity: 0; }
+.flip-card.go.rm { animation: dibs-flip-fade 200ms forwards; }
+.flip-card.go.rm .flip-face.front { animation: dibs-fade-out 200ms forwards; }
+.flip-card.go.rm .flip-face.back { animation: dibs-fade-in 200ms forwards; }
+@keyframes dibs-flip-fade { from { opacity: 1; } to { opacity: 1; } }
+@keyframes dibs-fade-out { to { opacity: 0; } }
+@keyframes dibs-fade-in { to { opacity: 1; } }
