@@ -126,20 +126,12 @@ svg circle:first-child[stroke="#e6dccf"], svg circle:first-child[stroke="#35323f
 @keyframes stamp-in { to { transform: translate(-50%, -50%) rotate(-8deg) scale(1); opacity: 1; } }
 @keyframes stamp-out { to { opacity: 0; } }
 
-/* M5 code card flip (Done.jsx): <div class="codecard"><div class="faces"><div class="face f">brand</div><div class="face b">code</div></div></div> */
-.codecard { position: relative; perspective: 900px; }
-/* Both faces sit in the same grid cell, so the card is as tall as its tallest face (code, PIN, link rows). */
-.codecard .faces { display: grid; transform-style: preserve-3d; animation: flip 1s .7s cubic-bezier(.4, 0, .2, 1) forwards; }
-.codecard .face { grid-area: 1 / 1; min-height: 170px; border-radius: 24px; backface-visibility: hidden; padding: 18px; box-sizing: border-box; }
-.codecard .face.f { background: linear-gradient(145deg, #1b2838, #0f1b2b); box-shadow: 0 30px 60px rgba(0, 0, 0, .5); }
-.codecard .face.b { background: linear-gradient(145deg, #e8482a, #b8321a); transform: rotateY(180deg); box-shadow: 0 30px 60px rgba(0, 0, 0, .5); }
-@keyframes flip { to { transform: rotateY(180deg); } }
+/* Done.jsx code card: <section class="codecard"><div class="face b">code</div></section>. No flip here: it plays on the Get my card tap (CardFlip). */
+.codecard { position: relative; }
+.codecard .face { min-height: 170px; border-radius: 24px; padding: 18px; box-sizing: border-box; }
+.codecard .face.b { background: linear-gradient(145deg, #e8482a, #b8321a); box-shadow: 0 30px 60px rgba(0, 0, 0, .5); }
 
 /* M5 face contents (Dibs layout, not in the kit) */
-.codecard .face.f { pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; color: #fff; }
-.codecard .face.f .blogo { width: 48px; height: 48px; border-radius: 13px; }
-.codecard .face.f .cc-name { font: 600 18px var(--font-display); }
-.codecard .face.f .cc-value { font: 700 28px var(--font-display); line-height: 1; }
 .codecard .face.b { display: flex; flex-direction: column; gap: 10px; color: #fff; }
 .codecard .cc-label { font: 600 12px var(--font-body); letter-spacing: .12em; text-transform: uppercase; opacity: .8; }
 .codecard .face.b .code-box { background: none; padding: 0; text-align: left; font-size: 22px; }
@@ -151,7 +143,6 @@ svg circle:first-child[stroke="#e6dccf"], svg circle:first-child[stroke="#35323f
 
 @media (prefers-reduced-motion: reduce) {
   .stamp { animation: none; opacity: 1; transform: translate(-50%, -50%) rotate(-8deg); }
-  .codecard .faces { animation: none; transform: rotateY(180deg); }
 }
 
 /* VF landing: splash (01), onboarding (02 to 04), language switch. Transform and opacity only. */

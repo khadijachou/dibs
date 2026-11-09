@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useApp } from '../App.jsx'
-import { itemLabel, itemName } from '../lib/itemName.js'
-import { BrandLogo, Header } from '../components/ui.jsx'
-import { goalBrand } from './Home.jsx'
+import { itemLabel } from '../lib/itemName.js'
+import { Header } from '../components/ui.jsx'
 import { getGoal, updateGoal } from '../lib/goals.js'
 import { api } from '../lib/api.js'
 import { config } from '../lib/config.js'
@@ -80,36 +79,27 @@ export default function Done({ goalId }) {
         </div>
 
         {config.redeemMode === 'api' && orderId ? (
-          // M5: brand card flips once on mount (CSS only) to the code card. Reading, polling and buttons unchanged.
+          // The card flip plays on the "Get my card" tap (Goal.jsx), where its sound can start; here the code card shows at once.
           <section className="codecard">
-            <div className="faces">
-              <div className="face f" aria-hidden="true">
-                <BrandLogo brand={goalBrand(goal)} />
-                <div>
-                  <div className="cc-name">{itemName(t, goal, { title: true })}</div>
-                  <div className="cc-value">{goal.itemDetail}</div>
+            <div className="face b">
+              <div className="cc-label">{t('done_code')}</div>
+              {!red && <div className="code-box">{t('done_waiting')}</div>}
+              {!red && <p className="small">{t(`done_s${stepIdx}`)}</p>}
+              {code && <div className="code-box">{show ? code : '•••• •••• ••••'}</div>}
+              {pin && (
+                <>
+                  <div className="cc-sub">{pinLabel}</div>
+                  <div className="code-box">{show ? pin : '••••'}</div>
+                </>
+              )}
+              {link && !safeLink && <p className="small" style={{ wordBreak: 'break-all' }}>{link}</p>}
+              {red && (
+                <div className="pills">
+                  {(code || pin) && <button type="button" className="btn ghost small" style={{ flex: 1 }} onClick={() => setShow(!show)}>{show ? t('done_hide') : t('done_show')}</button>}
+                  {safeLink && <a className="btn ghost small" style={{ flex: 1 }} href={safeLink} target="_blank" rel="noopener noreferrer">{t('done_open_link')}</a>}
+                  <button type="button" className="btn ghost small" style={{ flex: 1 }} onClick={() => navigator.clipboard?.writeText(copyText)}>{t('done_copy')}</button>
                 </div>
-              </div>
-              <div className="face b">
-                <div className="cc-label">{t('done_code')}</div>
-                {!red && <div className="code-box">{t('done_waiting')}</div>}
-                {!red && <p className="small">{t(`done_s${stepIdx}`)}</p>}
-                {code && <div className="code-box">{show ? code : '•••• •••• ••••'}</div>}
-                {pin && (
-                  <>
-                    <div className="cc-sub">{pinLabel}</div>
-                    <div className="code-box">{show ? pin : '••••'}</div>
-                  </>
-                )}
-                {link && !safeLink && <p className="small" style={{ wordBreak: 'break-all' }}>{link}</p>}
-                {red && (
-                  <div className="pills">
-                    {(code || pin) && <button type="button" className="btn ghost small" style={{ flex: 1 }} onClick={() => setShow(!show)}>{show ? t('done_hide') : t('done_show')}</button>}
-                    {safeLink && <a className="btn ghost small" style={{ flex: 1 }} href={safeLink} target="_blank" rel="noopener noreferrer">{t('done_open_link')}</a>}
-                    <button type="button" className="btn ghost small" style={{ flex: 1 }} onClick={() => navigator.clipboard?.writeText(copyText)}>{t('done_copy')}</button>
-                  </div>
-                )}
-              </div>
+              )}
             </div>
           </section>
         ) : (

@@ -30,7 +30,9 @@ export function useCardFlip(onDone) {
     started.current = true
     try {
       const reduced = prefersReduced()
-      playReveal({ reduced }) // synchronous: the AudioContext starts inside the tap; never awaited
+      // First thing in the tap, before any state update or await: create or resume the AudioContext and
+      // schedule the reveal sound (synchronous, never awaited). Then the flip starts.
+      playReveal({ reduced })
       setRun({ reduced })
     } catch {
       finish()

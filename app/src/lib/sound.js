@@ -31,19 +31,29 @@ export function playPop({ ifUnlocked = false } = {}) {
   } catch { /* no audio: stay silent */ }
 }
 
+// The page's one AudioContext for the reveal: created on the first tap, resumed on later ones (iOS suspends it
+// in the background and caps how many a page may open). Must be called synchronously inside the tap handler,
+// before any state update or await, or the browser keeps it suspended and the sound stays silent.
+let shared = null
+export function audioContext() {
+  const AC = window.AudioContext || window.webkitAudioContext
+  if (!AC) return null
+  if (!shared || shared.state === 'closed') shared = new AC()
+  if (shared.state !== 'running') shared.resume?.().catch?.(() => {})
+  return shared
+}
+
 // "Card revealed": synced with CardFlip. A soft rising whoosh while the card turns (filtered noise,
 // 0.10 to 0.50 s), then a bright rising C major arpeggio as the back face lands (0.50 to 0.98 s).
 // reduced: chime only, right away (the crossfade replaces the turn).
-// Same rules as the pop: start from the tap (the AudioContext is created synchronously here), 'ambient'
+// Same rules as the pop: start from the tap (the shared AudioContext is created or resumed synchronously here), 'ambient'
 // audio session, silent when dibs.sound === 'off', never throws, never awaited by the caller.
 export function playReveal({ reduced = false } = {}) {
   try {
     try { if (localStorage.getItem('dibs.sound') === 'off') return } catch { /* private mode: play */ }
     if (navigator.audioSession) { try { navigator.audioSession.type = 'ambient' } catch { /* older Safari */ } }
-    const AC = window.AudioContext || window.webkitAudioContext
-    if (!AC) return
-    const ctx = new AC()
-    ctx.resume?.().catch?.(() => {})
+    const ctx = audioContext()
+    if (!ctx) return
     const t0 = ctx.currentTime + 0.01
     const out = ctx.createGain()
     out.gain.value = 0.9
@@ -93,6 +103,7 @@ export function playReveal({ reduced = false } = {}) {
       }
       end = Math.max(end, at + dur + 0.02)
     })
-    setTimeout(() => { try { ctx.close() } catch { /* already closed */ } }, Math.ceil((end - ctx.currentTime) * 1000) + 200)
+    // Shared context: left open for the next reveal; the nodes end on their own. Disconnect the bus when done.
+    setTimeout(() => { try { out.disconnect() } catch { /* already gone */ } }, Math.ceil((end - ctx.currentTime) * 1000) + 200)
   } catch { /* no audio: stay silent */ }
 }
