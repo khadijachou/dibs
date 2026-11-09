@@ -467,23 +467,26 @@ svg circle:first-child[stroke="#e6dccf"], svg circle:first-child[stroke="#35323f
 .btile .blogo.letter { font-size: 22px; }
 .grid.enter .btile { animation: btile-in 320ms cubic-bezier(.2, .8, .2, 1) var(--delay, 0ms) backwards; }
 @keyframes btile-in { from { opacity: 0; transform: translateY(10px); } }
-/* Category chips: the highlight slides under the labels (ChipSlider). */
-.cats.slide { position: relative; }
-.cats.slide .cat { position: relative; z-index: 1; transition: color 160ms ease-out; }
-.cats.slide .cat.on { background: transparent; border-color: transparent; }
-.cat-ind { position: absolute; left: 0; right: 0; pointer-events: none; }
-.cat-ind i { position: absolute; top: 0; left: 0; height: 100%; background: #fff; transform-origin: 0 50%; }
-.cat-ind .l { border-radius: 999px 0 0 999px; }
-.cat-ind .m { width: 1px; }
-.cat-ind .r { border-radius: 0 999px 999px 0; }
-.cat-ind.ready i { transition: transform 280ms cubic-bezier(.2, .8, .2, 1); }
+/* Category chips: the highlight is a child of the active chip (Catalog.jsx useChipSlide), so it always covers
+   exactly that chip; the label sits above it. The slide is a Web Animation on its transform. */
+.cats.hl .cat { position: relative; isolation: isolate; transition: color 160ms ease-out; }
+.cats.hl .cat.on { background: transparent; border-color: transparent; }
+.cats.hl .cat > span { position: relative; }
+.cat-hl { position: absolute; inset: -1px; z-index: -1; border-radius: inherit; background: #fff; transform-origin: 0 50%; pointer-events: none; }
 @media (prefers-reduced-motion: reduce) {
   .btile { transition: none; }
   .grid.enter .btile { animation: none; }
   .btile-glow { display: none; }
-  .cat-ind.ready i { transition: none; }
+  .cats.hl .cat { transition: none; }
 }
 
 /* BUG-17: values without a live shop quote (live: false). Butter is for ink or coral grounds only, so this is muted cream. */
 .btile .btile-est { font-size: 11px; color: var(--cream); opacity: .78; margin-top: 4px; }
 .plan-margin { margin: -2px 0 6px; font-size: 12.5px; font-weight: 600; color: var(--cream); }
+
+/* Letter tiles (brands with no logo source): brand colour, white Poppins letter, same box and radius as the
+   logo plates in every context; the letter scales with the tile. */
+.blogo.letter { color: #fff; font-family: var(--font-display); font-weight: 700; line-height: 1; letter-spacing: 0; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .12); }
+.btile .blogo.letter { font-size: 24px; }
+.plan-head .blogo.letter, .codecard .blogo.letter { font-size: 22px; }
+.gift-face .gift-logo.letter { padding: 0; font-size: 38px; }

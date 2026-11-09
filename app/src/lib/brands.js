@@ -8,7 +8,8 @@ import { getCatalog } from './catalog.js'
 // Order = order on the "All" view. The first eight sit above the fold.
 // slugs marked "confirm" come from the shop site and must be checked on the server (`npm run catalog -- add <slug>`).
 // Logos: lib/brandIcons.js (simple-icons, by key) first; else logo (app/public/logos/<key>.png);
-// else tile (letter fallback in brand colours). The shop's catalogue data has no product image.
+// else tile: a letter tile in the brand's colour with a white letter. Used for Nintendo eShop, Xbox, Flightgift,
+// Best Buy and Disney, which simple-icons does not carry; the shop's catalogue data has no product image.
 export const BRANDS = [
   { key: 'steam',       name: 'Steam',             chip: 'games',     logo: '/logos/steam.png',       slugs: ['steam-usa'], popular: true },
   { key: 'amazon',      name: 'Amazon',            chip: 'shopping',  logo: '/logos/amazon.png',      slugs: ['amazon_com-usa'], popular: true },
@@ -19,18 +20,18 @@ export const BRANDS = [
   { key: 'playstation', name: 'PlayStation Store', chip: 'games',     logo: '/logos/playstation.png', slugs: ['sony-playstation-usa'] },
   { key: 'ubereats',    name: 'Uber Eats',         chip: 'food',      logo: '/logos/ubereats.png',    slugs: ['uber-eats-usa'] },
   // below the fold
-  { key: 'nintendo',    name: 'Nintendo eShop',    chip: 'games',     logo: null, tile: { bg: '#e60012', fg: '#fff', letter: 'N' }, slugs: ['nintendo-eshop-usa'] },            // confirm
+  { key: 'nintendo',    name: 'Nintendo eShop',    chip: 'games',     logo: null, tile: { bg: '#E60012', fg: '#fff', letter: 'N' }, slugs: ['nintendo-eshop-usa'] },            // confirm
   { key: 'roblox',      name: 'Roblox',            chip: 'games',     logo: null, tile: { bg: '#1b1b1f', fg: '#fff', letter: 'R' }, slugs: ['roblox-usa'] },              // confirm
   { key: 'fortnite',    name: 'Fortnite',          chip: 'games',     logo: null, tile: { bg: '#1d3a6b', fg: '#fff', letter: 'F' }, slugs: ['fortnite-usa'] },            // confirm
   { key: 'valorant',    name: 'Valorant',          chip: 'games',     logo: null, tile: { bg: '#ff4655', fg: '#fff', letter: 'V' }, slugs: ['valorant-usa'] },            // confirm
   { key: 'riot',        name: 'Riot Access',       chip: 'games',     logo: null, tile: { bg: '#d13639', fg: '#fff', letter: 'R' }, slugs: ['riot-access-usa'] },         // confirm
-  { key: 'xbox',        name: 'Xbox',              chip: 'games',     logo: null, tile: { bg: '#107c10', fg: '#fff', letter: 'X' }, slugs: ['xbox-usa'] },                // confirm, out of stock on 5 Nov
+  { key: 'xbox',        name: 'Xbox',              chip: 'games',     logo: null, tile: { bg: '#107C10', fg: '#fff', letter: 'X' }, slugs: ['xbox-usa'] },                // confirm, out of stock on 5 Nov
   { key: 'discord',     name: 'Discord Nitro',     chip: 'games',     logo: null, tile: { bg: '#5865f2', fg: '#fff', letter: 'D' }, slugs: ['discord-nitro-usa'] },       // confirm, maybe refused by the tool
   { key: 'hotels',      name: 'Hotels.com',        chip: 'travel',    logo: null, tile: { bg: '#d32f2f', fg: '#fff', letter: 'H' }, slugs: ['hotels_com-usa'] },          // confirm
-  { key: 'flightgift',  name: 'Flightgift',        chip: 'travel',    logo: null, tile: { bg: '#1f6feb', fg: '#fff', letter: 'F' }, slugs: ['flightgift-usa'] },          // confirm
+  { key: 'flightgift',  name: 'Flightgift',        chip: 'travel',    logo: null, tile: { bg: '#1F6FEB', fg: '#fff', letter: 'F' }, slugs: ['flightgift-usa'] },          // confirm
   { key: 'uber',        name: 'Uber',              chip: 'travel',    logo: null, tile: { bg: '#0b0b0d', fg: '#fff', letter: 'U' }, slugs: ['uber-usa'] },                // confirm
-  { key: 'bestbuy',     name: 'Best Buy',          chip: 'shopping',  logo: null, tile: { bg: '#ffe000', fg: '#1b1b1f', letter: 'B' }, slugs: ['best-buy-usa'] },         // confirm
-  { key: 'disney',      name: 'Disney',            chip: 'streaming', logo: null, tile: { bg: '#0a3e9a', fg: '#fff', letter: 'D' }, slugs: ['disney-usa'] },              // confirm
+  { key: 'bestbuy',     name: 'Best Buy',          chip: 'shopping',  logo: null, tile: { bg: '#0046BE', fg: '#fff', letter: 'B' }, slugs: ['best-buy-usa'] },         // confirm
+  { key: 'disney',      name: 'Disney',            chip: 'streaming', logo: null, tile: { bg: '#113CCF', fg: '#fff', letter: 'D' }, slugs: ['disney-usa'] },              // confirm
   { key: 'starbucks',   name: 'Starbucks',         chip: 'food',      logo: null, tile: { bg: '#00704a', fg: '#fff', letter: 'S' }, slugs: ['starbucks-usa'] },           // confirm
   { key: 'doordash',    name: 'DoorDash',          chip: 'food',      logo: null, tile: { bg: '#ff3008', fg: '#fff', letter: 'D' }, slugs: ['doordash-usa'] },            // confirm
 ]

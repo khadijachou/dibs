@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useState, useRef } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { useApp } from '../App.jsx'
 import { BrandLogo, Header, Icon } from '../components/ui.jsx'
 import { CHIPS, catalogBrands } from '../lib/brands.js'
@@ -9,49 +9,42 @@ import { useReducedMotion } from '../components/UnlockTimer.jsx'
 const STAGGER_MS = 40
 const STAGGER_MAX_MS = 400
 
-// Highlight behind the active chip. It slides with transform only: a left cap, a 1 px middle scaled to the
-// chip's width and a right cap, so the round ends never stretch (half a pixel of overlap hides the seams).
-// It measures through its own node's parent (.cats), which exists in its first layout effect. No transition
-// on the first placement.
-function ChipSlider({ active, deps }) {
-  const self = useRef(null)
-  const [box, setBox] = useState(null)
-  const [ready, setReady] = useState(false)
+// Category chip highlight. It lives inside the active chip (inset 0), so at rest it covers that chip exactly,
+// whatever the fonts, language or screen width; nothing is measured ahead of time. On a switch it slides from the
+// previous chip with a transform-only Web Animation (FLIP: both rects read at tap time). Reduced motion: no slide.
+const SLIDE_MS = 280
+function useChipSlide(active, reduced) {
+  const hl = useRef(null)
+  const from = useRef(null)
+  const remember = () => { from.current = hl.current?.getBoundingClientRect() || null }
   useLayoutEffect(() => {
-    const wrap = self.current?.parentElement
-    if (!wrap) return undefined
-    const measure = () => {
-      const el = wrap.querySelector(`[data-chip="${active}"]`)
-      if (el) setBox({ x: el.offsetLeft, w: el.offsetWidth, h: el.offsetHeight, y: el.offsetTop })
+    const el = hl.current
+    const a = from.current
+    from.current = null
+    // Keep the whole active chip inside the scrolling row (horizontal only, never the page).
+    const chipEl = el?.parentElement
+    const row = chipEl?.parentElement
+    if (chipEl && row) {
+      const left = chipEl.offsetLeft - row.offsetLeft
+      const right = left + chipEl.offsetWidth
+      if (left < row.scrollLeft) row.scrollLeft = left - 8
+      else if (right > row.scrollLeft + row.clientWidth) row.scrollLeft = right - row.clientWidth + 8
     }
-    measure()
-    const ro = typeof ResizeObserver === 'function' ? new ResizeObserver(measure) : null
-    ro?.observe(wrap)
-    return () => ro?.disconnect()
-  }, [active, ...deps]) // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    if (!box || ready) return undefined
-    const id = requestAnimationFrame(() => setReady(true))
-    return () => cancelAnimationFrame(id)
-  }, [box, ready])
-  const r = box ? box.h / 2 : 0
-  return (
-    <div ref={self} className={`cat-ind${ready ? ' ready' : ''}`} style={box ? { top: box.y, height: box.h } : { visibility: 'hidden' }} aria-hidden="true">
-      {box && (
-        <>
-          <i style={{ width: r, transform: `translateX(${box.x}px)` }} className="l" />
-          <i style={{ transform: `translateX(${box.x + r - 0.5}px) scaleX(${Math.max(0, box.w - 2 * r + 1)})` }} className="m" />
-          <i style={{ width: r, transform: `translateX(${box.x + box.w - r}px)` }} className="r" />
-        </>
-      )}
-    </div>
-  )
+    if (!el || !a || reduced || typeof el.animate !== 'function') return
+    const b = el.getBoundingClientRect()
+    if (!b.width) return
+    el.animate(
+      [{ transform: `translateX(${a.left - b.left}px) scaleX(${a.width / b.width})` }, { transform: 'none' }],
+      { duration: SLIDE_MS, easing: 'cubic-bezier(.2, .8, .2, 1)' },
+    )
+  }, [active, reduced])
+  return { hl, remember }
 }
 
 // One tile per brand; the amount is chosen on the Plan screen (UI v2.2).
 // moveFrom: opened from Move > "A new goal"; passed on to Plan and then to the new goal.
 export default function Catalog({ moveFrom = null }) {
-  const { t, lang, go, back, canGoBack } = useApp()
+  const { t, go, back, canGoBack } = useApp()
   const reduced = useReducedMotion()
   const brands = catalogBrands()
   const [chip, setChip] = useState('all')
@@ -60,6 +53,14 @@ export default function Catalog({ moveFrom = null }) {
   const shown = chip === 'all' ? brands : brands.filter((b) => b.chip === chip)
   const usedChips = CHIPS.filter((c) => brands.some((b) => b.chip === c))
   const brand = brands.find((b) => b.key === picked)
+  const slide = useChipSlide(chip, reduced)
+  const pickChip = (c) => { if (c === chip) return; slide.remember(); setChip(c) }
+  const chipBtn = (c, label) => (
+    <button type="button" key={c} className={`cat${chip === c ? ' on' : ''}`} aria-pressed={chip === c} onClick={() => pickChip(c)}>
+      {chip === c && <i className="cat-hl" ref={slide.hl} aria-hidden="true" />}
+      <span>{label}</span>
+    </button>
+  )
 
   // Soft brand glow after the press: a keyed layer, so a second tap restarts it (opacity only).
   const pick = (key) => {
@@ -75,12 +76,9 @@ export default function Catalog({ moveFrom = null }) {
           <h2 className="title">{t('cat_title')}</h2>
           <p className="sub" style={{ marginTop: 6 }}>{t('cat_sub')}</p>
         </div>
-        <div className={`cats${reduced ? '' : ' slide'}`} role="group">
-          {!reduced && <ChipSlider active={chip} deps={[lang, usedChips.length]} />}
-          <button type="button" data-chip="all" className={`cat${chip === 'all' ? ' on' : ''}`} aria-pressed={chip === 'all'} onClick={() => setChip('all')}>{t('chip_all', { count: brands.length })}</button>
-          {usedChips.map((c) => (
-            <button type="button" key={c} data-chip={c} className={`cat${chip === c ? ' on' : ''}`} aria-pressed={chip === c} onClick={() => setChip(c)}>{t('chip_' + c)}</button>
-          ))}
+        <div className="cats hl" role="group">
+          {chipBtn('all', t('chip_all', { count: brands.length }))}
+          {usedChips.map((c) => chipBtn(c, t('chip_' + c)))}
         </div>
         {/* key: a new grid per category, so the entrance plays on first load and on each switch, never on scroll. */}
         <div className={`grid${reduced ? '' : ' enter'}`} key={chip}>
