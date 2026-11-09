@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useApp } from '../App.jsx'
+import { useApp, useBlockBack } from '../App.jsx'
 import { BrandLogo, FieldError, Header, Notice, Ring, Stamp, WeekDots } from '../components/ui.jsx'
 import { classify, lastLogText } from '../lib/errors.js'
 import { getGoal, progress, savedNim, stakerFlag } from '../lib/goals.js'
@@ -110,6 +110,7 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null 
   }, [balance])
 
   const milestone = useGoalMilestone(goal)
+  useBlockBack(busy) // Android back waits while Nimiq Pay has the deposit open
 
   if (!goal) return null
   const reached = saved >= goal.targetNim

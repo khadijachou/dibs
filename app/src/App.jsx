@@ -1,8 +1,8 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { connect, getBalanceNim, host, isDemo, listAccountsWithBalance } from './lib/nimiq.js'
 import { getPrices } from './lib/price.js'
 import { makeT } from './lib/i18n.js'
-import { adoptGoals } from './lib/goals.js'
+import { adoptGoals, getGoal } from './lib/goals.js'
 import { loadCatalog } from './lib/catalog.js'
 import { readSimulateParam } from './lib/errors.js'
 import Home from './screens/Home.jsx'
@@ -32,6 +32,33 @@ const AppCtx = createContext(null)
 export const useApp = () => useContext(AppCtx)
 
 const SCREENS = { home: Home, catalog: Catalog, plan: Plan, goal: Goal, unlock: Unlock, redeem: Redeem, done: Done, stake: Stake, history: History, profile: Profile, more: More }
+
+// Back with nothing behind (after a reload, or a screen opened with reset): where each screen goes.
+// Goals (home) has no parent: back from there leaves the app.
+const HOME = { name: 'home', params: {} }
+function parentOf(route) {
+  const goalId = route.params?.goalId
+  if (route.name === 'home') return null
+  if (route.name === 'plan') return { name: 'catalog', params: {} }
+  if ((route.name === 'unlock' || route.name === 'redeem') && goalId) return { name: 'goal', params: { goalId } }
+  return HOME
+}
+
+// The screen in history.state survives a reload. One-shot params (the Dibs! stamp, a preset amount) are dropped,
+// and a screen whose goal is gone falls back to Goals.
+function restoredRoute(state, address) {
+  const r = state?.dibs && state.route
+  if (!r || !SCREENS[r.name]) return HOME
+  const { created, amount, moveFrom, ...params } = r.params || {} // eslint-disable-line no-unused-vars
+  if (params.goalId && !getGoal(address, params.goalId)) return HOME
+  return { name: r.name, params }
+}
+
+// Screens with a Nimiq Pay request open call this: Android back does nothing until it closes.
+export function useBlockBack(active) {
+  const { blockBack } = useApp()
+  useEffect(() => (active ? blockBack() : undefined), [active, blockBack])
+}
 
 export default function App() {
   const [ready, setReady] = useState(false)
@@ -91,7 +118,9 @@ export default function App() {
       await loadCatalog()
       getPrices().then(setPrices)
       // Home shows the welcome screen to new users and the hub to returning ones (UI v2.2).
-      setRoute({ name: 'home', params: {} })
+      // After a reload, the screen that was open comes back (its back goes to the screen's parent).
+      setRoute(restoredRoute(window.history.state, addr))
+      setHistory([])
       setReady(true)
     } catch (e) {
       setFatal(e)
@@ -110,16 +139,64 @@ export default function App() {
     setRoute({ name, params })
     window.scrollTo(0, 0)
   }, [route])
-  const back = useCallback(() => {
-    setHistory((h) => {
-      const prev = h.at(-1)
-      if (prev) setRoute(prev)
-      return h.slice(0, -1)
-    })
+  // While a Nimiq Pay request is open (deposit, unlock step, payment), back is blocked: counter of open requests.
+  const blocks = useRef(0)
+  const blockBack = useCallback(() => {
+    blocks.current += 1
+    let done = false
+    return () => { if (!done) { done = true; blocks.current -= 1 } }
   }, [])
-  const reset = useCallback((name = 'home', params = {}) => { setHistory([]); setRoute({ name, params }) }, [])
+  // The previous screen, or the screen's parent when nothing is behind it. False when there is nowhere to go.
+  const back = useCallback(() => {
+    if (blocks.current > 0) return false
+    const prev = history.at(-1)
+    const target = prev || parentOf(route)
+    if (!target) return false
+    if (prev) setHistory(history.slice(0, -1))
+    setRoute(target)
+    window.scrollTo(0, 0)
+    return true
+  }, [history, route])
+  // A screen opened with reset sits on top of Goals: back from a tab, Done or a new goal goes to Goals.
+  const reset = useCallback((name = 'home', params = {}) => { setHistory(name === 'home' ? [] : [HOME]); setRoute({ name, params }) }, [])
+  const canGoBack = history.length > 0 || Boolean(parentOf(route))
 
-  const ctx = { t, lang, setLang, address, balance, refreshBalance, prices, demo: isDemo(), go, back, reset, toast, showHowTo, canGoBack: history.length > 0 }
+  // Android back button. The page keeps at most two browser entries: a base entry, plus a guard entry on top of it
+  // whenever the app has somewhere to go back to. Back pops the guard; the app moves back one screen and puts the
+  // guard back if needed. On Goals with nothing behind, there is no guard, so back leaves the app as usual.
+  // history.state also carries the current screen, so a reload reopens it.
+  const guarded = useRef(false)
+  const ignorePop = useRef(false)
+  const backRef = useRef(back)
+  backRef.current = back
+  const routeRef = useRef(route)
+  routeRef.current = route
+  useEffect(() => {
+    if (!ready) return
+    const h = window.history
+    if (h.state?.dibs === 'guard') guarded.current = true // reloaded on a guard entry
+    if (canGoBack && !guarded.current) { h.pushState({ dibs: 'guard', route }, ''); guarded.current = true }
+    else if (!canGoBack && guarded.current) { ignorePop.current = true; guarded.current = false; h.back(); return }
+    h.replaceState({ dibs: guarded.current ? 'guard' : 'base', route }, '')
+  }, [ready, route, canGoBack])
+  useEffect(() => {
+    const onPop = () => {
+      if (ignorePop.current) {
+        ignorePop.current = false
+        window.history.replaceState({ dibs: 'base', route: HOME }, '')
+        return
+      }
+      guarded.current = false // the guard entry was just popped
+      if (!backRef.current()) {
+        // Blocked while a Nimiq Pay request is open: stay on this screen, guard again.
+        if (blocks.current > 0) { window.history.pushState({ dibs: 'guard', route: routeRef.current }, ''); guarded.current = true }
+      }
+    }
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+  }, [])
+
+  const ctx = { t, lang, setLang, address, balance, refreshBalance, prices, demo: isDemo(), go, back, reset, toast, showHowTo, canGoBack, blockBack }
 
   // The launch splash leaves (ring completes, then fades) once the next screen is ready to show.
   const splashDone = splashMin && (ready || Boolean(fatal) || (!onboarded && !isLab))

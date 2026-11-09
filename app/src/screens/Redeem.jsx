@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useApp } from '../App.jsx'
+import { useApp, useBlockBack } from '../App.jsx'
 import { ErrorBox, FieldError, Header, Notice } from '../components/ui.jsx'
 import { classify, lastLogText } from '../lib/errors.js'
 import { getGoal, updateGoal } from '../lib/goals.js'
@@ -74,6 +74,8 @@ export default function Redeem({ goalId }) {
     const id = setInterval(() => checkOrder(lockedOrderId, lockedToken, alive), POLL_MS)
     return () => { stop = true; clearInterval(id) }
   }, [lockedOrderId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useBlockBack(busy) // Android back waits while Nimiq Pay has the payment open
 
   if (!goal || !item) return null
   const apiMode = config.redeemMode === 'api'

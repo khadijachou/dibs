@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useApp } from '../App.jsx'
+import { useApp, useBlockBack } from '../App.jsx'
 import { Header, Notice } from '../components/ui.jsx'
 import { classify } from '../lib/errors.js'
 import { getGoal, listGoals, savedNim, stakedInGoals, updateGoal } from '../lib/goals.js'
@@ -47,6 +47,8 @@ export default function Unlock({ goalId, mode: modeParam }) {
     readStaker(address).then(chainReleaseAt).then((at) => { if (live) setReleaseAt(at) }).catch(() => {})
     return () => { live = false }
   }, [address, waiting])
+
+  useBlockBack(busy) // Android back waits while Nimiq Pay has the unlock step open
 
   if (!goal) return null
   const amount = savedNim(goal)
