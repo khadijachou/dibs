@@ -6,6 +6,7 @@ import { lastTxHash } from '../lib/history.js'
 import { readLog } from '../lib/errors.js'
 import { host } from '../lib/nimiq.js'
 import { PastList } from './Home.jsx'
+import { NAME_MAX, getName, setName } from '../lib/name.js'
 
 const FAQ = [1, 2, 3, 4]
 const soundOn = () => { try { return localStorage.getItem('dibs.sound') !== 'off' } catch { return true } }
@@ -14,6 +15,7 @@ export default function More() {
   const { t, address, showHowTo } = useApp()
   const [sound, setSound] = useState(soundOn)
   const [report, setReport] = useState(false)
+  const [name, setNameField] = useState(getName)
   const bought = listGoals(address).filter((g) => g.status === 'redeemed')
 
   const toggleSound = () => {
@@ -53,6 +55,13 @@ export default function More() {
 
         <section className="more-sec">
           <div className="sec-head"><h3>{t('more_settings')}</h3></div>
+          <div className="set-row">
+            <label htmlFor="set-name">{t('name_label')}</label>
+            <input id="set-name" className="name-input small-field" type="text" autoComplete="given-name" maxLength={NAME_MAX}
+              placeholder={t('name_placeholder')} value={name}
+              onChange={(e) => { setNameField(e.target.value); setName(e.target.value) }} onBlur={() => setNameField(setName(name))} />
+          </div>
+          <p className="small">{t('name_device')}</p>
           <div className="set-row"><span>{t('lang_label')}</span><LangSwitch /></div>
           <div className="set-row">
             <span>{t('more_sound')}</span>

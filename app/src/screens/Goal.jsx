@@ -2,15 +2,17 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useApp } from '../App.jsx'
 import { BrandLogo, FieldError, Header, Notice, Ring, Stamp, WeekDots } from '../components/ui.jsx'
 import { classify, lastLogText } from '../lib/errors.js'
-import { getGoal, progress, savedNim, stakedInGoals, stakerFlag } from '../lib/goals.js'
+import { getGoal, progress, savedNim, stakerFlag } from '../lib/goals.js'
 import { planOf, poolName, shortAddress } from '../lib/pace.js'
 import { goalBrand, PaceLine } from './Home.jsx'
-import { MIN_NEW_STAKER_NIM, toNim } from '../lib/config.js'
+import { MIN_NEW_STAKER_NIM } from '../lib/config.js'
 import { readStaker, stakeNim } from '../lib/nimiq.js'
 import { confirmPending, expired, pending, stakedLuna, startPending, waitForDeposit } from '../lib/deposit.js'
 import { fmtDate, fmtNim, weeksUntil } from '../lib/format.js'
 import { DeleteSheet, ManageSheet, MoveSheet } from './GoalManage.jsx'
 import { useCountUp } from '../lib/useCountUp.js'
+import { earnedNim } from '../lib/earned.js'
+import { MilestoneLine, useGoalMilestone } from '../components/Milestone.jsx'
 
 const parseNim = (v) => Math.floor(Number(String(v).replace(/[^\d.]/g, ''))) || 0
 
@@ -60,9 +62,7 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null 
     readStaker(address).then((st) => {
       if (!st) { setHasStaker(false); return }
       setHasStaker(true); stakerFlag.set(address)
-      // Rewards = what the staker holds beyond what the goals put in (pool restakes rewards).
-      const held = toNim((st.activeBalance ?? st.balance ?? 0) + (st.inactiveBalance ?? 0))
-      setEarned(Math.max(0, Math.floor(held - stakedInGoals(address))))
+      setEarned(earnedNim(st, address))
     }).catch(() => { /* chain unreadable: keep the last known flag */ })
   }, [address])
 
@@ -105,6 +105,8 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null 
     const id = setTimeout(() => setSlowWallet(true), 30000)
     return () => clearTimeout(id)
   }, [balance])
+
+  const milestone = useGoalMilestone(goal)
 
   if (!goal) return null
   const reached = saved >= goal.targetNim
@@ -186,7 +188,7 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null 
             {canManage && <button type="button" className="more-btn" aria-label={t('manage_btn')} aria-haspopup="dialog" onClick={() => setSheet('manage')}>⋯</button>}
           </div>
           <div className="mid">
-            <div className="ring-wrap">
+            <div className={`ring-wrap${milestone ? ' ms-pulse' : ''}`}>
               <Ring value={pct} size={100} label={`${Math.round(pct * 100)}%`} track="#35323f" color={pct >= 1 ? '#15896A' : '#E8482A'} />
               <div className="pct">{Math.round(pct * 100)}%</div>
             </div>
@@ -199,6 +201,7 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null 
           <WeekDots total={p.totalWeeks} done={p.weeksDone} now={p.weekIdx}
             left={t('week_of', { n: Math.min(p.totalWeeks, p.weekIdx + 1), total: p.totalWeeks })}
             right={reached ? null : t('goal_this_week', { amount: fmtNim(Math.min(remaining, p.pace.amount || p.weekly), lang) })} />
+          <MilestoneLine milestone={milestone} />
           {saved > 0 && <div className="acct">{t('goal_account', { address: '' }).trim()} <b>{shortAddress(address)}</b><span className="pool">● {pool}</span></div>}
         </section>
         {goal.status === 'saving' && !reached && <PaceLine pace={p.pace} />}

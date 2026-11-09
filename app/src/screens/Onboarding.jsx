@@ -1,9 +1,11 @@
 import { useRef, useState } from 'react'
 import { useApp } from '../App.jsx'
 import { Icon, LangSwitch, Wordmark } from '../components/ui.jsx'
+import { NAME_MAX, setName } from '../lib/name.js'
 
 // VF screens 02 to 04: three slides on first run. App.jsx shows them without
-// waiting for the wallet; onDone stores dibs.onboarded.
+// waiting for the wallet; onDone stores dibs.onboarded. On first run a name step follows the
+// last slide (Wave 2B); the replay from More skips it.
 const SLIDES = [
   { key: 1, Ill: CardIll },
   { key: 2, Ill: RingIll },
@@ -17,6 +19,9 @@ export default function Onboarding({ onDone, replay = false }) {
   const trust = t('ob_trust').split(' · ')
   const start = useRef(null)
   const goTo = (k) => setI(Math.max(0, Math.min(SLIDES.length - 1, k)))
+  const [askName, setAskName] = useState(false)
+  const finishSlides = () => (replay ? onDone() : setAskName(true))
+  if (askName) return <NameStep onDone={onDone} />
 
   // Swipe left/right (touch or mouse drag) changes slide.
   const onPointerDown = (e) => { start.current = { x: e.clientX, y: e.clientY } }
@@ -34,7 +39,7 @@ export default function Onboarding({ onDone, replay = false }) {
       <header className="header ob-top">
         <div className="grow"><Wordmark cream /></div>
         <LangSwitch />
-        <button type="button" className="ob-skip" onClick={onDone}>{t(replay ? 'ob_close' : 'ob_skip')}</button>
+        <button type="button" className="ob-skip" onClick={finishSlides}>{t(replay ? 'ob_close' : 'ob_skip')}</button>
       </header>
       <main className="screen ob">
         <div className="ob-view" onPointerDown={onPointerDown} onPointerUp={onPointerUp} onPointerCancel={() => { start.current = null }}>
@@ -51,10 +56,38 @@ export default function Onboarding({ onDone, replay = false }) {
         <div className="ob-dots" aria-hidden="true">{SLIDES.map((s, k) => <i key={s.key} className={k === i ? 'on' : ''} />)}</div>
         <p className="ob-trust"><b><Icon name="check" size={14} stroke={2.6} />{trust[0]}</b>{trust[1] && <span>{trust[1]}</span>}</p>
         <div className="bottom">
-          <button type="button" className={`btn ${last ? '' : 'ink'}`} onClick={() => (last ? onDone() : goTo(i + 1))}>
+          <button type="button" className={`btn ${last ? '' : 'ink'}`} onClick={() => (last ? finishSlides() : goTo(i + 1))}>
             {last ? t(replay ? 'ob_done' : 'ob_start') : t('ob_next')}
           </button>
         </div>
+      </main>
+    </div>
+  )
+}
+
+// "What should we call you?": optional, saved on this device only (lib/name.js).
+function NameStep({ onDone }) {
+  const { t } = useApp()
+  const [value, setValue] = useState('')
+  const save = (e) => { e.preventDefault(); setName(value); onDone() }
+  return (
+    <div className="app">
+      <header className="header ob-top">
+        <div className="grow"><Wordmark cream /></div>
+        <LangSwitch />
+      </header>
+      <main className="screen ob">
+        <form className="ob-name" onSubmit={save}>
+          <h1 className="ob-title">{t('name_title')}</h1>
+          <p className="ob-sub">{t('name_sub')}</p>
+          <label htmlFor="ob-name" className="sr-only">{t('name_label')}</label>
+          <input id="ob-name" className="name-input" type="text" autoComplete="given-name" autoCapitalize="words" maxLength={NAME_MAX}
+            placeholder={t('name_placeholder')} value={value} onChange={(e) => setValue(e.target.value)} />
+          <div className="bottom">
+            <button type="submit" className="btn" disabled={!value.trim()}>{t('ob_start')}</button>
+            <button type="button" className="btn ghost" onClick={() => { setName(''); onDone() }}>{t('ob_skip')}</button>
+          </div>
+        </form>
       </main>
     </div>
   )

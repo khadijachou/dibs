@@ -365,6 +365,19 @@ const en = {
   report_email: "Send by email",
   ob_close: "Close",
   ob_done: "Done",
+  home_hi: "Hi {name}",
+  home_earned_chip: "Staked · +{amount} NIM earned",
+  name_title: "What should we call you?",
+  name_sub: "Just a first name. It stays on this phone.",
+  name_label: "Your name",
+  name_placeholder: "First name",
+  name_device: "Your name stays on this device. Dibs never sends it anywhere.",
+  ms_25: "A quarter there.",
+  ms_25_name: "A quarter there, {name}.",
+  ms_50: "Halfway.",
+  ms_50_name: "Halfway, {name}.",
+  ms_75: "Three quarters there.",
+  ms_75_name: "Three quarters there, {name}.",
 }
 
 const fr = {
@@ -733,6 +746,19 @@ const fr = {
   report_email: "Envoyer par courriel",
   ob_close: "Fermer",
   ob_done: "Terminé",
+  home_hi: "Bonjour {name}",
+  home_earned_chip: "En staking · +{amount} NIM gagnés",
+  name_title: "Comment voulez-vous qu'on vous appelle?",
+  name_sub: "Juste un prénom. Il reste sur ce téléphone.",
+  name_label: "Votre nom",
+  name_placeholder: "Prénom",
+  name_device: "Votre nom reste sur cet appareil. Dibs ne l'envoie nulle part.",
+  ms_25: "Le quart du chemin.",
+  ms_25_name: "Le quart du chemin, {name}.",
+  ms_50: "À mi-chemin.",
+  ms_50_name: "À mi-chemin, {name}.",
+  ms_75: "Les trois quarts du chemin.",
+  ms_75_name: "Les trois quarts du chemin, {name}.",
 }
 
 const es = {
@@ -1101,6 +1127,19 @@ const es = {
   report_email: "Enviar por correo",
   ob_close: "Cerrar",
   ob_done: "Listo",
+  home_hi: "Hola {name}",
+  home_earned_chip: "En staking · +{amount} NIM ganados",
+  name_title: "¿Cómo quieres que te llamemos?",
+  name_sub: "Solo un nombre. Se queda en este teléfono.",
+  name_label: "Tu nombre",
+  name_placeholder: "Nombre",
+  name_device: "Tu nombre se queda en este dispositivo. Dibs nunca lo envía a ningún lado.",
+  ms_25: "Ya llevas un cuarto.",
+  ms_25_name: "Ya llevas un cuarto, {name}.",
+  ms_50: "A mitad de camino.",
+  ms_50_name: "A mitad de camino, {name}.",
+  ms_75: "Ya llevas tres cuartos.",
+  ms_75_name: "Ya llevas tres cuartos, {name}.",
 }
 
 const DICTS = { en, fr, es }

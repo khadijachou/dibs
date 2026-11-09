@@ -360,3 +360,20 @@ svg circle:first-child[stroke="#e6dccf"], svg circle:first-child[stroke="#35323f
 .switch.on i { transform: translateX(20px); }
 .report-text { width: 100%; background: var(--card); color: var(--cream); border: 1.5px solid #2b2834; border-radius: 12px; padding: 12px; font-size: 13.5px; resize: vertical; }
 @media (prefers-reduced-motion: reduce) { .countdown-row .spin { animation: none; } .switch, .switch i { transition: none; } }
+
+/* Wave 2B: name, earned chip, milestones */
+.hello { margin: 0; font: 600 20px var(--font-display); color: var(--cream); }
+.hello.on-ink { text-align: center; font-size: 17px; color: #c9c6d0; margin-bottom: 6px; }
+.ob-name { display: flex; flex-direction: column; gap: 14px; align-items: center; text-align: center; padding-top: 12vh; flex: 1; }
+.ob-name .bottom { width: 100%; display: flex; flex-direction: column; gap: 10px; }
+.name-input { width: 100%; height: 52px; box-sizing: border-box; background: var(--card); color: var(--cream); border: 1.5px solid #2b2834; border-radius: 14px; padding: 0 14px; font: 500 17px var(--font-body); outline: none; }
+.name-input:focus { border-color: #E8482A; }
+.name-input::placeholder { color: var(--muted); }
+.name-input.small-field { width: 55%; height: 40px; font-size: 15px; text-align: right; }
+.earned-chip { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; padding: 4px 10px; border-radius: 999px; background: var(--teal-soft); color: var(--teal); font-size: 12px; font-weight: 600; white-space: nowrap; }
+.earned-chip::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--teal); }
+.ms-line { margin: 10px 0 0; font: 600 15px var(--font-display); color: var(--butter); text-align: center; animation: ms-in .5s ease-out; }
+.ms-pulse { animation: ms-pulse 1s ease-out 1; border-radius: 50%; }
+@keyframes ms-pulse { 0% { transform: scale(1); box-shadow: 0 0 0 0 var(--glow); } 40% { transform: scale(1.08); box-shadow: 0 0 0 14px rgba(232, 72, 42, 0); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(232, 72, 42, 0); } }
+@keyframes ms-in { from { opacity: 0; transform: translateY(4px); } }
+@media (prefers-reduced-motion: reduce) { .ms-pulse, .ms-line { animation: none; } }

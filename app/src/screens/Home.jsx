@@ -1,12 +1,22 @@
 import { useRef, useState } from 'react'
 import { useApp } from '../App.jsx'
 import { BrandLogo, Header, Ring } from '../components/ui.jsx'
-import { listGoals, progress } from '../lib/goals.js'
+import { listGoals, progress, savedNim } from '../lib/goals.js'
 import { catalogBrands, brandOf } from '../lib/brands.js'
 import { findItem } from '../lib/catalog.js'
 import { planOf } from '../lib/pace.js'
 import { fmtDate, fmtNim } from '../lib/format.js'
 import { useCountUp } from '../lib/useCountUp.js'
+import { useEarned } from '../lib/earned.js'
+import { getName } from '../lib/name.js'
+import { MilestoneLine, useGoalMilestone } from '../components/Milestone.jsx'
+
+// "Hi Sam" when the user gave a name during onboarding or in More; nothing otherwise.
+function Hello({ onInk = false }) {
+  const { t } = useApp()
+  const name = getName()
+  return name ? <p className={`hello${onInk ? ' on-ink' : ''}`}>{t('home_hi', { name })}</p> : null
+}
 
 // "Call dibs. Save up." -> ["Call dibs.", "Save up."]
 const splitFirst = (s) => { const i = s.indexOf('. '); return i < 0 ? [s, ''] : [s.slice(0, i + 1), s.slice(i + 2)] }
@@ -40,6 +50,7 @@ function Welcome() {
           </svg>
           <img src="/brand/mark-cream.png" alt="" />
         </div>
+        <Hello onInk />
         <p className="tl">{splitFirst(t('welcome_t1'))[0]} <span className="dim">{splitFirst(t('welcome_t1'))[1]}</span><br /><span className="last">{t('welcome_t2')}</span></p>
         <p className="sub">{t('welcome_sub')}</p>
       </div>
@@ -74,7 +85,8 @@ function Welcome() {
 
 // Returning user: the active goal as a hero card, then past dibs and other brands.
 function Hub({ goals }) {
-  const { t, lang, go } = useApp()
+  const { t, address, go } = useApp()
+  const earned = useEarned(address)
   const isPast = (g) => g.status === 'redeemed' || g.status === 'withdrawn'
   const live = goals.filter((g) => !isPast(g))
   const active = live[0]
@@ -85,7 +97,8 @@ function Hub({ goals }) {
     <>
       <Header langChip />
       <main className="screen">
-        {live.length > 1 ? <GoalWallet goals={live} /> : active && <ActiveGoal goal={active} />}
+        <Hello />
+        {live.length > 1 ? <GoalWallet goals={live} earned={earned} /> : active && <ActiveGoal goal={active} earned={earned} />}
         {past.length > 0 && <PastList goals={past} title={t('home_past')} />}
         <section style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div className="sec-head"><h3>{t('home_else')}</h3></div>
@@ -126,7 +139,7 @@ export function PastList({ goals, title }) {
   )
 }
 
-function ActiveGoal({ goal }) {
+function ActiveGoal({ goal, earned }) {
   const { t } = useApp()
   const p = planOf(goal)
   const pct = progress(goal)
@@ -136,7 +149,7 @@ function ActiveGoal({ goal }) {
         <p className="small" style={{ color: 'var(--gold)', fontWeight: 600 }}>{t('home_pct', { pct: Math.round(pct * 100) })}</p>
         <h2 className="title">{goal.itemName}</h2>
       </div>
-      <GoalHero goal={goal} />
+      <GoalHero goal={goal} earned={earned} />
       {p.pace.kind !== 'done' && <PaceLine pace={p.pace} />}
     </>
   )
@@ -144,7 +157,7 @@ function ActiveGoal({ goal }) {
 
 // Several goals at once: a wallet of cards. Tabs to pick one, swipe between them,
 // each card keeps its own Add and Details. One staker underneath; goals are envelopes.
-function GoalWallet({ goals }) {
+function GoalWallet({ goals, earned }) {
   const { t } = useApp()
   const [i, setI] = useState(0)
   const ref = useRef(null)
@@ -176,15 +189,17 @@ function GoalWallet({ goals }) {
         ))}
       </div>
       <div className="gwallet" ref={ref} onScroll={onScroll}>
-        {goals.map((g) => <div className="gw-card" key={g.id}><GoalHero goal={g} /></div>)}
+        {goals.map((g) => <div className="gw-card" key={g.id}><GoalHero goal={g} earned={earned} /></div>)}
       </div>
       {p.pace.kind !== 'done' && <PaceLine pace={p.pace} />}
     </>
   )
 }
 
-function GoalHero({ goal }) {
+// earned: the staker's rewards (same figure as the goal screen), null while unknown.
+function GoalHero({ goal, earned }) {
   const { t, lang, go } = useApp()
+  const milestone = useGoalMilestone(goal)
   const p = planOf(goal)
   const pct = progress(goal)
   const brand = goalBrand(goal)
@@ -198,16 +213,19 @@ function GoalHero({ goal }) {
           <div><div className="t1">{goal.itemName} · {goal.itemDetail}</div><div className="t2">{fmtDate(goal.deadline, lang)} · {t(p.daysLeft === 1 ? 'days_left_one' : 'days_left_other', { count: p.daysLeft })}</div></div>
         </div>
         <div className="mid">
-          <div className="ring-wrap">
+          <div className={`ring-wrap${milestone ? ' ms-pulse' : ''}`}>
             <Ring value={pct} size={100} label={`${Math.round(pct * 100)}%`} track="#35323f" color={pct >= 1 ? '#15896A' : '#E8482A'} />
             <div className="pct">{Math.round(pct * 100)}%</div>
           </div>
           <div>
             <div className="n">{fmtNim(Math.round(savedShown), lang)} NIM</div>
             <div className="m">{t('goal_of2', { target: fmtNim(goal.targetNim, lang) })} · {t('goal_to_go', { amount: fmtNim(Math.round(remainingShown), lang) })}</div>
-            <div className="earning">{t('goal_earning_soon')}</div>
+            {earned > 0 && savedNim(goal) > 0
+              ? <div className="earned-chip">{t('home_earned_chip', { amount: fmtNim(earned, lang) })}</div>
+              : <div className="earning">{t('goal_earning_soon')}</div>}
           </div>
         </div>
+        <MilestoneLine milestone={milestone} />
         <div className="acts">
           {pct < 1 && goal.status === 'saving'
             ? <button type="button" className="btn" onClick={() => go('goal', { goalId: goal.id, amount: next })}>{t('goal_add', { nim: fmtNim(next, lang) })}</button>
