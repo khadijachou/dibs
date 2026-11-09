@@ -490,3 +490,7 @@ svg circle:first-child[stroke="#e6dccf"], svg circle:first-child[stroke="#35323f
 .btile .blogo.letter { font-size: 24px; }
 .plan-head .blogo.letter, .codecard .blogo.letter { font-size: 22px; }
 .gift-face .gift-logo.letter { padding: 0; font-size: 38px; }
+
+/* Deposit rows (Goal.jsx): the date never breaks ("7 novembre" on one line); only the note under the amount wraps. */
+.list .row > span:last-child { white-space: nowrap; flex-shrink: 0; }
+.list .row > span:first-child { min-width: 0; }

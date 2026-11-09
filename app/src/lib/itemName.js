@@ -10,8 +10,9 @@ const SUFFIX = / gift card$/i
 // (start of a title or a line), otherwise keep cat_item's case for use inside a sentence.
 export function localName(t, raw, { title = false } = {}) {
   const str = String(raw ?? '')
-  const [name, ...rest] = str.split(' · ')
-  if (!SUFFIX.test(name.trim())) return str
+  // Stored labels ("Netflix · 25 EUR") keep a plain space; join number and currency so "EUR" never wraps alone.
+  const [name, ...rest] = str.split(' · ').map((part) => part.replace(/(\d) ([A-Z]{3})\b/g, `$1${String.fromCharCode(0xa0)}$2`))
+  if (!SUFFIX.test(name.trim())) return [name, ...rest].join(' · ')
   let s = t('cat_item', { brand: name.trim().replace(SUFFIX, '') })
   if (title) s = s.charAt(0).toUpperCase() + s.slice(1)
   return [s, ...rest].join(' · ')

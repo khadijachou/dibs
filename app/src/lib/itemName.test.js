@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { makeT } from './i18n.js'
-import { detailText, fromText, itemLabel } from './itemName.js'
+import { detailText, fromText, itemLabel, localName } from './itemName.js'
 
 const NBSP = String.fromCharCode(0xa0)
 const plain = (s) => s.replaceAll(NBSP, ' ')
@@ -27,4 +27,9 @@ test('tile price line and goal label', () => {
   assert.equal(plain(fromText(t, { items: [{ detail: '1 Year', usd: 101.99 }] })), '1 an · 101,99 USD')
   assert.equal(plain(itemLabel(makeT('es'), { itemName: 'Discord Nitro', itemDetail: '1 Year', usd: 101.99 })), 'Discord Nitro · 1 año · 101,99 USD')
   assert.equal(plain(itemLabel(t, { itemName: 'Steam gift card', itemDetail: '20 USD', usd: 22.48 })), 'Carte-cadeau Steam · 20 USD')
+})
+
+test('stored labels keep number and currency together', () => {
+  const s = localName(makeT('fr'), 'Netflix · 25 EUR')
+  assert.equal(s, `Netflix · 25${NBSP}EUR`)
 })
