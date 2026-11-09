@@ -1,5 +1,7 @@
 // Fake wallet for desktop work. Mirrors the shape of the real provider closely
 // enough for the screens; it does not imitate protocol waiting times.
+import { releaseBlockOf } from './release.js'
+
 const KEY = 'dibs.demoWallet'
 const ADDRESS = 'NQ00 DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO'
 const LUNA = 100_000
@@ -62,6 +64,9 @@ export function createMockProvider() {
     sendRetireStakeTransaction({ retireStake }) {
       const st = s.staker
       if (!st || retireStake > st.inactiveBalance) fail('INVALID_TRANSACTION', 'Not enough inactive stake')
+      // Like mainnet: before the release Nimiq Pay still returns a hash, but the chain refuses it (nothing moves).
+      // Only a seeded staker carries inactiveFrom; the demo's own unlock has none and releases at once.
+      if (st.inactiveFrom && s.block < releaseBlockOf(st.inactiveFrom)) return tx(() => {})
       return tx(() => { st.inactiveBalance -= retireStake; st.retiredBalance += retireStake })
     },
     sendRemoveStakeTransaction({ value }) {

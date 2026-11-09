@@ -40,3 +40,12 @@ test('clock: time up or past reads as due, never 0 or negative', () => {
   assert.deepEqual(clockOf(-90_000), { due: true })
   assert.deepEqual(clockOf(NaN), { due: true })
 })
+
+// Mainnet read at block ~66,418,000: inactiveFrom 66,441,600, an election block itself (1,538 x 43,200),
+// not election block + 1 like the case above. Records what the current formula returns; the rule is not
+// changed until it is confirmed on mainnet.
+test('mainnet case: inactiveFrom 66,441,600 (an election block) -> current formula says 66,484,801', () => {
+  assert.equal(66_441_600 % 43_200, 0)
+  assert.equal(releaseBlockOf(66_441_600), 66_484_801) // one full epoch + 1 after inactiveFrom
+  assert.equal(releaseAtMs(66_441_600, 66_418_000, 0), 66_801 * 1000) // about 18 h 33 min from the read
+})

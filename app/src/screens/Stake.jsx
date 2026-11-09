@@ -5,6 +5,7 @@ import { BrandLogo, Header, Notice } from '../components/ui.jsx'
 import { listGoals, savedNim } from '../lib/goals.js'
 import { readStaker } from '../lib/nimiq.js'
 import { stakeSummary } from '../lib/earned.js'
+import { stageOf } from '../lib/unlockStage.js'
 import { poolName } from '../lib/pace.js'
 import { fmtNim } from '../lib/format.js'
 import { goalBrand } from './Home.jsx'
@@ -44,7 +45,7 @@ export default function Stake() {
           </div>
         </section>
         {!st && <p className="small">{t('stake_none')}</p>}
-        {unlocking.map((g) => <UnstakingCard key={g.id} goal={g} chainAt={state.releaseAt} />)}
+        {unlocking.map((g) => <UnstakingCard key={g.id} goal={g} chainAt={state.releaseAt} retired={stageOf(st, savedNim(g)).current === 'remove'} />)}
       </>
     )
   }
@@ -61,7 +62,7 @@ export default function Stake() {
   )
 }
 
-function UnstakingCard({ goal, chainAt }) {
+function UnstakingCard({ goal, chainAt, retired }) {
   const { t, lang, go } = useApp()
   const withdraw = goal.unlockMode === 'withdraw'
   return (
@@ -70,7 +71,7 @@ function UnstakingCard({ goal, chainAt }) {
         <BrandLogo brand={goalBrand(goal)} />
         <div className="grow"><b>{itemLabel(t, goal)}</b><span className="small">{t('stake_unstaking', { nim: fmtNim(savedNim(goal), lang) })}</span></div>
       </div>
-      <ReleaseClock goal={goal} chainAt={chainAt} />
+      <ReleaseClock goal={goal} chainAt={chainAt} retired={retired} />
       <button type="button" className={`btn small ${withdraw ? 'mint' : 'gold'}`} onClick={() => go('unlock', { goalId: goal.id, mode: withdraw ? 'withdraw' : undefined })}>{t('stake_open_unlock')}</button>
     </section>
   )

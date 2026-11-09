@@ -19,15 +19,16 @@ const estimateOf = (goal, chainAt) => {
 }
 
 // The clock reads as an estimate. Once it runs out it says "Should be ready now", never 0 or a negative time.
-// Only a retire step on record counts as released.
-export function ReleaseClock({ goal, chainAt }) {
+// retired: from the staker read (retiredBalance covers the goal). Without it, falls back to a retire step on record.
+export function ReleaseClock({ goal, chainAt, retired: retiredChain }) {
   const { t } = useApp()
   const [now, setNow] = useState(Date.now())
   useEffect(() => { const id = setInterval(() => setNow(Date.now()), 30_000); return () => clearInterval(id) }, [])
 
-  const retired = goal.unlockSteps.some((s) => s.step === 'retire')
+  const retired = retiredChain ?? goal.unlockSteps.some((s) => s.step === 'retire')
   const est = estimateOf(goal, chainAt)
-  const clock = est == null ? null : clockOf(est - now)
+  // Date.now() at render, not the interval's last tick: a fresh estimate must not read as later than it is.
+  const clock = est == null ? null : clockOf(est - Math.max(now, Date.now()))
   if (retired) return <div className="ok">{t('stake_released')}</div>
   if (clock?.due) return <div className="countdown-row">{t('stake_release_due')}</div>
   return (
