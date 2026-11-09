@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { useApp } from '../App.jsx'
 import { itemLabel, localName } from '../lib/itemName.js'
 import { BrandLogo, Header, Icon } from '../components/ui.jsx'
@@ -11,8 +12,11 @@ const ICON = { deposit: '+', move: '⇄', unlock: '↧', withdraw: '↩', purcha
 const EXPLORER = 'https://nimiq.watch/#'
 const STEP = { deactivate: 'unlock_s1', retire: 'unlock_s2', remove: 'unlock_s3' }
 
-export default function History() {
+export default function History({ focus }) {
   const { t, lang, address, toast, go } = useApp()
+  // Home's "See all" opens History on Your cards.
+  const cardsRef = useRef(null)
+  useEffect(() => { if (focus === 'cards') cardsRef.current?.scrollIntoView({ block: 'start' }) }, [focus])
   const goals = listGoals(address)
   // Newest purchase first, like the timeline.
   const cards = boughtGoals(goals).sort((a, b) => String(b.payment?.at || b.createdAt).localeCompare(String(a.payment?.at || a.createdAt)))
@@ -35,7 +39,7 @@ export default function History() {
       <main className="screen">
         <h2 className="title">{t('tab_history')}</h2>
 
-        <section className="more-sec">
+        <section className="more-sec hist-cards" ref={cardsRef}>
           <div className="sec-head"><h3>{t('hist_cards')}</h3></div>
           {cards.length === 0 ? (
             <p className="small">{t('hist_cards_empty')}</p>

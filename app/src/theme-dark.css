@@ -570,3 +570,6 @@ svg circle:first-child[stroke="#e6dccf"], svg circle:first-child[stroke="#35323f
 .help-card p { margin: 0; font-size: 14px; line-height: 1.5; color: var(--muted); }
 .help-email { max-width: 100%; overflow-wrap: anywhere; text-align: left; background: #2a2733; color: var(--cream); border: 1px solid #3a3744; border-radius: 999px; padding: 8px 14px; font: 600 14px var(--font-body); cursor: pointer; }
 .help-email:active { background: #34303f; }
+/* Home: Recent dibs, link to History */
+.see-all-link { align-self: flex-end; margin-top: -4px; background: none; border: 0; padding: 4px 2px; color: var(--gold); font: 600 13.5px var(--font-body); cursor: pointer; }
+.hist-cards { scroll-margin-top: 12px; }

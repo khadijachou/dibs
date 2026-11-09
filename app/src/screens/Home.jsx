@@ -90,12 +90,14 @@ function Welcome() {
 
 // Returning user: the active goal as a hero card, then past dibs and other brands.
 function Hub({ goals }) {
-  const { t, address, go } = useApp()
+  const { t, address, go, reset } = useApp()
   const earned = useEarned(address)
   const isPast = (g) => g.status === 'redeemed' || g.status === 'withdrawn'
   const live = goals.filter((g) => !isPast(g))
   const active = live[0]
-  const past = goals.filter(isPast)
+  // Newest first: the purchase date, or the return date for a withdrawn goal. Home keeps the 3 latest.
+  const endOf = (g) => String((g.status === 'withdrawn' ? g.withdrawnAt : g.payment?.at) || g.createdAt || '')
+  const past = goals.filter(isPast).sort((a, b) => endOf(b).localeCompare(endOf(a)))
   const liveKeys = new Set(live.map((g) => goalBrand(g).key))
   const others = catalogBrands().filter((b) => !liveKeys.has(b.key)).slice(0, 4)
   return (
@@ -104,7 +106,10 @@ function Hub({ goals }) {
       <main className="screen">
         <Hello />
         {live.length > 1 ? <GoalWallet goals={live} earned={earned} /> : active && <ActiveGoal goal={active} earned={earned} />}
-        {past.length > 0 && <PastList goals={past} title={t('home_past')} />}
+        {past.length > 0 && <PastList goals={past.slice(0, 3)} title={t('home_past')} />}
+        {past.length > 3 && (
+          <button type="button" className="see-all-link" onClick={() => { reset('history', { focus: 'cards' }); window.scrollTo(0, 0) }}>{t('home_see_all', { n: past.length })}</button>
+        )}
         <section style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div className="sec-head"><h3>{t('home_else')}</h3></div>
           <div className="bchips">
