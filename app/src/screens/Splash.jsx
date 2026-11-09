@@ -13,7 +13,7 @@ import { detailText } from '../lib/itemName.js'
 const CARDS = [
   { key: 'steam', name: 'Steam', price: '5 USD', x: '-14px', y: '10%', r: '-14deg', dur: '5.5s', bg: 'linear-gradient(145deg, #1b2838, #0f1b2b)' },
   { key: 'netflix', name: 'Netflix', price: '25 EUR', x: 'calc(100% - 118px)', y: '19%', r: '12deg', dur: '6.5s', bg: 'linear-gradient(145deg, #3a0f12, #1d0a0c)' },
-  { key: 'apple', name: 'Apple', price: '10 USD', x: '-10px', y: '56%', r: '8deg', dur: '6s', bg: 'linear-gradient(145deg, #2a2733, #1c1a22)' },
+  { key: 'apple', name: 'Apple', price: '10 USD', x: '-18px', y: '76%', r: '8deg', dur: '6s', bg: 'linear-gradient(145deg, #2a2733, #1c1a22)' },
   { key: 'amazon', name: 'Amazon', logo: '/logos/amazon.png', price: '10 USD', x: 'calc(100% - 168px)', y: '74%', r: '-6deg', dur: '7s', bg: 'linear-gradient(145deg, #2a2733, #1c1a22)' },
 ]
 
