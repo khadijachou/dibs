@@ -8,7 +8,7 @@ import { readStaker, unlock } from '../lib/nimiq.js'
 import { confirms, stageOf, STEPS } from '../lib/unlockStage.js'
 import { MIN_NEW_STAKER_NIM, toNim } from '../lib/config.js'
 import { fmtNim } from '../lib/format.js'
-import { chainRelease, leftText, ReleaseClock, timeText } from '../components/ReleaseClock.jsx'
+import { chainRelease, leftText, readyTimeText, ReleaseClock, useStableReadyAt } from '../components/ReleaseClock.jsx'
 import { UnlockTimer, usePageVisible } from '../components/UnlockTimer.jsx'
 import { goalBrand } from './Home.jsx'
 import { BLOCK_MS, clockOf, earliestStepBlockOf } from '../lib/release.js'
@@ -108,6 +108,9 @@ export default function Unlock({ goalId, mode: modeParam }) {
 
   useBlockBack(busy) // Android back waits while Nimiq Pay has the unlock step open
 
+  // The release time shown on the timer card, the early-tap toast and the step button: one value for all three.
+  const readyAt = useStableReadyAt(rel?.at ?? null)
+
   if (!goal) return null
   const amount = savedNim(goal)
   const pend = goal.unlockPending
@@ -135,10 +138,10 @@ export default function Unlock({ goalId, mode: modeParam }) {
     if (!step || blocked || busy || pend || !st) return
     if (step === 'retire' && early) {
       // Too early: nothing is sent. Say when, and read again in case the release just passed.
-      const clock = clockOf(relKnown.at - Date.now())
+      const clock = clockOf(readyAt - Date.now())
       toast(clock.due
         ? `${t('err_UNL_NOT_RELEASED_title')}. ${t('stake_release_due')}.`
-        : t('err_UNL_NOT_RELEASED_toast', { time: timeText(relKnown.at, lang), duration: leftText(t, clock) }))
+        : t('err_UNL_NOT_RELEASED_toast', { time: readyTimeText(readyAt, lang), duration: leftText(t, clock) }))
       check()
       return
     }
@@ -168,7 +171,7 @@ export default function Unlock({ goalId, mode: modeParam }) {
       <main className="screen">
         <h2 className="title">{t(withdraw ? 'withdraw_title' : 'unlock_title')}</h2>
         <p className="sub">{t(withdraw ? 'withdraw_intro' : 'unlock_intro')}</p>
-        {relKnown && startMs != null && <UnlockTimer brand={goalBrand(goal)} startMs={startMs} releaseMs={relKnown.at} released={relKnown.released} />}
+        {relKnown && startMs != null && <UnlockTimer brand={goalBrand(goal)} startMs={startMs} releaseMs={readyAt} released={relKnown.released} />}
         <section className="card">
           <div className="row"><span className="sub">{itemName(t, goal, { title: true })}</span><b>{fmtNim(amount, lang)} NIM</b></div>
           <div className={`steps${withdraw ? ' mint' : ''}`}>
@@ -224,7 +227,7 @@ export default function Unlock({ goalId, mode: modeParam }) {
         <div className="bottom">
           {current && (
             <button type="button" className={`btn ${early ? 'waiting' : withdraw ? 'mint' : 'gold'}`} disabled={busy || Boolean(pend) || !st || blocked} onClick={run}>
-              {early ? t('unl_retire_wait', { time: timeText(relKnown.at, lang) }) : t('unlock_go', { n: stepN(current) })}
+              {early ? t('unl_retire_wait', { time: readyTimeText(readyAt, lang) }) : t('unlock_go', { n: stepN(current) })}
             </button>
           )}
         </div>

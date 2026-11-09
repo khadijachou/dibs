@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { blocksLeft, clockOf, earliestStepBlockOf, progressOf, releaseAtMs, releaseBlockOf } from './release.js'
+import { blocksLeft, clockOf, earliestStepBlockOf, progressOf, readyMinute, releaseAtMs, releaseBlockOf } from './release.js'
 
 // Both cases read on mainnet: inactiveFrom is the next election block after step 1, release is one epoch + 1 later.
 test('mainnet 6 Nov: inactiveFrom 66,182,400 releases at 66,225,601', () => {
@@ -62,4 +62,14 @@ test('clock: time up or past reads as due, never 0 or negative', () => {
   assert.deepEqual(clockOf(0), { due: true })
   assert.deepEqual(clockOf(-90_000), { due: true })
   assert.deepEqual(clockOf(NaN), { due: true })
+})
+
+test('the ready time rounds up to the whole minute, the same way as the countdown', () => {
+  const at = Date.UTC(2026, 10, 9, 6, 42, 1) // 06:42:01 → 06:43, never 06:42 in one place and 06:43 in another
+  assert.equal(readyMinute(at), Date.UTC(2026, 10, 9, 6, 43, 0))
+  assert.equal(readyMinute(Date.UTC(2026, 10, 9, 6, 43, 0)), Date.UTC(2026, 10, 9, 6, 43, 0)) // already whole
+  // now + the countdown's minutes lands on the same minute as readyMinute when now is on a minute boundary
+  const now = Date.UTC(2026, 10, 9, 5, 0, 0)
+  const c = clockOf(at - now)
+  assert.equal(now + (c.h * 60 + c.m) * 60_000, readyMinute(at))
 })

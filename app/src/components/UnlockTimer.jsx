@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useApp } from '../App.jsx'
 import { BrandLogo } from './ui.jsx'
-import { leftText, timeText } from './ReleaseClock.jsx'
+import { leftText, readyTimeText } from './ReleaseClock.jsx'
 import { clockOf, progressOf } from '../lib/release.js'
 import { playPop } from '../lib/sound.js'
 
@@ -123,7 +123,7 @@ export function UnlockTimer({ brand, startMs, releaseMs, released }) {
           {clock.due
             ? <p className="ut-due">{left}</p>
             : <p className="ut-count"><span className="sr-only">{left}</span><Digits text={left} roll={!reduced} /></p>}
-          <p className="ut-ready">{t('unl_timer_ready', { time: timeText(releaseMs, lang) })}</p>
+          <p className="ut-ready">{t('unl_timer_ready', { time: readyTimeText(releaseMs, lang) })}</p>
           <p className="ut-close">{t('unl_timer_close')}</p>
         </>
       )}

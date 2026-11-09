@@ -37,3 +37,7 @@ export function clockOf(leftMs) {
   const mins = Math.ceil(leftMs / 60_000)
   return { due: false, h: Math.floor(mins / 60), m: mins % 60 }
 }
+
+// The "Ready around HH:MM" time, rounded up to the whole minute like the countdown (clockOf), so every place
+// that shows the release time (timer card, early-tap toast, step button) reads the same minute.
+export const readyMinute = (ms) => Math.ceil(ms / 60_000) * 60_000

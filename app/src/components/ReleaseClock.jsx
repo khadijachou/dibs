@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useApp } from '../App.jsx'
 import { getBlockNumber, isDemo } from '../lib/nimiq.js'
-import { blocksLeft, BLOCK_MS, clockOf, FALLBACK_MS, releaseAtMs, releaseBlockOf } from '../lib/release.js'
+import { blocksLeft, BLOCK_MS, clockOf, FALLBACK_MS, readyMinute, releaseAtMs, releaseBlockOf } from '../lib/release.js'
 
 // Shared by Stake and Unlock: display only, no money calls.
 
@@ -31,6 +31,19 @@ export const leftText = (t, clock) =>
 
 // Wall-clock time of day in the user's language: "01:30".
 export const timeText = (ms, lang) => new Intl.DateTimeFormat(lang, { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(ms))
+
+// "Ready around {time}": the one function for the release time of day (timer card, toast, step button).
+export const readyTimeText = (ms, lang) => timeText(readyMinute(ms), lang)
+
+// Display only: each chain read re-estimates the release from the block height and moves it by a second or two.
+// Keep the shown estimate until a new read moves it by a minute or more, so the card and a toast from an earlier
+// read never straddle a minute. The chain's `released` flag is never smoothed.
+export function useStableReadyAt(at) {
+  const kept = useRef(null)
+  if (at == null) kept.current = null
+  else if (kept.current == null || Math.abs(at - kept.current) >= 60_000) kept.current = at
+  return kept.current
+}
 
 // The goal's release estimate: the chain's when known, else the deactivate step time + 12 h 4 min.
 const estimateOf = (goal, chainAt) => {
