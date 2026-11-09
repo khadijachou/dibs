@@ -3,14 +3,16 @@
 // Brand is derived from the Bitrefill slug in shopUrl, so the server needs no change.
 import { getCatalog } from './catalog.js'
 
+// popular: the "Popular" badge, a static flag (there is no pick count to rank by). Set on the first three of the
+// curated order below.
 // Order = order on the "All" view. The first eight sit above the fold.
 // slugs marked "confirm" come from the shop site and must be checked on the server (`npm run catalog -- add <slug>`).
 // Logos: lib/brandIcons.js (simple-icons, by key) first; else logo (app/public/logos/<key>.png);
 // else tile (letter fallback in brand colours). The shop's catalogue data has no product image.
 export const BRANDS = [
-  { key: 'steam',       name: 'Steam',             chip: 'games',     logo: '/logos/steam.png',       slugs: ['steam-usa'] },
+  { key: 'steam',       name: 'Steam',             chip: 'games',     logo: '/logos/steam.png',       slugs: ['steam-usa'], popular: true },
   { key: 'amazon',      name: 'Amazon',            chip: 'shopping',  logo: '/logos/amazon.png',      slugs: ['amazon_com-usa'], popular: true },
-  { key: 'apple',       name: 'Apple',             chip: 'shopping',  logo: '/logos/apple.png',       slugs: ['apple-usa'] },
+  { key: 'apple',       name: 'Apple',             chip: 'shopping',  logo: '/logos/apple.png',       slugs: ['apple-usa'], popular: true },
   { key: 'netflix',     name: 'Netflix',           chip: 'streaming', logo: '/logos/netflix.png',     slugs: ['netflix-usa', 'netflix-eu'] },
   { key: 'airbnb',      name: 'Airbnb',            chip: 'travel',    logo: '/logos/airbnb.png',      slugs: ['airbnb-usa'] },
   { key: 'googleplay',  name: 'Google Play',       chip: 'games',     logo: '/logos/googleplay.png',  slugs: ['google-play-usa'] },

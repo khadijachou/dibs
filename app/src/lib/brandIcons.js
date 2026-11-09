@@ -30,3 +30,19 @@ export const BRAND_ICONS = {
 }
 
 export const brandIcon = (key) => BRAND_ICONS[key] || null
+
+// Tint for the tile and the press glow. Brands whose official colour is black or near-black would vanish on
+// the dark card: Steam uses its official light blue, the others a neutral silver.
+const NEUTRAL = '#C9C6D2'
+const TINT = { amazon: '#FF9900', steam: '#66C0F4', googleplay: NEUTRAL }
+const luminance = (hex) => {
+  const n = parseInt(hex.replace('#', ''), 16)
+  return (0.2126 * ((n >> 16) & 255) + 0.7152 * ((n >> 8) & 255) + 0.0722 * (n & 255)) / 255
+}
+export function brandColor(brand) {
+  if (!brand) return NEUTRAL
+  if (TINT[brand.key]) return TINT[brand.key]
+  const hex = brandIcon(brand.key) ? `#${brandIcon(brand.key).hex}` : brand.tile?.bg
+  if (!hex) return NEUTRAL
+  return luminance(hex) < 0.12 ? NEUTRAL : hex
+}
