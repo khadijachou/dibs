@@ -133,11 +133,16 @@ input.email { width: 100%; height: 48px; border-radius: 12px; border: 1.5px soli
 .btn small { display: block; font: 500 12px var(--font-body); opacity: .9; margin-top: 2px; }
 .btn.tall { height: auto; min-height: 56px; padding: 10px 18px; }
 .sec-label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin: 0; }
-.blogo { width: 40px; height: 40px; border-radius: 11px; object-fit: cover; display: block; flex-shrink: 0; }
-.blogo.light { background: #fff; border: 1px solid var(--line); object-fit: contain; }
-/* simple-icons glyph: white plate, glyph at 64 % so every brand sits in the same optical box */
-.blogo.si { display: grid; place-items: center; background: #fff; }
-.blogo.si svg { width: 64%; height: 64%; display: block; }
+/* Brand logo tile (components/ui.jsx BrandLogo). The tile clips; the glyph rules use .blogo > .blogo-glyph so
+   no container rule (ring, card, sheet) can resize or move the glyph out of its tile. */
+.blogo { width: 40px; height: 40px; border-radius: 11px; display: grid; place-items: center; flex-shrink: 0;
+  position: relative; overflow: hidden; box-sizing: border-box; padding: 0;
+  grid-template: minmax(0, 1fr) / minmax(0, 1fr); /* one track that fills the tile, so glyph sizes are definite */ }
+.blogo > .blogo-glyph { position: static; inset: auto; transform: none; margin: 0; display: block; max-width: 100%; max-height: 100%; overflow: hidden; }
+.blogo.si, .blogo.img { background: #fff; }
+.blogo.si > svg.blogo-glyph { width: 64%; height: 64%; }
+/* Sizes are % of the tile's own track (padding % would follow the parent's width, so none is used). */
+.blogo.img > img.blogo-glyph { width: 84%; height: 84%; object-fit: contain; border-radius: 0; }
 .blogo.letter { display: grid; place-items: center; background: var(--navy); color: var(--ground); font: 700 17px var(--font-display); }
 
 /* Welcome */
@@ -302,8 +307,8 @@ input.email { width: 100%; height: 48px; border-radius: 12px; border: 1.5px soli
 .ut-tip i::after { content: ''; position: absolute; inset: -11px; border-radius: 50%; background: radial-gradient(closest-side, rgba(255, 128, 98, .85), rgba(232, 72, 42, 0)); animation: ut-breathe 2.5s ease-in-out infinite; }
 @keyframes ut-breathe { 0%, 100% { opacity: .3; transform: scale(.75); } 50% { opacity: 1; transform: scale(1.2); } }
 .ut-logo { position: absolute; inset: 0; display: grid; place-items: center; }
-.ut-logo .blogo { width: 72px; height: 72px; border-radius: 18px; }
-.ut-logo .blogo.letter { font-size: 30px; }
+.ut-logo .blogo { width: 68px; height: 68px; border-radius: 18px; }
+.ut-logo .blogo.letter { font-size: 28px; }
 .ut-burst { position: absolute; left: 50%; top: 50%; width: 0; height: 0; pointer-events: none; }
 .ut-burst i { position: absolute; width: 8px; height: 8px; margin: -4px; border-radius: 50%; background: #2bc48f; opacity: 0; animation: ut-pop .8s cubic-bezier(.15, .7, .3, 1) var(--d) both; }
 .ut-burst i.b { width: 6px; height: 6px; margin: -3px; background: var(--butter); }

@@ -99,20 +99,31 @@ export function Wordmark({ cream = true, color, className = '' }) {
   )
 }
 
-// Brand logo for a catalogue brand or a goal. Order: the brand's simple-icons glyph (inline SVG in its
-// official colour on a white plate, sharp at any density), else the PNG in public/logos, else a letter tile.
+// The brand logo tile, the one component for every brand logo in the app (catalogue, goal cards, Plan, timer ring,
+// flip face, Stake, sheets, splash, onboarding). Always the same box: a div.blogo tile that clips its content
+// (overflow hidden), with one glyph inside (.blogo-glyph):
+//   si:     the brand's simple-icons glyph, inline SVG in its official colour, contained at 64 % on a white plate
+//   img:    the brand PNG (Amazon only), contained with padding on a white plate
+//   letter: the brand's letter in white on the brand colour
+// Containers only set the tile's size and radius (.ut-logo .blogo { width: 68px }); the glyph rules are specific
+// enough that a container rule such as `.ut-ring svg { position: absolute; width: 100% }` can never reach it.
 export function BrandLogo({ brand, className = '' }) {
   const icon = brandIcon(brand?.key)
   if (icon) {
     return (
       <div className={`blogo si ${className}`} aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill={`#${icon.hex}`}><path d={icon.path} /></svg>
+        <svg className="blogo-glyph" viewBox="0 0 24 24" fill={`#${icon.hex}`}><path d={icon.path} /></svg>
       </div>
     )
   }
-  if (!brand?.logo) return <div className={`blogo letter ${className}`} style={brand?.tile ? { background: brand.tile.bg, color: brand.tile.fg } : undefined} aria-hidden="true">{brand?.tile?.letter || (brand?.name || '?')[0]}</div>
-  const light = ['amazon', 'playstation', 'googleplay'].includes(brand.key)
-  return <img className={`blogo${light ? ' light' : ''} ${className}`} src={brand.logo} alt="" />
+  if (brand?.logo) {
+    return <div className={`blogo img ${className}`} aria-hidden="true"><img className="blogo-glyph" src={brand.logo} alt="" /></div>
+  }
+  return (
+    <div className={`blogo letter ${className}`} style={brand?.tile ? { background: brand.tile.bg, color: brand.tile.fg } : undefined} aria-hidden="true">
+      <span className="blogo-glyph">{brand?.tile?.letter || (brand?.name || '?')[0]}</span>
+    </div>
+  )
 }
 
 const LANGS = ['en', 'fr', 'es']
