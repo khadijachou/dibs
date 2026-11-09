@@ -2,6 +2,7 @@
 // the app shows one tile per brand and lets the user pick the value on the Plan screen.
 // Brand is derived from the Bitrefill slug in shopUrl, so the server needs no change.
 import { getCatalog } from './catalog.js'
+import { notSold } from './availability.js'
 
 // popular: the "Popular" badge, a static flag (there is no pick count to rank by). Set on the first three of the
 // curated order below.
@@ -50,8 +51,11 @@ export function brandOf(item) {
 // Brands that have at least one item in the live catalogue, with their items sorted by value.
 export function catalogBrands() {
   const map = new Map()
-  for (const item of getCatalog()) {
-    if (item.inStock === false) continue
+  const all = getCatalog()
+  for (const item of all) {
+    // Hidden: out of stock, or a value the shop does not sell (lib/availability.js notSold). Goals already on such a
+    // card keep working; they get the "not available" choices instead.
+    if (item.inStock === false || notSold(item, all)) continue
     const b = brandOf(item)
     if (!map.has(b.key)) map.set(b.key, { ...b, items: [] })
     map.get(b.key).items.push(item)

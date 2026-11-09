@@ -4,7 +4,9 @@ import { itemLabel, itemName } from '../lib/itemName.js'
 import { ErrorBox, FieldError, Header, Notice } from '../components/ui.jsx'
 import { classify, lastLogText } from '../lib/errors.js'
 import { getGoal, updateGoal } from '../lib/goals.js'
-import { findItem } from '../lib/catalog.js'
+import { findItem, refreshCatalog } from '../lib/catalog.js'
+import { goalCardIssue } from '../lib/availability.js'
+import { CardIssue } from '../components/CardIssue.jsx'
 import { isDemo, payInvoice } from '../lib/nimiq.js'
 import { invoiceMatchesPrice, parseInvoice } from '../lib/invoice.js'
 import { usdToNim } from '../lib/price.js'
@@ -38,6 +40,7 @@ export default function Redeem({ goalId }) {
   const [error, setError] = useState(null)
   const [unknown, setUnknown] = useState(() => !!readPayLock(goalId))
   const [problem, setProblem] = useState(null) // ErrorKey
+  const [refused, setRefused] = useState(false) // the shop refused the card at checkout (gone or sold out)
 
   // Countdown to the invoice expiry (Bitrefill locks the price for 30 minutes).
   useEffect(() => {
@@ -78,7 +81,7 @@ export default function Redeem({ goalId }) {
 
   useBlockBack(busy) // Android back waits while Nimiq Pay has the payment open
 
-  if (!goal || !item) return null
+  if (!goal) return null // a card gone from the catalogue still renders: it shows the "not available" choices
   const apiMode = config.redeemMode === 'api'
   const current = apiMode ? order?.invoice || '' : invoice
   const parsed = parseInvoice(current)
@@ -96,8 +99,13 @@ export default function Redeem({ goalId }) {
   const payNim = parsed && invoiceUsd != null && prices?.nimUsd ? usdToNim(invoiceUsd, prices.nimUsd) : null
   const emailBad = !emailOk(email)
 
+  // Card no longer available (catalogue check at launch, or the shop's answer at checkout): the same message and
+  // choices as on the goal, instead of a generic error. Never while a payment outcome is unknown or an invoice exists.
+  const unavailable = !unknown && !order && (refused || !item || Boolean(goalCardIssue(goal)))
+
   const getInvoice = async () => {
     setError(null)
+    if (unavailable) return
     if (emailBad) { setEmailTouched(true); return }
     try { localStorage.setItem(EMAIL_KEY, email) } catch { /* ignore */ }
     setBusy(true)
@@ -105,6 +113,11 @@ export default function Redeem({ goalId }) {
       setOrder(await api.createOrder(item.id, email))
     } catch (e) {
       const key = classify(e, 'invoice')
+      // Was the card withdrawn or sold out since launch? The shop says so (409 out of stock, 400 unknown item),
+      // or a fresh read of the catalogue does.
+      const shopRefused = e.apiError === 'SHOP_OUT_OF_STOCK' || /unknown item/i.test(e.message || '')
+      if (key !== 'SRV_DOWN') await refreshCatalog()
+      if (shopRefused || goalCardIssue(getGoal(address, goalId))) { setRefused(true); return }
       if (isDemo() && !e.apiError?.match(/^(SHOP_LIMIT|SRV_DOWN)$/)) {
         // Demo wallet with no Bitrefill credentials: fake a 30-minute invoice so the flow can be walked.
         const sats = Math.round((goal.usd / (prices?.btcUsd || 80000)) * 1e8)
@@ -159,7 +172,9 @@ export default function Redeem({ goalId }) {
       <main className="screen">
         <h2 className="title">{t('redeem_title', { name: itemName(t, goal) })}</h2>
 
-        {apiMode ? (
+        {unavailable ? (
+          <CardIssue goal={goal} force />
+        ) : apiMode ? (
           <section className="card">
             <div className="row"><span className="sub">{itemLabel(t, goal)}</span><b>{fmtUsd(order?.usd ?? goal.usd, lang)} USD</b></div>
             <p className="small plan-note">{t('plan_price_note')}</p>
@@ -221,7 +236,7 @@ export default function Redeem({ goalId }) {
             actions={[{ label: t('err_GENERIC_action2'), onClick: () => { navigator.clipboard?.writeText(lastLogText()); toast(t('err_copied')) } }]} />
         ) : null}
         {!unknown && !problem && <ErrorBox error={error} />}
-        <p className="small">{t('redeem_refund')}</p>
+        {!unavailable && <p className="small">{t('redeem_refund')}</p>}
 
         {payNim != null && !expired && !locked && (!check || check.ok) && (
           <div className="pay-sum" role="status">
@@ -229,7 +244,7 @@ export default function Redeem({ goalId }) {
             {apiMode && left != null && <span className="small countdown">{t('redeem_expires', { time: mmss(left) })}</span>}
           </div>
         )}
-        <div className="bottom">
+        {!unavailable && <div className="bottom">
           {expired ? (
             <button type="button" className="btn" disabled={busy} onClick={() => { setOrder(null); setLeft(null) }}>{t('err_PAY_EXPIRED_cta')}</button>
           ) : (
@@ -237,7 +252,7 @@ export default function Redeem({ goalId }) {
               {busy ? t('redeem_paying') : locked ? t('err_PAY_UNKNOWN_cta') : t('redeem_pay')}
             </button>
           )}
-        </div>
+        </div>}
       </main>
     </>
   )

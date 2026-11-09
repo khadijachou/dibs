@@ -1,9 +1,10 @@
+import { CardIssue } from '../components/CardIssue.jsx'
 import { useRef, useState } from 'react'
 import { useApp } from '../App.jsx'
 import { detailText, fromText, itemLabel, itemName } from '../lib/itemName.js'
 import { BrandLogo, Header, Ring, DibsMark } from '../components/ui.jsx'
 import { listGoals, progress } from '../lib/goals.js'
-import { catalogBrands, brandOf } from '../lib/brands.js'
+import { BRANDS, catalogBrands, brandOf } from '../lib/brands.js'
 import { findItem } from '../lib/catalog.js'
 import { planOf } from '../lib/pace.js'
 import { fmtDate, fmtNim } from '../lib/format.js'
@@ -24,8 +25,10 @@ function Hello({ onInk = false }) {
 const splitFirst = (s) => { const i = s.indexOf('. '); return i < 0 ? [s, ''] : [s.slice(0, i + 1), s.slice(i + 2)] }
 
 // Brand of a goal: stored on the goal (v2.2), or derived from its catalogue item.
+// The goal's brand from what the goal saved (brandKey), so it keeps its logo even when its card has left the catalogue.
 export function goalBrand(goal) {
-  if (goal.logo) return { key: goal.brandKey, name: goal.brandName, logo: goal.logo }
+  const known = goal.brandKey ? BRANDS.find((b) => b.key === goal.brandKey) : null
+  if (known || goal.logo) return { ...(known || {}), key: goal.brandKey, name: goal.brandName || known?.name, logo: goal.logo || known?.logo || null }
   return brandOf(findItem(goal.itemId)) || { name: goal.itemName }
 }
 
@@ -226,6 +229,7 @@ function GoalHero({ goal, earned }) {
           </div>
         </div>
         <MilestoneLine milestone={milestone} />
+        <CardIssue goal={goal} />
         <div className="acts">
           {pct < 1 && goal.status === 'saving'
             ? <button type="button" className="btn" onClick={() => go('goal', { goalId: goal.id, amount: next })}>{t('goal_add', { nim: fmtNim(next, lang) })}</button>

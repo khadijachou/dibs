@@ -44,7 +44,8 @@ function useChipSlide(active, reduced) {
 
 // One tile per brand; the amount is chosen on the Plan screen (UI v2.2).
 // moveFrom: opened from Move > "A new goal"; passed on to Plan and then to the new goal.
-export default function Catalog({ moveFrom = null }) {
+// changeFor: a goal id whose card is no longer available (components/CardIssue.jsx); Plan then swaps that goal's card.
+export default function Catalog({ moveFrom = null, changeFor = null }) {
   const { t, go, back, canGoBack } = useApp()
   const reduced = useReducedMotion()
   const brands = catalogBrands()
@@ -75,7 +76,7 @@ export default function Catalog({ moveFrom = null }) {
       <main className="screen">
         <div>
           <h2 className="title">{t('cat_title')}</h2>
-          <p className="sub" style={{ marginTop: 6 }}>{t('cat_sub')}</p>
+          <p className="sub" style={{ marginTop: 6 }}>{t(changeFor ? 'change_sub' : 'cat_sub')}</p>
         </div>
         <div className="cats hl" role="group">
           {chipBtn('all', t('chip_all', { count: brands.length }))}
@@ -101,7 +102,7 @@ export default function Catalog({ moveFrom = null }) {
         {shown.length > 6 && <div className="scroll-fade" aria-hidden="true" />}
         <div className="bottom">
           <p className="small center">{t('cat_footer2')}</p>
-          <button type="button" className="btn tall" disabled={!brand} onClick={() => go('plan', { brandKey: picked, moveFrom })}>
+          <button type="button" className="btn tall" disabled={!brand} onClick={() => go('plan', { brandKey: picked, moveFrom, changeFor })}>
             {brand && t('cat_cta', { brand: brand.name })}<small>{t('cat_cta_sub')}</small>
           </button>
         </div>

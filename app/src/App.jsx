@@ -39,7 +39,7 @@ const HOME = { name: 'home', params: {} }
 function parentOf(route) {
   const goalId = route.params?.goalId
   if (route.name === 'home') return null
-  if (route.name === 'plan') return { name: 'catalog', params: {} }
+  if (route.name === 'plan') return { name: 'catalog', params: route.params?.changeFor ? { changeFor: route.params.changeFor } : {} }
   if ((route.name === 'unlock' || route.name === 'redeem') && goalId) return { name: 'goal', params: { goalId } }
   return HOME
 }

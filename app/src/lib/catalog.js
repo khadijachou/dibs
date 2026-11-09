@@ -11,16 +11,27 @@ export const FALLBACK_CATALOG = [
 
 let catalog = FALLBACK_CATALOG
 let loaded = false
+let fromServer = false
 
 export async function loadCatalog() {
   if (loaded) return catalog
   try {
     const items = await api.catalog()
-    if (Array.isArray(items) && items.length) catalog = items
-  } catch { /* server down: keep the fallback */ }
+    if (Array.isArray(items) && items.length) { catalog = items; fromServer = true }
+  } catch { /* server down: keep the fallback (or the last good list) */ }
   loaded = true
   return catalog
 }
+
+// Reads the catalogue again (checkout: was the card withdrawn or sold out since launch?).
+export async function refreshCatalog() {
+  loaded = false
+  return loadCatalog()
+}
+
+// True once the list comes from the server. The fallback list holds three Steam values only, so card availability
+// is never judged from it (lib/availability.js).
+export const catalogFromServer = () => fromServer
 
 export const getCatalog = () => catalog
 export const findItem = (id) => catalog.find((i) => i.id === id) || FALLBACK_CATALOG.find((i) => i.id === id)

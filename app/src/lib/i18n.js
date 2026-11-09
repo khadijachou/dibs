@@ -425,6 +425,15 @@ const en = {
   dur_month_one: '{count} Month',
   dur_month_other: '{count} Months',
   plan_margin: 'Includes a 10% safety margin',
+  avail_title: "This card isn’t available right now.",
+  avail_sub: "Your NIM is safe: pick another card or get your NIM back.",
+  avail_change: "Change card",
+  change_sub: "Pick the new card. Your saved NIM stays with this goal.",
+  change_label: "New card for this goal",
+  change_summary: "You keep your {saved} NIM, your deposits and your history. New target: {target} NIM.",
+  change_cta: "Switch to this card",
+  change_cta_sub: "No transaction. Your NIM stays where it is.",
+  change_done: "Card changed. Your NIM and history are unchanged.",
   plan_target_note: "Your target is set at today's NIM price. If the price moves, you may need a little more or less at the end.",
 }
 
@@ -855,6 +864,15 @@ const fr = {
   dur_month_one: '{count} mois',
   dur_month_other: '{count} mois',
   plan_margin: 'Marge de sécurité de 10 % incluse',
+  avail_title: "Cette carte n’est pas disponible pour l’instant.",
+  avail_sub: "Vos NIM sont en sécurité : choisissez une autre carte ou récupérez vos NIM.",
+  avail_change: "Changer de carte",
+  change_sub: "Choisissez la nouvelle carte. Vos NIM épargnés restent dans cet objectif.",
+  change_label: "Nouvelle carte pour cet objectif",
+  change_summary: "Vous gardez vos {saved} NIM, vos dépôts et votre historique. Nouveau montant visé : {target} NIM.",
+  change_cta: "Passer à cette carte",
+  change_cta_sub: "Aucune transaction. Vos NIM restent où ils sont.",
+  change_done: "Carte changée. Vos NIM et votre historique restent les mêmes.",
   plan_target_note: "Votre montant visé est fixé au cours du NIM d’aujourd’hui. Si le cours bouge, il vous faudra peut-être un peu plus ou un peu moins à la fin.",
 }
 
@@ -1285,6 +1303,15 @@ const es = {
   dur_month_one: '{count} mes',
   dur_month_other: '{count} meses',
   plan_margin: 'Incluye un margen de seguridad del 10 %',
+  avail_title: "Esta tarjeta no está disponible por ahora.",
+  avail_sub: "Tus NIM están a salvo: elige otra tarjeta o recupera tus NIM.",
+  avail_change: "Cambiar de tarjeta",
+  change_sub: "Elige la nueva tarjeta. Tus NIM ahorrados se quedan en esta meta.",
+  change_label: "Nueva tarjeta para esta meta",
+  change_summary: "Conservas tus {saved} NIM, tus depósitos y tu historial. Nuevo monto objetivo: {target} NIM.",
+  change_cta: "Cambiar a esta tarjeta",
+  change_cta_sub: "Ninguna transacción. Tus NIM se quedan donde están.",
+  change_done: "Tarjeta cambiada. Tus NIM y tu historial no cambian.",
   plan_target_note: "Tu monto objetivo se fija al precio del NIM de hoy. Si el precio cambia, puede que necesites un poco más o un poco menos al final.",
 }
 

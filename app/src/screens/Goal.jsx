@@ -13,6 +13,8 @@ import { fmtDate, fmtNim, weeksUntil } from '../lib/format.js'
 import { DeleteSheet, ManageSheet, MoveSheet } from './GoalManage.jsx'
 import { useCountUp } from '../lib/useCountUp.js'
 import { CardFlip, GiftFace, useCardFlip } from '../components/CardFlip.jsx'
+import { CardIssue } from '../components/CardIssue.jsx'
+import { goalCardIssue } from '../lib/availability.js'
 import { stakeSummary } from '../lib/earned.js'
 import { MilestoneLine, useGoalMilestone } from '../components/Milestone.jsx'
 import { GoalStatus } from '../components/GoalStatus.jsx'
@@ -217,6 +219,7 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null 
           {saved > 0 && stakerAddress && <div className="acct">{t('goal_account', { address: '' }).trim()} <b>{shortAddress(stakerAddress)}</b><span className="pool">● {pool}</span></div>}
         </section>
         </CardFlip>
+        <CardIssue goal={goal} />
         {goal.status === 'saving' && !reached && <PaceLine pace={p.pace} />}
 
         {goal.status === 'saving' && !reached && (
@@ -301,7 +304,7 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null 
           {((goal.status === 'unlocking' && !withdrawing) || (goal.status === 'saving' && reached)) && (
             <button type="button" className="btn gold" onClick={() => go('unlock', { goalId: goal.id })}>{t('goal_unlock')}</button>
           )}
-          {goal.status === 'ready' && (
+          {goal.status === 'ready' && !goalCardIssue(goal) && (
             <button type="button" className="btn gold" onClick={flip.start}>{t('goal_buy', { name: itemName(t, goal) })}</button>
           )}
         </div>
