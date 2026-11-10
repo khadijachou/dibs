@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useApp } from '../App.jsx'
 import { Header } from '../components/ui.jsx'
+import { Avatar } from '../components/Avatar.jsx'
 import { listGoals } from '../lib/goals.js'
 import { profileStats } from '../lib/profileStats.js'
 import { stakeSummary } from '../lib/earned.js'
@@ -11,7 +12,7 @@ import { poolName } from '../lib/pace.js'
 
 // Profile: the name, a Total saved hero and four tiles, all from data the app already has (goal ledger, staker, dibs.name).
 export default function Profile() {
-  const { t, lang, address, prices, reset } = useApp()
+  const { t, lang, address, walletAddress, prices, reset } = useApp()
   const name = getName() // changed only in More > Settings
   // Earned from staking: the Stake tab's own figure. undefined while reading, null when the chain is unreadable.
   const [earned, setEarned] = useState(undefined)
@@ -44,12 +45,11 @@ export default function Profile() {
       <main className="screen">
         <section className="prof-head">
           <h2 className="title">{t('tab_profile')}</h2>
-          {name && (
-            <div className="prof-who">
-              <span className="prof-avatar" aria-hidden="true">{name.charAt(0).toUpperCase()}</span>
-              <span className="prof-name">{name}</span>
-            </div>
-          )}
+          <div className="prof-who">
+            <Avatar address={walletAddress} size={56} className="prof-av"
+              fallback={name ? <span className="prof-avatar" aria-hidden="true">{name.charAt(0).toUpperCase()}</span> : null} />
+            {name && <span className="prof-name">{name}</span>}
+          </div>
           <p className="sub">{t('prof_intro')}</p>
         </section>
 

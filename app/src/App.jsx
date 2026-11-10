@@ -67,6 +67,7 @@ export default function App() {
   const [ready, setReady] = useState(false)
   const [fatal, setFatal] = useState(null)
   const [address, setAddress] = useState(null)
+  const [walletAddress, setWalletAddress] = useState(null) // listAccounts()[0]: stable, unlike the funded HTLC address
   const [balance, setBalance] = useState(null)
   const [prices, setPrices] = useState(null)
   const [route, setRoute] = useState({ name: 'home', params: {} })
@@ -114,6 +115,7 @@ export default function App() {
       configureStats({ demo: isDemo() })
       readSimulateParam() // ?sim works in demo mode only, so read it once we know the mode
       const accounts = await listAccountsWithBalance()
+      setWalletAddress(accounts[0]?.address || null)
       const funded = accounts.filter((a) => a.nim > 0).sort((a, b) => b.nim - a.nim)
       const addr = (funded[0] || accounts[0]).address
       adoptGoals(addr)
@@ -214,7 +216,7 @@ export default function App() {
     return () => window.removeEventListener('popstate', onPop)
   }, [])
 
-  const ctx = { t, lang, setLang, address, balance, refreshBalance, prices, demo: isDemo(), go, back, reset, toast, showHowTo, canGoBack, blockBack }
+  const ctx = { t, lang, setLang, address, walletAddress, balance, refreshBalance, prices, demo: isDemo(), go, back, reset, toast, showHowTo, canGoBack, blockBack }
 
   // The launch splash leaves (ring completes, then fades) once the next screen is ready to show.
   const splashDone = splashMin && (ready || Boolean(fatal) || (!onboarded && !isLab))

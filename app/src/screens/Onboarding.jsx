@@ -4,6 +4,7 @@ import { BrandLogo, Icon, LangSwitch, Wordmark } from '../components/ui.jsx'
 import { NAME_MAX, setName } from '../lib/name.js'
 import { fmtNim, fmtPct } from '../lib/format.js'
 import { ConsentStep } from '../components/StatsConsent.jsx'
+import { Avatar } from '../components/Avatar.jsx'
 import { consent } from '../lib/stats.js'
 
 // VF screens 02 to 04: three slides on first run. App.jsx shows them without
@@ -72,7 +73,7 @@ export default function Onboarding({ onDone, replay = false }) {
 
 // "What should we call you?": optional, saved on this device only (lib/name.js).
 function NameStep({ onDone }) {
-  const { t } = useApp()
+  const { t, walletAddress } = useApp()
   const [value, setValue] = useState('')
   const save = (e) => { e.preventDefault(); setName(value); onDone() }
   return (
@@ -83,6 +84,7 @@ function NameStep({ onDone }) {
       </header>
       <main className="screen ob">
         <form className="ob-name" onSubmit={save}>
+          <div className="ob-avatar"><Avatar address={walletAddress} size={104} /><span>{t('name_avatar')}</span></div>
           <h1 className="ob-title">{t('name_title')}</h1>
           <p className="ob-sub">{t('name_sub')}</p>
           <label htmlFor="ob-name" className="sr-only">{t('name_label')}</label>
