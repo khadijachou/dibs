@@ -3,7 +3,7 @@ import { useApp, useBlockBack } from '../App.jsx'
 import { itemName } from '../lib/itemName.js'
 import { Header, Notice } from '../components/ui.jsx'
 import { classify } from '../lib/errors.js'
-import { getGoal, listGoals, savedNim, updateGoal } from '../lib/goals.js'
+import { getGoal, savedNim, unlockRunning, updateGoal } from '../lib/goals.js'
 import { txOutcome } from '../lib/nimiq.js'
 import { STEPS } from '../lib/unlockStage.js'
 import { DONE, STEP_OF } from '../lib/unlock.js'
@@ -88,13 +88,15 @@ export default function Unlock({ goalId, mode: modeParam }) {
 
   if (!goal) return null
   const amount = savedNim(goal)
-  const state = us?.state ?? null
+  // One unlock at a time (card or withdraw): while another goal's unlock runs, the chain's inactive NIM is that
+  // goal's, so this goal shows no step and sends nothing.
+  const otherRelease = goal.status === 'saving' ? unlockRunning(address, goal.id) : null
+  const state = otherRelease ? null : us?.state ?? null
   const current = state ? STEP_OF[state] : null
   const done = state ? DONE[state] : []
   const waiting = state === 'waiting'
   // Checks before step 1 of a withdraw: one release at a time, and the rest staked stays 0 or >= 100 NIM.
   const first = current === 'deactivate'
-  const otherRelease = withdraw && first ? listGoals(address).find((g) => g.id !== goal.id && g.status === 'unlocking') : null
   const rest = us ? toNim(us.active) - amount : null
   // The chain holds less than this goal says (or no staker): the ledger and the stake disagree, send nothing.
   const mismatch = first && Boolean(us?.short)
@@ -162,7 +164,7 @@ export default function Unlock({ goalId, mode: modeParam }) {
       <main className="screen">
         <h2 className="title">{t(withdraw ? 'withdraw_title' : 'unlock_title')}</h2>
         <p className="sub">{t(withdraw ? 'withdraw_intro' : 'unlock_intro')}</p>
-        {relKnown && startMs != null && <UnlockTimer brand={goalBrand(goal)} startMs={startMs} releaseMs={readyAt} released={state === 'ready'} />}
+        {!otherRelease && relKnown && startMs != null && <UnlockTimer brand={goalBrand(goal)} startMs={startMs} releaseMs={readyAt} released={state === 'ready'} />}
         <section className="card">
           <div className="row"><span className="sub">{itemName(t, goal, { title: true })}</span><b>{fmtNim(amount, lang)} NIM</b></div>
           <div className={`steps${withdraw ? ' mint' : ''}`}>
@@ -193,7 +195,8 @@ export default function Unlock({ goalId, mode: modeParam }) {
           </div>
         </section>
         {otherRelease && (
-          <Notice tone="info" title={t('withdraw_busy_title')} sub={t('withdraw_busy_sub', { name: itemName(t, otherRelease, { title: true }) })} safe={t('safe_nimSafe')} />
+          <Notice tone="info" title={t('unlock_busy_title', { name: itemName(t, otherRelease, { title: true }) })} sub={t('unlock_busy_sub')} safe={t('safe_nimSafe')}
+            actions={[{ label: t('unlock_busy_action'), onClick: () => reset('goal', { goalId: otherRelease.id }) }]} />
         )}
         {!otherRelease && mismatch && <div className="band-warn">{t(withdraw ? 'withdraw_mismatch' : 'unl_no_stake')}</div>}
         {!otherRelease && underMin && (

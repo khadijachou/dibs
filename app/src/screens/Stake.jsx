@@ -36,7 +36,7 @@ export default function Stake() {
     body = <Notice tone="wait" title={t('stake_reading')} />
   } else {
     const st = state.staker
-    const { total, earned } = stakeSummary(st, address)
+    const { total, earned, other } = stakeSummary(st, address)
     body = (
       <>
         <section className="hero stake-hero">
@@ -44,8 +44,10 @@ export default function Stake() {
           <div className="n">{fmtNim(total, lang)} NIM</div>
           <div className="stake-facts">
             <div><span>{t('stake_validator')}</span><b><i className="dot" aria-hidden="true" />{poolName()}</b></div>
-            <div><span>{t('stake_earned')}</span><b className="mint">+{fmtNim(earned, lang)} NIM</b></div>
+            {earned != null && <div><span>{t('stake_earned')}</span><b className="mint">+{fmtNim(earned, lang)} NIM</b></div>}
+            {other >= 1 && <div><span>{t('stake_other')}</span><b>{fmtNim(Math.floor(other), lang)} NIM</b></div>}
           </div>
+          {other >= 1 && <p className="small">{t('stake_other_note')}</p>}
         </section>
         {!st && <p className="small">{t('stake_none')}</p>}
         {active.length > 0 && <WeekCard goals={active} />}

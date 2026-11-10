@@ -79,11 +79,25 @@ export function moveNim(address, fromId, toId, nim) {
   return { from: next.find((g) => g.id === fromId), to: next.find((g) => g.id === toId) }
 }
 
+// A goal can be deleted when it holds 0 NIM and no unlock of it is in progress (mainnet 10 Nov: a 0 % duplicate
+// of a goal in its unlock could not be removed).
+export const deletable = (g) => Boolean(g) && savedNim(g) === 0 && ['saving', 'redeemed', 'withdrawn'].includes(g.status)
+
+// The other goal whose unlock is running (chain state waiting, ready or remove), if any. One staker holds every
+// goal, so only one unlock can run at a time: a second one would read the first one's inactive NIM as its own.
+export const unlockRunning = (address, exceptId = null) =>
+  read(address).find((g) => g.id !== exceptId && g.status === 'unlocking') || null
+
+// The open goal (not bought, not withdrawn) for this card, if any. Recovery links to it, never adds a second one.
+export const openGoalFor = (goals, itemId) =>
+  goals.filter((g) => g.itemId === itemId && g.status !== 'redeemed' && g.status !== 'withdrawn')
+    .sort((a, b) => savedNim(b) - savedNim(a) || String(a.createdAt).localeCompare(String(b.createdAt)))[0] || null
+
 // Deletes an empty goal. Also clears copies kept under older addresses, or adoptGoals would bring it back.
 export function removeGoal(address, id) {
   const g = getGoal(address, id)
   if (!g) throw new Error('Goal not found')
-  if (savedNim(g) !== 0 || !['saving', 'redeemed', 'withdrawn'].includes(g.status)) throw new Error('Goal still holds NIM')
+  if (!deletable(g)) throw new Error('Goal still holds NIM')
   let keys = [key(address)]
   try { keys = [...new Set([key(address), ...Object.keys(localStorage).filter((k) => k.startsWith('dibs.goals.'))])] } catch { /* storage blocked */ }
   for (const k of keys) {
@@ -114,6 +128,8 @@ export const stakerFlag = {
 // a Remove, Nimiq Pay stopped listing NQ80... and listed a new funded NQ64... instead.
 // So on start we merge goals saved under ANY address on this device into the current one
 // (the current copy wins when both have the same goal), and never lose a goal to a rotation.
+// Recovery (10 Nov, after a reinstall): never a second open goal for the same card. An empty copy is dropped
+// when a goal for that card is already open; an empty open goal here gives way to a funded one found elsewhere.
 export function adoptGoals(address) {
   let keys = []
   try { keys = Object.keys(localStorage).filter((k) => k.startsWith('dibs.goals.') && k !== key(address)) } catch { return }
@@ -126,5 +142,14 @@ export function adoptGoals(address) {
     try { goals = JSON.parse(localStorage.getItem(k)) || [] } catch { /* skip */ }
     for (const g of goals) if (g && g.id && !ids.has(g.id)) { ids.add(g.id); extra.push(g) }
   }
-  if (extra.length) write(address, [...mine, ...extra].sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt))))
+  if (!extra.length) return
+  let all = [...mine]
+  for (const g of extra) {
+    const open = g.status !== 'redeemed' && g.status !== 'withdrawn'
+    const twin = open ? openGoalFor(all, g.itemId) : null
+    if (twin && savedNim(g) === 0 && deletable(g)) continue // empty copy: link to the open goal
+    if (twin && savedNim(twin) === 0 && deletable(twin)) all = all.filter((x) => x.id !== twin.id) // funded one wins
+    all.push(g)
+  }
+  write(address, all.sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt))))
 }

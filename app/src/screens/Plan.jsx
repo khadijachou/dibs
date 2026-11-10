@@ -4,7 +4,7 @@ import { detailText, isAmountDetail, itemName } from '../lib/itemName.js'
 import { BrandLogo, Header, WeekDots } from '../components/ui.jsx'
 import { brandOf, catalogBrands, pickAmounts } from '../lib/brands.js'
 import { findItem } from '../lib/catalog.js'
-import { createGoal, getGoal, savedNim, updateGoal } from '../lib/goals.js'
+import { createGoal, getGoal, listGoals, openGoalFor, savedNim, updateGoal } from '../lib/goals.js'
 import { cardChangePatch, payLockedFor } from '../lib/availability.js'
 import { usdToNim } from '../lib/price.js'
 import { poolName } from '../lib/pace.js'
@@ -68,6 +68,9 @@ export default function Plan({ brandKey, itemId, moveFrom = null, changeFor = nu
   }
 
   const create = () => {
+    // One open goal per card (10 Nov: a goal created again after a reinstall sat next to the recovered one at 0 %).
+    const existing = openGoalFor(listGoals(address), item.id)
+    if (existing) { toast(t('goal_exists')); reset('goal', { goalId: existing.id }); return }
     playPop() // the Dibs! stamp, from this tap
     const goal = createGoal(address, { item, targetNim, deadline, brand: b, nimUsd: prices.nimUsd })
     track('goal_created', { goalId: goal.id, brand: b?.key || undefined, itemId: item.id, usd: item.usd, weeks })

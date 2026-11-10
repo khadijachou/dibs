@@ -161,7 +161,7 @@ export default function App() {
     readStaker(address).then((st) => {
       const { total, earned } = stakeSummary(st, address)
       const goalsActive = listGoals(address).filter((g) => g.status !== 'redeemed' && g.status !== 'withdrawn').length
-      track('snapshot', { stakedNim: total, earnedNim: earned, goalsActive })
+      track('snapshot', { stakedNim: total, earnedNim: earned ?? 0, goalsActive })
       markDaily('snapshot')
     }).catch(() => { /* chain unreadable: try on the next open */ })
   }, [ready, address]) // eslint-disable-line react-hooks/exhaustive-deps

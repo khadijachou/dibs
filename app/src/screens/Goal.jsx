@@ -3,7 +3,7 @@ import { useApp, useBlockBack } from '../App.jsx'
 import { detailText, itemLabel, itemName, localName } from '../lib/itemName.js'
 import { BrandLogo, FieldError, Header, Notice, Ring, Stamp, WeekDots } from '../components/ui.jsx'
 import { classify, lastLogText } from '../lib/errors.js'
-import { getGoal, progress, savedNim, stakerFlag } from '../lib/goals.js'
+import { deletable, getGoal, listGoals, openGoalFor, progress, savedNim, stakerFlag, unlockRunning } from '../lib/goals.js'
 import { planOf, poolName, shortAddress } from '../lib/pace.js'
 import { goalBrand, PaceLine } from './Home.jsx'
 import { MIN_NEW_STAKER_NIM } from '../lib/config.js'
@@ -15,7 +15,7 @@ import { DeleteSheet, ManageSheet, MoveSheet } from './GoalManage.jsx'
 import { useCountUp } from '../lib/useCountUp.js'
 import { CardFlip, GiftFace, useCardFlip } from '../components/CardFlip.jsx'
 import { CardIssue } from '../components/CardIssue.jsx'
-import { goalCardIssue } from '../lib/availability.js'
+import { goalCardIssue, payLockedFor } from '../lib/availability.js'
 import { stakeSummary } from '../lib/earned.js'
 import { track } from '../lib/stats.js'
 import { txHash } from '../lib/history.js'
@@ -30,7 +30,6 @@ const parseNim = (v) => Math.floor(Number(String(v).replace(/[^\d.]/g, ''))) || 
 // "A new goal" opens the Move sheet once, not again when this screen is revisited.
 const movesOpened = new Set()
 
-const payLocked = () => { try { return Boolean(localStorage.getItem('dibs.pending')) } catch { return false } }
 
 
 
@@ -45,6 +44,7 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
   const [slowWallet, setSlowWallet] = useState(false)
   const [flash, setFlash] = useState(null)
   const [earned, setEarned] = useState(0)
+  const [earnedSince, setEarnedSince] = useState(null) // when Dibs started measuring rewards (not the first deposit)
   const [stakerAddress, setStakerAddress] = useState(null) // BUG-15: the account line shows the staker, not the funded address
   // BUG-01: a deposit waiting for the chain (survives reloads), and the outcomes it can end in.
   const [pend, setPend] = useState(() => pending.get(address))
@@ -84,7 +84,9 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
       if (!st) { setHasStaker(false); return }
       setHasStaker(true); stakerFlag.set(address)
       setStakerAddress(st.address || null)
-      setEarned(stakeSummary(st, address).byGoal[goalId] ?? 0) // this goal's share of Stake's figure
+      const sum = stakeSummary(st, address)
+      setEarned(sum.earned == null ? 0 : sum.byGoal[goalId] ?? 0) // this goal's share of Savings' figure; hidden when unknown
+      setEarnedSince(sum.since)
     }).catch(() => { /* chain unreadable: keep the last known flag */ })
   }, [address, goalId])
 
@@ -137,7 +139,9 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
   // Unlock resumes from the chain (E11): steps done in the Lab, an app closed half way, refused txs. The saved
   // status follows the chain, and Get my card stays disabled while the NIM is not released yet.
   const [unlockSt, setUnlockSt] = useState(null)
-  const unlockable = Boolean(goal) && (goal.status === 'unlocking' || goal.status === 'ready' || (goal.status === 'saving' && saved >= goal.targetNim))
+  // Another goal's unlock is running: this one cannot start its own (the chain state would be the other goal's).
+  const otherUnlock = goal && goal.status === 'saving' ? unlockRunning(address, goal.id) : null
+  const unlockable = Boolean(goal) && !otherUnlock && (goal.status === 'unlocking' || goal.status === 'ready' || (goal.status === 'saving' && saved >= goal.targetNim))
   useEffect(() => {
     if (!unlockable) { setUnlockSt(null); return undefined }
     let live = true
@@ -169,8 +173,12 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
   const overBalance = !cantOpen && !underMin && tooMuch
   const invalid = !amountNim || tooMuch || underMin || cantOpen
   // Quick picks scale with the goal: the weekly suggestion, a quarter of the target, everything left.
-  const canManage = goal.status === 'saving' && !(pend && pend.goalId === goal.id) && !payLocked()
-  const empty = goal.status === 'saving' && saved === 0 && goal.deposits.length > 0
+  // Manage (⋯): saving goals, and any goal with 0 NIM and no unlock in progress (Delete). Only this goal's own
+  // pending deposit or pay lock closes it.
+  const canManage = (goal.status === 'saving' || deletable(goal)) && !(pend && pend.goalId === goal.id) && !payLockedFor(goal.id)
+  // An empty goal next to another open goal for the same card (a duplicate after a recovery): offer to delete it.
+  const twin = goal.status === 'saving' && saved === 0 ? openGoalFor(listGoals(address).filter((g) => g.id !== goal.id), goal.itemId) : null
+  const empty = goal.status === 'saving' && saved === 0 && (goal.deposits.length > 0 || Boolean(twin)) && canManage
   // Add only while there is something to add; a goal at 100 % or past saving shows Details.
   const adding = mode === 'add' && goal.status === 'saving' && !reached
   const withdraw = () => { setSheet(null); go('unlock', { goalId: goal.id, mode: 'withdraw' }) }
@@ -379,13 +387,17 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
         {reached && goal.status === 'saving' && <div className="ok">{t('goal_reached')}</div>}
         {goal.status === 'ready' && <div className="ok">{t('goal_ready')}</div>}
         {empty && (
-          <div className="empty-row"><span>{t('goal_empty')}</span><button type="button" className="link-danger" onClick={() => setSheet('delete')}>{t('manage_delete')}</button></div>
+          <div className="empty-row"><span>{twin ? t('goal_duplicate') : t('goal_empty')}</span><button type="button" className="link-danger" onClick={() => setSheet('delete')}>{t('manage_delete')}</button></div>
         )}
         {goal.status === 'withdrawn' && (
           <>
             <div className="ok">{t('withdraw_returned_body', { nim: fmtNim(returned, lang), date: fmtDate(goal.withdrawnAt || goal.createdAt, lang) })}</div>
             <div className="empty-row"><span>{t('withdraw_returned')}</span><button type="button" className="link-danger" onClick={() => setSheet('delete')}>{t('manage_delete')}</button></div>
           </>
+        )}
+        {otherUnlock && reached && (
+          <Notice tone="info" title={t('unlock_busy_title', { name: itemName(t, otherUnlock, { title: true }) })} sub={t('unlock_busy_sub')} safe={t('safe_nimSafe')}
+            actions={[{ label: t('unlock_busy_action'), onClick: () => go('goal', { goalId: otherUnlock.id }) }]} />
         )}
         {problemNotices}
 
@@ -396,7 +408,7 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
               {goal.deposits.slice().reverse().map((d) => (
                 <div className={`row${d.kind ? ' ' + d.kind : ''}`} key={(d.id || d.tx) + d.at}><span>{d.nim < 0 ? '−' : '+'}{fmtNim(Math.abs(d.nim), lang)} NIM{rowLabel(d) && <small className="row-note">{rowLabel(d)}</small>}</span><span>{Date.now() - Date.parse(d.at) < 60_000 ? t('goal_just_now') : fmtDate(d.at, lang)}</span></div>
               ))}
-              {earned > 0 && <div className="row"><span style={{ color: 'var(--teal)' }}>{t('goal_earned_row', { amount: fmtNim(earned, lang) })}</span><span>{t('goal_since', { date: fmtDate(goal.deposits[0].at, lang) })}</span></div>}
+              {earned > 0 && <div className="row"><span style={{ color: 'var(--teal)' }}>{t('goal_earned_row', { amount: fmtNim(earned, lang) })}</span><span>{t('goal_since', { date: fmtDate([goal.deposits[0].at, earnedSince].filter(Boolean).sort().at(-1), lang) })}</span></div>}
             </div>
           </section>
         )}
@@ -409,7 +421,9 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
             <button type="button" className="btn mint" onClick={() => go('unlock', { goalId: goal.id, mode: 'withdraw' })}>{t('manage_back')}</button>
           )}
           {((goal.status === 'unlocking' && !withdrawing) || (goal.status === 'saving' && reached)) && (
-            unlockSt?.state === 'waiting' && unlockSt.releaseAt != null
+            otherUnlock
+              ? <button type="button" className="btn gold" disabled>{t('goal_unlock')}</button>
+              : unlockSt?.state === 'waiting' && unlockSt.releaseAt != null
               ? <button type="button" className="btn waiting" disabled>{t('goal_card_ready_at', { time: readyTimeText(unlockSt.releaseAt, lang) })}</button>
               : <button type="button" className="btn gold" onClick={() => go('unlock', { goalId: goal.id })}>{t('goal_unlock')}</button>
           )}
