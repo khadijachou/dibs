@@ -15,6 +15,8 @@ import { MilestoneLine, useGoalMilestone } from '../components/Milestone.jsx'
 import { GoalDot, GoalStatus, goalPace } from '../components/GoalStatus.jsx'
 import { StatsCard } from '../components/StatsConsent.jsx'
 import HowSteps from '../components/HowSteps.jsx'
+import PromoBanner from '../components/PromoBanner.jsx'
+import BrandSheet from '../components/BrandSheet.jsx'
 
 // Welcome screen (no goal yet): "Welcome, Sam" when the user gave a name during onboarding or in More; nothing otherwise.
 function Hello() {
@@ -112,6 +114,8 @@ function Hub({ goals }) {
   // Newest first: the purchase date, or the return date for a withdrawn goal. Home keeps the 3 latest.
   const endOf = (g) => String((g.status === 'withdrawn' ? g.withdrawnAt : g.payment?.at) || g.createdAt || '')
   const past = goals.filter(isPast).sort((a, b) => endOf(b).localeCompare(endOf(a)))
+  const [sheet, setSheet] = useState(null) // brand key whose sheet is open (promo banner)
+  const sheetBrand = sheet ? catalogBrands().find((b) => b.key === sheet) : null
   return (
     <>
       <Header langChip />
@@ -124,10 +128,12 @@ function Hub({ goals }) {
         {past.length > 3 && (
           <button type="button" className="see-all-link" onClick={() => { reset('history', { focus: 'cards' }); window.scrollTo(0, 0) }}>{t('home_see_all', { n: past.length })}</button>
         )}
+        <PromoBanner onOpen={setSheet} />
         <div className="bottom">
           <button type="button" className="btn tall" onClick={() => go('catalog')}>{t('home_new2')}<small>{t('home_new2_sub')}</small></button>
         </div>
       </main>
+      {sheetBrand && <BrandSheet brand={sheetBrand} onClose={() => setSheet(null)} onPick={() => { setSheet(null); go('plan', { brandKey: sheetBrand.key }) }} />}
     </>
   )
 }
