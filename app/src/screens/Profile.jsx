@@ -167,7 +167,7 @@ function RewardsCard({ badges, goals, onOpen }) {
           <button type="button" className="rw-row" key={id} onClick={() => onOpen(id)}>
             <Medal id={id} earned={Boolean(badges[id])} size={40} />
             <span className="rw-mid">
-              <b>{t(`badge_${id}`)} · <em>{t('rw_amount', { amount: fmtNim(REWARDS[id].nim, lang) })}</em></b>
+              <b>{t(`badge_${id}`)}{'\u00a0'}<span className="rw-amt">· <em>{t('rw_amount', { amount: fmtNim(REWARDS[id].nim, lang) })}</em></span></b>
               <small>{t(`rw_${id}_how`)}</small>
             </span>
             <span className={`rw-state ${st.state}`}>{label}</span>

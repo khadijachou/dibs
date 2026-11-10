@@ -108,3 +108,28 @@ test('kept for the week, picked again the next week; done recorded once', () => 
   assert.equal(checkQuest([g], at(4)).justDone, false)
   assert.equal(JSON.parse(store.get('dibs.quests.done')).length, 1)
 })
+
+test('no goal at all: no quest, nothing stored', () => {
+  assert.equal(pickQuest([], at(3)), null)
+  assert.equal(currentQuest([], at(3)), null)
+  assert.equal(store.get('dibs.quest'), undefined)
+  assert.deepEqual(checkQuest([], at(3)), { quest: null, state: null, justDone: false })
+})
+
+test('the first goal: a quest is picked at the next check and that goal does not complete it', () => {
+  assert.equal(currentQuest([], at(3, 9)), null)
+  const first = goal({ brandKey: 'steam', createdAt: iso(at(3, 10)), deadline: iso(at(3, 10) + 70 * 864e5) })
+  const r = checkQuest([first], at(3, 11))
+  assert.ok(r.quest)
+  assert.equal(r.quest.pickedAt, iso(at(3, 11)))
+  assert.equal(r.state.done, false)
+  assert.equal(JSON.parse(store.get('dibs.quest')).week, '2026-11-02')
+})
+
+test('New territory: done only by a goal created after the pick', () => {
+  const q = { week: '2026-11-02', id: 'new', chip: 'travel', pickedAt: iso(at(3, 12)) }
+  const before = goal({ brandKey: 'airbnb', createdAt: iso(at(3, 11)) }) // same week, before the pick
+  assert.equal(questState(q, [before], at(4)).done, false)
+  const after = goal({ brandKey: 'airbnb', createdAt: iso(at(3, 13)) })
+  assert.equal(questState(q, [before, after], at(4)).done, true)
+})

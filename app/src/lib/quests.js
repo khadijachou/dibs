@@ -45,10 +45,13 @@ function pickNew(goals) {
 }
 
 // The kinds that apply, in the order round, week, new; index = ISO week number mod count. null: no quest this week.
+// No goal at all (any status): no quest yet, nothing stored; the first check after the first goal picks the week's.
+// pickedAt: New territory only counts a goal created after it.
 export function pickQuest(goals = [], now = Date.now()) {
+  if (!goals.length) return null
   const options = [pickRound(goals), pickWeek(goals, now), pickNew(goals)].filter(Boolean)
   if (!options.length) return null
-  return { week: weekKey(now), ...options[isoWeek(now) % options.length] }
+  return { week: weekKey(now), pickedAt: new Date(now).toISOString(), ...options[isoWeek(now) % options.length] }
 }
 
 const goneGoal = (goal) => !goal || goal.status === 'redeemed' || goal.status === 'withdrawn'
@@ -58,7 +61,9 @@ export function questState(quest, goals = [], now = Date.now()) {
   if (!quest) return { done: false, progress: 0, hidden: true }
   const from = weekStart(now)
   if (quest.id === 'new') {
-    const done = goals.some((g) => chipOf(g) === quest.chip && Date.parse(g.createdAt) >= from)
+    // Only a goal created after the quest was picked (quests stored before pickedAt existed: the week's start).
+    const after = Date.parse(quest.pickedAt) || from
+    const done = goals.some((g) => chipOf(g) === quest.chip && Date.parse(g.createdAt) > after)
     return { done, progress: done ? 1 : 0, hidden: false }
   }
   const goal = goals.find((g) => g.id === quest.goalId)
