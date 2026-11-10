@@ -89,3 +89,65 @@ test('merge on start: a bought copy never blocks; an empty open goal here gives 
   assert.ok(!ids.includes(empty.id))
   assert.deepEqual(ids.sort(), ['bought', 'funded'])
 })
+
+// Deleted goals never come back.
+const { cardTakenBy, deletedIds, removeGoal } = await import('./goals.js')
+const OLD = 'NQ99 OLD'
+const savedUnder = (addr) => JSON.parse(localStorage.getItem(`dibs.goals.${addr}`) || '[]').map((g) => g.id)
+
+test('a deleted goal is removed under every address and never adopted again', () => {
+  const g = make(STEAM_5_USA)
+  localStorage.setItem(`dibs.goals.${OLD}`, JSON.stringify([{ ...g }])) // same goal, kept under a rotated address
+  removeGoal(ADDR, g.id)
+  assert.deepEqual(savedUnder(ADDR), [])
+  assert.deepEqual(savedUnder(OLD), [])
+  assert.ok(deletedIds().has(g.id))
+  // A copy that survives somewhere (storage restored, old backup): the merge on start drops it again.
+  localStorage.setItem(`dibs.goals.${OLD}`, JSON.stringify([{ ...g }]))
+  adoptGoals(ADDR)
+  assert.deepEqual(savedUnder(ADDR), [])
+  assert.deepEqual(savedUnder(OLD), [])
+})
+
+test('an empty duplicate dropped on start does not come back after the open goal is bought', () => {
+  const open = make(STEAM_5_USA, { deposits: [{ nim: 20000, at: '2026-11-01T00:00:00Z' }] })
+  localStorage.setItem(`dibs.goals.${OLD}`, JSON.stringify([{ id: 'dup', itemId: STEAM_5_USA.id, status: 'saving', deposits: [], createdAt: '2026-11-02T00:00:00Z' }]))
+  adoptGoals(ADDR)
+  assert.deepEqual(savedUnder(OLD), [])
+  updateGoal(ADDR, open.id, { status: 'redeemed' })
+  localStorage.setItem(`dibs.goals.${OLD}`, JSON.stringify([{ id: 'dup', itemId: STEAM_5_USA.id, status: 'saving', deposits: [], createdAt: '2026-11-02T00:00:00Z' }]))
+  adoptGoals(ADDR)
+  assert.deepEqual(savedUnder(ADDR), [open.id])
+})
+
+test('an empty open goal that gives way to a funded copy is deleted for good', () => {
+  const empty = make(STEAM_5_USA)
+  localStorage.setItem(`dibs.goals.${OLD}`, JSON.stringify([{ id: 'funded', itemId: STEAM_5_USA.id, status: 'saving', deposits: [{ nim: 3000 }], createdAt: '2026-10-02T00:00:00Z' }]))
+  adoptGoals(ADDR)
+  assert.ok(deletedIds().has(empty.id))
+  localStorage.setItem(`dibs.goals.${OLD}`, JSON.stringify([{ ...empty }, { id: 'funded', itemId: STEAM_5_USA.id, status: 'saving', deposits: [{ nim: 3000 }], createdAt: '2026-10-02T00:00:00Z' }]))
+  adoptGoals(ADDR)
+  assert.deepEqual(savedUnder(ADDR), ['funded'])
+})
+
+// Change card (Plan.jsx): the new card must not already have another open goal.
+test('change card onto a card with another open goal: blocked, points to that goal', () => {
+  const steam5 = make(STEAM_5_USA, { deposits: [{ nim: 1000, at: '2026-11-01T00:00:00Z' }] })
+  const steam20 = make(STEAM_20_USA)
+  assert.equal(cardTakenBy(listGoals(ADDR), STEAM_5_USA.id, steam20.id)?.id, steam5.id)
+})
+
+test('change card onto a free card, a bought or withdrawn card, or its own card: allowed', () => {
+  const g = make(STEAM_20_USA)
+  assert.equal(cardTakenBy(listGoals(ADDR), STEAM_5_EU.id, g.id), null)
+  assert.equal(cardTakenBy(listGoals(ADDR), STEAM_20_USA.id, g.id), null)
+  make(STEAM_5_USA, { status: 'redeemed' })
+  make(STEAM_5_USA, { status: 'withdrawn' })
+  assert.equal(cardTakenBy(listGoals(ADDR), STEAM_5_USA.id, g.id), null)
+})
+
+test('change card onto a card whose goal is in unlock: blocked', () => {
+  const waiting = make(STEAM_5_USA, { status: 'unlocking', deposits: [{ nim: 20000, at: '2026-11-01T00:00:00Z' }] })
+  const g = make(STEAM_20_USA)
+  assert.equal(cardTakenBy(listGoals(ADDR), STEAM_5_USA.id, g.id)?.id, waiting.id)
+})

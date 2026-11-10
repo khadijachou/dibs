@@ -93,19 +93,34 @@ export const openGoalFor = (goals, itemId) =>
   goals.filter((g) => g.itemId === itemId && g.status !== 'redeemed' && g.status !== 'withdrawn')
     .sort((a, b) => savedNim(b) - savedNim(a) || String(a.createdAt).localeCompare(String(b.createdAt)))[0] || null
 
-// Deletes an empty goal. Also clears copies kept under older addresses, or adoptGoals would bring it back.
+// The open goal for this card other than `exceptId` (Change card: the goal being changed does not count).
+export const cardTakenBy = (goals, itemId, exceptId = null) => openGoalFor(goals.filter((g) => g.id !== exceptId), itemId)
+
+// Deleted goals never come back. Every copy is removed from every address it was saved under (Nimiq Pay rotates
+// the funded address), and the id is kept in a device-wide list that adoptGoals and later merges respect.
+const DELETED = 'dibs.deleted'
+export const deletedIds = () => { try { return new Set(JSON.parse(localStorage.getItem(DELETED)) || []) } catch { return new Set() } }
+function forget(ids) {
+  if (!ids.length) return
+  const gone = deletedIds()
+  for (const id of ids) gone.add(id)
+  try { localStorage.setItem(DELETED, JSON.stringify([...gone])) } catch { /* storage blocked */ }
+  let keys = []
+  try { keys = Object.keys(localStorage).filter((k) => k.startsWith('dibs.goals.')) } catch { return }
+  for (const k of keys) {
+    let list
+    try { list = JSON.parse(localStorage.getItem(k)) || [] } catch { continue }
+    const kept = list.filter((x) => !gone.has(x?.id))
+    if (kept.length !== list.length) try { localStorage.setItem(k, JSON.stringify(kept)) } catch { /* storage blocked */ }
+  }
+}
+
+// Deletes an empty goal everywhere on this device.
 export function removeGoal(address, id) {
   const g = getGoal(address, id)
   if (!g) throw new Error('Goal not found')
   if (!deletable(g)) throw new Error('Goal still holds NIM')
-  let keys = [key(address)]
-  try { keys = [...new Set([key(address), ...Object.keys(localStorage).filter((k) => k.startsWith('dibs.goals.'))])] } catch { /* storage blocked */ }
-  for (const k of keys) {
-    let list
-    try { list = JSON.parse(localStorage.getItem(k)) || [] } catch { continue }
-    if (!list.some((x) => x?.id === id)) continue
-    try { localStorage.setItem(k, JSON.stringify(list.filter((x) => x?.id !== id))) } catch { /* storage blocked */ }
-  }
+  forget([id])
 }
 
 export const savedNim = (goal) => goal.deposits.reduce((s, d) => s + d.nim, 0)
@@ -131,9 +146,9 @@ export const stakerFlag = {
 // Recovery (10 Nov, after a reinstall): never a second open goal for the same card. An empty copy is dropped
 // when a goal for that card is already open; an empty open goal here gives way to a funded one found elsewhere.
 export function adoptGoals(address) {
+  const gone = deletedIds()
   let keys = []
   try { keys = Object.keys(localStorage).filter((k) => k.startsWith('dibs.goals.') && k !== key(address)) } catch { return }
-  if (!keys.length) return
   const mine = read(address)
   const ids = new Set(mine.map((g) => g.id))
   const extra = []
@@ -142,14 +157,17 @@ export function adoptGoals(address) {
     try { goals = JSON.parse(localStorage.getItem(k)) || [] } catch { /* skip */ }
     for (const g of goals) if (g && g.id && !ids.has(g.id)) { ids.add(g.id); extra.push(g) }
   }
-  if (!extra.length) return
-  let all = [...mine]
+  const dropped = [...ids].filter((id) => gone.has(id)) // deleted earlier: copies still lying around go too
+  let all = mine.filter((g) => !gone.has(g.id))
   for (const g of extra) {
+    if (gone.has(g.id)) continue
     const open = g.status !== 'redeemed' && g.status !== 'withdrawn'
     const twin = open ? openGoalFor(all, g.itemId) : null
-    if (twin && savedNim(g) === 0 && deletable(g)) continue // empty copy: link to the open goal
-    if (twin && savedNim(twin) === 0 && deletable(twin)) all = all.filter((x) => x.id !== twin.id) // funded one wins
+    if (twin && savedNim(g) === 0 && deletable(g)) { dropped.push(g.id); continue } // empty copy: link to the open goal
+    if (twin && savedNim(twin) === 0 && deletable(twin)) { dropped.push(twin.id); all = all.filter((x) => x.id !== twin.id) } // funded one wins
     all.push(g)
   }
+  if (!extra.length && !dropped.length) return
   write(address, all.sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt))))
+  forget(dropped)
 }
