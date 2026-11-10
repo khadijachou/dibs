@@ -23,11 +23,10 @@ function Hello() {
   return name ? <p className="hello on-ink">{t('greet_first', { name })}</p> : null
 }
 
-// Hub: "Welcome back, Sam", or "Welcome back" when no name is saved.
-function Greeting() {
+// Hub: the label over the goal card(s). The greeting itself moved to the Welcome back moment after the splash.
+function GoalsLabel({ count }) {
   const { t } = useApp()
-  const name = getName()
-  return <p className="hello">{name ? t('greet_back', { name }) : t('greet_back_anon')}</p>
+  return <p className="hello">{t(count === 0 ? 'home_goals_none' : count === 1 ? 'home_goals_one' : 'home_goals_other')}</p>
 }
 
 // "Call dibs. Save up." -> ["Call dibs.", "Save up."]
@@ -117,9 +116,9 @@ function Hub({ goals }) {
       <Header langChip />
       <main className="screen">
         <h2 className="title">{t('home_title')}</h2>
-        {/* Several goals: the greeting shares its row with the carousel dots (GoalWallet). One goal: greeting, then the card. */}
-        {/* Usage stats: asked once under the greeting to users who finished onboarding before the consent step. */}
-        {live.length > 1 ? <GoalWallet goals={live} earned={earned} /> : <><Greeting /><StatsCard />{active && <GoalHero goal={active} earned={earned} />}</>}
+        {/* Several goals: the goals label shares its row with the carousel dots (GoalWallet). One goal: label, then the card. */}
+        {/* Usage stats: asked once under the goals label to users who finished onboarding before the consent step. */}
+        {live.length > 1 ? <GoalWallet goals={live} earned={earned} /> : <><GoalsLabel count={live.length} /><StatsCard />{active && <GoalHero goal={active} earned={earned} />}</>}
         {past.length > 0 && <PastList goals={past.slice(0, 3)} title={t('home_past')} />}
         {past.length > 3 && (
           <button type="button" className="see-all-link" onClick={() => { reset('history', { focus: 'cards' }); window.scrollTo(0, 0) }}>{t('home_see_all', { n: past.length })}</button>
@@ -186,7 +185,7 @@ function GoalWallet({ goals, earned }) {
   }
   return (
     <>
-      <div className="greet-row"><Greeting /><CarouselDots count={goals.length} current={cur} /></div>
+      <div className="greet-row"><GoalsLabel count={goals.length} /><CarouselDots count={goals.length} current={cur} /></div>
       <StatsCard />
       <div className="gw-tabs" role="tablist">
         {goals.map((g, k) => (

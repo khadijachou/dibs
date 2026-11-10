@@ -22,6 +22,8 @@ import History from './screens/History.jsx'
 import More from './screens/More.jsx'
 import Profile from './screens/Profile.jsx'
 import { TabBar, TAB_ROUTES } from './components/ui.jsx'
+import { preloadAvatar } from './components/Avatar.jsx'
+import WelcomeBack from './components/WelcomeBack.jsx'
 
 // The Lab (#lab) is a developer screen: only in demo mode or in a build made with VITE_LAB=1.
 const labAllowed = () => import.meta.env.VITE_LAB === '1' || isDemo()
@@ -92,6 +94,11 @@ export default function App() {
   const [splashMin, setSplashMin] = useState(false)
   const [splashGone, setSplashGone] = useState(false)
   const hideSplash = useCallback(() => setSplashGone(true), [])
+  // Welcome back: only for users who were already onboarded when the app opened, once per launch.
+  const [welcome, setWelcome] = useState(() => { try { return localStorage.getItem('dibs.onboarded') === '1' } catch { return false } })
+  const endWelcome = useCallback(() => setWelcome(false), [])
+  // A launch that reopens another screen (a payment in progress, a goal) skips it: never shown later in the session.
+  useEffect(() => { if (ready && splashGone && route.name !== 'home') setWelcome(false) }, [ready, splashGone]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { const id = setTimeout(() => setSplashMin(true), 900); return () => clearTimeout(id) }, [])
   const finishOnboarding = useCallback(() => {
     try { localStorage.setItem('dibs.onboarded', '1') } catch { /* private mode */ }
@@ -115,7 +122,9 @@ export default function App() {
       configureStats({ demo: isDemo() })
       readSimulateParam() // ?sim works in demo mode only, so read it once we know the mode
       const accounts = await listAccountsWithBalance()
-      setWalletAddress(accounts[0]?.address || null)
+      const wallet = accounts[0]?.address || null
+      setWalletAddress(wallet)
+      preloadAvatar(wallet) // the Welcome back avatar is drawn before the splash leaves
       const funded = accounts.filter((a) => a.nim > 0).sort((a, b) => b.nim - a.nim)
       const addr = (funded[0] || accounts[0]).address
       adoptGoals(addr)
@@ -244,6 +253,7 @@ export default function App() {
   const tabs = !isLab && TAB_ROUTES.includes(route.name)
   return (
     <AppCtx.Provider value={ctx}>
+      {welcome && !isLab && route.name === 'home' && <WelcomeBack onDone={endWelcome} />}
       <div className={`app${tabs ? ' with-tabs' : ''}`}><Screen {...route.params} />{tabs && <TabBar current={route.name} />}{toastText && <div className="toast" role="status"><i>i</i>{toastText}</div>}</div>
     </AppCtx.Provider>
   )

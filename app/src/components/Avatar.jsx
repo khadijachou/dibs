@@ -8,6 +8,12 @@ const lib = () => import('@nimiq/identicons/dist/identicons.bundle.min.js').then
 // Identicons hash the text: always the user-friendly form, uppercase, groups of 4 ("NQ20 MJRQ ...").
 export const friendly = (a) => String(a || '').replace(/\s+/g, '').toUpperCase().replace(/(.{4})(?=.)/g, '$1 ')
 
+export function preloadAvatar(address) {
+  const key = address ? friendly(address) : null
+  if (!key || cache.has(key)) return
+  lib().then((I) => I.toDataUrl(key)).then((u) => cache.set(key, u)).catch(() => {})
+}
+
 export function Avatar({ address, size = 56, className = '', fallback = null }) {
   const key = address ? friendly(address) : null
   const [url, setUrl] = useState(() => (key && cache.get(key)) || null)
