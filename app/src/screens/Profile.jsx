@@ -331,28 +331,35 @@ function LevelCard({ x, onRanks, onHow }) {
   const pct = v ? v.pct : x.need ? Math.min(100, Math.round((x.into / x.need) * 100)) : 0
   return (
     <section className="lvl">
-      <button type="button" className="lvl-card" onClick={onRanks}>
-        <span className="lvl-top">
-          <span className={`lvl-hex${v?.flip ? ' flip' : ''}`} aria-hidden="true">
-            <svg viewBox="-1 -1 29 26"><path d={HEX} fill="#E8482A" /></svg>
-            <b>{level}</b>
+      <div className="lvl-card">
+        <button type="button" className="lvl-main" onClick={onRanks}>
+          <span className="lvl-top">
+            <span className={`lvl-hex${v?.flip ? ' flip' : ''}`} aria-hidden="true">
+              <svg viewBox="-1 -1 29 26"><path d={HEX} fill="#E8482A" /></svg>
+              <b>{level}</b>
+            </span>
+            <span className="lvl-mid">
+              <small>{t('level_rank_small', { n: level })}</small>
+              <b>{t(`rank_${x.rank.id}`)}</b>
+            </span>
+            <span className="chev" aria-hidden="true">›</span>
           </span>
-          <span className="lvl-mid">
-            <small>{t('level_rank_small', { n: level })}</small>
-            <b>{t(`rank_${x.rank.id}`)}</b>
+          <span className="lvl-bar" aria-hidden="true"><i style={{ width: `${pct}%`, ...(v ? { transition: v.barMs ? `width ${v.barMs}ms ease-out` : 'none' } : null) }} /></span>
+          <span className="lvl-foot">
+            <span>{t('xp_of', { into, need })}</span>
+            <span>{x.next ? t('xp_next_rank', { rank: t(`rank_${x.next.id}`), level: x.next.level }) : t('xp_top_rank')}</span>
           </span>
+        </button>
+        <button type="button" className="lvl-how" onClick={onHow}>
+          <span>{t('xp_how')}</span>
           <span className="chev" aria-hidden="true">›</span>
-        </span>
-        <span className="lvl-bar" aria-hidden="true"><i style={{ width: `${pct}%`, ...(v ? { transition: v.barMs ? `width ${v.barMs}ms ease-out` : 'none' } : null) }} /></span>
-        <span className="lvl-foot">
-          <span>{t('xp_of', { into, need })}</span>
-          <span>{x.next ? t('xp_next_rank', { rank: t(`rank_${x.next.id}`), level: x.next.level }) : t('xp_top_rank')}</span>
-        </span>
-      </button>
-      <div className="lvl-row">
-        {x.rhythm.level > 0 && <span className="lvl-pill">{t('rhythm_pill', { pct: x.rhythm.level * 10 })}</span>}
-        <button type="button" className="txt-link" onClick={onHow}>{t('xp_how')}</button>
+        </button>
       </div>
+      {x.rhythm.level > 0 && (
+        <div className="lvl-row">
+          <span className="lvl-pill">{t('rhythm_pill', { pct: x.rhythm.level * 10 })}</span>
+        </div>
+      )}
     </section>
   )
 }

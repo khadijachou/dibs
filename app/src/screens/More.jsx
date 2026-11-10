@@ -7,10 +7,10 @@ import { NumbersCard, StatsSetting } from '../components/StatsConsent.jsx'
 import { siX } from 'simple-icons'
 import { APP_VERSION, HELP_EMAIL } from '../components/LegalText.jsx'
 import { copyText } from '../lib/clipboard.js'
+import { FAQ } from './Faq.jsx'
 import { useFullscreen } from '../lib/fullscreen.js'
 import FullscreenSheet from '../components/FullscreenSheet.jsx'
 
-const FAQ = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
 const X_URL = 'https://x.com/calldibs_app'
 const soundOn = () => { try { return localStorage.getItem('dibs.sound') !== 'off' } catch { return true } }
 
@@ -121,16 +121,11 @@ export default function More() {
             <span><b>{t('follow_row')}</b><small>{t('follow_row_sub')}</small></span>
             <span className="chev ext" aria-hidden="true"><OutIcon /></span>
           </a>
-        </section>
-
-        <section className="more-sec">
-          <div className="sec-head"><h3>{t('more_faq')}</h3></div>
-          {FAQ.map((n) => (
-            <details key={n} className="faq">
-              <summary>{`${n}. ${t(`faq_${n}q`)}`}</summary>
-              <p>{t(`faq_${n}a`)}</p>
-            </details>
-          ))}
+          <button type="button" className="sheet-row faq-row" onClick={() => go('faq')}>
+            <span className="si" aria-hidden="true">?</span>
+            <span><b>{t('more_faq')}</b><small>{t('faq_row_sub', { n: FAQ.length })}</small></span>
+            <span className="chev" aria-hidden="true">›</span>
+          </button>
         </section>
 
         <section className="more-sec">

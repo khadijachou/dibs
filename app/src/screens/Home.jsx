@@ -16,6 +16,7 @@ import { GoalDot, GoalStatus, goalPace } from '../components/GoalStatus.jsx'
 import { StatsCard } from '../components/StatsConsent.jsx'
 import HowSteps from '../components/HowSteps.jsx'
 import GoalRing from '../components/GoalRing.jsx'
+import Num from '../components/Num.jsx'
 import PromoBanner from '../components/PromoBanner.jsx'
 import BrandSheet from '../components/BrandSheet.jsx'
 
@@ -193,7 +194,7 @@ function GoalHero({ goal, earned }) {
   const savedShown = useCountUp(p.saved)
   const remainingShown = useCountUp(p.remaining)
   return (
-      <section className={`hero${goalPace(goal) ? ' has-dot' : ''}`}>
+      <section className={`hero goal-card${goalPace(goal) ? ' has-dot' : ''}`}>
         <GoalDot goal={goal} />
         <div className="top">
           <BrandLogo brand={brand} />
@@ -202,7 +203,7 @@ function GoalHero({ goal, earned }) {
         <div className="mid">
           <GoalRing goal={goal} pct={pct} milestone={milestone} />
           <div>
-            <div className="n">{fmtNim(Math.round(savedShown), lang)} NIM</div>
+            <div className="n"><Num value={fmtNim(Math.round(savedShown), lang)} /> NIM</div>
             <div className="m">{t('goal_of2', { target: fmtNim(goal.targetNim, lang) })} · {t('goal_to_go', { amount: fmtNim(Math.round(remainingShown), lang) })}</div>
             <GoalStatus goal={goal} earned={earned?.byGoal[goal.id]} />
           </div>

@@ -26,6 +26,7 @@ import History from './screens/History.jsx'
 import More from './screens/More.jsx'
 import Profile from './screens/Profile.jsx'
 import Legal from './screens/Legal.jsx'
+import Faq from './screens/Faq.jsx'
 import { TabBar, TAB_ROUTES } from './components/ui.jsx'
 import { preloadAvatar } from './components/Avatar.jsx'
 import WelcomeBack from './components/WelcomeBack.jsx'
@@ -47,7 +48,7 @@ const hostLang = () => { try { const l = String(host.language() || '').slice(0, 
 const AppCtx = createContext(null)
 export const useApp = () => useContext(AppCtx)
 
-const SCREENS = { home: Home, catalog: Catalog, plan: Plan, goal: Goal, unlock: Unlock, redeem: Redeem, done: Done, stake: Stake, history: History, profile: Profile, more: More, browse: Catalog, legal: Legal }
+const SCREENS = { home: Home, catalog: Catalog, plan: Plan, goal: Goal, unlock: Unlock, redeem: Redeem, done: Done, stake: Stake, history: History, profile: Profile, more: More, browse: Catalog, legal: Legal, faq: Faq }
 
 // Back with nothing behind (after a reload, or a screen opened with reset): where each screen goes.
 // Goals (home) has no parent: back from there leaves the app.
@@ -57,6 +58,7 @@ function parentOf(route) {
   if (route.name === 'home') return null
   if (route.name === 'browse') return { name: 'more', params: {} }
   if (route.name === 'legal') return { name: 'more', params: {} }
+  if (route.name === 'faq') return { name: 'more', params: {} }
   if (route.name === 'plan') return { name: 'catalog', params: route.params?.changeFor ? { changeFor: route.params.changeFor } : {} }
   if ((route.name === 'unlock' || route.name === 'redeem') && goalId) return { name: 'goal', params: { goalId } }
   return HOME

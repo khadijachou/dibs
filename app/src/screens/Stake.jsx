@@ -50,10 +50,10 @@ export default function Stake() {
           </div>
           {other >= 1 && <p className="small">{t('stake_other_note')}</p>}
         </section>
+        {unlocking.map((g) => <UnstakingCard key={g.id} goal={g} chainAt={state.releaseAt} retired={stageOf(st, savedNim(g)).current === 'remove'} />)}
         {!st && <p className="small">{t('stake_none')}</p>}
         {active.length > 0 && <WeekCard goals={active} />}
         <QuestCard />
-        {unlocking.map((g) => <UnstakingCard key={g.id} goal={g} chainAt={state.releaseAt} retired={stageOf(st, savedNim(g)).current === 'remove'} />)}
       </>
     )
   }

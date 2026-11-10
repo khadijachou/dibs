@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useApp } from '../App.jsx'
 import { fmtNim } from '../lib/format.js'
@@ -39,10 +39,44 @@ const TABS = [
 ]
 export const TAB_ROUTES = TABS.map((x) => x.route)
 
+// The pill behind the active tab's icon: measured on the icon (not the label), slides to the new tab (250 ms, like
+// the catalogue chip highlight). The first placement and reduced motion jump.
+const PILL_W = 52
+const PILL_H = 26
+function useTabPill(current) {
+  const bar = useRef(null)
+  const pill = useRef(null)
+  const placed = useRef(false)
+  useLayoutEffect(() => {
+    const place = () => {
+      const nav = bar.current
+      const icon = nav?.querySelector('.tab.on svg')
+      const el = pill.current
+      if (!nav || !el) return
+      if (!icon) { el.style.opacity = '0'; return }
+      const n = nav.getBoundingClientRect()
+      const r = icon.getBoundingClientRect()
+      const x = r.left - n.left + r.width / 2 - PILL_W / 2
+      const y = r.top - n.top + r.height / 2 - PILL_H / 2
+      el.classList.toggle('slide', placed.current)
+      el.style.transform = `translate(${x}px, ${y}px)`
+      el.style.opacity = '1'
+      placed.current = true
+    }
+    place()
+    const onResize = () => { placed.current = false; place() }
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [current])
+  return { bar, pill }
+}
+
 export function TabBar({ current }) {
   const { t, reset } = useApp()
+  const { bar, pill } = useTabPill(current)
   return (
-    <nav className="tabbar" aria-label={t('tabs_label')}>
+    <nav className="tabbar" aria-label={t('tabs_label')} ref={bar}>
+      <i className="tab-pill" ref={pill} aria-hidden="true" />
       {TABS.map((x) => (
         <button type="button" key={x.route} className={`tab${x.route === current ? ' on' : ''}`} aria-current={x.route === current ? 'page' : undefined}
           onClick={() => { if (x.route !== current) { reset(x.route); window.scrollTo(0, 0) } }}>

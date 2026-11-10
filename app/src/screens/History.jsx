@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { Fragment, useEffect, useRef } from 'react'
 import { useApp } from '../App.jsx'
 import { itemLabel, localName } from '../lib/itemName.js'
 import { BrandLogo, Header, Icon } from '../components/ui.jsx'
@@ -7,6 +7,7 @@ import { boughtGoals } from '../lib/profileStats.js'
 import { buildTimeline, shortHash } from '../lib/history.js'
 import { fmtDate, fmtNim } from '../lib/format.js'
 import { goalBrand } from './Home.jsx'
+import { dayKey } from '../lib/xp.js'
 
 const ICON = { deposit: '+', move: '⇄', unlock: '↧', withdraw: '↩', purchase: '✓' }
 const EXPLORER = 'https://nimiq.watch/#'
@@ -21,6 +22,16 @@ export default function History({ focus }) {
   // Newest purchase first, like the timeline.
   const cards = boughtGoals(goals).sort((a, b) => String(b.payment?.at || b.createdAt).localeCompare(String(a.payment?.at || a.createdAt)))
   const events = buildTimeline(goals, (g) => itemLabel(t, g), (s) => localName(t, s, { title: true }))
+  // Grouped by local day (the timeline is newest first): Today, Yesterday, else the date as the rows showed it.
+  const today = dayKey(Date.now())
+  const yesterday = dayKey(new Date().setDate(new Date().getDate() - 1))
+  const days = []
+  for (const e of events) {
+    const k = dayKey(Date.parse(e.at))
+    if (days.at(-1)?.key !== k) days.push({ key: k, at: e.at, events: [] })
+    days.at(-1).events.push(e)
+  }
+  const dayLabel = (d) => (d.key === today ? t('hist_today') : d.key === yesterday ? t('hist_yesterday') : fmtDate(d.at, lang))
 
   const title = (e) => {
     if (e.type === 'deposit') return t('hist_deposit')
@@ -59,24 +70,30 @@ export default function History({ focus }) {
             <p>{t('hist_empty_body')}</p>
           </section>
         ) : (
-          <ol className="timeline">
-            {events.map((e) => (
-              <li key={e.id} className={`tl-row ${e.type}`}>
-                <span className="tl-ic" aria-hidden="true">{ICON[e.type]}</span>
-                <div className="tl-main">
-                  <b>{title(e)}</b>
-                  {e.type !== 'move' && <span className="tl-goal">{e.goal}</span>}
-                  <span className="tl-meta">
-                    {fmtDate(e.at, lang)}
-                    {e.tx && e.type === 'purchase' && <span>{t('hist_payment_ref')}</span>}
-                    {e.tx && <button type="button" className="tl-tx" aria-label={t('hist_copy_tx')} onClick={() => copy(e.tx)}>{shortHash(e.tx)}</button>}
-                    {e.tx && e.type !== 'purchase' && <a className="tl-link" href={`${EXPLORER}${e.tx}`} target="_blank" rel="noopener noreferrer">{t('hist_view_tx')}</a>}
-                  </span>
-                </div>
-                <span className="tl-amt">{e.type === 'deposit' ? '+' : ''}{fmtNim(e.nim, lang)} NIM</span>
-              </li>
+          <div className="tl-days">
+            {days.map((d) => (
+              <Fragment key={d.key}>
+                <h3 className="tl-day">{dayLabel(d)}</h3>
+                <ol className="timeline">
+                  {d.events.map((e) => (
+                    <li key={e.id} className={`tl-row ${e.type}`}>
+                      <span className="tl-ic" aria-hidden="true">{ICON[e.type]}</span>
+                      <div className="tl-main">
+                        <b>{title(e)}</b>
+                        {e.type !== 'move' && <span className="tl-goal">{e.goal}</span>}
+                        {e.tx && <span className="tl-meta">
+                          {e.type === 'purchase' && <span>{t('hist_payment_ref')}</span>}
+                          <button type="button" className="tl-tx" aria-label={t('hist_copy_tx')} onClick={() => copy(e.tx)}>{shortHash(e.tx)}</button>
+                          {e.type !== 'purchase' && <a className="tl-link" href={`${EXPLORER}${e.tx}`} target="_blank" rel="noopener noreferrer">{t('hist_view_tx')}</a>}
+                        </span>}
+                      </div>
+                      <span className="tl-amt">{e.type === 'deposit' ? '+' : ''}{fmtNim(e.nim, lang)} NIM</span>
+                    </li>
+                  ))}
+                </ol>
+              </Fragment>
             ))}
-          </ol>
+          </div>
         )}
       </main>
     </>

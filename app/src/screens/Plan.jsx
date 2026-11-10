@@ -9,6 +9,7 @@ import { cardChangePatch, payLockedFor } from '../lib/availability.js'
 import { usdToNim } from '../lib/price.js'
 import { poolName } from '../lib/pace.js'
 import { playPop } from '../lib/sound.js'
+import Num from '../components/Num.jsx'
 import { addDays, fmtDate, fmtNim, fmtUsd } from '../lib/format.js'
 import { useCountUp } from '../lib/useCountUp.js'
 import { track } from '../lib/stats.js'
@@ -117,7 +118,7 @@ export default function Plan({ brandKey, itemId, moveFrom = null, changeFor = nu
           <p className="small plan-note">{amounts.length > 1 ? t('plan_price_note') : estimated ? `${t('price_checkout')}.` : !isAmountDetail(item) ? `${detailText(t, item)}. ${t('plan_price_note')}` : `${t('plan_price', { usd: fmtUsd(item.usd, lang) })}. ${t('plan_price_note')}`}</p>
           <div>
             <span className="plan-label target">{t('plan_target2')}</span>
-            <div className="target-num" style={{ margin: '4px 0 6px' }}>{fmtNim(Math.round(targetShown), lang)} NIM</div>
+            <div className="target-num" style={{ margin: '4px 0 6px' }}><Num value={fmtNim(Math.round(targetShown), lang)} /> NIM</div>
             {estimated && <p className="plan-margin">{t('price_checkout')} · {t('plan_margin')}</p>}
             <div className={`rate${prices.live ? '' : ' off'}`}>
               <span>{t('plan_rate_val', { rate: fmtUsd(prices.nimUsd, lang) })}</span>

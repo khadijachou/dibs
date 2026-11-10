@@ -11,6 +11,7 @@ import { readStaker, stakeNim } from '../lib/nimiq.js'
 import { confirmPending, expired, pending, stakedLuna, startPending, waitForDeposit } from '../lib/deposit.js'
 import { audioContext, playDeposit } from '../lib/sound.js'
 import GoalRing from '../components/GoalRing.jsx'
+import Num from '../components/Num.jsx'
 import { fmtDate, fmtEarned, fmtNim, fmtUsd, weeksUntil } from '../lib/format.js'
 import { findItem } from '../lib/catalog.js'
 import { DeleteSheet, ManageSheet, MoveSheet } from './GoalManage.jsx'
@@ -361,7 +362,7 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
           <div className="mid">
             <GoalRing goal={goal} pct={pct} milestone={milestone} />
             <div>
-              <div className="n">{fmtNim(Math.round(savedShown), lang)} NIM</div>
+              <div className="n"><Num value={fmtNim(Math.round(savedShown), lang)} /> NIM</div>
               <div className="m">{t('goal_of2', { target: fmtNim(goal.targetNim, lang) })}<br />{t('goal_to_go', { amount: fmtNim(Math.round(remainingShown), lang) })}</div>
               <GoalStatus goal={goal} earned={earned} />
             </div>
