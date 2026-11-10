@@ -2,8 +2,8 @@ import { useApp } from '../App.jsx'
 import { Header } from '../components/ui.jsx'
 import { LegalText } from '../components/LegalText.jsx'
 
-// More > Legal: Privacy, Terms and What's new (params.page).
-const PAGES = ['privacy', 'terms', 'news']
+// More > Legal: Privacy, Terms, Rewards and What's new (params.page).
+const PAGES = ['privacy', 'terms', 'rewards', 'news']
 
 export default function Legal({ page: asked }) {
   const { t, back, canGoBack } = useApp()

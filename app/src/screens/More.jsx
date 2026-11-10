@@ -6,27 +6,11 @@ import { catalogBrands } from '../lib/brands.js'
 import { NumbersCard, StatsSetting } from '../components/StatsConsent.jsx'
 import { siX } from 'simple-icons'
 import { APP_VERSION, HELP_EMAIL } from '../components/LegalText.jsx'
+import { copyText } from '../lib/clipboard.js'
 
 const FAQ = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
 const X_URL = 'https://x.com/calldibs_app'
 const soundOn = () => { try { return localStorage.getItem('dibs.sound') !== 'off' } catch { return true } }
-
-// Clipboard API first; the hidden textarea covers webviews where it is missing or refused.
-async function copyText(text) {
-  try { await navigator.clipboard.writeText(text); return true } catch { /* fall back */ }
-  try {
-    const ta = document.createElement('textarea')
-    ta.value = text
-    ta.setAttribute('readonly', '')
-    ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;'
-    document.body.appendChild(ta)
-    ta.select()
-    ta.setSelectionRange(0, text.length)
-    const ok = document.execCommand('copy')
-    document.body.removeChild(ta)
-    return ok
-  } catch { return false }
-}
 
 // Four rounded squares (Browse the catalogue). A stroke icon: text glyphs turn into emoji on iOS.
 const GridIcon = () => (
@@ -54,6 +38,13 @@ const ShieldIcon = () => (
 const DocIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="M7 3h7l5 5v13H7z" /><path d="M14 3v5h5M10 13h6M10 17h6" />
+  </svg>
+)
+
+// A gift (Rewards).
+const GiftIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect x="3" y="8" width="18" height="5" rx="1" /><path d="M5 13v8h14v-8M12 8v13M12 8C10 4 6 4 7 7c.5 1.5 3 1 5 1zM12 8c2-4 6-4 5-1-.5 1.5-3 1-5 1z" />
   </svg>
 )
 
@@ -85,6 +76,7 @@ export default function More() {
     try { localStorage.setItem('dibs.sound', next ? 'on' : 'off') } catch { /* private mode */ }
     setSound(next)
   }
+  const followX = () => { copyText(X_URL).then((ok) => { if (ok) toast(t('follow_copied')) }) }
   const copyEmail = async () => { if (await copyText(HELP_EMAIL)) toast(t('help_copied')) }
   // Share Dibs: the system share sheet where there is one, else copy the text and link. Nothing goes to our server.
   const shareDibs = async () => {
@@ -119,7 +111,8 @@ export default function More() {
             <span><b>{t('share_row')}</b><small>{t('share_row_sub')}</small></span>
             <span className="chev" aria-hidden="true">›</span>
           </button>
-          <a className="sheet-row" href={X_URL} target="_blank" rel="noopener noreferrer">
+          {/* Inside Nimiq Pay the link opens nothing: the tap also copies it. No preventDefault, so X opens where links work. */}
+          <a className="sheet-row" href={X_URL} target="_blank" rel="noopener noreferrer" onClick={followX}>
             <span className="si x" aria-hidden="true"><XIcon /></span>
             <span><b>{t('follow_row')}</b><small>{t('follow_row_sub')}</small></span>
             <span className="chev ext" aria-hidden="true"><OutIcon /></span>
@@ -164,6 +157,11 @@ export default function More() {
           <button type="button" className="sheet-row" onClick={() => go('legal', { page: 'terms' })}>
             <span className="si" aria-hidden="true"><DocIcon /></span>
             <span><b>{t('legal_terms')}</b><small>{t('legal_terms_sub')}</small></span>
+            <span className="chev" aria-hidden="true">›</span>
+          </button>
+          <button type="button" className="sheet-row" onClick={() => go('legal', { page: 'rewards' })}>
+            <span className="si" aria-hidden="true"><GiftIcon /></span>
+            <span><b>{t('legal_rewards')}</b><small>{t('legal_rewards_sub')}</small></span>
             <span className="chev" aria-hidden="true">›</span>
           </button>
           <button type="button" className="sheet-row" onClick={() => go('legal', { page: 'news' })}>

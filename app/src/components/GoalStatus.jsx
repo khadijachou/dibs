@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useApp } from '../App.jsx'
 import { savedNim } from '../lib/goals.js'
 import { getStaker } from '../lib/nimiq.js'
-import { fmtDate, fmtNim } from '../lib/format.js'
+import { fmtDate, fmtEarned, fmtNim } from '../lib/format.js'
 import { planOf } from '../lib/pace.js'
 import { chainReleaseAt, ReleaseClock } from './ReleaseClock.jsx'
 

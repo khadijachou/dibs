@@ -10,6 +10,8 @@ function read(address) {
 }
 function write(address, goals) {
   try { localStorage.setItem(key(address), JSON.stringify(goals)) } catch { /* storage blocked */ }
+  // Tells the app the ledger changed (App.jsx runs the badge check). Display only; no window under node --test.
+  try { window.dispatchEvent(new Event('dibs:goals')) } catch { /* no window */ }
 }
 
 export function listGoals(address) {

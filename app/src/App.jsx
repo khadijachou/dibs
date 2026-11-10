@@ -26,6 +26,10 @@ import { TabBar, TAB_ROUTES } from './components/ui.jsx'
 import { preloadAvatar } from './components/Avatar.jsx'
 import WelcomeBack from './components/WelcomeBack.jsx'
 import HowItWorks from './components/HowItWorks.jsx'
+import BadgeStamp from './components/BadgeStamp.jsx'
+import { check as checkBadges, setShared } from './lib/badges.js'
+import { shareBadge as sharePoster } from './lib/poster.js'
+import { getName } from './lib/name.js'
 
 // The Lab (#lab) is a developer screen: only in demo mode or in a build made with VITE_LAB=1.
 const labAllowed = () => import.meta.env.VITE_LAB === '1' || isDemo()
@@ -57,7 +61,7 @@ function parentOf(route) {
 function restoredRoute(state, address) {
   const r = state?.dibs && state.route
   if (!r || !SCREENS[r.name]) return HOME
-  const { created, amount, moveFrom, ...params } = r.params || {} // eslint-disable-line no-unused-vars
+  const { created, amount, moveFrom, badge, badgeAt, ...params } = r.params || {} // eslint-disable-line no-unused-vars
   if (params.goalId && !getGoal(address, params.goalId)) return HOME
   return { name: r.name, params }
 }
@@ -120,9 +124,32 @@ export default function App() {
   const showHowTo = useCallback(() => { setHowTo(true); window.scrollTo(0, 0) }, [])
   const closeHowTo = useCallback(() => { setHowTo(false); window.scrollTo(0, 0) }, [])
 
+  // Badges (lib/badges.js): checked on the phone when the app is ready, after each route change, after refreshBalance
+  // and when the goal ledger changes. New ones queue for the stamp (components/BadgeStamp.jsx), one at a time.
+  const [stamps, setStamps] = useState([])
+  const addressRef = useRef(null)
+  addressRef.current = address
+  const earnedCache = useRef({ address: null, at: 0, value: null })
+  const runBadgeCheck = useCallback(async () => {
+    const addr = addressRef.current
+    if (!addr) return
+    const c = earnedCache.current
+    // The earned figure the app already reads (Stake, Profile), read from the chain at most once a minute here.
+    if (c.address !== addr || Date.now() - c.at > 60_000) {
+      c.address = addr
+      c.at = Date.now()
+      try { c.value = stakeSummary(await readStaker(addr), addr).earned } catch { /* chain unreadable: keep the last figure */ }
+    }
+    const ids = await checkBadges({ goals: listGoals(addr), earnedNim: c.value ?? 0 })
+    if (ids.length) setStamps((q) => [...q, ...ids.filter((id) => !q.includes(id))])
+  }, [])
+  const badgeCheckRef = useRef(runBadgeCheck)
+  badgeCheckRef.current = runBadgeCheck
+
   const refreshBalance = useCallback(async (addr = address) => {
     if (!addr) return
     try { setBalance(await getBalanceNim(addr)) } catch { /* older hosts: no getBalance */ }
+    badgeCheckRef.current()
   }, [address])
 
   const start = useCallback(async () => {
@@ -166,6 +193,13 @@ export default function App() {
       markDaily('snapshot')
     }).catch(() => { /* chain unreadable: try on the next open */ })
   }, [ready, address]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (ready && address) runBadgeCheck() }, [ready, address, route, runBadgeCheck])
+  useEffect(() => {
+    let timer
+    const onGoals = () => { clearTimeout(timer); timer = setTimeout(() => badgeCheckRef.current(), 300) }
+    window.addEventListener('dibs:goals', onGoals)
+    return () => { clearTimeout(timer); window.removeEventListener('dibs:goals', onGoals) }
+  }, [])
   useEffect(() => {
     const onHash = () => setLabHash(location.hash === '#lab')
     window.addEventListener('hashchange', onHash)
@@ -198,6 +232,13 @@ export default function App() {
   // A screen opened with reset sits on top of Goals: back from a tab, Done or a new goal goes to Goals.
   const reset = useCallback((name = 'home', params = {}) => { setHistory(name === 'home' ? [] : [HOME]); setRoute({ name, params }) }, [])
   const canGoBack = history.length > 0 || Boolean(parentOf(route))
+  const isBlocked = useCallback(() => blocks.current > 0, [])
+  const endStamp = useCallback(() => setStamps((q) => q.slice(1)), [])
+  // Share on X (lib/poster.js). Any tap earns Spread the word, then the badge check runs.
+  const shareBadge = useCallback(async (badgeId) => {
+    setShared()
+    try { await sharePoster(badgeId, { t, name: getName(), toast }) } finally { runBadgeCheck() }
+  }, [t, toast, runBadgeCheck])
 
   // Android back button. The page keeps at most two browser entries: a base entry, plus a guard entry on top of it
   // whenever the app has somewhere to go back to. Back pops the guard; the app moves back one screen and puts the
@@ -234,7 +275,7 @@ export default function App() {
     return () => window.removeEventListener('popstate', onPop)
   }, [])
 
-  const ctx = { t, lang, setLang, address, walletAddress, balance, refreshBalance, prices, demo: isDemo(), go, back, reset, toast, showHowTo, canGoBack, blockBack }
+  const ctx = { t, lang, setLang, address, walletAddress, balance, refreshBalance, prices, demo: isDemo(), go, back, reset, toast, showHowTo, canGoBack, blockBack, shareBadge }
 
   // The launch splash leaves (ring completes, then fades) once the next screen is ready to show.
   const splashDone = splashMin && (ready || Boolean(fatal) || (!onboarded && !isLab))
@@ -267,7 +308,7 @@ export default function App() {
       {intro === 'steps' && !isLab && <HowItWorks onDone={endIntro} />}
       {/* First-run intro: Home is not mounted behind it, so it loads (with its own entrance) after "Got it". */}
       {intro && !isLab ? <div className="app intro-bg" aria-hidden="true" /> : (
-        <div className={`app${tabs ? ' with-tabs' : ''}`}><Screen {...route.params} />{tabs && <TabBar current={route.name} />}{toastText && <div className="toast" role="status"><i>i</i>{toastText}</div>}</div>
+        <div className={`app${tabs ? ' with-tabs' : ''}`}><Screen {...route.params} />{tabs && <TabBar current={route.name} />}<BadgeStamp id={stamps[0] || null} isBlocked={isBlocked} onDone={endStamp} />{toastText && <div className="toast" role="status"><i>i</i>{toastText}</div>}</div>
       )}
     </AppCtx.Provider>
   )
