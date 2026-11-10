@@ -10,6 +10,7 @@ import { poolName } from '../lib/pace.js'
 import { fmtNim } from '../lib/format.js'
 import { goalBrand } from './Home.jsx'
 import { chainReleaseAt, ReleaseClock } from '../components/ReleaseClock.jsx'
+import WeekCard from '../components/WeekCard.jsx'
 
 export default function Stake() {
   const { t, lang, address } = useApp()
@@ -24,7 +25,9 @@ export default function Stake() {
 
   useEffect(() => { load() }, [load])
 
-  const unlocking = listGoals(address).filter((g) => g.status === 'unlocking')
+  const goals = listGoals(address)
+  const unlocking = goals.filter((g) => g.status === 'unlocking')
+  const active = goals.filter((g) => g.status !== 'redeemed' && g.status !== 'withdrawn')
 
   let body
   if (state.status === 'down') {
@@ -45,6 +48,7 @@ export default function Stake() {
           </div>
         </section>
         {!st && <p className="small">{t('stake_none')}</p>}
+        {active.length > 0 && <WeekCard goals={active} />}
         {unlocking.map((g) => <UnstakingCard key={g.id} goal={g} chainAt={state.releaseAt} retired={stageOf(st, savedNim(g)).current === 'remove'} />)}
       </>
     )

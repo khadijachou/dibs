@@ -14,7 +14,7 @@ import { getName } from '../lib/name.js'
 import { MilestoneLine, useGoalMilestone } from '../components/Milestone.jsx'
 import { GoalDot, GoalStatus, goalPace } from '../components/GoalStatus.jsx'
 import { StatsCard } from '../components/StatsConsent.jsx'
-import BrandSheet from '../components/BrandSheet.jsx'
+import HowSteps from '../components/HowSteps.jsx'
 
 // Welcome screen (no goal yet): "Welcome, Sam" when the user gave a name during onboarding or in More; nothing otherwise.
 function Hello() {
@@ -81,6 +81,11 @@ function Welcome() {
         </div>
         <p className="trust"><i>✓</i>{t('welcome_trust1')}</p>
         <p className="trust"><i>✓</i>{t('welcome_trust2')}</p>
+        {/* Until the first goal: How Dibs works, the same steps as the first-run pop-up, drawn when scrolled to. */}
+        <section className="hiw-home">
+          <div className="sec-head"><h3>{t('fs_title')}</h3></div>
+          <div className="hiw-panel"><HowSteps reveal /></div>
+        </section>
         <div className="bottom">
           {brand ? (
             <button type="button" className="btn tall" onClick={() => go('plan', { brandKey: brand.key })}>
@@ -107,10 +112,6 @@ function Hub({ goals }) {
   // Newest first: the purchase date, or the return date for a withdrawn goal. Home keeps the 3 latest.
   const endOf = (g) => String((g.status === 'withdrawn' ? g.withdrawnAt : g.payment?.at) || g.createdAt || '')
   const past = goals.filter(isPast).sort((a, b) => endOf(b).localeCompare(endOf(a)))
-  const liveKeys = new Set(live.map((g) => goalBrand(g).key))
-  const others = catalogBrands().filter((b) => !liveKeys.has(b.key)).slice(0, 4)
-  const [sheet, setSheet] = useState(null) // brand key whose sheet is open ("Call dibs on something else")
-  const sheetBrand = others.find((b) => b.key === sheet)
   return (
     <>
       <Header langChip />
@@ -123,20 +124,10 @@ function Hub({ goals }) {
         {past.length > 3 && (
           <button type="button" className="see-all-link" onClick={() => { reset('history', { focus: 'cards' }); window.scrollTo(0, 0) }}>{t('home_see_all', { n: past.length })}</button>
         )}
-        <section style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <div className="sec-head"><h3>{t('home_else')}</h3></div>
-          <div className="bchips">
-            {others.map((b) => (
-              <button type="button" key={b.key} className="bchip" aria-haspopup="dialog" onClick={() => setSheet(b.key)}><BrandLogo brand={b} />{b.name}</button>
-            ))}
-            <button type="button" className="bchip more" onClick={() => go('catalog')}>{t('see_all')} ›</button>
-          </div>
-        </section>
         <div className="bottom">
           <button type="button" className="btn tall" onClick={() => go('catalog')}>{t('home_new2')}<small>{t('home_new2_sub')}</small></button>
         </div>
       </main>
-      {sheetBrand && <BrandSheet brand={sheetBrand} onClose={() => setSheet(null)} onPick={() => { setSheet(null); go('plan', { brandKey: sheetBrand.key }) }} />}
     </>
   )
 }

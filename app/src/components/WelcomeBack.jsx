@@ -8,7 +8,8 @@ import { Avatar } from './Avatar.jsx'
 const HOLD_MS = 1600
 const OUT_MS = 350
 
-export default function WelcomeBack({ onDone }) {
+// first: the first-run intro ("Welcome, Sam" instead of "Welcome back, Sam").
+export default function WelcomeBack({ onDone, first = false }) {
   const { t, walletAddress } = useApp()
   const name = getName()
   const [out, setOut] = useState(false)
@@ -23,7 +24,7 @@ export default function WelcomeBack({ onDone }) {
     <div className={`wb${out ? ' out' : ''}`} role="status" onClick={close}>
       <div className="wb-card">
         <Avatar address={walletAddress} size={96} />
-        <p className="wb-text">{name ? t('greet_back', { name }) : t('greet_back_anon')}</p>
+        <p className="wb-text">{first ? (name ? t('greet_first', { name }) : t('greet_first_anon')) : (name ? t('greet_back', { name }) : t('greet_back_anon'))}</p>
       </div>
     </div>
   )

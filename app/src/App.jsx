@@ -24,6 +24,7 @@ import Profile from './screens/Profile.jsx'
 import { TabBar, TAB_ROUTES } from './components/ui.jsx'
 import { preloadAvatar } from './components/Avatar.jsx'
 import WelcomeBack from './components/WelcomeBack.jsx'
+import HowItWorks from './components/HowItWorks.jsx'
 
 // The Lab (#lab) is a developer screen: only in demo mode or in a build made with VITE_LAB=1.
 const labAllowed = () => import.meta.env.VITE_LAB === '1' || isDemo()
@@ -100,8 +101,15 @@ export default function App() {
   // A launch that reopens another screen (a payment in progress, a goal) skips it: never shown later in the session.
   useEffect(() => { if (ready && splashGone && route.name !== 'home') setWelcome(false) }, [ready, splashGone]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { const id = setTimeout(() => setSplashMin(true), 900); return () => clearTimeout(id) }, [])
+  // First run: right after the slides and the name step, "Welcome, {name}" then How Dibs works, once ever.
+  const [intro, setIntro] = useState(null) // null | 'welcome' | 'steps'
+  const endIntroWelcome = useCallback(() => setIntro('steps'), [])
+  const endIntro = useCallback(() => { setIntro(null); window.scrollTo(0, 0) }, [])
   const finishOnboarding = useCallback(() => {
     try { localStorage.setItem('dibs.onboarded', '1') } catch { /* private mode */ }
+    let seen = false
+    try { seen = localStorage.getItem('dibs.introSeen') === '1' } catch { /* private mode */ }
+    if (!seen) setIntro('welcome')
     setOnboarded(true)
     window.scrollTo(0, 0)
   }, [])
@@ -254,7 +262,12 @@ export default function App() {
   return (
     <AppCtx.Provider value={ctx}>
       {welcome && !isLab && route.name === 'home' && <WelcomeBack onDone={endWelcome} />}
-      <div className={`app${tabs ? ' with-tabs' : ''}`}><Screen {...route.params} />{tabs && <TabBar current={route.name} />}{toastText && <div className="toast" role="status"><i>i</i>{toastText}</div>}</div>
+      {intro === 'welcome' && !isLab && <WelcomeBack first onDone={endIntroWelcome} />}
+      {intro === 'steps' && !isLab && <HowItWorks onDone={endIntro} />}
+      {/* First-run intro: Home is not mounted behind it, so it loads (with its own entrance) after "Got it". */}
+      {intro && !isLab ? <div className="app intro-bg" aria-hidden="true" /> : (
+        <div className={`app${tabs ? ' with-tabs' : ''}`}><Screen {...route.params} />{tabs && <TabBar current={route.name} />}{toastText && <div className="toast" role="status"><i>i</i>{toastText}</div>}</div>
+      )}
     </AppCtx.Provider>
   )
 }

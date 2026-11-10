@@ -34,6 +34,13 @@ const GridIcon = () => (
   </svg>
 )
 
+// An arrow out of a tray (Share Dibs).
+const ShareIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M12 15V3" /><path d="M7.5 7.5 12 3l4.5 4.5" /><path d="M5 12v6.5A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5V12" />
+  </svg>
+)
+
 export default function More() {
   const { t, go, showHowTo, toast } = useApp()
   const [sound, setSound] = useState(soundOn)
@@ -44,6 +51,15 @@ export default function More() {
     setSound(next)
   }
   const copyEmail = async () => { if (await copyText(HELP_EMAIL)) toast(t('help_copied')) }
+  // Share Dibs: the system share sheet where there is one, else copy the text and link. Nothing goes to our server.
+  const shareDibs = async () => {
+    const url = window.location.origin
+    const text = t('share_text')
+    if (navigator.share) {
+      try { await navigator.share({ title: 'Dibs', text, url }); return } catch (e) { if (e?.name === 'AbortError') return }
+    }
+    if (await copyText(`${text} ${url}`)) toast(t('share_copied'))
+  }
 
   return (
     <>
@@ -61,6 +77,11 @@ export default function More() {
           <button type="button" className="sheet-row" onClick={() => go('browse')}>
             <span className="si" aria-hidden="true"><GridIcon /></span>
             <span><b>{t('browse_more')}</b><small>{t('browse_more_sub', { count: catalogBrands().length })}</small></span>
+            <span className="chev" aria-hidden="true">›</span>
+          </button>
+          <button type="button" className="sheet-row" onClick={shareDibs}>
+            <span className="si" aria-hidden="true"><ShareIcon /></span>
+            <span><b>{t('share_row')}</b><small>{t('share_row_sub')}</small></span>
             <span className="chev" aria-hidden="true">›</span>
           </button>
         </section>
