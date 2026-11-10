@@ -1,39 +1,9 @@
-// The "Dibs!" stamp pop: a short synthesised sound, no audio file.
-// Call it only from the user's tap (browsers, iOS above all, need a gesture to start audio).
-// Silent under reduced motion or when localStorage dibs.sound === 'off'. Never throws.
-// ifUnlocked: for a pop that is not started by a tap (e.g. the release arriving while the page is open).
-// Plays only when an earlier tap already unlocked audio for this page; otherwise stays silent.
-export function playPop({ ifUnlocked = false } = {}) {
-  try {
-    try { if (localStorage.getItem('dibs.sound') === 'off') return } catch { /* private mode: play */ }
-    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
-    // 'ambient' follows the iPhone silent switch and mixes with other audio.
-    if (navigator.audioSession) { try { navigator.audioSession.type = 'ambient' } catch { /* older Safari */ } }
-    if (ifUnlocked && navigator.userActivation && !navigator.userActivation.hasBeenActive) return
-    const AC = window.AudioContext || window.webkitAudioContext
-    if (!AC) return
-    const ctx = new AC()
-    if (ifUnlocked && ctx.state !== 'running') { ctx.close?.().catch?.(() => {}); return }
-    const t0 = ctx.currentTime + 0.01
-    const osc = ctx.createOscillator()
-    const gain = ctx.createGain()
-    osc.type = 'sine'
-    osc.frequency.setValueAtTime(880, t0)
-    osc.frequency.exponentialRampToValueAtTime(220, t0 + 0.09)
-    gain.gain.setValueAtTime(0.0001, t0)
-    gain.gain.exponentialRampToValueAtTime(0.3, t0 + 0.008)
-    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.14)
-    osc.connect(gain).connect(ctx.destination)
-    osc.onended = () => { try { ctx.close() } catch { /* already closed */ } }
-    ctx.resume?.().catch?.(() => {})
-    osc.start(t0)
-    osc.stop(t0 + 0.16)
-  } catch { /* no audio: stay silent */ }
-}
-
-// The page's one AudioContext for the reveal: created on the first tap, resumed on later ones (iOS suspends it
-// in the background and caps how many a page may open). Must be called synchronously inside the tap handler,
-// before any state update or await, or the browser keeps it suspended and the sound stays silent.
+// ---- Audio unlock -------------------------------------------------------------------------------------------------
+// The page's one AudioContext: created on the first tap, resumed on later ones (iOS suspends it in the background,
+// and after Nimiq Pay's approval sheet it can be 'interrupted'; it also caps how many a page may open). App.jsx calls
+// audioContext() from a capture listener on every pointerdown / keydown, and resumeShared() when the page is visible again.
+// audioContext() must be called synchronously inside the tap handler, before any state update or await,
+// or the browser keeps it suspended. Sounds not started by a tap never create a context.
 let shared = null
 export function audioContext() {
   const AC = window.AudioContext || window.webkitAudioContext
@@ -43,6 +13,76 @@ export function audioContext() {
   return shared
 }
 
+// Back to visible: wake the shared context if there is one (never a new context, failures ignored).
+export function resumeShared() {
+  try { if (shared && shared.state !== 'running' && shared.state !== 'closed') shared.resume?.().catch?.(() => {}) } catch { /* stay silent */ }
+}
+
+// What a sound not started by a tap may do, from the shared context's state (null: none yet) and whether the page
+// has had a tap: 'play' now, 'resume' first (then play if it runs within RESUME_MS), or stay 'silent'.
+export const RESUME_MS = 400
+export function soundPlan(state, hasTap) {
+  if (!state || state === 'closed' || !hasTap) return 'silent'
+  if (state === 'running') return 'play'
+  if (state === 'suspended' || state === 'interrupted') return 'resume'
+  return 'silent'
+}
+
+const hasTapped = () => !navigator.userActivation || navigator.userActivation.hasBeenActive
+// dibs.sound missing (a new user) = on; only 'off' silences. screens/More.jsx reads it the same way.
+const soundOff = () => { try { return localStorage.getItem('dibs.sound') === 'off' } catch { return false } }
+// 'ambient' follows the iPhone silent switch and mixes with other audio (intended).
+const ambient = () => { if (navigator.audioSession) { try { navigator.audioSession.type = 'ambient' } catch { /* older Safari */ } } }
+
+// Runs play(ctx) on the shared context when a tap already unlocked it: right away when running, else after resume()
+// once it reports 'running', within RESUME_MS. Otherwise silent; nothing is queued for later.
+function withUnlocked(play) {
+  const ctx = shared
+  const plan = soundPlan(ctx?.state || null, hasTapped())
+  if (plan === 'silent') return
+  if (plan === 'play') { play(ctx); return }
+  const deadline = performance.now() + RESUME_MS
+  let done = false
+  const check = () => {
+    if (done) return
+    if (ctx.state === 'running') { done = true; try { play(ctx) } catch { /* stay silent */ } return }
+    if (performance.now() < deadline) setTimeout(check, 25)
+    else done = true
+  }
+  try { ctx.resume?.().then?.(check, () => {}) } catch { /* poll only */ }
+  check()
+}
+
+// The "Dibs!" stamp pop: a short synthesised sound, no audio file. Plays whatever the motion setting (reduced motion
+// changes animations, not sound); silent when dibs.sound === 'off'. Never throws.
+// From a tap (default): on the shared context, created or resumed here, inside the tap.
+// ifUnlocked: for a pop not started by a tap (e.g. the release arriving while the page is open): plays only when an
+// earlier tap unlocked audio, resuming the context first when needed (withUnlocked).
+function schedulePop(ctx) {
+  const t0 = ctx.currentTime + 0.01
+  const osc = ctx.createOscillator()
+  const gain = ctx.createGain()
+  osc.type = 'sine'
+  osc.frequency.setValueAtTime(880, t0)
+  osc.frequency.exponentialRampToValueAtTime(220, t0 + 0.09)
+  gain.gain.setValueAtTime(0.0001, t0)
+  gain.gain.exponentialRampToValueAtTime(0.3, t0 + 0.008)
+  gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.14)
+  osc.connect(gain).connect(ctx.destination)
+  osc.onended = () => { try { gain.disconnect() } catch { /* already gone */ } }
+  osc.start(t0)
+  osc.stop(t0 + 0.16)
+}
+export function playPop({ ifUnlocked = false } = {}) {
+  try {
+    if (soundOff()) return
+    ambient()
+    if (ifUnlocked) { withUnlocked(schedulePop); return }
+    const ctx = audioContext()
+    if (ctx) schedulePop(ctx)
+  } catch { /* no audio: stay silent */ }
+}
+
 // "Card revealed": synced with CardFlip. A soft rising whoosh while the card turns (filtered noise,
 // 0.10 to 0.50 s), then a bright rising C major arpeggio as the back face lands (0.50 to 0.98 s).
 // reduced: chime only, right away (the crossfade replaces the turn).
@@ -50,8 +90,8 @@ export function audioContext() {
 // audio session, silent when dibs.sound === 'off', never throws, never awaited by the caller.
 export function playReveal({ reduced = false } = {}) {
   try {
-    try { if (localStorage.getItem('dibs.sound') === 'off') return } catch { /* private mode: play */ }
-    if (navigator.audioSession) { try { navigator.audioSession.type = 'ambient' } catch { /* older Safari */ } }
+    if (soundOff()) return
+    ambient()
     const ctx = audioContext()
     if (!ctx) return
     const t0 = ctx.currentTime + 0.01
@@ -220,8 +260,8 @@ export function playWelcome({ first = false, reduced = false, since = performanc
     },
   }
   try {
-    try { if (localStorage.getItem('dibs.sound') === 'off') return handle } catch { /* private mode: play */ }
-    if (navigator.audioSession) { try { navigator.audioSession.type = 'ambient' } catch { /* older Safari */ } }
+    if (soundOff()) return handle
+    ambient()
     ctx = audioContext()
     if (!ctx) return handle
     const go = () => {
@@ -253,13 +293,7 @@ export function playWelcome({ first = false, reduced = false, since = performanc
 // ---- Small sounds: NIM added, milestone, goal complete, badge / quest -------------------------------------------------
 // Same rules as playReveal (shared context, 'ambient', silent when dibs.sound === 'off', never throws, never awaited),
 // but they never unlock audio themselves: they play only when a tap in this session already did (the shared context
-// exists and is running). Otherwise silent.
-function unlockedContext() {
-  if (!shared || shared.state !== 'running') return null
-  if (navigator.userActivation && !navigator.userActivation.hasBeenActive) return null
-  return shared
-}
-
+// exists), resuming it first when suspended or interrupted (withUnlocked). Otherwise silent.
 // One note: oscillator -> envelope (exponential attack, then decay to silence by `decay` s after `at`) -> out.
 // tremolo: [rate Hz, depth 0..1] for the shimmer. Returns when it ends.
 function note(ctx, out, at, { f, f1 = null, glide = 0, type = 'sine', peak, attack, decay, tremolo = null }) {
@@ -345,15 +379,15 @@ export const SOUNDS = {
 
 function playIfUnlocked(build) {
   try {
-    try { if (localStorage.getItem('dibs.sound') === 'off') return } catch { /* private mode: play */ }
-    if (navigator.audioSession) { try { navigator.audioSession.type = 'ambient' } catch { /* older Safari */ } }
-    const ctx = unlockedContext()
-    if (!ctx) return
-    const out = ctx.createGain()
-    out.gain.value = 0.9
-    out.connect(ctx.destination)
-    const end = build(ctx, out, ctx.currentTime + 0.01)
-    setTimeout(() => { try { out.disconnect() } catch { /* already gone */ } }, Math.ceil((end - ctx.currentTime) * 1000) + 200)
+    if (soundOff()) return
+    ambient()
+    withUnlocked((ctx) => {
+      const out = ctx.createGain()
+      out.gain.value = 0.9
+      out.connect(ctx.destination)
+      const end = build(ctx, out, ctx.currentTime + 0.01)
+      setTimeout(() => { try { out.disconnect() } catch { /* already gone */ } }, Math.ceil((end - ctx.currentTime) * 1000) + 200)
+    })
   } catch { /* no audio: stay silent */ }
 }
 

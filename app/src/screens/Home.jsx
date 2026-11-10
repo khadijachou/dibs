@@ -1,7 +1,7 @@
 import { CardIssue } from '../components/CardIssue.jsx'
 import { useRef, useState } from 'react'
 import { useApp } from '../App.jsx'
-import { detailText, fromText, itemLabel } from '../lib/itemName.js'
+import { detailText, itemLabel } from '../lib/itemName.js'
 import { BrandLogo, CREAM, Header, DibsMark } from '../components/ui.jsx'
 import { listGoals, progress } from '../lib/goals.js'
 import { BRANDS, catalogBrands, brandOf } from '../lib/brands.js'
@@ -50,12 +50,11 @@ export default function Home() {
   return goals.length === 0 ? <Welcome /> : <Hub goals={goals} />
 }
 
-// First run: the brand moment and three real picks (UI v2.2, welcome A).
+// First run: the brand moment, then the same photo banner as the hub (a slide opens the brand sheet).
 function Welcome() {
   const { t, go } = useApp()
-  const picks = catalogBrands().slice(0, 3)
-  const [picked, setPicked] = useState(null)
-  const brand = picks.find((b) => b.key === picked)
+  const [sheet, setSheet] = useState(null) // brand key whose sheet is open (promo banner)
+  const sheetBrand = sheet ? catalogBrands().find((b) => b.key === sheet) : null
   return (
     <>
       <div className="welcome-hero">
@@ -73,16 +72,7 @@ function Welcome() {
       </div>
       <main className="screen">
         <StatsCard />
-        <p className="sec-label">{t('welcome_popular')}</p>
-        <div className="picks">
-          {picks.map((b) => (
-            <button type="button" key={b.key} className={`pick${b.key === picked ? ' on' : ''}`} aria-pressed={b.key === picked} onClick={() => setPicked(b.key)}>
-              <BrandLogo brand={b} />
-              <b>{b.name}</b>
-              <span>{fromText(t, b)}</span>
-            </button>
-          ))}
-        </div>
+        <PromoBanner onOpen={setSheet} />
         <p className="trust"><i>✓</i>{t('welcome_trust1')}</p>
         <p className="trust"><i>✓</i>{t('welcome_trust2')}</p>
         {/* Until the first goal: How Dibs works, the same steps as the first-run pop-up, drawn when scrolled to. */}
@@ -91,17 +81,12 @@ function Welcome() {
           <div className="hiw-panel"><HowSteps reveal /></div>
         </section>
         <div className="bottom">
-          {brand ? (
-            <button type="button" className="btn tall" onClick={() => go('plan', { brandKey: brand.key })}>
-              {t('welcome_cta_pick', { brand: brand.name })}<small>{t('welcome_cta_pick_sub')}</small>
-            </button>
-          ) : (
-            <button type="button" className="btn tall" onClick={() => go('catalog')}>
-              {t('welcome_cta_all')}<small>{t('welcome_cta_all_sub')}</small>
-            </button>
-          )}
+          <button type="button" className="btn tall" onClick={() => go('catalog')}>
+            {t('welcome_cta_all')}<small>{t('welcome_cta_all_sub')}</small>
+          </button>
         </div>
       </main>
+      {sheetBrand && <BrandSheet brand={sheetBrand} onClose={() => setSheet(null)} onPick={() => { setSheet(null); go('plan', { brandKey: sheetBrand.key }) }} />}
     </>
   )
 }

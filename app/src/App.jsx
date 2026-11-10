@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import { startFullscreen } from './lib/fullscreen.js'
+import { fullscreen, startFullscreen } from './lib/fullscreen.js'
 import { initLastVisit, recordEarned } from './lib/lastVisit.js'
-import { playTing } from './lib/sound.js'
+import { audioContext, playTing, resumeShared } from './lib/sound.js'
 import { connect, getBalanceNim, host, isDemo, listAccountsWithBalance, readStaker } from './lib/nimiq.js'
 import { configureStats, dailyDue, flush, markDaily, snapshotData, track } from './lib/stats.js'
 import { stakeSummary } from './lib/earned.js'
@@ -32,6 +32,7 @@ import { preloadAvatar } from './components/Avatar.jsx'
 import WelcomeBack from './components/WelcomeBack.jsx'
 import HowItWorks from './components/HowItWorks.jsx'
 import BadgeStamp from './components/BadgeStamp.jsx'
+import ShareConfirmSheet from './components/ShareConfirmSheet.jsx'
 import { check as checkBadges, getBadges, setShared, shareEarns } from './lib/badges.js'
 import { addSharedId, levelOf, rankOf, recordVisit, xpSummary } from './lib/xp.js'
 import { checkQuest } from './lib/quests.js'
@@ -231,6 +232,35 @@ export default function App() {
     window.addEventListener('dibs:goals', onGoals)
     return () => { clearTimeout(timer); window.removeEventListener('dibs:goals', onGoals) }
   }, [])
+  // Audio: every tap (capture, passive) creates the shared context the first time and resumes it later, so sounds
+  // that follow (NIM added, a badge) can play. Back to visible: resume it if it exists (iOS suspends it).
+  useEffect(() => {
+    const unlock = () => { try { audioContext() } catch { /* no audio */ } }
+    const onVisible = () => { if (document.visibilityState === 'visible') resumeShared() }
+    const opts = { capture: true, passive: true }
+    window.addEventListener('pointerdown', unlock, opts)
+    window.addEventListener('keydown', unlock, opts)
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      window.removeEventListener('pointerdown', unlock, opts)
+      window.removeEventListener('keydown', unlock, opts)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
+  }, [])
+  // Full screen: the status bar band shows only while the page is scrolled (html.fs-scrolled, scrollY > 4).
+  useEffect(() => {
+    const root = document.documentElement
+    let listening = false
+    const onScroll = () => root.classList.toggle('fs-scrolled', window.scrollY > 4)
+    const sync = () => {
+      const on = fullscreen.get().on
+      if (on && !listening) { window.addEventListener('scroll', onScroll, { passive: true }); listening = true; onScroll() }
+      if (!on && listening) { window.removeEventListener('scroll', onScroll); listening = false; root.classList.remove('fs-scrolled') }
+    }
+    sync()
+    const unsub = fullscreen.subscribe(sync)
+    return () => { unsub(); if (listening) window.removeEventListener('scroll', onScroll); root.classList.remove('fs-scrolled') }
+  }, [])
   useEffect(() => {
     const onHash = () => setLabHash(location.hash === '#lab')
     window.addEventListener('hashchange', onHash)
@@ -265,8 +295,15 @@ export default function App() {
   const canGoBack = history.length > 0 || Boolean(parentOf(route))
   const isBlocked = useCallback(() => blocks.current > 0, [])
   const endStamp = useCallback(() => setStamps((q) => q.slice(1)), [])
-  // Share on X (lib/poster.js). Spread the word only after a real share (shared or fallback, never cancelled or
-  // failed); badges already earned stay. Then the badge check runs.
+  // Share on X (lib/poster.js). After a share that ran (shared or fallback) the confirm sheet asks whether the post is up;
+  // only its Yes records Spread the word and the +30 XP. Cancelled, failed, Not yet or a closed sheet: nothing is recorded.
+  // Badges already earned stay. Then the badge check runs.
+  const [shareAsk, setShareAsk] = useState(null) // badge id waiting for the user's confirmation
+  const confirmShare = useCallback(() => {
+    if (shareAsk) { setShared(); addSharedId(shareAsk) }
+    setShareAsk(null)
+    runBadgeCheck()
+  }, [shareAsk, runBadgeCheck])
   const shareBadge = useCallback(async (badgeId) => {
     let result = 'failed'
     // The poster's chips: the current level and rank (lib/xp.js).
@@ -276,7 +313,7 @@ export default function App() {
       chips = [t('level_n', { n: level }), t(`rank_${rankOf(level).id}`)]
     } catch { /* poster without chips */ }
     try { result = await sharePoster(badgeId, { t, name: getName(), toast, chips }) } finally {
-      if (shareEarns(result)) { setShared(); addSharedId(badgeId) }
+      if (shareEarns(result)) setShareAsk(badgeId)
       runBadgeCheck()
     }
     return result
@@ -354,6 +391,7 @@ export default function App() {
       {intro && !isLab ? <div className="app intro-bg" aria-hidden="true" /> : (
         <div className={`app${tabs ? ' with-tabs' : ''}`}><Screen {...route.params} />{tabs && <TabBar current={route.name} />}<BadgeStamp id={stamps[0] || null} isBlocked={isBlocked} onDone={endStamp} />{toastText && <div className="toast" role="status"><i>i</i>{toastText}</div>}</div>
       )}
+      {shareAsk && !isLab && <ShareConfirmSheet onYes={confirmShare} onClose={() => setShareAsk(null)} />}
     </AppCtx.Provider>
   )
 }

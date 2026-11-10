@@ -10,8 +10,10 @@ import { copyText } from '../lib/clipboard.js'
 import { FAQ } from './Faq.jsx'
 import { useFullscreen } from '../lib/fullscreen.js'
 import FullscreenSheet from '../components/FullscreenSheet.jsx'
+import { audioContext, playTing } from '../lib/sound.js'
 
 const X_URL = 'https://x.com/calldibs_app'
+// Sound is on unless the user turned it off: dibs.sound missing (a new user) = on, as in lib/sound.js.
 const soundOn = () => { try { return localStorage.getItem('dibs.sound') !== 'off' } catch { return true } }
 
 // Four rounded squares (Browse the catalogue). A stroke icon: text glyphs turn into emoji on iOS.
@@ -59,7 +61,7 @@ const SparkIcon = () => (
 
 // The X logo (simple-icons, official glyph), white on a black circle (.si.x).
 const XIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d={siX.path} /></svg>
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d={siX.path} /></svg>
 )
 
 // An arrow pointing up and out: the row opens outside the app. A stroke icon: text arrows turn into emoji on iOS.
@@ -137,6 +139,8 @@ export default function More() {
             <span>{t('more_sound')}</span>
             <button type="button" role="switch" aria-checked={sound} aria-label={t('more_sound')} className={`switch${sound ? ' on' : ''}`} onClick={toggleSound}><i /></button>
           </div>
+          {/* From the tap: audioContext() creates or resumes the shared context, then the ting plays on it. */}
+          {sound && <button type="button" className="txt-link sound-test" onClick={() => { audioContext(); playTing() }}>{t('sound_test')}</button>}
           {fs.supported && (fs.on ? (
             <button type="button" className="set-row fs-row" onClick={fs.leave}>
               <span><b>{t('fs_row_on')}</b></span>

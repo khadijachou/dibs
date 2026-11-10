@@ -100,7 +100,7 @@ export default function Profile({ badge: askedBadge, badgeAt }) {
               fallback={name ? <span className="prof-avatar" aria-hidden="true">{name.charAt(0).toUpperCase()}</span> : null} />
             {name && <span className="prof-name">{name}</span>}
           </div>
-          <p className="sub">{t('prof_intro')}</p>
+          <p className="small">{t('prof_intro')}</p>
         </section>
 
         <section className="pstats">
@@ -126,7 +126,7 @@ export default function Profile({ badge: askedBadge, badgeAt }) {
           </section>
         )}
 
-        <p className="sub lvl-intro">{t('xp_intro_1')}<br />{t('xp_intro_2')}</p>
+        <p className="small lvl-intro">{t('xp_intro_1')}<br />{t('xp_intro_2')}</p>
         <LevelCard x={xp} onRanks={() => setXpSheet('ranks')} onHow={() => setXpSheet('xp')} />
 
         <section className="badges">

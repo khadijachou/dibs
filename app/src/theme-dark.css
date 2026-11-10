@@ -281,7 +281,9 @@ svg circle:first-child[stroke="#e6dccf"], svg circle:first-child[stroke="#35323f
 .sheet-row.new { border-style: dashed; }
 /* More: Follow Dibs on X (a link, not a button) */
 a.sheet-row { text-decoration: none; -webkit-tap-highlight-color: transparent; }
-.sheet-row .si.x { background: #000; color: #fff; }
+.sheet-row .si.x { background: #2a2733; color: var(--cream); } /* same circle as the other rows; the official X glyph, 14 px */
+/* More > Settings: Play a test sound, a small text button under the Sound switch */
+.txt-link.sound-test { align-self: flex-start; margin: -2px 0 4px; }
 .sheet-row .chev.ext { display: grid; place-items: center; color: var(--muted); }
 .sheet .pill:disabled { opacity: .45; }
 .sheet .amount input { font-size: 28px; }
@@ -944,9 +946,12 @@ a.sheet-row { text-decoration: none; -webkit-tap-highlight-color: transparent; }
 .set-row.fs-row .chev { color: var(--muted); font-size: 20px; }
 html.is-fullscreen { --fs-inset: env(safe-area-inset-top, 0px); --fs-top: max(var(--fs-inset), 12px); }
 /* Status bar band: content scrolling up passes under it, not under the clock and the notch. Solid over the inset,
-   then a 12 px fade. Above the content and the tab bar (8), below the badge band (15) and the sheets (30). */
+   then a 12 px fade. Above the content and the tab bar (8), below the badge band (15) and the sheets (30).
+   Only while the page is scrolled (html.fs-scrolled, App.jsx): at rest there is no band, so panels that run to the
+   top (the Welcome hero, the goal cards) are never cut. */
 html.is-fullscreen body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: calc(var(--fs-inset) + 12px); z-index: 12; pointer-events: none;
-  background: linear-gradient(var(--ground) 0, var(--ground) var(--fs-inset), rgba(21, 20, 26, 0) 100%); }
+  background: linear-gradient(var(--ground) 0, var(--ground) var(--fs-inset), rgba(21, 20, 26, 0) 100%); opacity: 0; transition: opacity .15s ease; }
+html.is-fullscreen.fs-scrolled body::before { opacity: 1; }
 html.is-fullscreen .header { padding-top: var(--fs-top); padding-right: 60px; }
 html.is-fullscreen .app > .screen:first-child { padding-top: var(--fs-top); } /* screens without the header row */
 html.is-fullscreen .hiw { padding-top: max(env(safe-area-inset-top, 0px), 20px); }

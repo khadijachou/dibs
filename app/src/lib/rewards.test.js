@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { active, claimDetails, groupAddress, state } from './rewards.js'
+import { REWARDS, active, claimDetails, groupAddress, state } from './rewards.js'
 import { makeT } from './i18n.js'
 
 const DAY = 864e5
@@ -51,4 +51,12 @@ test('claim details: dibs gives the first redeemed goal order id', () => {
 test('groupAddress', () => {
   assert.equal(groupAddress('NQ15 HNAH YRVH'), 'NQ15 HNAH YRVH')
   assert.equal(groupAddress(''), '')
+})
+
+test('places and amounts: Dibs! first 20 at 5,000 NIM, Planted first 30 at 1,000 NIM (budget 130,000 NIM)', () => {
+  assert.equal(REWARDS.dibs.places, 20)
+  assert.equal(REWARDS.planted.places, 30)
+  assert.equal(REWARDS.dibs.nim, 5000)
+  assert.equal(REWARDS.planted.nim, 1000)
+  assert.equal(REWARDS.dibs.places * REWARDS.dibs.nim + REWARDS.planted.places * REWARDS.planted.nim, 130000)
 })

@@ -2,8 +2,8 @@
 // details and emails them; the team checks the order or the deposit and pays by hand. Rules: More > Legal > Rewards.
 export const PROGRAM_END = '2026-11-30T23:59:59Z'
 export const REWARDS = {
-  dibs: { nim: 5000, places: 10 },
-  planted: { nim: 1000, places: 20, holdDays: 7 },
+  dibs: { nim: 5000, places: 20 },
+  planted: { nim: 1000, places: 30, holdDays: 7 },
 }
 export const REWARD_IDS = ['planted', 'dibs']
 export const CLAIM_EMAIL = 'calldibs.contact@gmail.com'
