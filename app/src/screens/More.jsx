@@ -7,6 +7,8 @@ import { NumbersCard, StatsSetting } from '../components/StatsConsent.jsx'
 import { siX } from 'simple-icons'
 import { APP_VERSION, HELP_EMAIL } from '../components/LegalText.jsx'
 import { copyText } from '../lib/clipboard.js'
+import { useFullscreen } from '../lib/fullscreen.js'
+import FullscreenSheet from '../components/FullscreenSheet.jsx'
 
 const FAQ = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
 const X_URL = 'https://x.com/calldibs_app'
@@ -70,6 +72,8 @@ const OutIcon = () => (
 export default function More() {
   const { t, go, showHowTo, toast } = useApp()
   const [sound, setSound] = useState(soundOn)
+  const fs = useFullscreen()
+  const [fsAsk, setFsAsk] = useState(false)
 
   const toggleSound = () => {
     const next = !sound
@@ -138,6 +142,17 @@ export default function More() {
             <span>{t('more_sound')}</span>
             <button type="button" role="switch" aria-checked={sound} aria-label={t('more_sound')} className={`switch${sound ? ' on' : ''}`} onClick={toggleSound}><i /></button>
           </div>
+          {fs.supported && (fs.on ? (
+            <button type="button" className="set-row fs-row" onClick={fs.leave}>
+              <span><b>{t('fs_row_on')}</b></span>
+            </button>
+          ) : (
+            <button type="button" className="set-row fs-row" onClick={() => setFsAsk(true)}>
+              <span><b>{t('fs_row')}</b><small>{t('fs_row_sub')}</small></span>
+              <span className="chev" aria-hidden="true">›</span>
+            </button>
+          ))}
+          {fsAsk && <FullscreenSheet onClose={() => setFsAsk(false)} />}
           <StatsSetting />
         </section>
 

@@ -916,3 +916,17 @@ a.sheet-row { text-decoration: none; -webkit-tap-highlight-color: transparent; }
 @media (prefers-reduced-motion: reduce) { .lvl-bar i, .quest-bar i { transition: none; } }
 /* Long sheets scroll: their rows and buttons keep their height instead of shrinking. */
 .sheet > * { flex-shrink: 0; }
+
+/* Full screen in Nimiq Pay (lib/fullscreen.js). html.is-fullscreen only: nothing changes otherwise.
+   The page now runs under the status bar and the notch, and Nimiq Pay draws its exit button in the top-right corner. */
+.fs-btn { width: 36px; height: 36px; border-radius: 18px; margin-left: -2px; flex-shrink: 0; color: var(--cream); }
+.set-row.fs-row { width: 100%; text-align: left; color: var(--cream); font: inherit; font-size: 14.5px; cursor: pointer; }
+.set-row.fs-row > span:first-child { flex: 1; min-width: 0; }
+.set-row.fs-row b { display: block; font-weight: 500; }
+.set-row.fs-row small { display: block; color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+.set-row.fs-row .chev { color: var(--muted); font-size: 20px; }
+html.is-fullscreen { --fs-top: max(env(safe-area-inset-top, 0px), 12px); }
+html.is-fullscreen .header { padding-top: var(--fs-top); padding-right: 60px; }
+html.is-fullscreen .app > .screen:first-child { padding-top: var(--fs-top); } /* screens without the header row */
+html.is-fullscreen .hiw { padding-top: max(env(safe-area-inset-top, 0px), 20px); }
+html.is-fullscreen .bstamp-live { top: calc(58px + var(--fs-top)); }

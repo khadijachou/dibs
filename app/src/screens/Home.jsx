@@ -85,7 +85,7 @@ function Welcome() {
         <p className="trust"><i>✓</i>{t('welcome_trust2')}</p>
         {/* Until the first goal: How Dibs works, the same steps as the first-run pop-up, drawn when scrolled to. */}
         <section className="hiw-home">
-          <div className="sec-head"><h3>{t('fs_title')}</h3></div>
+          <div className="sec-head"><h3>{t('hiw_title')}</h3></div>
           <div className="hiw-panel"><HowSteps reveal /></div>
         </section>
         <div className="bottom">

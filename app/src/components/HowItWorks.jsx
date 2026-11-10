@@ -21,7 +21,7 @@ export default function HowItWorks({ onDone }) {
   return (
     <div className={`hiw${out ? ' out' : ''}`} role="dialog" aria-modal="true" aria-labelledby="hiw-title">
       <div className="hiw-card">
-        <h2 id="hiw-title" className="hiw-title">{t('fs_title')}</h2>
+        <h2 id="hiw-title" className="hiw-title">{t('hiw_title')}</h2>
         <HowSteps />
         <button type="button" ref={btn} className="btn" onClick={close}>{t('hiw_cta')}</button>
       </div>

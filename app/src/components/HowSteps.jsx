@@ -33,8 +33,8 @@ export default function HowSteps({ reveal = false }) {
             <b>{i + 1}</b>
           </span>
           <span className="hiw-txt">
-            <b>{t(`fs_${k}`)}</b>
-            <small>{t(`fs_${k}_sub`, { pool: poolName() })}</small>
+            <b>{t(`hiw_${k}`)}</b>
+            <small>{t(`hiw_${k}_sub`, { pool: poolName() })}</small>
           </span>
         </li>
       ))}

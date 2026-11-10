@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { startFullscreen } from './lib/fullscreen.js'
 import { connect, getBalanceNim, host, isDemo, listAccountsWithBalance, readStaker } from './lib/nimiq.js'
 import { configureStats, dailyDue, flush, markDaily, snapshotData, track } from './lib/stats.js'
 import { stakeSummary } from './lib/earned.js'
@@ -162,6 +163,7 @@ export default function App() {
     setFatal(null)
     try {
       await connect()
+      startFullscreen() // supported only inside Nimiq Pay; never blocks the start
       configureStats({ demo: isDemo() })
       readSimulateParam() // ?sim works in demo mode only, so read it once we know the mode
       const accounts = await listAccountsWithBalance()

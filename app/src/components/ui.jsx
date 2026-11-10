@@ -4,6 +4,8 @@ import { useApp } from '../App.jsx'
 import { fmtNim } from '../lib/format.js'
 import { useCountUp } from '../lib/useCountUp.js'
 import { brandIcon, DARK_TILES } from '../lib/brandIcons.js'
+import { useFullscreen } from '../lib/fullscreen.js'
+import FullscreenSheet from './FullscreenSheet.jsx'
 
 const PATHS = {
   back: <path d="M15 5l-7 7 7 7" />,
@@ -18,6 +20,7 @@ const PATHS = {
   food: <><path d="M6 3v8a2 2 0 0 0 4 0V3M8 11v10" /><path d="M16 21V3c2 1 3 4 3 7h-3" /></>,
   travel: <><path d="M3 15l7-2 4-9 2 1-2 8 6-1 1 2-7 3-4 4H7l2-4-6 1z" /></>,
   check: <path d="M5 12.5l4.5 4.5L19 7.5" />,
+  expand: <path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" />, // four corners (full screen)
   search: <><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.6-3.6" /></>,
   tabGoals: <path d="M4 10.5 12 4l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5.5h-5V20H5a1 1 0 0 1-1-1z" />, // house (Home tab)
   tabStake: <><ellipse cx="12" cy="6.5" rx="7" ry="3" /><path d="M5 6.5v5c0 1.7 3.1 3 7 3s7-1.3 7-3v-5" /><path d="M5 11.5v5c0 1.7 3.1 3 7 3s7-1.3 7-3v-5" /></>,
@@ -186,6 +189,8 @@ export function LangChip() {
 export function Header({ onBack, onInk = false, langChip = false }) {
   const { t, balance, demo, lang, reset } = useApp()
   const balanceShown = useCountUp(balance)
+  const fs = useFullscreen()
+  const [fsAsk, setFsAsk] = useState(false)
   return (
     <header className={`header${onInk ? ' on-ink' : ''}`}>
       {onBack ? (
@@ -201,6 +206,11 @@ export function Header({ onBack, onInk = false, langChip = false }) {
       {balance == null
         ? <span className="chip sk" aria-label={t('goal_reading')}>000,000 NIM</span>
         : <span className="chip">{fmtNim(Math.round(balanceShown), lang)} NIM</span>}
+      {/* Only inside Nimiq Pay, and hidden in full screen: Nimiq Pay shows its own exit button there. */}
+      {fs.supported && !fs.on && (
+        <button type="button" className="icon-btn fs-btn" aria-label={t('fs_btn')} onClick={() => setFsAsk(true)}><Icon name="expand" size={20} /></button>
+      )}
+      {fsAsk && <FullscreenSheet onClose={() => setFsAsk(false)} />}
     </header>
   )
 }
