@@ -5,9 +5,9 @@ import { NAME_MAX, getName, setName } from '../lib/name.js'
 import { catalogBrands } from '../lib/brands.js'
 import { NumbersCard, StatsSetting } from '../components/StatsConsent.jsx'
 import { siX } from 'simple-icons'
+import { APP_VERSION, HELP_EMAIL } from '../components/LegalText.jsx'
 
 const FAQ = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-const HELP_EMAIL = 'calldibs.contact@gmail.com'
 const X_URL = 'https://x.com/calldibs_app'
 const soundOn = () => { try { return localStorage.getItem('dibs.sound') !== 'off' } catch { return true } }
 
@@ -40,6 +40,27 @@ const GridIcon = () => (
 const ShareIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="M12 15V3" /><path d="M7.5 7.5 12 3l4.5 4.5" /><path d="M5 12v6.5A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5V12" />
+  </svg>
+)
+
+// A shield (Privacy).
+const ShieldIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M12 3 5 6v5c0 4.5 3 8 7 10 4-2 7-5.5 7-10V6z" />
+  </svg>
+)
+
+// A page with a folded corner (Terms).
+const DocIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M7 3h7l5 5v13H7z" /><path d="M14 3v5h5M10 13h6M10 17h6" />
+  </svg>
+)
+
+// A spark (What's new).
+const SparkIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M12 3v3M12 18v3M3 12h3M18 12h3M6 6l2 2M16 16l2 2M6 18l2-2M16 8l2-2" />
   </svg>
 )
 
@@ -131,6 +152,26 @@ export default function More() {
           <h3>{t('help_title')}</h3>
           <p>{t('help_body')}</p>
           <button type="button" className="help-email" aria-label={t('help_email')} onClick={copyEmail}>{HELP_EMAIL}</button>
+        </section>
+
+        <section className="more-sec">
+          <div className="sec-head"><h3>{t('more_legal')}</h3></div>
+          <button type="button" className="sheet-row" onClick={() => go('legal', { page: 'privacy' })}>
+            <span className="si" aria-hidden="true"><ShieldIcon /></span>
+            <span><b>{t('legal_privacy')}</b><small>{t('legal_privacy_sub')}</small></span>
+            <span className="chev" aria-hidden="true">›</span>
+          </button>
+          <button type="button" className="sheet-row" onClick={() => go('legal', { page: 'terms' })}>
+            <span className="si" aria-hidden="true"><DocIcon /></span>
+            <span><b>{t('legal_terms')}</b><small>{t('legal_terms_sub')}</small></span>
+            <span className="chev" aria-hidden="true">›</span>
+          </button>
+          <button type="button" className="sheet-row" onClick={() => go('legal', { page: 'news' })}>
+            <span className="si" aria-hidden="true"><SparkIcon /></span>
+            <span><b>{t('legal_news')}</b><small>{t('legal_news_sub', { v: APP_VERSION })}</small></span>
+            <span className="chev" aria-hidden="true">›</span>
+          </button>
+          <p className="legal-version">{t('legal_version', { v: APP_VERSION })}</p>
         </section>
       </main>
     </>

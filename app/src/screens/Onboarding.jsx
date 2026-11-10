@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { useApp } from '../App.jsx'
-import { BrandLogo, Icon, LangSwitch, Wordmark } from '../components/ui.jsx'
+import { BrandLogo, Icon, LangSwitch, Sheet, Wordmark } from '../components/ui.jsx'
+import { LegalText } from '../components/LegalText.jsx'
 import { NAME_MAX, setName } from '../lib/name.js'
 import { fmtNim, fmtPct } from '../lib/format.js'
 import { ConsentStep } from '../components/StatsConsent.jsx'
@@ -75,6 +76,7 @@ export default function Onboarding({ onDone, replay = false }) {
 function NameStep({ onDone }) {
   const { t, walletAddress } = useApp()
   const [value, setValue] = useState('')
+  const [doc, setDoc] = useState(null) // 'terms' | 'privacy': the sheet opened from the agreement line
   const save = (e) => { e.preventDefault(); setName(value); onDone() }
   return (
     <div className="app">
@@ -94,7 +96,9 @@ function NameStep({ onDone }) {
             <button type="submit" className="btn" disabled={!value.trim()}>{t('ob_start')}</button>
             <button type="button" className="btn ghost" onClick={() => { setName(''); onDone() }}>{t('ob_skip')}</button>
           </div>
+          <p className="ob-agree">{t('legal_agree_1')} <button type="button" onClick={() => setDoc('terms')}>{t('legal_agree_terms')}</button> {t('legal_agree_2')} <button type="button" onClick={() => setDoc('privacy')}>{t('legal_agree_privacy')}</button>.</p>
         </form>
+        {doc && <Sheet title={t(`legal_${doc}`)} label={t(`legal_${doc}`)} onClose={() => setDoc(null)}><LegalText page={doc} /></Sheet>}
       </main>
     </div>
   )

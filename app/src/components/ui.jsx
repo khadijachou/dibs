@@ -19,7 +19,7 @@ const PATHS = {
   travel: <><path d="M3 15l7-2 4-9 2 1-2 8 6-1 1 2-7 3-4 4H7l2-4-6 1z" /></>,
   check: <path d="M5 12.5l4.5 4.5L19 7.5" />,
   search: <><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.6-3.6" /></>,
-  tabGoals: <><circle cx="12" cy="12" r="8.5" /><circle cx="12" cy="12" r="4" /></>,
+  tabGoals: <path d="M4 10.5 12 4l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5.5h-5V20H5a1 1 0 0 1-1-1z" />, // house (Home tab)
   tabStake: <><ellipse cx="12" cy="6.5" rx="7" ry="3" /><path d="M5 6.5v5c0 1.7 3.1 3 7 3s7-1.3 7-3v-5" /><path d="M5 11.5v5c0 1.7 3.1 3 7 3s7-1.3 7-3v-5" /></>,
   tabHistory: <><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></>,
   tabProfile: <><circle cx="12" cy="8.5" r="3.8" /><path d="M4.8 20c.9-3.6 3.7-5.6 7.2-5.6s6.3 2 7.2 5.6" /></>,
