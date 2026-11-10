@@ -42,7 +42,7 @@ function wrap(ctx, text, maxWidth) {
   return lines
 }
 
-// chips: optional short labels under the line (prompt 2 adds Level and Rank).
+// chips: short labels under the line: the level and the rank (App.jsx shareBadge).
 export async function drawPoster({ name, badgeId, t, chips = [] }) {
   try {
     await Promise.all(['700 92px Poppins', '600 40px Inter', '400 38px Inter'].map((f) => document.fonts.load(f)))
@@ -145,20 +145,20 @@ function download(blob, filename) {
 // the copy is not awaited before navigator.share, so the share stays inside the tap.
 // Returns 'shared' (navigator.share resolved), 'cancelled' (AbortError), 'fallback' (copy + save + X page ran) or
 // 'failed'. The caller marks Spread the word only for a real share (lib/badges.js shareEarns).
-export async function shareBadge(badgeId, { t, name, toast }) {
+export async function shareBadge(badgeId, { t, name, toast, chips = [] }) {
   try {
     const text = shareText(badgeId, t)
     const copied = copyText(text)
     const filename = `dibs-badge-${badgeId}.png`
     if (canShareFiles()) {
-      const blob = await drawPoster({ name, badgeId, t })
+      const blob = await drawPoster({ name, badgeId, t, chips })
       const file = new File([blob], filename, { type: 'image/png' })
       if (navigator.canShare({ files: [file] })) {
         try { await navigator.share({ files: [file], text }); return 'shared' } catch (e) { if (e?.name === 'AbortError') return 'cancelled' }
       }
     }
     await copied
-    try { download(await drawPoster({ name, badgeId, t }), filename) } catch { /* the text is still copied */ }
+    try { download(await drawPoster({ name, badgeId, t, chips }), filename) } catch { /* the text is still copied */ }
     try { window.open(`https://x.com/intent/post?text=${encodeURIComponent(text)}`, '_blank', 'noopener') } catch { /* blocked */ }
     toast?.(t('share_badge_saved'))
     return 'fallback'

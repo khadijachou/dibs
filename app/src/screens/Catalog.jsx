@@ -68,11 +68,11 @@ export function GiftTile({ brand, big = false, style, onOpen }) {
 // A tile opens the brand sheet; its button starts the goal on Plan (the amount is chosen there).
 // moveFrom: opened from Move > "A new goal"; passed on to Plan and then to the new goal.
 // changeFor: a goal id whose card is no longer available (components/CardIssue.jsx); Plan then swaps that goal's card.
-export default function Catalog({ moveFrom = null, changeFor = null }) {
+export default function Catalog({ moveFrom = null, changeFor = null, chip: initialChip = null }) {
   const { t, go, back, canGoBack } = useApp()
   const reduced = useReducedMotion()
   const brands = catalogBrands()
-  const [chip, setChip] = useState('all')
+  const [chip, setChip] = useState(() => (CHIPS.includes(initialChip) ? initialChip : 'all')) // initial category (Quest of the week)
   const [q, setQ] = useState('')
   const [open, setOpen] = useState(null) // brand key whose sheet is open
   // Search: the start of any word in the brand name, any case ("st": Steam, PlayStation Store, Starbucks; not Best Buy).

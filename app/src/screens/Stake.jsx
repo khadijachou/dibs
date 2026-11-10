@@ -11,6 +11,7 @@ import { fmtEarned, fmtNim } from '../lib/format.js'
 import { goalBrand } from './Home.jsx'
 import { chainReleaseAt, ReleaseClock } from '../components/ReleaseClock.jsx'
 import WeekCard from '../components/WeekCard.jsx'
+import QuestCard from '../components/QuestCard.jsx'
 
 export default function Stake() {
   const { t, lang, address } = useApp()
@@ -51,6 +52,7 @@ export default function Stake() {
         </section>
         {!st && <p className="small">{t('stake_none')}</p>}
         {active.length > 0 && <WeekCard goals={active} />}
+        <QuestCard />
         {unlocking.map((g) => <UnstakingCard key={g.id} goal={g} chainAt={state.releaseAt} retired={stageOf(st, savedNim(g)).current === 'remove'} />)}
       </>
     )

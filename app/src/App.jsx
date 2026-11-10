@@ -27,7 +27,9 @@ import { preloadAvatar } from './components/Avatar.jsx'
 import WelcomeBack from './components/WelcomeBack.jsx'
 import HowItWorks from './components/HowItWorks.jsx'
 import BadgeStamp from './components/BadgeStamp.jsx'
-import { check as checkBadges, setShared, shareEarns } from './lib/badges.js'
+import { check as checkBadges, getBadges, setShared, shareEarns } from './lib/badges.js'
+import { addSharedId, levelOf, rankOf, recordVisit, xpSummary } from './lib/xp.js'
+import { checkQuest } from './lib/quests.js'
 import { shareBadge as sharePoster } from './lib/poster.js'
 import { getName } from './lib/name.js'
 
@@ -142,7 +144,11 @@ export default function App() {
     }
     const ids = await checkBadges({ goals: listGoals(addr), earnedNim: c.value ?? 0 })
     if (ids.length) setStamps((q) => [...q, ...ids.filter((id) => !q.includes(id))])
+    // Quest of the week (lib/quests.js): picked at the first check of the week; a toast the first time it is done.
+    try { if (checkQuest(listGoals(addr)).justDone) toastRef.current?.(tRef.current('quest_done_toast')) } catch { /* display only */ }
   }, [])
+  const toastRef = useRef(null)
+  const tRef = useRef(null)
   const badgeCheckRef = useRef(runBadgeCheck)
   badgeCheckRef.current = runBadgeCheck
 
@@ -185,6 +191,7 @@ export default function App() {
   // and whatever an earlier open could not send. Read only; never waits on anything.
   useEffect(() => {
     if (!ready || !address) return
+    recordVisit() // XP and the weekly rhythm (lib/xp.js): one entry per local day, on this phone only
     if (dailyDue('open')) { track('app_open', { lang }); markDaily('open') } else flush()
     if (!dailyDue('snapshot')) return
     readStaker(address).then((st) => {
@@ -238,12 +245,18 @@ export default function App() {
   // failed); badges already earned stay. Then the badge check runs.
   const shareBadge = useCallback(async (badgeId) => {
     let result = 'failed'
-    try { result = await sharePoster(badgeId, { t, name: getName(), toast }) } finally {
-      if (shareEarns(result)) setShared()
+    // The poster's chips: the current level and rank (lib/xp.js).
+    let chips = []
+    try {
+      const { level } = levelOf(xpSummary({ goals: listGoals(address), badges: getBadges() }).xp)
+      chips = [t('level_n', { n: level }), t(`rank_${rankOf(level).id}`)]
+    } catch { /* poster without chips */ }
+    try { result = await sharePoster(badgeId, { t, name: getName(), toast, chips }) } finally {
+      if (shareEarns(result)) { setShared(); addSharedId(badgeId) }
       runBadgeCheck()
     }
     return result
-  }, [t, toast, runBadgeCheck])
+  }, [t, toast, runBadgeCheck, address])
 
   // Android back button. The page keeps at most two browser entries: a base entry, plus a guard entry on top of it
   // whenever the app has somewhere to go back to. Back pops the guard; the app moves back one screen and puts the
@@ -280,6 +293,8 @@ export default function App() {
     return () => window.removeEventListener('popstate', onPop)
   }, [])
 
+  toastRef.current = toast
+  tRef.current = t
   const ctx = { t, lang, setLang, address, walletAddress, balance, refreshBalance, prices, demo: isDemo(), go, back, reset, toast, showHowTo, canGoBack, blockBack, shareBadge }
 
   // The launch splash leaves (ring completes, then fades) once the next screen is ready to show.

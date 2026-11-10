@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useApp } from '../App.jsx'
 import { Header, Sheet } from '../components/ui.jsx'
 import { Avatar } from '../components/Avatar.jsx'
-import { Medal } from '../components/Badge.jsx'
+import { HEX, Medal } from '../components/Badge.jsx'
 import { listGoals } from '../lib/goals.js'
 import { profileStats } from '../lib/profileStats.js'
 import { stakeSummary } from '../lib/earned.js'
@@ -14,6 +14,8 @@ import { BADGES, GROUPS, getBadges } from '../lib/badges.js'
 import { CLAIM_EMAIL, PROGRAM_END, REWARDS, REWARD_IDS, active as rewardsActive, claimDetails, state as rewardState } from '../lib/rewards.js'
 import { itemLabel } from '../lib/itemName.js'
 import { copyText } from '../lib/clipboard.js'
+import { RANKS, XP } from '../lib/xp.js'
+import { useXp } from '../lib/useXp.js'
 
 const TOTAL = BADGES.length
 const longDate = (d, lang) => new Intl.DateTimeFormat(lang, { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(d)).replace(/ /g, ' ')
@@ -72,6 +74,8 @@ export default function Profile({ badge: askedBadge, badgeAt }) {
   ]
   const earnedList = BADGES.filter((b) => badges[b.id])
   const showRewards = rewardsActive()
+  const xp = useXp(address)
+  const [xpSheet, setXpSheet] = useState(null) // 'ranks' | 'xp'
 
   return (
     <>
@@ -110,6 +114,9 @@ export default function Profile({ badge: askedBadge, badgeAt }) {
           </section>
         )}
 
+        <p className="sub lvl-intro">{t('xp_intro_1')}<br />{t('xp_intro_2')}</p>
+        <LevelCard x={xp} onRanks={() => setXpSheet('ranks')} onHow={() => setXpSheet('xp')} />
+
         <section className="badges">
           <div className="sec-head">
             <h3>{t('badges_title')}</h3>
@@ -131,6 +138,8 @@ export default function Profile({ badge: askedBadge, badgeAt }) {
 
         {showRewards && <RewardsCard badges={badges} goals={goals} onOpen={setSheet} />}
       </main>
+      {xpSheet === 'ranks' && <RanksSheet x={xp} onHow={() => setXpSheet('xp')} onClose={() => setXpSheet(null)} />}
+      {xpSheet === 'xp' && <XpSheet x={xp} onClose={() => setXpSheet(null)} />}
       {sheet && <BadgeSheet id={sheet} badges={badges} goals={goals} onClose={() => setSheet(null)} />}
     </>
   )
@@ -196,14 +205,13 @@ function BadgeSheet({ id, badges, goals, onClose }) {
         <p>{t(`badge_${id}_how`)}</p>
         {!earned && <span className="bsheet-locked">{t('badge_locked')}</span>}
       </div>
-      {(earned || reward) && (
-        <dl className="facts">
-          {earned && <div><dt>{t('badge_earned_on')}</dt><dd>{longDate(rec.at, lang)}</dd></div>}
-          {earned && goal && <div><dt>{t('badge_with')}</dt><dd>{itemLabel(t, goal)}</dd></div>}
-          {earned && next && <div><dt>{t('badge_next')}</dt><dd>{t(`badge_${next.id}`)}</dd></div>}
-          {reward && <div className="rw"><dt>{t('rw_row')}</dt><dd>{t('rw_row_value', { amount })}</dd></div>}
-        </dl>
-      )}
+      <dl className="facts">
+        {earned && <div><dt>{t('badge_earned_on')}</dt><dd>{longDate(rec.at, lang)}</dd></div>}
+        {earned && goal && <div><dt>{t('badge_with')}</dt><dd>{itemLabel(t, goal)}</dd></div>}
+        <div><dt>{t('badge_reward')}</dt><dd>{t('badge_reward_xp')}</dd></div>
+        {earned && next && <div><dt>{t('badge_next')}</dt><dd>{t(`badge_${next.id}`)}</dd></div>}
+        {reward && <div className="rw"><dt>{t('rw_row')}</dt><dd>{t('rw_row_value', { amount })}</dd></div>}
+      </dl>
       {earned && reward ? (
         <>
           <button type="button" className="btn" disabled={st.state === 'wait'} onClick={() => setClaim(true)}>
@@ -233,6 +241,86 @@ function ClaimSheet({ id, amount, goals, onClose }) {
       <pre className="rw-box">{lines.join('\n')}</pre>
       <button type="button" className="btn" onClick={copy}>{t('rw_copy')}</button>
       <p className="small">{t('rw_address_note')} <button type="button" className="txt-link" onClick={() => go('legal', { page: 'rewards' })}>{t('rw_rules')}</button></p>
+    </Sheet>
+  )
+}
+
+// Level card: the level in a coral hexagon, the rank, the XP bar and the next rank. Opens the Ranks sheet.
+function LevelCard({ x, onRanks, onHow }) {
+  const { t } = useApp()
+  const pct = x.need ? Math.min(100, Math.round((x.into / x.need) * 100)) : 0
+  return (
+    <section className="lvl">
+      <button type="button" className="lvl-card" onClick={onRanks}>
+        <span className="lvl-top">
+          <span className="lvl-hex" aria-hidden="true">
+            <svg viewBox="-1 -1 29 26"><path d={HEX} fill="#E8482A" /></svg>
+            <b>{x.level}</b>
+          </span>
+          <span className="lvl-mid">
+            <small>{t('level_rank_small', { n: x.level })}</small>
+            <b>{t(`rank_${x.rank.id}`)}</b>
+          </span>
+          <span className="chev" aria-hidden="true">›</span>
+        </span>
+        <span className="lvl-bar" aria-hidden="true"><i style={{ width: `${pct}%` }} /></span>
+        <span className="lvl-foot">
+          <span>{t('xp_of', { into: x.into, need: x.need })}</span>
+          <span>{x.next ? t('xp_next_rank', { rank: t(`rank_${x.next.id}`), level: x.next.level }) : t('xp_top_rank')}</span>
+        </span>
+      </button>
+      <div className="lvl-row">
+        {x.rhythm.level > 0 && <span className="lvl-pill">{t('rhythm_pill', { pct: x.rhythm.level * 10 })}</span>}
+        <button type="button" className="txt-link" onClick={onHow}>{t('xp_how')}</button>
+      </div>
+    </section>
+  )
+}
+
+function RanksSheet({ x, onHow, onClose }) {
+  const { t } = useApp()
+  return (
+    <Sheet title={t('ranks_title')} onClose={onClose}>
+      <ul className="ranks-list">
+        {RANKS.map((r) => {
+          const you = r.id === x.rank.id
+          const name = t(`rank_${r.id}`)
+          return (
+            <li key={r.id} className={you ? 'you' : undefined}>
+              <span>{you ? t('rank_you', { rank: name }) : name}</span>
+              <b>{t('level_n', { n: r.level })}</b>
+            </li>
+          )
+        })}
+      </ul>
+      <h4 className="ranks-h">{t('rhythm_title')}</h4>
+      <p className="ranks-p">{t('rhythm_body')}</p>
+      <p className="ranks-now">{x.rhythm.level > 0 ? t('rhythm_now', { weeks: x.rhythm.weeks, pct: x.rhythm.level * 10 }) : t('rhythm_none')}</p>
+      <button type="button" className="btn ghost" onClick={onHow}>{t('xp_how')}</button>
+      <button type="button" className="btn ghost" onClick={onClose}>{t('ob_close')}</button>
+    </Sheet>
+  )
+}
+
+const XP_ROWS = [['xp_r_open', XP.open], ['xp_r_add', XP.deposit, 'xp_r_add_note'], ['xp_r_1000', XP.thousand], ['xp_r_milestone', XP.milestone],
+  ['xp_r_quest', XP.quest], ['xp_r_badge', XP.badge], ['xp_r_share', XP.share], ['xp_r_card', XP.card]]
+
+function XpSheet({ x, onClose }) {
+  const { t } = useApp()
+  const list = RANKS.map((r) => `${t(`rank_${r.id}`)} ${r.level}`).join(' · ')
+  return (
+    <Sheet title={t('xp_how')} onClose={onClose}>
+      <p className="ranks-p">{t('xp_sheet_lead', { n: x.level, rank: t(`rank_${x.rank.id}`) })}</p>
+      <dl className="facts">
+        {XP_ROWS.map(([key, n, note]) => (
+          <div key={key}>
+            <dt className="xp-dt">{t(key)}{note && <small> {t(note)}</small>}</dt>
+            <dd>{t('xp_plus', { n })}</dd>
+          </div>
+        ))}
+      </dl>
+      <p className="small">{t('ranks_line', { list })}</p>
+      <button type="button" className="btn ghost" onClick={onClose}>{t('ob_close')}</button>
     </Sheet>
   )
 }

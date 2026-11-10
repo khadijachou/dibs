@@ -864,3 +864,54 @@ a.sheet-row { text-decoration: none; -webkit-tap-highlight-color: transparent; }
 @media (prefers-reduced-motion: reduce) { .bstamp { animation: none; } }
 /* Toasts from inside a sheet (claim details copied) show above it. */
 .toast { z-index: 30; }
+
+/* Levels, XP, ranks, weekly rhythm and the Quest of the week. */
+.lvl-intro { margin: 2px 0 -4px; }
+.lvl { display: flex; flex-direction: column; gap: 8px; }
+.lvl-card { display: flex; flex-direction: column; gap: 10px; width: 100%; text-align: left; font: inherit; color: var(--cream); cursor: pointer;
+  background: var(--card); border: 1px solid #2b2834; border-radius: 20px; padding: 14px 16px;
+  background-image: radial-gradient(90% 120% at 0% 0%, rgba(232, 72, 42, .14), transparent 60%); }
+.lvl-top { display: flex; align-items: center; gap: 12px; }
+.lvl-hex { position: relative; width: 52px; height: 46px; flex-shrink: 0; display: grid; place-items: center; }
+.lvl-hex svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.lvl-hex b { position: relative; font: 700 19px/1 var(--font-display); color: var(--cream); }
+.lvl-mid { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.lvl-mid small { font-size: 12.5px; color: var(--muted); }
+.lvl-mid b { font: 700 20px/1.2 var(--font-display); overflow-wrap: anywhere; }
+.lvl-top .chev { color: var(--muted); font-size: 22px; flex-shrink: 0; }
+.lvl-bar { display: block; height: 8px; border-radius: 4px; background: #2f2c38; overflow: hidden; }
+.lvl-bar i { display: block; height: 100%; border-radius: 4px; background: var(--gold); transition: width .5s ease; }
+.lvl-foot { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 12.5px; color: var(--muted); }
+.lvl-foot span:last-child { text-align: right; }
+.lvl-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.lvl-row .txt-link { margin-left: auto; }
+.lvl-pill { display: inline-flex; align-items: center; padding: 5px 10px; border-radius: 999px; background: rgba(255, 201, 77, .14); color: #FFC94D; font: 600 12.5px var(--font-body); }
+
+.ranks-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.ranks-list li { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; border: 1px solid #2b2834; border-radius: 14px; padding: 11px 14px; background: var(--card); font-size: 14px; }
+.ranks-list li span { min-width: 0; overflow-wrap: anywhere; }
+.ranks-list li b { font-size: 13px; font-weight: 600; color: var(--muted); flex-shrink: 0; }
+.ranks-list li.you { border-color: rgba(232, 72, 42, .55); background: rgba(232, 72, 42, .12); font-weight: 600; }
+.ranks-list li.you b { color: #ff7a5c; }
+.ranks-h { margin: 6px 0 0; font: 600 15px var(--font-display); color: var(--cream); }
+.ranks-p { margin: 0; font-size: 14px; color: #cfcad8; line-height: 1.45; }
+.ranks-now { margin: 0; font-size: 13.5px; font-weight: 600; color: #FFC94D; }
+.facts dt.xp-dt { color: var(--cream); font-size: 13.5px; flex-shrink: 1; min-width: 0; }
+.facts dt.xp-dt small { color: var(--muted); font-size: 12px; }
+
+.quest { display: flex; flex-direction: column; gap: 8px; }
+.quest-card { display: flex; flex-direction: column; gap: 10px; border-radius: 20px; padding: 16px; border: 1.5px solid rgba(255, 201, 77, .28);
+  background: linear-gradient(160deg, #2c2417, #1f1d26); }
+.quest-top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.quest-meta { font: 700 11.5px var(--font-body); letter-spacing: .08em; text-transform: uppercase; color: #FFC94D; }
+.quest-card.done .quest-meta { color: var(--teal); }
+.quest-ends { font-size: 12.5px; color: var(--muted); }
+.quest-name { font: 700 19px/1.25 var(--font-display); color: var(--cream); overflow-wrap: anywhere; }
+.quest-text { margin: 0; font-size: 14px; color: #d9d4df; line-height: 1.45; overflow-wrap: anywhere; }
+.quest-bar { height: 6px; border-radius: 3px; background: #3a3322; overflow: hidden; }
+.quest-bar i { display: block; height: 100%; border-radius: 3px; background: #FFC94D; transition: width .5s ease; }
+.quest-card.done .quest-bar i { background: var(--teal-deep); }
+.btn.quest-btn { height: 48px; font-size: 15px; }
+@media (prefers-reduced-motion: reduce) { .lvl-bar i, .quest-bar i { transition: none; } }
+/* Long sheets scroll: their rows and buttons keep their height instead of shrinking. */
+.sheet > * { flex-shrink: 0; }
