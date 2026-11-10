@@ -716,12 +716,29 @@ a.sheet-row { text-decoration: none; -webkit-tap-highlight-color: transparent; }
    z-index 9: above the tab bar (8), below the toast (10). */
 .wb { position: fixed; inset: 0; z-index: 9; display: grid; place-items: center; background: rgba(21, 20, 26, .55); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); animation: wb-in .3s ease-out; transition: opacity .35s ease-in; cursor: pointer; }
 .wb.out { opacity: 0; }
-.wb-card { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 0 24px; animation: wb-pop .45s cubic-bezier(.2, .8, .2, 1); }
-.wb-text { margin: 0; font: 600 24px/1.25 var(--font-display); color: var(--cream); text-align: center; }
+/* The mark is centred a little above the middle (margin-bottom), and the text hangs under it (absolute), so the mark
+   never moves when line 3 gets its earned sentence. */
+.wb-card { position: relative; margin-bottom: 120px; }
+.wb-mark { position: relative; }
+.wb-mark svg { display: block; overflow: visible; }
+.wb-av { position: absolute; width: 92px; height: 92px; animation: wb-av .45s .1s cubic-bezier(.34, 1.56, .64, 1) both; }
+.wb-ring { animation: wb-draw .6s .4s cubic-bezier(.3, .7, .2, 1) both; }
+.wb-ribbon { animation: wb-drop .55s .8s cubic-bezier(.3, 1.22, .6, 1) both; }
+.wb-lines { position: absolute; top: calc(100% + 18px); left: 50%; transform: translateX(-50%); width: min(340px, calc(100vw - 40px));
+  display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
+.wb-lines p { margin: 0; animation: wb-up .35s ease-out both; }
+.wb-title { font: 700 26px/1.2 var(--font-display); color: var(--cream); animation-delay: 1.15s !important; text-wrap: balance; }
+.wb-kept { font: 600 15px/1.35 var(--font-body); color: #FFC94D; animation-delay: 1.35s !important; }
+.wb-status { font: 400 14.5px/1.45 var(--font-body); color: #c9c6d0; max-width: 290px; animation-delay: 1.55s !important; text-wrap: pretty; }
+.wb-status b { font-weight: 600; color: var(--cream); }
 @keyframes wb-in { from { opacity: 0; } }
-@keyframes wb-pop { from { opacity: 0; transform: translateY(8px) scale(.94); } }
+@keyframes wb-pop { from { opacity: 0; transform: translateY(8px) scale(.94); } } /* the How it works card */
+@keyframes wb-av { from { opacity: 0; transform: scale(.4); } }
+@keyframes wb-draw { from { stroke-dashoffset: var(--len); } to { stroke-dashoffset: 0; } }
+@keyframes wb-drop { from { transform: translateY(var(--drop)); } }
+@keyframes wb-up { from { opacity: 0; transform: translateY(10px); } }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .wb { background: rgba(21, 20, 26, .9); } }
-@media (prefers-reduced-motion: reduce) { .wb, .wb-card { animation: none; } .wb { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .wb, .wb-av, .wb-ring, .wb-ribbon, .wb-lines p { animation: none; } .wb { transition: none; } }
 /* How Dibs works: steps (components/HowSteps.jsx), the first-run pop-up (HowItWorks.jsx) and Home before the first goal */
 .hiw { position: fixed; inset: 0; z-index: 9; display: grid; place-items: center; padding: 20px; background: rgba(21, 20, 26, .6); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); animation: wb-in .3s ease-out; transition: opacity .3s ease-in; }
 .hiw.out { opacity: 0; }

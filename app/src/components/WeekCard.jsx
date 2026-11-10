@@ -9,7 +9,7 @@ import { planOf } from '../lib/pace.js'
 // Savings tab: This week, over every active goal. What to add this week across saving goals to stay on track, how
 // many are on track / behind / late, and Next up: a goal ready to buy, then one at 100% waiting to unlock, then the
 // saving goal closest to done (unlocking goals have their own card on this page). Display only.
-const short = (t, g) => `${goalBrand(g).name} ${detailText(t, g, { short: true })}`
+export const goalShortName = (t, g) => `${goalBrand(g).name} ${detailText(t, g, { short: true })}`
 
 function nextUp(goals) {
   const by = (s) => goals.filter((g) => goalState(g) === s)
@@ -31,7 +31,7 @@ export default function WeekCard({ goals }) {
   // The Add button opens the goal furthest behind, with what it needs this week.
   const first = saving.filter((x) => x.pace.plan.pace.kind !== 'ahead')
     .sort((a, b) => b.pace.lagWeeks - a.pace.lagWeeks || (b.pace.plan.pace.amount || 0) - (a.pace.plan.pace.amount || 0))[0]
-  const item = next ? short(t, next.goal) : ''
+  const item = next ? goalShortName(t, next.goal) : ''
   const nextText = !next ? null
     : next.kind === 'ready' ? t('next_ready', { item })
     : next.kind === 'reached' ? t('next_reached', { item })

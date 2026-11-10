@@ -7,6 +7,7 @@ import { fmtNim, fmtPct } from '../lib/format.js'
 import { ConsentStep } from '../components/StatsConsent.jsx'
 import { Avatar } from '../components/Avatar.jsx'
 import { consent } from '../lib/stats.js'
+import { audioContext } from '../lib/sound.js'
 
 // VF screens 02 to 04: three slides on first run. App.jsx shows them without
 // waiting for the wallet; onDone stores dibs.onboarded. On first run a name step follows the
@@ -77,7 +78,8 @@ function NameStep({ onDone }) {
   const { t, walletAddress } = useApp()
   const [value, setValue] = useState('')
   const [doc, setDoc] = useState(null) // 'terms' | 'privacy': the sheet opened from the agreement line
-  const save = (e) => { e.preventDefault(); setName(value); onDone() }
+  // audioContext() first, inside the tap: the first-run Welcome that follows can then play its sounds.
+  const save = (e) => { audioContext(); e.preventDefault(); setName(value); onDone() }
   return (
     <div className="app">
       <header className="header ob-top">
@@ -94,7 +96,7 @@ function NameStep({ onDone }) {
             placeholder={t('name_placeholder')} value={value} onChange={(e) => setValue(e.target.value)} />
           <div className="bottom">
             <button type="submit" className="btn" disabled={!value.trim()}>{t('ob_start')}</button>
-            <button type="button" className="btn ghost" onClick={() => { setName(''); onDone() }}>{t('ob_skip')}</button>
+            <button type="button" className="btn ghost" onClick={() => { audioContext(); setName(''); onDone() }}>{t('ob_skip')}</button>
           </div>
           <p className="ob-agree">{t('legal_agree_1')} <button type="button" onClick={() => setDoc('terms')}>{t('legal_agree_terms')}</button> {t('legal_agree_2')} <button type="button" onClick={() => setDoc('privacy')}>{t('legal_agree_privacy')}</button>.</p>
         </form>

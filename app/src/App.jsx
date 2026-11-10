@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { startFullscreen } from './lib/fullscreen.js'
+import { initLastVisit, recordEarned } from './lib/lastVisit.js'
 import { connect, getBalanceNim, host, isDemo, listAccountsWithBalance, readStaker } from './lib/nimiq.js'
 import { configureStats, dailyDue, flush, markDaily, snapshotData, track } from './lib/stats.js'
 import { stakeSummary } from './lib/earned.js'
@@ -141,7 +142,10 @@ export default function App() {
     if (c.address !== addr || Date.now() - c.at > 60_000) {
       c.address = addr
       c.at = Date.now()
-      try { c.value = stakeSummary(await readStaker(addr), addr).earned } catch { /* chain unreadable: keep the last figure */ }
+      try {
+        c.value = stakeSummary(await readStaker(addr), addr).earned
+        recordEarned(c.value) // Welcome back: earned since the last visit (lib/lastVisit.js)
+      } catch { /* chain unreadable: keep the last figure */ }
     }
     const ids = await checkBadges({ goals: listGoals(addr), earnedNim: c.value ?? 0 })
     if (ids.length) setStamps((q) => [...q, ...ids.filter((id) => !q.includes(id))])
@@ -161,6 +165,7 @@ export default function App() {
 
   const start = useCallback(async () => {
     setFatal(null)
+    initLastVisit() // the last visit's earned figure, read before this launch writes it
     try {
       await connect()
       startFullscreen() // supported only inside Nimiq Pay; never blocks the start
