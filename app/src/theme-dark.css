@@ -925,7 +925,11 @@ a.sheet-row { text-decoration: none; -webkit-tap-highlight-color: transparent; }
 .set-row.fs-row b { display: block; font-weight: 500; }
 .set-row.fs-row small { display: block; color: var(--muted); font-size: 12.5px; margin-top: 2px; }
 .set-row.fs-row .chev { color: var(--muted); font-size: 20px; }
-html.is-fullscreen { --fs-top: max(env(safe-area-inset-top, 0px), 12px); }
+html.is-fullscreen { --fs-inset: env(safe-area-inset-top, 0px); --fs-top: max(var(--fs-inset), 12px); }
+/* Status bar band: content scrolling up passes under it, not under the clock and the notch. Solid over the inset,
+   then a 12 px fade. Above the content and the tab bar (8), below the badge band (15) and the sheets (30). */
+html.is-fullscreen body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: calc(var(--fs-inset) + 12px); z-index: 12; pointer-events: none;
+  background: linear-gradient(var(--ground) 0, var(--ground) var(--fs-inset), rgba(21, 20, 26, 0) 100%); }
 html.is-fullscreen .header { padding-top: var(--fs-top); padding-right: 60px; }
 html.is-fullscreen .app > .screen:first-child { padding-top: var(--fs-top); } /* screens without the header row */
 html.is-fullscreen .hiw { padding-top: max(env(safe-area-inset-top, 0px), 20px); }
