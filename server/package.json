@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "node --watch --env-file-if-exists=.env src/index.js",
     "start": "node --env-file-if-exists=.env src/index.js",
-    "catalog": "node --env-file-if-exists=.env scripts/catalog.js"
+    "catalog": "node --env-file-if-exists=.env scripts/catalog.js",
+    "test": "node --test src/*.test.js"
   },
   "dependencies": {
     "@hono/node-server": "2.1.5",

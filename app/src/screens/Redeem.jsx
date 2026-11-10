@@ -101,15 +101,18 @@ export default function Redeem({ goalId }) {
   const parsed = parseInvoice(current)
   const expired = apiMode && left === 0 && !unknown // while locked, a new price must not drop the order being checked
   const locked = unknown || !!readPayLock(goal.id)
+  // The order's USD: the shop's price asked again at checkout, or (shop not read) the invoice's sats at the BTC price.
+  // Never the catalogue's price: what is paid is the invoice, and the USD shown must match it.
+  const orderUsd = order?.usd ?? (order?.sats && prices?.btcUsd ? (order.sats / 1e8) * prices.btcUsd : null)
   // In API mode the server tells us the exact sats; in manual mode we compare with the BTC price.
   const check = parsed
     ? apiMode && order?.sats
-      ? { ok: Math.abs(parsed.sats - order.sats) <= 1, invoiceUsd: order.usd }
+      ? { ok: Math.abs(parsed.sats - order.sats) <= 1, invoiceUsd: orderUsd }
       : prices?.btcUsd ? invoiceMatchesPrice({ sats: parsed.sats, btcUsd: prices.btcUsd, expectedUsd: goal.usd }) : null
     : null
   // BUG-08a, display only: the invoice's own USD (the server's quote for this invoice, or its sats at the BTC price
   // in manual mode), in NIM at today's rate. Nimiq Pay does the real conversion, so it reads "about".
-  const invoiceUsd = apiMode ? order?.usd ?? null : check?.invoiceUsd ?? null
+  const invoiceUsd = apiMode ? orderUsd : check?.invoiceUsd ?? null
   const payNim = parsed && invoiceUsd != null && prices?.nimUsd ? usdToNim(invoiceUsd, prices.nimUsd) : null
   const emailBad = !emailOk(email)
 
@@ -190,7 +193,7 @@ export default function Redeem({ goalId }) {
           <CardIssue goal={goal} force />
         ) : apiMode ? (
           <section className="card">
-            <div className="row"><span className="sub">{itemLabel(t, goal)}</span><b>{fmtUsd(order?.usd ?? goal.usd, lang)} USD</b></div>
+            <div className="row"><span className="sub">{itemLabel(t, goal)}</span><b>{fmtUsd(orderUsd ?? goal.usd, lang)} USD</b></div>
             <p className="small plan-note">{t('plan_price_note')}</p>
             {!order && (
               <>

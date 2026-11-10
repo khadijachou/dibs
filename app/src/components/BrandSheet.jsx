@@ -46,7 +46,7 @@ export default function BrandSheet({ brand, onClose, onPick }) {
                 <b>{detailText(t, it, { short: true })}</b>
                 {prices && it.usd != null && (
                   <span className={it.live === false ? 'est' : undefined}>
-                    {t('bs_nim', { nim: fmtNim(usdToNim(it.usd, prices.nimUsd), lang) })}
+                    {it.live === false ? '≈ ' : ''}{t('bs_nim', { nim: fmtNim(usdToNim(it.usd, prices.nimUsd), lang) })}
                   </span>
                 )}
               </div>

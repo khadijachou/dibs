@@ -9,8 +9,15 @@ export const mcpEnabled = () => Boolean(CLIENT_ID && CLIENT_SECRET)
 
 let token = null // { value, expiresAt }
 
-async function getToken() {
-  if (token && Date.now() < token.expiresAt - 60_000) return token.value
+// One token request at a time: a burst of calls (the catalogue) shares the same renewal.
+let tokenRequest = null
+function getToken() {
+  if (token && Date.now() < token.expiresAt - 60_000) return Promise.resolve(token.value)
+  tokenRequest ??= requestToken().finally(() => { tokenRequest = null })
+  return tokenRequest
+}
+
+async function requestToken() {
   const body = new URLSearchParams({
     grant_type: 'client_credentials',
     scope: 'mcp',

@@ -8,6 +8,7 @@ import { randomBytes, timingSafeEqual } from 'node:crypto'
 import { bitrefillEnabled, createLightningInvoice, getInvoice, getProduct } from './bitrefill.js'
 import { adminStats, countCatalogFallback, forget, intake, publicStats, statsEnabled } from './stats.js'
 import { adminPage, statsPage } from './pages.js'
+import { createPriceBook, priceOf } from './prices.js'
 
 // What Dibs sells: server/catalog.json, managed with `npm run catalog`.
 // Read again whenever the file changes, so new items show after a page reload.
@@ -49,22 +50,9 @@ async function saveInvoices() {
   await writeFile(DATA_FILE, JSON.stringify(invoices, null, 2))
 }
 
-// Live prices, cached 5 minutes per product slug.
-const priceCache = new Map()
-async function priceFor(item) {
-  const hit = priceCache.get(item.slug)
-  let product = hit && Date.now() - hit.at < 5 * 60_000 ? hit.product : null
-  if (!product && bitrefillEnabled()) {
-    try {
-      product = await getProduct(item.slug)
-      priceCache.set(item.slug, { product, at: Date.now() })
-    } catch (e) {
-      console.error('price lookup failed:', item.slug, e.message)
-    }
-  }
-  const pkg = product?.packages.find((p) => p.value === item.packageValue)
-  return { usd: pkg ? pkg.price : item.fallbackUsd, live: Boolean(pkg), inStock: product ? product.inStock : true }
-}
+// Live prices: one shop lookup per product, cached 5 minutes, last good answer kept 24 h (src/prices.js).
+const prices = createPriceBook({ getProduct, enabled: bitrefillEnabled, log: (slug, e) => console.error('price lookup failed:', slug, e.message) })
+const priceFor = async (item, opts) => priceOf(item, await prices.product(item.slug, opts))
 
 app.get('/api/health', (c) => c.json({ ok: true, bitrefill: bitrefillEnabled() }))
 
@@ -72,7 +60,7 @@ app.get('/api/catalog', async (c) => {
   const items = catalog()
   const out = await Promise.all(items.map(async (i) => {
     const p = await priceFor(i)
-    return { id: i.id, name: i.name, detail: i.detail, icon: i.icon, faceValue: i.packageValue, usd: p.usd, live: p.live, inStock: p.inStock, shopUrl: `https://www.bitrefill.com/${i.slug}/` }
+    return { id: i.id, name: i.name, detail: i.detail, icon: i.icon, faceValue: i.packageValue, usd: p.usd, live: p.live, sold: p.sold, inStock: p.inStock, shopUrl: `https://www.bitrefill.com/${i.slug}/` }
   }))
   if (out.some((i) => !i.live)) countCatalogFallback() // admin view: daily count of answers with fallback prices
   return c.json(out)
@@ -92,8 +80,11 @@ app.post('/api/redeem', async (c) => {
     const orderToken = randomBytes(16).toString('hex')
     invoices[inv.invoiceId] = { token: inv.accessToken, orderToken, itemId, createdAt: new Date().toISOString() }
     await saveInvoices()
-    const p = await priceFor(item)
-    return c.json({ orderId: inv.invoiceId, orderToken, invoice: inv.invoice, sats: inv.sats, usd: p.usd, expiresAt: inv.expiresAt })
+    // The amount paid is the shop's invoice (sats). The USD shown next to it is the shop's price asked again now,
+    // never the catalogue's cache: null when the shop cannot be read, and the app then shows the invoice in USD.
+    const p = await priceFor(item, { fresh: true })
+    const fresh = p.live && p.pricedAt && Date.now() - Date.parse(p.pricedAt) < 60_000
+    return c.json({ orderId: inv.invoiceId, orderToken, invoice: inv.invoice, sats: inv.sats, usd: fresh ? p.usd : null, expiresAt: inv.expiresAt })
   } catch (e) {
     console.error('redeem failed:', e.message)
     return c.json({ error: 'Could not create the order' }, 502)

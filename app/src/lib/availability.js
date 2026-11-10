@@ -2,14 +2,11 @@
 // saved NIM; a goal's NIM stays in its ledger whatever happens to its card.
 import { catalogFromServer, getCatalog } from './catalog.js'
 
-const slugOf = (item) => (item?.shopUrl || '').split('/').filter(Boolean).pop() || ''
-
-// "live": false on /api/catalog means the server has no shop quote for that value: either the shop lookup failed
-// (then every value of the product is live: false) or the shop has the product but does not sell that value
-// (other values of the same product are live: true). The second case cannot be bought: the order would ask the shop
-// for a package it does not have. Example (9 Nov): Riot Access "24.99" (the shop's package is "25", priced 24.99).
-export const notSold = (item, items = getCatalog()) =>
-  item?.live === false && items.some((o) => o !== item && o.live === true && slugOf(o) === slugOf(item))
+// A value the shop does not sell: the server read the shop's list and this value is not in it (sold: false).
+// Example (9 Nov): Riot Access "24.99" (the shop's package is "25", priced 24.99). It cannot be bought: the order
+// would ask the shop for a package it does not have. live: false alone (no shop answer) never hides a value:
+// on 10 Nov failed lookups hid Steam 20 and 50 USD. That value shows with ≈ and "Price confirmed at checkout".
+export const notSold = (item) => item?.sold === false
 
 // 'ok' | 'gone' (removed from the catalogue, or a value the shop does not sell) | 'out' (out of stock) |
 // null (unknown: the catalogue did not come from the server, so nothing is judged).
