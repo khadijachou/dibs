@@ -38,6 +38,9 @@ function classifyKey(err, ctx) {
   if (type === 'PERMISSION_DENIED') return ctx === 'pay' ? 'PAY_CANCELLED' : 'DEP_CANCELLED'
   if (type === 'DUPLICATE_PAYMENT') return 'PAY_DUPLICATE'
   if (type === 'TRANSACTION_OUTCOME_UNKNOWN') return 'PAY_UNKNOWN'
+  // Nimiq Pay keeps an earlier request open (9 Nov: a refused Retire stayed "pending") and refuses the next one
+  // with INTERNAL_ERROR "A transaction is still pending". Not a release problem: say so.
+  if (ctx === 'unlock' && /still pending/i.test(`${err?.message || ''} ${err?.error?.message || ''}`)) return 'UNL_WALLET_PENDING'
   // Staking refusals: codes not known yet (record them on the mainnet run).
   if (ctx === 'unlock' && type) return 'UNL_NOT_RELEASED'
   if (err?.apiError) return err.apiError
@@ -55,6 +58,11 @@ const SIM = {
   PAY_UNKNOWN: { ctx: 'pay', type: 'TRANSACTION_OUTCOME_UNKNOWN' },
   PAY_DUPLICATE: { ctx: 'pay', type: 'DUPLICATE_PAYMENT' },
   UNL_NOT_RELEASED: { ctx: 'unlock', type: 'INVALID_TRANSACTION' },
+  UNL_WALLET_PENDING: { ctx: 'unlock', type: 'INTERNAL_ERROR', message: 'A transaction is still pending' },
+  // Not an error: the demo wallet's next Stop staking (or a staker already unlocking) gets a release 12 h away,
+  // so the "waiting" state can be checked (Get my card disabled, Retire never opens Nimiq Pay). Read by
+  // lib/mockProvider.js and kept until ?sim=off.
+  UNL_WAITING: { ctx: 'none' },
   GENERIC: { ctx: 'deposit', type: 'SOMETHING_NEW' },
   SHOP_LIMIT: { ctx: 'invoice', api: 'SHOP_LIMIT' },
   SRV_DOWN: { ctx: 'invoice', api: 'SRV_DOWN' },
@@ -74,6 +82,6 @@ export function simulated(ctx) {
   try { localStorage.removeItem(SIM_KEY) } catch { /* ignore */ }
   const e = new Error(`Simulated ${key}`)
   if (s.api) e.apiError = s.api
-  else e.error = { type: s.type, message: `Simulated ${key}` }
+  else e.error = { type: s.type, message: s.message || `Simulated ${key}` }
   throw e
 }

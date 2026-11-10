@@ -21,6 +21,8 @@ import { track } from '../lib/stats.js'
 import { txHash } from '../lib/history.js'
 import { MilestoneLine, useGoalMilestone } from '../components/Milestone.jsx'
 import { GoalDot, GoalStatus } from '../components/GoalStatus.jsx'
+import { getUnlockState, settleGoal } from '../lib/unlockFlow.js'
+import { readyTimeText } from '../components/ReleaseClock.jsx'
 
 const parseNim = (v) => Math.floor(Number(String(v).replace(/[^\d.]/g, ''))) || 0
 
@@ -131,6 +133,24 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
   // Get my card: the card flips (display only), then the pay screen opens exactly as before.
   const flip = useCardFlip(() => go('redeem', { goalId }))
   useBlockBack(busy) // Android back waits while Nimiq Pay has the deposit open
+
+  // Unlock resumes from the chain (E11): steps done in the Lab, an app closed half way, refused txs. The saved
+  // status follows the chain, and Get my card stays disabled while the NIM is not released yet.
+  const [unlockSt, setUnlockSt] = useState(null)
+  const unlockable = Boolean(goal) && (goal.status === 'unlocking' || goal.status === 'ready' || (goal.status === 'saving' && saved >= goal.targetNim))
+  useEffect(() => {
+    if (!unlockable) { setUnlockSt(null); return undefined }
+    let live = true
+    const read = () => getUnlockState(getGoal(address, goalId), address).then((us) => {
+      if (!live || !alive.current) return
+      setUnlockSt(us)
+      const { goal: g } = settleGoal(address, getGoal(address, goalId), us)
+      if (g) setGoal(g)
+    }).catch(() => { /* chain unreadable: the Unlock screen says so; no state guessed here */ })
+    read()
+    const id = setInterval(read, 60_000)
+    return () => { live = false; clearInterval(id) }
+  }, [address, goalId, unlockable, goal?.status]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!goal) return null
   const reached = saved >= goal.targetNim
@@ -389,7 +409,9 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
             <button type="button" className="btn mint" onClick={() => go('unlock', { goalId: goal.id, mode: 'withdraw' })}>{t('manage_back')}</button>
           )}
           {((goal.status === 'unlocking' && !withdrawing) || (goal.status === 'saving' && reached)) && (
-            <button type="button" className="btn gold" onClick={() => go('unlock', { goalId: goal.id })}>{t('goal_unlock')}</button>
+            unlockSt?.state === 'waiting' && unlockSt.releaseAt != null
+              ? <button type="button" className="btn waiting" disabled>{t('goal_card_ready_at', { time: readyTimeText(unlockSt.releaseAt, lang) })}</button>
+              : <button type="button" className="btn gold" onClick={() => go('unlock', { goalId: goal.id })}>{t('goal_unlock')}</button>
           )}
           {goal.status === 'ready' && !goalCardIssue(goal) && (
             <button type="button" className="btn gold" onClick={flip.start}>{t('goal_buy', { name: itemName(t, goal) })}</button>

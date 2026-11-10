@@ -19,6 +19,7 @@ Env (never commit real values; `.env` files and `server/data/` are git-ignored):
 ## Where things are (app/src)
 
 - `lib/nimiq.js`: the only place that talks to Nimiq Pay. `connect()` (falls back to the demo wallet outside Nimiq Pay), `listAccountsWithBalance`, `getBalanceNim` (waits for consensus), `readStaker` (strict) / `getStaker` (never throws), `stakeNim`, `unlock.deactivate/retire/remove`, `payInvoice`.
+- `lib/unlock.js` (pure rules) + `lib/unlockFlow.js`: `getUnlockState(goal)` → stake / waiting / ready / remove / pay from the chain only; `sendUnlockStep` re-reads it right before every send (no Retire before the release block, Remove = whole retired balance); `settleGoal` aligns the saved status. Every unlock screen resumes from it.
 - `lib/deposit.js`: one-tap deposit with a pending lock (`dibs:pending` in localStorage) and chain confirmation.
 - `lib/goals.js`: goal ledger in localStorage (`dibs.goals.<address>`), `adoptGoals` merges goals saved under any address on the device.
 - `lib/stats.js`: usage stats with consent (`track`, outbox, backfill, delete); `lib/profileStats.js`: Profile and Stake numbers from the ledger.
@@ -51,6 +52,6 @@ Server only (`server/src/mcp.js`, `server/src/bitrefill.js`). Client credentials
 - Every error notice says what happened, whether NIM moved, what to do. Tones: info white, wait white + spinner, stop red (money attention), ok mint. Coral is never an error colour.
 - Copy: plain words, no em dashes, no exclamation marks except "Dibs!". en is the source; every new key goes to fr (Quebec: vous, courriel, carte-cadeau) and es (neutral, tú) with the same key.
 - Brand: coral `#E8482A` (action, progress), ink `#23212B`, cream `#FFF6EC`, mint `#15896A`, butter `#FFC94D` (on ink or coral only), red `#B42318`; Poppins 600/700, Inter 400 to 600.
-- Test every change in demo mode (desktop browser) with `?sim=KEY` where it applies (`DEP_CANCELLED`, `DEP_SENT_ERROR`, `PAY_UNKNOWN`, `PAY_CANCELLED`, `PAY_DUPLICATE`, `UNL_NOT_RELEASED`, `SHOP_LIMIT`, `SRV_DOWN`, `GENERIC`), then on mainnet inside Nimiq Pay.
+- Test every change in demo mode (desktop browser) with `?sim=KEY` where it applies (`DEP_CANCELLED`, `DEP_SENT_ERROR`, `PAY_UNKNOWN`, `PAY_CANCELLED`, `PAY_DUPLICATE`, `UNL_NOT_RELEASED`, `UNL_WALLET_PENDING`, `UNL_WAITING` (demo release 12 h away, kept until `?sim=off`), `SHOP_LIMIT`, `SRV_DOWN`, `GENERIC`), then on mainnet inside Nimiq Pay.
 - Never commit `.env`, `server/data/`, secrets, emails or gift card codes.
 - Stats: consent first; never a name, email, code or address; anonId stored hashed; tx hashes checked once then deleted.

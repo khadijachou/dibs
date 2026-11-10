@@ -8,6 +8,7 @@ import { findItem, refreshCatalog } from '../lib/catalog.js'
 import { goalCardIssue } from '../lib/availability.js'
 import { CardIssue } from '../components/CardIssue.jsx'
 import { isDemo, payInvoice } from '../lib/nimiq.js'
+import { getUnlockState, settleGoal } from '../lib/unlockFlow.js'
 import { invoiceMatchesPrice, parseInvoice } from '../lib/invoice.js'
 import { usdToNim } from '../lib/price.js'
 import { config } from '../lib/config.js'
@@ -53,6 +54,19 @@ export default function Redeem({ goalId }) {
 
   // The lock goes away once the goal is redeemed (only on a confirmed outcome or a redeemed goal).
   useEffect(() => { if (goal?.status === 'redeemed') clearPayLock(goalId) }, [goal?.status, goalId])
+
+  // Get my card resumes from the chain: if NIM is still inactive or retired, the goal goes back to its unlock step.
+  // Never while a payment is locked or an invoice is open (the payment may already have spent the NIM).
+  useEffect(() => {
+    if (goal?.status !== 'ready' || readPayLock(goalId) || order) return undefined
+    let live = true
+    getUnlockState(goal, address).then((us) => {
+      if (!live) return
+      const { goal: g } = settleGoal(address, getGoal(address, goalId), us)
+      if (g && g.status !== 'ready') reset('goal', { goalId })
+    }).catch(() => { /* chain unreadable: the payment flow stays as it is */ })
+    return () => { live = false }
+  }, [goalId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // The shop is the truth: confirmed paid = goal redeemed, lock removed, go to Done.
   const lockedOrderId = unknown ? (readPayLock(goalId)?.orderId || order?.orderId || null) : null // the order paid with an unknown outcome

@@ -1,12 +1,13 @@
 // Lab: one button per check from the build plan. Open with #lab in the URL.
 // Every call and its result goes into the log; Copy it and paste it in Discord.
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useApp } from '../App.jsx'
 import { config, toLuna, toNim } from '../lib/config.js'
 import { listAccountsWithBalance, connect, describeError, getBalanceNim, getBlockNumber, getStaker, readStaker, host, isDemo, payInvoice, unlock } from '../lib/nimiq.js'
 import { parseInvoice } from '../lib/invoice.js'
 import { getPrices } from '../lib/price.js'
 import { api } from '../lib/api.js'
+import { releaseBlockOf } from '../lib/release.js'
 
 export default function Lab() {
   const { address } = useApp()
@@ -23,6 +24,23 @@ export default function Lab() {
   const [orderToken, setOrderToken] = useState(null)
   const [paidAt, setPaidAt] = useState(null)
 
+  // Release figures for section 3, read from the chain. The Lab's Retire and Remove stay ungated on purpose
+  // (they test the chain's own refusals), so it says plainly when a send will be refused.
+  const [rel, setRel] = useState(null)
+  const readRel = useCallback(async () => {
+    try {
+      const [st, block] = await Promise.all([readStaker(address), getBlockNumber()])
+      const from = Number(st?.inactiveFrom)
+      setRel({
+        block: Number(block),
+        inactive: toNim(st?.inactiveBalance ?? 0),
+        retired: toNim(st?.retiredBalance ?? 0),
+        releaseBlock: from > 0 && Number(st?.inactiveBalance) > 0 ? releaseBlockOf(from) : null,
+      })
+    } catch (e) { setRel({ error: describeError(e).message }) }
+  }, [address])
+  useEffect(() => { readRel() }, [readRel])
+
   const write = (label, data) =>
     setLog((l) => [...l, `[${new Date().toISOString().slice(11, 19)}] ${label}: ${typeof data === 'string' ? data : JSON.stringify(data)}`])
 
@@ -36,6 +54,7 @@ export default function Lab() {
       write(`${label} ERROR`, describeError(e))
     } finally {
       setBusy(false)
+      readRel()
     }
   }
 
@@ -172,6 +191,21 @@ export default function Lab() {
       <section className="card">
         <h2>3. Unlock sequence</h2>
         <p className="small">Run in order with the amount above. If a step is refused, note the error and the block height, then retry later to measure the wait.</p>
+        {rel?.error && <p className="small">Release: could not read the chain ({rel.error})</p>}
+        {rel && !rel.error && (
+          <p className="small">
+            Current block {rel.block.toLocaleString('en')} · release block {rel.releaseBlock != null ? rel.releaseBlock.toLocaleString('en') : 'none (nothing inactive)'}
+            {' '}· inactive {rel.inactive} NIM · retired {rel.retired} NIM
+          </p>
+        )}
+        {rel?.releaseBlock != null && rel.block < rel.releaseBlock && (
+          <p className="small" style={{ color: '#B42318', fontWeight: 600 }}>
+            Not released yet: this will be refused ({(rel.releaseBlock - rel.block).toLocaleString('en')} blocks to go)
+          </p>
+        )}
+        <div className="btns" style={{ marginBottom: 8 }}>
+          <button type="button" className="btn small ghost" disabled={busy} onClick={readRel}>Read release</button>
+        </div>
         <div className="btns">
           <button type="button" className="btn small" disabled={busy} onClick={checks.deactivate}>1. Deactivate</button>
           <button type="button" className="btn small" disabled={busy} onClick={checks.retire}>2. Retire</button>

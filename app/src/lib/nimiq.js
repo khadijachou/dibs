@@ -139,12 +139,39 @@ export async function stakeNim({ nim, hasStaker, validator = config.defaultValid
   return tx
 }
 
-// Unlock is three protocol steps. Waiting times between them are check 3.
+// Unlock is three protocol steps. These are the raw sends, no checks: the app goes through
+// lib/unlockFlow.js (sendUnlockStep re-reads the chain and refuses an early Retire or Remove).
+// Only the Lab calls these directly, to test the chain's own refusals.
 const sim = (fn) => (...a) => { if (demo) simulated('unlock'); return fn(...a) }
 export const unlock = {
-  deactivate: (newActiveNim) => provider.sendSetActiveStakeTransaction({ newActiveBalance: toLuna(newActiveNim) }),
+  deactivate: sim((newActiveNim) => provider.sendSetActiveStakeTransaction({ newActiveBalance: toLuna(newActiveNim) })),
   retire: sim((nim) => provider.sendRetireStakeTransaction({ retireStake: toLuna(nim) })),
-  remove: (nim) => provider.sendRemoveStakeTransaction({ value: toLuna(nim) }),
+  remove: sim((nim) => provider.sendRemoveStakeTransaction({ value: toLuna(nim) })),
+}
+
+// A hash is not a success: a tx can be included and still fail (9 Nov: Retire before the release, fee 0).
+// Polls getTransactionByHash until the tx shows with its executionResult.
+// 'ok' | 'refused' (included, executionResult false) | 'unknown' (not seen within maxMs) | 'cancelled'.
+export async function txOutcome(hash, { everyMs = 5000, maxMs = 120_000, isCancelled } = {}) {
+  if (!hash) return 'unknown'
+  const end = Date.now() + maxMs
+  for (;;) {
+    if (isCancelled?.()) return 'cancelled'
+    try {
+      const res = await provider.request({ method: 'getTransactionByHash', params: [hash] })
+      const tx = res?.data ?? res
+      if (tx && typeof tx === 'object' && 'executionResult' in tx) return tx.executionResult ? 'ok' : 'refused'
+    } catch { /* not included yet, or an RPC hiccup: ask again */ }
+    if (Date.now() + everyMs > end) return 'unknown'
+    await new Promise((r) => setTimeout(r, everyMs))
+  }
+}
+
+// Spendable NIM over every shared address (the funded HTLC address changes over time). null when unreadable.
+export async function walletNim() {
+  const list = await listAccountsWithBalance()
+  if (list.some((a) => a.nim == null)) return null
+  return list.reduce((s, a) => s + a.nim, 0)
 }
 
 // Pays a fixed-amount BOLT11 invoice. The user picks NIM or USDT in Nimiq Pay.
