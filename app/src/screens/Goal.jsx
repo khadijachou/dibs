@@ -13,6 +13,7 @@ import { fmtDate, fmtNim, fmtUsd, weeksUntil } from '../lib/format.js'
 import { findItem } from '../lib/catalog.js'
 import { DeleteSheet, ManageSheet, MoveSheet } from './GoalManage.jsx'
 import { useCountUp } from '../lib/useCountUp.js'
+import { useDuplicateText } from '../components/useDuplicateText.js'
 import { CardFlip, GiftFace, useCardFlip } from '../components/CardFlip.jsx'
 import { CardIssue } from '../components/CardIssue.jsx'
 import { goalCardIssue, payLockedFor } from '../lib/availability.js'
@@ -156,6 +157,10 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
     return () => { live = false; clearInterval(id) }
   }, [address, goalId, unlockable, goal?.status]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // An empty goal next to another open goal for the same card (a duplicate after a recovery): offer to delete it.
+  const twin = goal && goal.status === 'saving' && saved === 0 ? openGoalFor(listGoals(address).filter((g) => g.id !== goal.id), goal.itemId) : null
+  const twinText = useDuplicateText('merge', twin)
+
   if (!goal) return null
   const reached = saved >= goal.targetNim
   const pct = progress(goal)
@@ -176,8 +181,6 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
   // Manage (⋯): saving goals, and any goal with 0 NIM and no unlock in progress (Delete). Only this goal's own
   // pending deposit or pay lock closes it.
   const canManage = (goal.status === 'saving' || deletable(goal)) && !(pend && pend.goalId === goal.id) && !payLockedFor(goal.id)
-  // An empty goal next to another open goal for the same card (a duplicate after a recovery): offer to delete it.
-  const twin = goal.status === 'saving' && saved === 0 ? openGoalFor(listGoals(address).filter((g) => g.id !== goal.id), goal.itemId) : null
   const empty = goal.status === 'saving' && saved === 0 && (goal.deposits.length > 0 || Boolean(twin)) && canManage
   // Add only while there is something to add; a goal at 100 % or past saving shows Details.
   const adding = mode === 'add' && goal.status === 'saving' && !reached
@@ -387,7 +390,9 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
         {reached && goal.status === 'saving' && <div className="ok">{t('goal_reached')}</div>}
         {goal.status === 'ready' && <div className="ok">{t('goal_ready')}</div>}
         {empty && (
-          <div className="empty-row"><span>{twin ? t('goal_duplicate') : t('goal_empty')}</span><button type="button" className="link-danger" onClick={() => setSheet('delete')}>{t('manage_delete')}</button></div>
+          twin
+            ? <Notice tone="info" title={twinText} actions={[{ label: t('change_exists_open'), onClick: () => go('goal', { goalId: twin.id }) }, { label: t('manage_delete'), onClick: () => setSheet('delete') }]} />
+            : <div className="empty-row"><span>{t('goal_empty')}</span><button type="button" className="link-danger" onClick={() => setSheet('delete')}>{t('manage_delete')}</button></div>
         )}
         {goal.status === 'withdrawn' && (
           <>

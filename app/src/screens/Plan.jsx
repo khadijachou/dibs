@@ -12,6 +12,10 @@ import { playPop } from '../lib/sound.js'
 import { addDays, fmtDate, fmtNim, fmtUsd } from '../lib/format.js'
 import { useCountUp } from '../lib/useCountUp.js'
 import { track } from '../lib/stats.js'
+import { getUnlockState } from '../lib/unlockFlow.js'
+import { duplicateMessage, duplicateText, needsChainRead } from '../lib/duplicate.js'
+import { useDuplicateText } from '../components/useDuplicateText.js'
+import { readyTimeText } from '../components/ReleaseClock.jsx'
 
 // BUG-17: an item with live: false has no shop quote; its usd is the catalogue's stored placeholder.
 // Its target gets a 10 % safety margin so the user does not fall short when the shop confirms the price.
@@ -43,6 +47,9 @@ export default function Plan({ brandKey, itemId, moveFrom = null, changeFor = nu
   useEffect(() => { const id = setInterval(() => setNow(Date.now()), 30000); return () => clearInterval(id) }, [])
 
   const item = amounts.find((i) => i.id === pickedId) || amounts[0]
+  // One open goal per card: Change card never moves a goal onto a card another open goal already has.
+  const taken = changing && item ? cardTakenBy(listGoals(address), item.id, changing.id) : null
+  const takenText = useDuplicateText('change', taken)
   // Display only: null until prices load, so the first real target appears without counting from 0.
   const targetShown = useCountUp(item && prices ? usdToNim(targetUsdOf(item), prices.nimUsd) : null)
   if (!item) return null
@@ -59,8 +66,6 @@ export default function Plan({ brandKey, itemId, moveFrom = null, changeFor = nu
   const ago = mins < 1 ? t('ago_now') : t('ago_min', { n: mins })
   const b = brand || brandOf(item)
 
-  // One open goal per card: Change card never moves a goal onto a card another open goal already has.
-  const taken = changing ? cardTakenBy(listGoals(address), item.id, changing.id) : null
   const switchCard = () => {
     const g = getGoal(address, changing.id)
     if (!g || payLockedFor(g.id) || cardTakenBy(listGoals(address), item.id, g.id)) return
@@ -72,7 +77,13 @@ export default function Plan({ brandKey, itemId, moveFrom = null, changeFor = nu
   const create = () => {
     // One open goal per card (10 Nov: a goal created again after a reinstall sat next to the recovered one at 0 %).
     const existing = openGoalFor(listGoals(address), item.id)
-    if (existing) { toast(t('goal_exists')); reset('goal', { goalId: existing.id }); return }
+    if (existing) {
+      reset('goal', { goalId: existing.id })
+      // The message follows that goal's unlock on the chain; unreadable chain: the plain message.
+      const say = (us) => toast(duplicateText(t, existing, duplicateMessage('new', existing, us), (ms) => readyTimeText(ms, lang)))
+      if (needsChainRead(existing)) getUnlockState(existing, address).then(say, () => say(null)); else say(null)
+      return
+    }
     playPop() // the Dibs! stamp, from this tap
     const goal = createGoal(address, { item, targetNim, deadline, brand: b, nimUsd: prices.nimUsd })
     track('goal_created', { goalId: goal.id, brand: b?.key || undefined, itemId: item.id, usd: item.usd, weeks })
@@ -134,7 +145,7 @@ export default function Plan({ brandKey, itemId, moveFrom = null, changeFor = nu
         </div>
         <div className="bottom">
           {changing && taken && (
-            <Notice tone="info" title={t('change_exists')} actions={[{ label: t('change_exists_open'), onClick: () => reset('goal', { goalId: taken.id }) }]} />
+            <Notice tone="info" title={takenText} actions={[{ label: t('change_exists_open'), onClick: () => reset('goal', { goalId: taken.id }) }]} />
           )}
           {changing
             ? <button type="button" className="btn tall" disabled={Boolean(taken)} onClick={switchCard}>{t('change_cta')}<small>{t('change_cta_sub')}</small></button>
