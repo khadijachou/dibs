@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { startFullscreen } from './lib/fullscreen.js'
 import { initLastVisit, recordEarned } from './lib/lastVisit.js'
+import { playTing } from './lib/sound.js'
 import { connect, getBalanceNim, host, isDemo, listAccountsWithBalance, readStaker } from './lib/nimiq.js'
 import { configureStats, dailyDue, flush, markDaily, snapshotData, track } from './lib/stats.js'
 import { stakeSummary } from './lib/earned.js'
@@ -150,7 +151,7 @@ export default function App() {
     const ids = await checkBadges({ goals: listGoals(addr), earnedNim: c.value ?? 0 })
     if (ids.length) setStamps((q) => [...q, ...ids.filter((id) => !q.includes(id))])
     // Quest of the week (lib/quests.js): picked at the first check of the week; a toast the first time it is done.
-    try { if (checkQuest(listGoals(addr)).justDone) toastRef.current?.(tRef.current('quest_done_toast')) } catch { /* display only */ }
+    try { if (checkQuest(listGoals(addr)).justDone) { toastRef.current?.(tRef.current('quest_done_toast')); playTing() } } catch { /* display only */ }
   }, [])
   const toastRef = useRef(null)
   const tRef = useRef(null)

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useApp } from '../App.jsx'
 import { Medal } from './Badge.jsx'
+import { playTing } from '../lib/sound.js'
 
 // "Badge earned" band: one new badge at a time, 4 s, fixed under the header. Tap (or Share) opens Profile on that
 // badge's sheet, where the share hint is. Never shown over a Nimiq Pay request (blockBack) nor over the "Dibs!" stamp
@@ -20,6 +21,7 @@ export default function BadgeStamp({ id, isBlocked, onDone }) {
       if (isBlocked()) { timer = setTimeout(tryShow, 1000); return }
       if (dibsStampOn()) { timer = setTimeout(tryShow, 250); return }
       setShown(id)
+      playTing()
       timer = setTimeout(() => { setShown(null); onDone() }, SHOW_MS)
     }
     timer = setTimeout(tryShow, FIRST_LOOK_MS)

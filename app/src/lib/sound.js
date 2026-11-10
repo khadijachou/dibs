@@ -249,3 +249,128 @@ export function playWelcome({ first = false, reduced = false, since = performanc
   } catch { /* no audio: stay silent */ }
   return handle
 }
+
+// ---- Small sounds: NIM added, milestone, goal complete, badge / quest -------------------------------------------------
+// Same rules as playReveal (shared context, 'ambient', silent when dibs.sound === 'off', never throws, never awaited),
+// but they never unlock audio themselves: they play only when a tap in this session already did (the shared context
+// exists and is running). Otherwise silent.
+function unlockedContext() {
+  if (!shared || shared.state !== 'running') return null
+  if (navigator.userActivation && !navigator.userActivation.hasBeenActive) return null
+  return shared
+}
+
+// One note: oscillator -> envelope (exponential attack, then decay to silence by `decay` s after `at`) -> out.
+// tremolo: [rate Hz, depth 0..1] for the shimmer. Returns when it ends.
+function note(ctx, out, at, { f, f1 = null, glide = 0, type = 'sine', peak, attack, decay, tremolo = null }) {
+  const o = ctx.createOscillator()
+  const g = ctx.createGain()
+  o.type = type
+  o.frequency.setValueAtTime(f, at)
+  if (f1) o.frequency.exponentialRampToValueAtTime(f1, at + glide)
+  g.gain.setValueAtTime(0.0001, at)
+  g.gain.exponentialRampToValueAtTime(peak, at + attack)
+  g.gain.exponentialRampToValueAtTime(0.0001, at + decay)
+  let last = o.connect(g)
+  const extra = []
+  if (tremolo) {
+    const [rate, depth] = tremolo
+    const trem = ctx.createGain()
+    trem.gain.value = 1 - depth
+    const lfo = ctx.createOscillator()
+    const lfoGain = ctx.createGain()
+    lfo.frequency.value = rate
+    lfoGain.gain.value = depth
+    lfo.connect(lfoGain).connect(trem.gain)
+    last = last.connect(trem)
+    extra.push(lfo)
+  }
+  last.connect(out)
+  const stop = at + decay + 0.02
+  ;[o, ...extra].forEach((n) => { n.start(at); n.stop(stop) })
+  return stop
+}
+
+// The sounds as builders (ctx, out, t0) -> end time, so they can also be rendered offline.
+export const SOUNDS = {
+  // NIM added: two short bell strikes, C7 then G7 40 ms later, each with an inharmonic partial at 2.76x.
+  clink(ctx, out, t0) {
+    return Math.max(
+      note(ctx, out, t0, { f: 2093, peak: 0.14, attack: 0.004, decay: 0.22 }),
+      note(ctx, out, t0, { f: 2093 * 2.76, peak: 0.03, attack: 0.004, decay: 0.08 }),
+      note(ctx, out, t0 + 0.04, { f: 3136, peak: 0.11, attack: 0.004, decay: 0.30 }),
+      note(ctx, out, t0 + 0.04, { f: 3136 * 2.76, peak: 0.02, attack: 0.004, decay: 0.07 }),
+    )
+  },
+  // 25, 50 or 75 %: E6, G6, C7, 65 ms apart, each with a soft triangle octave.
+  milestone(ctx, out, t0) {
+    let end = t0
+    ;[1318.5, 1568, 2093].forEach((f, i) => {
+      const at = t0 + i * 0.065
+      end = Math.max(end,
+        note(ctx, out, at, { f, peak: 0.10, attack: 0.01, decay: 0.42 }),
+        note(ctx, out, at, { f: f * 2, type: 'triangle', peak: 0.02, attack: 0.01, decay: 0.3 }))
+    })
+    return end
+  },
+  // 100 %: a quick run G5 C6 E6 G6, landing at 0.22 s on a held C major chord (C6 E6 G6 C7, each doubled 0.3 % sharp
+  // at half volume, plus a triangle octave at 18 %), a soft shimmer (C8, G7 with tremolo) and a low bloom. About 1.6 s.
+  goalDone(ctx, out, t0) {
+    let end = t0
+    ;[783.99, 1046.5, 1318.5, 1568].forEach((f, i) => {
+      end = Math.max(end, note(ctx, out, t0 + i * 0.055, { f, peak: 0.075, attack: 0.006, decay: 0.22 }))
+    })
+    const land = t0 + 0.22
+    ;[[1046.5, 0.07], [1318.5, 0.06], [1568, 0.06], [2093, 0.05]].forEach(([f, v]) => {
+      end = Math.max(end,
+        note(ctx, out, land, { f, peak: v, attack: 0.015, decay: 1.35 }),
+        note(ctx, out, land, { f: f * 1.003, peak: v / 2, attack: 0.015, decay: 1.35 }),
+        note(ctx, out, land, { f: f * 2, type: 'triangle', peak: v * 0.18, attack: 0.015, decay: 1.35 }))
+    })
+    end = Math.max(end,
+      note(ctx, out, land, { f: 4186, peak: 0.02, attack: 0.015, decay: 1.0, tremolo: [9, 0.5] }),
+      note(ctx, out, land, { f: 3136, peak: 0.015, attack: 0.015, decay: 1.0, tremolo: [7, 0.5] }),
+      note(ctx, out, land, { f: 130, f1: 65, glide: 0.25, peak: 0.12, attack: 0.02, decay: 0.45 }))
+    return end
+  },
+  // Badge earned band, Quest done toast: A6 with a triangle octave, then E7 80 ms later.
+  ting(ctx, out, t0) {
+    return Math.max(
+      note(ctx, out, t0, { f: 1760, peak: 0.12, attack: 0.006, decay: 0.8 }),
+      note(ctx, out, t0, { f: 3520, type: 'triangle', peak: 0.025, attack: 0.006, decay: 0.5 }),
+      note(ctx, out, t0 + 0.08, { f: 2637, peak: 0.06, attack: 0.006, decay: 0.6 }),
+    )
+  },
+}
+
+function playIfUnlocked(build) {
+  try {
+    try { if (localStorage.getItem('dibs.sound') === 'off') return } catch { /* private mode: play */ }
+    if (navigator.audioSession) { try { navigator.audioSession.type = 'ambient' } catch { /* older Safari */ } }
+    const ctx = unlockedContext()
+    if (!ctx) return
+    const out = ctx.createGain()
+    out.gain.value = 0.9
+    out.connect(ctx.destination)
+    const end = build(ctx, out, ctx.currentTime + 0.01)
+    setTimeout(() => { try { out.disconnect() } catch { /* already gone */ } }, Math.ceil((end - ctx.currentTime) * 1000) + 200)
+  } catch { /* no audio: stay silent */ }
+}
+
+export const playClink = () => playIfUnlocked(SOUNDS.clink)
+export const playMilestone = () => playIfUnlocked(SOUNDS.milestone)
+export const playGoalDone = () => playIfUnlocked(SOUNDS.goalDone)
+export const playTing = () => playIfUnlocked(SOUNDS.ting)
+
+// One sound per deposit, from the goal's progress (0..1) before and after it: 100 % > a 25/50/75 % mark > the clink.
+export function depositSound(before, after) {
+  if (before < 1 && after >= 1) return 'goalDone'
+  if ([0.25, 0.5, 0.75].some((m) => before < m && after >= m)) return 'milestone'
+  return 'clink'
+}
+export function playDeposit(before, after) {
+  const k = depositSound(before, after)
+  if (k === 'goalDone') playGoalDone()
+  else if (k === 'milestone') playMilestone()
+  else playClink()
+}

@@ -9,6 +9,7 @@ import { goalBrand, PaceLine } from './Home.jsx'
 import { MIN_NEW_STAKER_NIM } from '../lib/config.js'
 import { readStaker, stakeNim } from '../lib/nimiq.js'
 import { confirmPending, expired, pending, stakedLuna, startPending, waitForDeposit } from '../lib/deposit.js'
+import { audioContext, playDeposit } from '../lib/sound.js'
 import { fmtDate, fmtEarned, fmtNim, fmtUsd, weeksUntil } from '../lib/format.js'
 import { findItem } from '../lib/catalog.js'
 import { DeleteSheet, ManageSheet, MoveSheet } from './GoalManage.jsx'
@@ -109,6 +110,7 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
         if (p.walletError) setRecovered({ nim: p.nim })
         else if (p.goalId === goalId) {
           setFlash({ nim: p.nim, tx: String(p.tx || '').slice(0, 6) })
+          if (g) playDeposit(Math.min(1, (savedNim(g) - p.nim) / g.targetNim), progress(g)) // one sound: 100 % > 25/50/75 % > clink
           setTimeout(() => alive.current && setFlash(null), 6000)
         }
         refreshBalance()
@@ -194,6 +196,7 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
 
   // One tap = one transaction. The chain decides new staker vs add stake, and whether it worked.
   const add = async () => {
+    audioContext() // inside the tap, before any await: unlocks the "NIM added" sound for when the deposit lands
     setProblem(null); setRecovered(null); setUnseen(false); setRpcDown(false)
     const nim = amountNim
     if (invalid || busy || pending.get(address)) return
