@@ -7,7 +7,7 @@ import { readStaker } from '../lib/nimiq.js'
 import { stakeSummary } from '../lib/earned.js'
 import { stageOf } from '../lib/unlockStage.js'
 import { poolName } from '../lib/pace.js'
-import { fmtNim } from '../lib/format.js'
+import { fmtEarned, fmtNim } from '../lib/format.js'
 import { goalBrand } from './Home.jsx'
 import { chainReleaseAt, ReleaseClock } from '../components/ReleaseClock.jsx'
 import WeekCard from '../components/WeekCard.jsx'
@@ -44,7 +44,7 @@ export default function Stake() {
           <div className="n">{fmtNim(total, lang)} NIM</div>
           <div className="stake-facts">
             <div><span>{t('stake_validator')}</span><b><i className="dot" aria-hidden="true" />{poolName()}</b></div>
-            {earned != null && <div><span>{t('stake_earned')}</span><b className="mint">+{fmtNim(earned, lang)} NIM</b></div>}
+            {earned != null && <div><span>{t('stake_earned')}</span><b className="mint">{fmtEarned(earned, lang)} NIM</b></div>}
             {other >= 1 && <div><span>{t('stake_other')}</span><b>{fmtNim(Math.floor(other), lang)} NIM</b></div>}
           </div>
           {other >= 1 && <p className="small">{t('stake_other_note')}</p>}

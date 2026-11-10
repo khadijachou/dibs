@@ -69,6 +69,15 @@ export const statsPage = `${HEAD('Dibs in numbers')}
 <script>
 const fmt = (n) => Number(n || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c])
+// NIM earned, same rules as the app (app/src/lib/format.js fmtEarned): 10 and up whole, under 10 two decimals,
+// under 0.01 "< 0.01". Always rounded down.
+function fmtEarned(n) {
+  const v = Number(n) || 0
+  if (v <= 0) return '0'
+  if (v < 0.01) return '< 0.01'
+  if (v < 10) return '+' + (Math.floor(v * 100 + 1e-9) / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  return '+' + Math.floor(v).toLocaleString('en-US')
+}
 function tile(k, n, s, tone) { return '<div class="tile ' + (tone || '') + '"><div class="k">' + esc(k) + '</div><div class="n">' + esc(n) + '</div><div class="s">' + esc(s) + '</div></div>' }
 async function load() {
   try {
@@ -81,7 +90,7 @@ async function load() {
       tile('Goals created', fmt(d.goalsCreated), fmt(d.goalsActive) + ' active right now'),
       tile('Goals reached', fmt(d.goalsReached), 'saved up to 100%', 'mint'),
       tile('Cards bought', fmt(d.cardsBought), 'about ' + fmt(d.cardsUsd) + ' USD in total', 'butter'),
-      d.nimEarned == null ? tile('NIM earned from staking', 'Not enough data yet', 'shown once phones report it', 'nodata') : tile('NIM earned from staking', fmt(d.nimEarned), 'rewards so far', 'mint'),
+      d.nimEarned == null ? tile('NIM earned from staking', 'Not enough data yet', 'shown once phones report it', 'nodata') : tile('NIM earned from staking', fmtEarned(d.nimEarned), 'rewards so far', 'mint'),
     ].join('')
     document.getElementById('asof').innerHTML = '<span class="dot" aria-hidden="true"></span>As of ' + esc(new Date(d.updatedAt).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }))
   } catch {

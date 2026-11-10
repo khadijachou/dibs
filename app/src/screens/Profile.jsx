@@ -29,7 +29,7 @@ export default function Profile() {
   // The pill under the total: what staking earned, or where the NIM is staked while nothing is earned yet.
   // None while the chain is being read or cannot be read, and none when nothing is saved.
   const pill = s.totalSaved > 0 && earned != null
-    ? (earned > 0 ? t('prof_earned_pill', { amount: fmtNim(earned, lang) }) : t('prof_earning', { pool: poolName() }))
+    ? (earned > 0 ? t('prof_earned_pill', { amount: fmtEarned(earned, lang) }) : t('prof_earning', { pool: poolName() }))
     : null
 
   const tiles = [

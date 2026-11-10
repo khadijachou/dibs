@@ -79,11 +79,15 @@ export async function flush() {
 // earnedRule 2 = only rewards on the principal Dibs tracks (inGoalsNim). The server counts earnedNim only with it.
 // earned unknown (null): no earnedNim at all, never 0 or a guess.
 export const EARNED_RULE = 2
-export function snapshotData(summary, goalsActive) {
-  const { total, inGoals, earned } = summary || {}
+// earnedDays: days since Dibs started measuring (summary.since), so the server can check earned against
+// 25 % a year of inGoalsNim, the app's own bound (profileStats.MAX_APR).
+export function snapshotData(summary, goalsActive, now = Date.now()) {
+  const { total, inGoals, earned, since } = summary || {}
   const out = { stakedNim: total ?? 0, goalsActive }
-  if (earned != null && Number.isFinite(earned)) Object.assign(out, { earnedNim: earned, inGoalsNim: inGoals ?? 0, earnedRule: EARNED_RULE })
-  return out
+  if (earned == null || !Number.isFinite(earned)) return out
+  const from = Date.parse(since)
+  const earnedDays = Number.isFinite(from) ? Math.max(0, Math.round(((now - from) / DAY_MS) * 100) / 100) : 0
+  return { ...out, earnedNim: earned, inGoalsNim: inGoals ?? 0, earnedDays, earnedRule: EARNED_RULE }
 }
 const today = () => new Date().toISOString().slice(0, 10)
 export function dailyDue(kind) {

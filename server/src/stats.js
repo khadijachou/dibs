@@ -140,18 +140,24 @@ const usd = (v) => num(v, 0, 2_000)
 // Earned from staking: only snapshots made with the app's honest rule (earnedRule 2: rewards on the principal Dibs
 // tracks, inGoalsNim) count. Earlier phones sent "total staked minus goal deposits", which called stake from outside
 // Dibs "earned" (24,263 NIM for 47,797 saved): every earnedNim without the rule is ignored.
+// Sanity check, the app's own bound (app/src/lib/profileStats.js MAX_APR): earned <= inGoalsNim x 25 % x
+// earnedDays / 365 + 1 NIM (the same 1 NIM allowance the app gives stake noise). Above it, the report is dropped.
 export const EARNED_RULE = 2
-const MAX_EARNED_SHARE = 0.01 // sanity check: earned above 1 % of the NIM it covers is not believed
+const MAX_APR = 0.25
+const EARNED_FLOOR = 1
+export const maxEarned = (inGoalsNim, days) => inGoalsNim * MAX_APR * (days / 365) + EARNED_FLOOR
 export function reliableEarned(d) {
-  if (!d || d.earnedRule !== EARNED_RULE || typeof d.earnedNim !== 'number' || typeof d.inGoalsNim !== 'number') return null
-  if (d.earnedNim > d.inGoalsNim * MAX_EARNED_SHARE) return null
+  if (!d || d.earnedRule !== EARNED_RULE) return null
+  if (![d.earnedNim, d.inGoalsNim, d.earnedDays].every((v) => typeof v === 'number')) return null
+  if (d.earnedNim > 0 && !(d.inGoalsNim > 0)) return null
+  if (d.earnedNim > maxEarned(d.inGoalsNim, d.earnedDays)) return null
   return d.earnedNim
 }
 
 // Allowed kinds and their fields. Anything else is dropped. A null for a required field drops the event.
 const KINDS = {
   app_open: { lang: oneOf(['en', 'fr', 'es']) },
-  snapshot: { stakedNim: nim, earnedNim: nim, inGoalsNim: nim, earnedRule: oneOf([EARNED_RULE]), goalsActive: (v) => num(v, 0, 1000) },
+  snapshot: { stakedNim: nim, earnedNim: nim, inGoalsNim: nim, earnedDays: (v) => num(v, 0, 3650), earnedRule: oneOf([EARNED_RULE]), goalsActive: (v) => num(v, 0, 1000) },
   consent: { value: oneOf(['yes']) },
   goal_created: { goalId: id, brand: slug, itemId: id, usd, weeks: (v) => num(v, 0, 60) },
   deposit: { goalId: id, depositId: id, nim, tx: hex64 },
@@ -162,7 +168,7 @@ const KINDS = {
   error: { key: (v) => (typeof v === 'string' && /^[A-Z][A-Z0-9_]{1,39}$/.test(v) ? v : null) },
 }
 // Fields that may be missing (the event is kept without them).
-const OPTIONAL = { snapshot: ['earnedNim', 'inGoalsNim', 'earnedRule'], goal_created: ['brand', 'itemId', 'usd', 'weeks'], deposit: ['tx'], purchase: ['itemId', 'usd', 'tx'], app_open: ['lang'] }
+const OPTIONAL = { snapshot: ['earnedNim', 'inGoalsNim', 'earnedDays', 'earnedRule'], goal_created: ['brand', 'itemId', 'usd', 'weeks'], deposit: ['tx'], purchase: ['itemId', 'usd', 'tx'], app_open: ['lang'] }
 
 function clean(ev, now) {
   if (!ev || typeof ev !== 'object') return null
@@ -397,7 +403,7 @@ function compute() {
     cardsUsd: round(cardsUsd, 2),
     nimAddedVerified: round(nimAdded, 2),
     nimStakedNow: round(staked, 2),
-    nimEarned: earnedBy.size ? round(earned, 2) : null, // null: no reliable report yet, the page says so
+    nimEarned: earnedBy.size ? round(earned, 5) : null, // null: no reliable report yet, the page says so
     earnedReports: earnedBy.size,
   }
 

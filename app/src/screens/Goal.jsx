@@ -9,7 +9,7 @@ import { goalBrand, PaceLine } from './Home.jsx'
 import { MIN_NEW_STAKER_NIM } from '../lib/config.js'
 import { readStaker, stakeNim } from '../lib/nimiq.js'
 import { confirmPending, expired, pending, stakedLuna, startPending, waitForDeposit } from '../lib/deposit.js'
-import { fmtDate, fmtNim, fmtUsd, weeksUntil } from '../lib/format.js'
+import { fmtDate, fmtEarned, fmtNim, fmtUsd, weeksUntil } from '../lib/format.js'
 import { findItem } from '../lib/catalog.js'
 import { DeleteSheet, ManageSheet, MoveSheet } from './GoalManage.jsx'
 import { useCountUp } from '../lib/useCountUp.js'
@@ -413,7 +413,7 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
               {goal.deposits.slice().reverse().map((d) => (
                 <div className={`row${d.kind ? ' ' + d.kind : ''}`} key={(d.id || d.tx) + d.at}><span>{d.nim < 0 ? '−' : '+'}{fmtNim(Math.abs(d.nim), lang)} NIM{rowLabel(d) && <small className="row-note">{rowLabel(d)}</small>}</span><span>{Date.now() - Date.parse(d.at) < 60_000 ? t('goal_just_now') : fmtDate(d.at, lang)}</span></div>
               ))}
-              {earned > 0 && <div className="row"><span style={{ color: 'var(--teal)' }}>{t('goal_earned_row', { amount: fmtNim(earned, lang) })}</span><span>{t('goal_since', { date: fmtDate([goal.deposits[0].at, earnedSince].filter(Boolean).sort().at(-1), lang) })}</span></div>}
+              {earned > 0 && <div className="row"><span style={{ color: 'var(--teal)' }}>{t('goal_earned_row', { amount: fmtEarned(earned, lang) })}</span><span>{t('goal_since', { date: fmtDate([goal.deposits[0].at, earnedSince].filter(Boolean).sort().at(-1), lang) })}</span></div>}
             </div>
           </section>
         )}

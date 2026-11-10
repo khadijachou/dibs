@@ -10,6 +10,17 @@ const num = (lang, opts, n) => nbsp(new Intl.NumberFormat(lang, opts).format(n))
 export const fmtInt = (n, lang = 'en') => num(lang, { maximumFractionDigits: 0 }, Math.floor(n))
 export const fmtNim = fmtInt
 
+// NIM earned from staking, with its sign, the same on Savings, the goal screen, Profile and Dibs in numbers
+// (server/src/pages.js copies these rules): 10 and up whole ("+24"), under 10 two decimals ("+0.04"),
+// under 0.01 "< 0.01", 0 "0". Always rounded down: never more than was earned.
+export const fmtEarned = (n, lang = 'en') => {
+  const v = Number(n) || 0
+  if (v <= 0) return num(lang, { maximumFractionDigits: 0 }, 0)
+  if (v < 0.01) return '<' + NBSP + num(lang, { minimumFractionDigits: 2 }, 0.01)
+  if (v < 10) return '+' + num(lang, { minimumFractionDigits: 2, maximumFractionDigits: 2 }, Math.floor(v * 100 + 1e-9) / 100)
+  return '+' + fmtInt(v, lang)
+}
+
 // USD: 2 decimals from 1 USD up (10.50); below 1 (the NIM rate) 3 significant digits (0.000270).
 export const fmtUsd = (n, lang = 'en') =>
   num(lang, n >= 1 || n === 0

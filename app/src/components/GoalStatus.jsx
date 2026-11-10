@@ -25,7 +25,7 @@ export function GoalStatus({ goal, earned }) {
   if (state === 'unlocking') return <div className="goal-status wait"><Releasing goal={goal} /></div>
   if (state === 'saving' && savedNim(goal) <= 0) return null // nothing staked yet
   const text = {
-    saving: earned > 0 ? t('home_earned_chip', { amount: fmtNim(earned, lang) }) : t('status_saving'),
+    saving: earned > 0 ? t('home_earned_chip', { amount: fmtEarned(earned, lang) }) : t('status_saving'),
     reached: t('status_reached'),
     ready: t('status_ready'),
     bought: t('status_bought', { date: fmtDate(goal.payment?.at || goal.createdAt, lang) }),

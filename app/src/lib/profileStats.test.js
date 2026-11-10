@@ -40,8 +40,8 @@ test('stake that was there before Dibs is other staked NIM, never earned (mainne
   assert.equal(first.base.other, 1362)
   // A week later the whole stake earned 9 NIM: only the goals' share counts.
   const later = stakeEarnings(stk(1371, 1000), goals, first.base, { now: T0 + 7 * DAY })
-  assert.equal(later.earned, Math.floor((9 * 1000) / 2362))
-  assert.equal(later.other + later.earned + later.inGoals, later.total)
+  assert.equal(later.earned, 3.81033) // 9 x 1000 / 2362, to the luna, rounded down
+  assert.ok(Math.abs(later.other + later.earned + later.inGoals - later.total) < 1e-6)
 })
 
 test('per-goal earned adds up to the goals earned, whatever the split', () => {

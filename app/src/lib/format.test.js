@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { fmtAmount, fmtNim, fmtPct, fmtUsd } from './format.js'
+import { fmtAmount, fmtEarned, fmtNim, fmtPct, fmtUsd } from './format.js'
 
 const NNBSP = String.fromCharCode(0x202f)
 const NBSP = String.fromCharCode(0xa0)
@@ -34,4 +34,15 @@ test('card face values: whole stays whole, decimals in the language', () => {
   assert.equal(fmtAmount('9.99', 'fr'), '9,99')
   assert.equal(fmtAmount('9.99', 'es'), '9,99')
   assert.equal(fmtAmount('1000', 'fr'), `1${NBSP}000`)
+})
+
+test('earned: whole from 10, 2 decimals below, < 0.01 for crumbs, never rounded up', () => {
+  assert.equal(fmtEarned(24263.9, 'en'), '+24,263')
+  assert.equal(fmtEarned(10, 'en'), '+10')
+  assert.equal(fmtEarned(9.999, 'en'), '+9.99')
+  assert.equal(fmtEarned(0.04, 'en'), '+0.04')
+  assert.equal(fmtEarned(0.04, 'fr'), '+0,04')
+  assert.equal(fmtEarned(0.009, 'en'), '<' + NBSP + '0.01')
+  assert.equal(fmtEarned(0.00001, 'es'), '<' + NBSP + '0,01')
+  assert.equal(fmtEarned(0, 'en'), '0')
 })

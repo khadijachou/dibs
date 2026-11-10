@@ -28,6 +28,7 @@ const inStake = (goals) => goals.filter((g) => (g.status === 'saving' || g.statu
 // recorded yet). Nimiq staking pays far less; the bound only catches additions.
 export const MAX_APR = 0.25
 const DAY_MS = 86_400_000
+const LUNA = 100_000
 
 // The one earned calculation (Savings "Earned so far", the goal screen, Profile, the goal cards).
 // Mainnet, 10 Nov: "total staked minus goal deposits" called 1,362 NIM of stake that was active before Dibs
@@ -69,18 +70,21 @@ export function stakeEarnings(st, goals, base = null, { now = Date.now(), settli
     fresh = 0
   }
   const weight = inGoals + next.other
-  const earned = Math.floor((next.carry || 0) + (weight > 0 ? (Math.max(0, fresh) * inGoals) / weight : 0))
+  // Kept to the luna (rounded down), so 0.04 NIM stays 0.04, never 0.
+  const earned = Math.floor(((next.carry || 0) + (weight > 0 ? (Math.max(0, fresh) * inGoals) / weight : 0)) * LUNA + 1e-6) / LUNA
   if (next.earned !== earned) next = { ...next, earned } // the last figure shown, kept for the next move of the base
   return { total, inGoals, other: Math.max(0, total - inGoals - earned), earned, byGoal: splitEarned(earned, staked), since: next.since, base: next }
 }
 
+// Split in luna (largest remainder), so the goals' shares add up exactly to earned.
 export function splitEarned(earned, goals) {
   const out = {}
   const weight = goals.reduce((s, g) => s + savedNim(g), 0)
   if (!earned || !weight) { goals.forEach((g) => { out[g.id] = 0 }); return out }
-  const parts = goals.map((g) => { const exact = (earned * savedNim(g)) / weight; return { id: g.id, n: Math.floor(exact), rest: exact - Math.floor(exact) } })
-  let left = earned - parts.reduce((s, p) => s + p.n, 0)
+  const total = Math.round(earned * LUNA)
+  const parts = goals.map((g) => { const exact = (total * savedNim(g)) / weight; return { id: g.id, n: Math.floor(exact), rest: exact - Math.floor(exact) } })
+  let left = total - parts.reduce((s, p) => s + p.n, 0)
   parts.slice().sort((a, b) => b.rest - a.rest).forEach((p) => { if (left > 0) { p.n += 1; left -= 1 } })
-  parts.forEach((p) => { out[p.id] = p.n })
+  parts.forEach((p) => { out[p.id] = p.n / LUNA })
   return out
 }

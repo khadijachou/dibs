@@ -67,10 +67,18 @@ test('snapshot sends earned only with the honest rule, nothing when unknown', as
   assert.deepEqual(unknown, { stakedNim: 100, goalsActive: 1 })
   // 1,362 NIM staked before Dibs: none of it is earned (old formula said 1,362).
   const first = stakeEarnings(st(1562), [g], null, { now })
-  const s = snapshotData(first, 1)
-  assert.deepEqual(s, { stakedNim: 1562, goalsActive: 1, earnedNim: 0, inGoalsNim: 200, earnedRule: EARNED_RULE })
+  const s = snapshotData(first, 1, now)
+  assert.deepEqual(s, { stakedNim: 1562, goalsActive: 1, earnedNim: 0, inGoalsNim: 200, earnedDays: 0, earnedRule: EARNED_RULE })
   // Same function as the screens: the value sent is stakeEarnings().earned.
   const later = stakeEarnings(st(1600), [g], first.base, { now: now + 30 * 864e5 })
-  assert.equal(snapshotData(later, 1).earnedNim, later.earned)
+  const sent = snapshotData(later, 1, now + 30 * 864e5)
+  assert.equal(sent.earnedNim, later.earned)
+  assert.equal(sent.earnedDays, 30)
   assert.ok(later.earned < 38)
+  // Small rewards keep their decimals (200 NIM, 4 to 7 Nov: 0.04 NIM), never rounded to 0.
+  const g2 = { id: 'g2', status: 'saving', deposits: [{ id: 'd2', nim: 200, at: day(6) }] }
+  const a = stakeEarnings(st(200), [g2], null, { now })
+  const b = stakeEarnings(st(200.04), [g2], a.base, { now: now + 3 * 864e5 })
+  assert.equal(b.earned, 0.04)
+  assert.equal(snapshotData(b, 1, now + 3 * 864e5).earnedNim, 0.04)
 })
