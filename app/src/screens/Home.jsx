@@ -104,16 +104,13 @@ function Welcome() {
   )
 }
 
-// Returning user: the active goal as a hero card, then past dibs and other brands.
+// Returning user: the goals label and the active goal(s), the photo banner, then New goal.
 function Hub({ goals }) {
-  const { t, address, go, reset } = useApp()
+  const { t, address, go } = useApp()
   const earned = useEarned(address)
   const isPast = (g) => g.status === 'redeemed' || g.status === 'withdrawn'
   const live = goals.filter((g) => !isPast(g))
   const active = live[0]
-  // Newest first: the purchase date, or the return date for a withdrawn goal. Home keeps the 3 latest.
-  const endOf = (g) => String((g.status === 'withdrawn' ? g.withdrawnAt : g.payment?.at) || g.createdAt || '')
-  const past = goals.filter(isPast).sort((a, b) => endOf(b).localeCompare(endOf(a)))
   const [sheet, setSheet] = useState(null) // brand key whose sheet is open (promo banner)
   const sheetBrand = sheet ? catalogBrands().find((b) => b.key === sheet) : null
   return (
@@ -124,10 +121,6 @@ function Hub({ goals }) {
         {/* Several goals: the goals label shares its row with the carousel dots (GoalWallet). One goal: label, then the card. */}
         {/* Usage stats: asked once under the goals label to users who finished onboarding before the consent step. */}
         {live.length > 1 ? <GoalWallet goals={live} earned={earned} /> : <><GoalsLabel count={live.length} /><StatsCard />{active && <GoalHero goal={active} earned={earned} />}</>}
-        {past.length > 0 && <PastList goals={past.slice(0, 3)} title={t('home_past')} />}
-        {past.length > 3 && (
-          <button type="button" className="see-all-link" onClick={() => { reset('history', { focus: 'cards' }); window.scrollTo(0, 0) }}>{t('home_see_all', { n: past.length })}</button>
-        )}
         <PromoBanner onOpen={setSheet} />
         <div className="bottom">
           <button type="button" className="btn tall" onClick={() => go('catalog')}>{t('home_new2')}<small>{t('home_new2_sub')}</small></button>
@@ -135,28 +128,6 @@ function Hub({ goals }) {
       </main>
       {sheetBrand && <BrandSheet brand={sheetBrand} onClose={() => setSheet(null)} onPick={() => { setSheet(null); go('plan', { brandKey: sheetBrand.key }) }} />}
     </>
-  )
-}
-
-// Past dibs: redeemed goals open Done (the code), withdrawn ones the goal screen (with Delete).
-export function PastList({ goals, title }) {
-  const { t, lang, go } = useApp()
-  return (
-    <section style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      {title && <div className="sec-head"><h3>{title}</h3></div>}
-      {goals.map((g) => {
-        const back = g.status === 'withdrawn'
-        const end = back ? g.withdrawnAt : g.payment?.at
-        const days = Math.max(1, Math.ceil((Date.parse(end || g.createdAt) - Date.parse(g.createdAt)) / 864e5))
-        return (
-          <button type="button" key={g.id} className="past" onClick={() => go(back ? 'goal' : 'done', { goalId: g.id, mode: 'details' })}>
-            <BrandLogo brand={goalBrand(g)} />
-            <div><b>{itemLabel(t, g)}</b><span className="s">{fmtDate(end || g.createdAt, lang)} · {t(days === 1 ? 'done_stat_days_one' : 'done_stat_days_other', { count: days })}</span></div>
-            <span className={`code${back ? ' returned' : ''}`}>{t(back ? 'withdraw_returned' : 'home_code')}</span>
-          </button>
-        )
-      })}
-    </section>
   )
 }
 
