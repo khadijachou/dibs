@@ -17,6 +17,8 @@ import { CardFlip, GiftFace, useCardFlip } from '../components/CardFlip.jsx'
 import { CardIssue } from '../components/CardIssue.jsx'
 import { goalCardIssue } from '../lib/availability.js'
 import { stakeSummary } from '../lib/earned.js'
+import { track } from '../lib/stats.js'
+import { txHash } from '../lib/history.js'
 import { MilestoneLine, useGoalMilestone } from '../components/Milestone.jsx'
 import { GoalDot, GoalStatus } from '../components/GoalStatus.jsx'
 
@@ -95,6 +97,7 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
       if (!p || p.id !== pend.id) return
       if (r === 'landed') {
         const g = confirmPending(p, address)
+        if (g) track('deposit', { goalId: p.goalId, depositId: p.id, nim: p.nim, tx: txHash(p.tx) || undefined })
         setPend(null)
         setHasStaker(true); stakerFlag.set(address)
         if (g && g.id === goalId) setGoal(g)

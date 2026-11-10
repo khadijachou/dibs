@@ -14,13 +14,14 @@ Build check before every commit: `cd app && npx vite build`.
 
 Env (never commit real values; `.env` files and `server/data/` are git-ignored):
 - `app/.env`: `VITE_API_URL` (server URL, no trailing slash), `VITE_REDEEM_MODE=api`, `VITE_DEFAULT_VALIDATOR` (Garuda Pool `NQ15 HNAH YRVH DFVM YHAG BSXG 0QHK KA0Q XDR7`), `VITE_NIMIQ_RPC_URL=https://rpc.nimiqwatch.com`, `VITE_FALLBACK_NIM_USD`.
-- `server/.env`: `BITREFILL_CLIENT_ID`, `BITREFILL_CLIENT_SECRET`, `ALLOWED_ORIGINS` (the app's HTTPS origin), `PORT`.
+- `server/.env`: `BITREFILL_CLIENT_ID`, `BITREFILL_CLIENT_SECRET`, `ALLOWED_ORIGINS` (the app's HTTPS origin), `PORT`, `STATS_SALT`, `ADMIN_KEY`, optional `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN`.
 
 ## Where things are (app/src)
 
 - `lib/nimiq.js`: the only place that talks to Nimiq Pay. `connect()` (falls back to the demo wallet outside Nimiq Pay), `listAccountsWithBalance`, `getBalanceNim` (waits for consensus), `readStaker` (strict) / `getStaker` (never throws), `stakeNim`, `unlock.deactivate/retire/remove`, `payInvoice`.
 - `lib/deposit.js`: one-tap deposit with a pending lock (`dibs:pending` in localStorage) and chain confirmation.
 - `lib/goals.js`: goal ledger in localStorage (`dibs.goals.<address>`), `adoptGoals` merges goals saved under any address on the device.
+- `lib/stats.js`: usage stats with consent (`track`, outbox, backfill, delete); `lib/profileStats.js`: Profile and Stake numbers from the ledger.
 - `lib/errors.js`: `classify(err, ctx)` → ErrorKey, Lab log (last 50), `?sim=KEY` demo simulator.
 - `lib/i18n.js`: en / fr / es, flat keys, same keys and `{placeholders}` in all three.
 - `lib/brands.js`, `lib/catalog.js`: brand tiles over the server catalogue (fallback list when the server is down).
@@ -52,3 +53,4 @@ Server only (`server/src/mcp.js`, `server/src/bitrefill.js`). Client credentials
 - Brand: coral `#E8482A` (action, progress), ink `#23212B`, cream `#FFF6EC`, mint `#15896A`, butter `#FFC94D` (on ink or coral only), red `#B42318`; Poppins 600/700, Inter 400 to 600.
 - Test every change in demo mode (desktop browser) with `?sim=KEY` where it applies (`DEP_CANCELLED`, `DEP_SENT_ERROR`, `PAY_UNKNOWN`, `PAY_CANCELLED`, `PAY_DUPLICATE`, `UNL_NOT_RELEASED`, `SHOP_LIMIT`, `SRV_DOWN`, `GENERIC`), then on mainnet inside Nimiq Pay.
 - Never commit `.env`, `server/data/`, secrets, emails or gift card codes.
+- Stats: consent first; never a name, email, code or address; anonId stored hashed; tx hashes checked once then deleted.

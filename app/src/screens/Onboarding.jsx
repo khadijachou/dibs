@@ -3,10 +3,13 @@ import { useApp } from '../App.jsx'
 import { BrandLogo, Icon, LangSwitch, Wordmark } from '../components/ui.jsx'
 import { NAME_MAX, setName } from '../lib/name.js'
 import { fmtNim, fmtPct } from '../lib/format.js'
+import { ConsentStep } from '../components/StatsConsent.jsx'
+import { consent } from '../lib/stats.js'
 
 // VF screens 02 to 04: three slides on first run. App.jsx shows them without
 // waiting for the wallet; onDone stores dibs.onboarded. On first run a name step follows the
-// last slide (Wave 2B); the header Skip and the replay from More go straight to the app.
+// last slide (Wave 2B), then the usage stats consent (Round 2E, only if never answered); the header Skip and the
+// replay from More go straight to the app.
 const SLIDES = [
   { key: 1, Ill: CardIll },
   { key: 2, Ill: RingIll },
@@ -20,9 +23,10 @@ export default function Onboarding({ onDone, replay = false }) {
   const trust = t('ob_trust').split(' · ')
   const start = useRef(null)
   const goTo = (k) => setI(Math.max(0, Math.min(SLIDES.length - 1, k)))
-  const [askName, setAskName] = useState(false)
-  const finishSlides = () => (replay ? onDone() : setAskName(true))
-  if (askName) return <NameStep onDone={onDone} />
+  const [step, setStep] = useState('slides') // slides -> name -> consent
+  const finishSlides = () => (replay ? onDone() : setStep('name'))
+  if (step === 'name') return <NameStep onDone={() => (consent() === null ? setStep('consent') : onDone())} />
+  if (step === 'consent') return <ConsentStep onDone={onDone} />
 
   // Swipe left/right (touch or mouse drag) changes slide.
   const onPointerDown = (e) => { start.current = { x: e.clientX, y: e.clientY } }

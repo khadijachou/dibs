@@ -6,6 +6,8 @@ import { getGoal, updateGoal } from '../lib/goals.js'
 import { api } from '../lib/api.js'
 import { config } from '../lib/config.js'
 import { isDemo } from '../lib/nimiq.js'
+import { track } from '../lib/stats.js'
+import { txHash } from '../lib/history.js'
 
 // Bitrefill invoice statuses, in order. Anything else shows as "waiting".
 const STEPS = ['created', 'payment_detected', 'payment_confirmed', 'complete']
@@ -40,6 +42,7 @@ export default function Done({ goalId }) {
     const save = (r) => {
       const g = getGoal(address, goalId)
       if (g) updateGoal(address, goalId, { payment: { ...g.payment, redemption: r } })
+      if (g) track('purchase', { goalId, itemId: g.itemId, usd: g.usd, tx: txHash(g.payment?.hash) || undefined }) // the order is complete
       setRed(r)
     }
     if (isDemo()) { const id = setTimeout(() => { setStatus('complete'); save(redemptionOf({ code: 'DEMO-CODE-0000' })) }, 3000); return () => clearTimeout(id) }

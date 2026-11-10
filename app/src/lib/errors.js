@@ -2,6 +2,7 @@
 // the raw error goes to a small log (last 50, shown in the Lab), the user sees plain words.
 import { NimiqProviderError } from '@nimiq/mini-app-sdk'
 import { isDemo } from './nimiq.js'
+import { track } from './stats.js'
 
 const LOG_KEY = 'dibs.log'
 const SIM_KEY = 'dibs.simulate'
@@ -25,7 +26,13 @@ export const readLog = () => { try { return JSON.parse(localStorage.getItem(LOG_
 export const lastLogText = () => JSON.stringify(readLog().slice(-1)[0] || {}, null, 2)
 
 // ctx: deposit | unlock | pay | invoice | api
+// Usage stats (with consent) get the classified key only, never the message or the raw error.
 export function classify(err, ctx) {
+  const key = classifyKey(err, ctx)
+  track('error', { key })
+  return key
+}
+function classifyKey(err, ctx) {
   log(ctx, err)
   const type = NimiqProviderError.is(err) ? err.type : err?.type || err?.error?.type
   if (type === 'PERMISSION_DENIED') return ctx === 'pay' ? 'PAY_CANCELLED' : 'DEP_CANCELLED'

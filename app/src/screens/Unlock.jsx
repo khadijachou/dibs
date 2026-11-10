@@ -11,6 +11,7 @@ import { fmtNim } from '../lib/format.js'
 import { chainRelease, leftText, readyTimeText, ReleaseClock, useStableReadyAt } from '../components/ReleaseClock.jsx'
 import { UnlockTimer, usePageVisible } from '../components/UnlockTimer.jsx'
 import { goalBrand } from './Home.jsx'
+import { track } from '../lib/stats.js'
 import { BLOCK_MS, clockOf, earliestStepBlockOf } from '../lib/release.js'
 
 const LABELS = { deactivate: 'unlock_s1', retire: 'unlock_s2', remove: 'unlock_s3' }
@@ -62,6 +63,7 @@ export default function Unlock({ goalId, mode: modeParam }) {
     const pend = g.unlockPending
     if (pend && confirms(pend, read, amount)) {
       const steps = [...g.unlockSteps.filter((x) => x.step !== pend.step), { step: pend.step, tx: pend.tx, at: pend.at }]
+      track('unlock_step', { goalId: g.id, step: pend.step, mode: withdraw ? 'withdraw' : 'card' }) // the chain confirmed it
       if (pend.step === 'remove') {
         const at = new Date().toISOString()
         const patch = withdraw

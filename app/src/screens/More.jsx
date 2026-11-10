@@ -3,8 +3,9 @@ import { useApp } from '../App.jsx'
 import { Header, LangSwitch } from '../components/ui.jsx'
 import { NAME_MAX, getName, setName } from '../lib/name.js'
 import { catalogBrands } from '../lib/brands.js'
+import { NumbersCard, StatsSetting } from '../components/StatsConsent.jsx'
 
-const FAQ = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+const FAQ = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
 const HELP_EMAIL = 'calldibs.contact@gmail.com'
 const soundOn = () => { try { return localStorage.getItem('dibs.sound') !== 'off' } catch { return true } }
 
@@ -49,6 +50,7 @@ export default function More() {
       <Header />
       <main className="screen">
         <h2 className="title">{t('tab_more')}</h2>
+        <NumbersCard />
 
         <section className="more-sec">
           <button type="button" className="sheet-row" onClick={showHowTo}>
@@ -82,6 +84,7 @@ export default function More() {
             <span>{t('more_sound')}</span>
             <button type="button" role="switch" aria-checked={sound} aria-label={t('more_sound')} className={`switch${sound ? ' on' : ''}`} onClick={toggleSound}><i /></button>
           </div>
+          <StatsSetting />
         </section>
 
         <section className="help-card">

@@ -70,6 +70,19 @@ npm run catalog -- remove amazon_com-usa-10
 
 Bitrefill charges above face value (a 5 USD Steam card costs about 5.62 USD). Targets are built from Bitrefill's payment price, read live and cached 5 minutes. The catalogue lives in `server/src/index.js` (slug + package value) with a fallback copy in `app/src/lib/catalog.js`.
 
+## Data and privacy
+
+Dibs sends usage numbers only if the user taps **Share stats** (onboarding, or the card on Goals for people who onboarded earlier). Tap **No thanks**, or switch it off in More > Settings, and Dibs sends nothing.
+
+- Shared, anonymously: goals created, NIM added and cards bought (plus daily opens, unlock steps and error keys, never error messages).
+- Never shared: a name, an email, a gift card code, PIN or link, an order token, a Nimiq address.
+- To count each phone once, the phone makes a random ID (`dibs.anonId`); the server stores only `HMAC-SHA256(STATS_SALT, anonId)`.
+- To make sure every deposit is real, the server checks its transaction ID once on the Nimiq blockchain (deposits must go to the staking contract with the reported amount), then deletes it. The hash waits in memory only, at most 24 h, and is never written to storage or returned by any endpoint. Public NIM totals count verified deposits only.
+- More > Settings > **Delete what was shared** removes every event of that phone from the server, and the public totals go down accordingly.
+- The totals are public: `/stats` on the server ("Dibs in numbers"), JSON at `/api/stats`. `/admin` needs `ADMIN_KEY`.
+
+Server env: `STATS_SALT` (required for stats; missing = `POST /api/events` answers 503), `ADMIN_KEY`, and optionally `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` for durable storage (without them events live in `server/data/events.ndjson` and `/api/stats` says `durable: false`).
+
 ## Rules we follow
 
 - Public repo, MIT license, no secrets: credentials live in `.env` files and `server/data/`, both git-ignored.

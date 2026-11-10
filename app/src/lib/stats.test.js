@@ -1,52 +1,58 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { boughtGoals, profileStats, splitEarned, stakeEarnings } from './stats.js'
 
-const dep = (nim, at, kind) => ({ nim, at, tx: 'x', ...(kind ? { kind } : {}) })
-const goal = (status, targetNim, deposits) => ({ id: Math.random().toString(36), status, targetNim, deposits })
-const LUNA = 100_000
-const sum = (o) => Object.values(o).reduce((s, n) => s + n, 0)
+// A tiny localStorage for node, so the consent rules can be checked without a browser.
+const mem = new Map()
+globalThis.localStorage = {
+  getItem: (k) => (mem.has(k) ? mem.get(k) : null),
+  setItem: (k, v) => mem.set(k, String(v)),
+  removeItem: (k) => mem.delete(k),
+  key: (i) => [...mem.keys()][i] ?? null,
+  get length() { return mem.size },
+}
+const calls = []
+globalThis.fetch = async (url, opts) => { calls.push({ url, ...opts }); return { ok: true, status: 204, json: async () => ({}) } }
 
-test('empty ledger: all zero, no date', () => {
-  assert.deepEqual(profileStats([]), { totalSaved: 0, goalsDone: 0, cardsBought: 0, activeGoals: 0, savingSince: null })
+const { backfillEvents, consent, setConsent, track } = await import('./stats.js')
+
+const now = Date.parse('2026-11-10T12:00:00Z')
+const day = (n) => new Date(now - n * 864e5).toISOString()
+const HASH = 'a'.repeat(64)
+const goal = {
+  id: 'g1', brandKey: 'steam', itemId: 'steam-5', usd: 5, itemName: 'Steam', createdAt: day(20), deadline: day(20 - 56),
+  deposits: [
+    { id: 'dep-1', nim: 100, tx: HASH, at: day(19) },
+    { id: 'm1', nim: -10, kind: 'move', at: day(18) },
+    { id: 'w1', nim: -90, kind: 'withdraw', at: day(2) },
+  ],
+  unlockSteps: [{ step: 'deactivate', tx: 'x', at: day(5) }],
+  unlockMode: 'withdraw', status: 'withdrawn', payment: null,
+}
+
+test('backfill: goal, real deposits, unlock steps; never names, emails or addresses', () => {
+  const ev = backfillEvents([goal], now)
+  assert.deepEqual(ev.map((e) => e.kind), ['goal_created', 'deposit', 'unlock_step'])
+  assert.ok(ev.every((e) => e.backfill === true))
+  assert.deepEqual(ev[0].data, { goalId: 'g1', brand: 'steam', itemId: 'steam-5', usd: 5, weeks: 8 })
+  assert.deepEqual(ev[1].data, { goalId: 'g1', depositId: 'dep-1', nim: 100, tx: HASH })
+  assert.deepEqual(ev[2].data, { goalId: 'g1', step: 'deactivate', mode: 'withdraw' })
+  assert.ok(!JSON.stringify(ev).includes('Steam'))
 })
 
-test('lifetime total: real deposits of every goal, withdrawn included, moves excluded', () => {
-  const goals = [
-    goal('redeemed', 100, [dep(100, '2026-10-02T10:00:00Z')]),
-    goal('saving', 500, [dep(200, '2026-10-05T10:00:00Z'), dep(-50, '2026-10-06T10:00:00Z', 'move')]),
-    goal('saving', 300, [dep(50, '2026-10-06T10:00:00Z', 'move'), dep(300, '2026-10-07T10:00:00Z')]),
-    goal('withdrawn', 400, [dep(150, '2026-09-30T10:00:00Z'), dep(-150, '2026-10-08T10:00:00Z', 'withdraw')]),
-  ]
-  const s = profileStats(goals)
-  assert.equal(s.totalSaved, 750)
-  assert.equal(s.goalsDone, 2) // redeemed + the 300/300 goal; the withdrawn one is not done
-  assert.equal(s.cardsBought, 1)
-  assert.equal(s.cardsBought, boughtGoals(goals).length)
-  assert.equal(s.activeGoals, 2)
-  assert.equal(s.savingSince, '2026-09-30T10:00:00.000Z')
+test('backfill: purchases carry the payment hash; older than 60 days is left out', () => {
+  const bought = { ...goal, id: 'g2', deposits: [], unlockSteps: [], unlockMode: null, status: 'redeemed', payment: { hash: HASH, at: day(1), orderToken: 'secret', redemption: { code: 'CODE' } } }
+  const old = { ...goal, id: 'g3', createdAt: day(90), deposits: [], unlockSteps: [] }
+  const ev = backfillEvents([bought, old], now)
+  assert.deepEqual(ev.map((e) => e.kind), ['goal_created', 'purchase'])
+  assert.equal(ev[1].data.tx, HASH)
+  assert.ok(!JSON.stringify(ev).includes('secret') && !JSON.stringify(ev).includes('CODE'))
 })
 
-test('per-goal earned adds up to Stake earned, whatever the split', () => {
-  const goals = [
-    goal('saving', 1000, [dep(333, '2026-10-01T00:00:00Z')]),
-    goal('saving', 1000, [dep(333, '2026-10-01T00:00:00Z')]),
-    goal('unlocking', 1000, [dep(334, '2026-10-01T00:00:00Z')]),
-    goal('redeemed', 100, [dep(100, '2026-10-01T00:00:00Z')]), // left the stake: no share
-    goal('saving', 100, []), // nothing staked: no share
-  ]
-  for (const rewards of [0, 1, 2, 7, 100, 12345]) {
-    const st = { activeBalance: (1000 + rewards - 400) * LUNA, inactiveBalance: 300 * LUNA, retiredBalance: 100 * LUNA }
-    const r = stakeEarnings(st, goals)
-    assert.equal(r.earned, rewards)
-    assert.equal(sum(r.byGoal), r.earned, `rewards ${rewards}`)
-    assert.equal(Object.keys(r.byGoal).length, 3)
-  }
-  assert.deepEqual(stakeEarnings(null, goals), { total: 0, earned: 0, byGoal: splitEarned(0, goals.slice(0, 3)) })
-})
-
-test('split follows each goal\'s stake', () => {
-  const a = goal('saving', 1000, [dep(750, '2026-10-01T00:00:00Z')])
-  const b = goal('saving', 1000, [dep(250, '2026-10-01T00:00:00Z')])
-  assert.deepEqual(splitEarned(40, [a, b]), { [a.id]: 30, [b.id]: 10 })
+test('nothing is queued or sent before Share stats, nor after No thanks', () => {
+  assert.equal(consent(), null)
+  track('move', { nim: 5 })
+  setConsent('no')
+  track('move', { nim: 5 })
+  assert.equal(localStorage.getItem('dibs.outbox'), null)
+  assert.equal(calls.length, 0)
 })

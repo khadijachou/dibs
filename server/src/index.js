@@ -6,6 +6,8 @@ import { serve } from '@hono/node-server'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { randomBytes, timingSafeEqual } from 'node:crypto'
 import { bitrefillEnabled, createLightningInvoice, getInvoice, getProduct } from './bitrefill.js'
+import { adminStats, countCatalogFallback, forget, intake, publicStats, statsEnabled } from './stats.js'
+import { adminPage, statsPage } from './pages.js'
 
 // What Dibs sells: server/catalog.json, managed with `npm run catalog`.
 // Read again whenever the file changes, so new items show after a page reload.
@@ -72,6 +74,7 @@ app.get('/api/catalog', async (c) => {
     const p = await priceFor(i)
     return { id: i.id, name: i.name, detail: i.detail, icon: i.icon, faceValue: i.packageValue, usd: p.usd, live: p.live, inStock: p.inStock, shopUrl: `https://www.bitrefill.com/${i.slug}/` }
   }))
+  if (out.some((i) => !i.live)) countCatalogFallback() // admin view: daily count of answers with fallback prices
   return c.json(out)
 })
 
@@ -122,6 +125,56 @@ app.get('/api/orders/:id', async (c) => {
     return c.json({ error: 'Order lookup failed' }, 502)
   }
 })
+
+// ---- Anonymous usage stats (server/src/stats.js). Only phones whose user tapped Share stats send anything. ----
+
+// Body: { anonId, events: [{ kind, at, data, backfill? }] }, at most 20 events and 8 KB.
+async function smallJson(c) {
+  const text = await c.req.text().catch(() => '')
+  if (text.length > 8 * 1024) return null
+  try { return JSON.parse(text) } catch { return null }
+}
+app.post('/api/events', async (c) => {
+  if (!statsEnabled()) return c.body(null, 503)
+  if (limited(c)) return c.body(null, 429)
+  const body = await smallJson(c)
+  if (!body) return c.body(null, 400)
+  const r = await intake(body)
+  if (r === 'bad') return c.body(null, 400)
+  if (r === 'limited') return c.body(null, 429)
+  return c.body(null, 204)
+})
+
+// Body: { anonId }. Removes every event of that device.
+app.delete('/api/events', async (c) => {
+  if (!statsEnabled()) return c.body(null, 503)
+  if (limited(c)) return c.body(null, 429)
+  const body = await smallJson(c)
+  if (!body || !(await forget(body))) return c.body(null, 400)
+  return c.body(null, 204)
+})
+
+app.get('/api/stats', async (c) => {
+  c.header('cache-control', 'public, max-age=60')
+  return c.json(await publicStats())
+})
+
+// Admin numbers: x-admin-key must match ADMIN_KEY. Missing key, wrong key or no ADMIN_KEY all get the same 404.
+function adminOk(given) {
+  const key = process.env.ADMIN_KEY || ''
+  if (!key || typeof given !== 'string') return false
+  const a = Buffer.from(given)
+  const b = Buffer.from(key)
+  return a.length === b.length && timingSafeEqual(a, b)
+}
+app.get('/api/admin/stats', async (c) => {
+  if (!adminOk(c.req.header('x-admin-key'))) return c.json({ error: 'Not found' }, 404)
+  c.header('cache-control', 'no-store')
+  return c.json(await adminStats())
+})
+
+app.get('/stats', (c) => c.html(statsPage))
+app.get('/admin', (c) => { c.header('cache-control', 'no-store'); c.header('x-robots-tag', 'noindex'); return c.html(adminPage) })
 
 const port = Number(process.env.PORT || 8787)
 serve({ fetch: app.fetch, port }, () => console.log(`dibs server on http://localhost:${port} (bitrefill: ${bitrefillEnabled() ? 'on' : 'off'})`))

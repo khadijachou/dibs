@@ -5,6 +5,7 @@ import { BrandLogo, FieldError, Sheet } from '../components/ui.jsx'
 import { listGoals, moveNim, progress, removeGoal, savedNim } from '../lib/goals.js'
 import { goalBrand } from './Home.jsx'
 import { fmtNim } from '../lib/format.js'
+import { track } from '../lib/stats.js'
 
 const parseNim = (v) => Math.floor(Number(String(v).replace(/[^\d.]/g, ''))) || 0
 // title: at the start of a line or title; false inside a sentence.
@@ -60,6 +61,7 @@ export function MoveSheet({ goal, preselect = null, onClose, onMoved }) {
     if (!ok) return
     try {
       const r = moveNim(address, goal.id, target.id, nim)
+      track('move', { nim })
       toast(t('move_done', { nim: fmtNim(nim, lang), name: goalLabel(target, t) }))
       onMoved(r)
     } catch {
@@ -116,6 +118,7 @@ export function DeleteSheet({ goal, onClose }) {
   const del = () => {
     try {
       removeGoal(address, goal.id)
+      track('goal_deleted', { goalId: goal.id })
       toast(t('delete_done'))
       reset('home')
     } catch {

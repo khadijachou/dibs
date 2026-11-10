@@ -13,6 +13,7 @@ import { useEarned } from '../lib/earned.js'
 import { getName } from '../lib/name.js'
 import { MilestoneLine, useGoalMilestone } from '../components/Milestone.jsx'
 import { GoalDot, GoalStatus, goalPace } from '../components/GoalStatus.jsx'
+import { StatsCard } from '../components/StatsConsent.jsx'
 
 // Welcome screen (no goal yet): "Welcome, Sam" when the user gave a name during onboarding or in More; nothing otherwise.
 function Hello() {
@@ -67,6 +68,7 @@ function Welcome() {
         <p className="sub">{t('welcome_sub')}</p>
       </div>
       <main className="screen">
+        <StatsCard />
         <p className="sec-label">{t('welcome_popular')}</p>
         <div className="picks">
           {picks.map((b) => (
@@ -113,7 +115,8 @@ function Hub({ goals }) {
       <main className="screen">
         <h2 className="title">{t('tab_goals')}</h2>
         {/* Several goals: the greeting shares its row with the carousel dots (GoalWallet). One goal: greeting, then the card. */}
-        {live.length > 1 ? <GoalWallet goals={live} earned={earned} /> : <><Greeting />{active && <GoalHero goal={active} earned={earned} />}</>}
+        {/* Usage stats: asked once under the greeting to users who finished onboarding before the consent step. */}
+        {live.length > 1 ? <GoalWallet goals={live} earned={earned} /> : <><Greeting /><StatsCard />{active && <GoalHero goal={active} earned={earned} />}</>}
         {past.length > 0 && <PastList goals={past.slice(0, 3)} title={t('home_past')} />}
         {past.length > 3 && (
           <button type="button" className="see-all-link" onClick={() => { reset('history', { focus: 'cards' }); window.scrollTo(0, 0) }}>{t('home_see_all', { n: past.length })}</button>
@@ -180,6 +183,7 @@ function GoalWallet({ goals, earned }) {
   return (
     <>
       <div className="greet-row"><Greeting /><CarouselDots count={goals.length} current={cur} /></div>
+      <StatsCard />
       <div className="gw-tabs" role="tablist">
         {goals.map((g, k) => (
           <button type="button" role="tab" aria-selected={k === i} key={g.id} className={`gw-tab${k === i ? ' on' : ''}`} onClick={() => pick(k)}>

@@ -11,6 +11,7 @@ import { poolName } from '../lib/pace.js'
 import { playPop } from '../lib/sound.js'
 import { addDays, fmtDate, fmtNim, fmtUsd } from '../lib/format.js'
 import { useCountUp } from '../lib/useCountUp.js'
+import { track } from '../lib/stats.js'
 
 // BUG-17: an item with live: false has no shop quote; its usd is the catalogue's stored placeholder.
 // Its target gets a 10 % safety margin so the user does not fall short when the shop confirms the price.
@@ -69,6 +70,7 @@ export default function Plan({ brandKey, itemId, moveFrom = null, changeFor = nu
   const create = () => {
     playPop() // the Dibs! stamp, from this tap
     const goal = createGoal(address, { item, targetNim, deadline, brand: b, nimUsd: prices.nimUsd })
+    track('goal_created', { goalId: goal.id, brand: b?.key || undefined, itemId: item.id, usd: item.usd, weeks })
     reset('goal', { goalId: goal.id, created: true, moveFrom })
   }
 

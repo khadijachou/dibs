@@ -1,8 +1,10 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import { connect, getBalanceNim, host, isDemo, listAccountsWithBalance } from './lib/nimiq.js'
+import { connect, getBalanceNim, host, isDemo, listAccountsWithBalance, readStaker } from './lib/nimiq.js'
+import { configureStats, dailyDue, flush, markDaily, track } from './lib/stats.js'
+import { stakeSummary } from './lib/earned.js'
 import { getPrices } from './lib/price.js'
 import { makeT } from './lib/i18n.js'
-import { adoptGoals, getGoal } from './lib/goals.js'
+import { adoptGoals, getGoal, listGoals } from './lib/goals.js'
 import { loadCatalog } from './lib/catalog.js'
 import { readSimulateParam } from './lib/errors.js'
 import Home from './screens/Home.jsx'
@@ -110,6 +112,7 @@ export default function App() {
     setFatal(null)
     try {
       await connect()
+      configureStats({ demo: isDemo() })
       readSimulateParam() // ?sim works in demo mode only, so read it once we know the mode
       const accounts = await listAccountsWithBalance()
       const funded = accounts.filter((a) => a.nim > 0).sort((a, b) => b.nim - a.nim)
@@ -130,6 +133,20 @@ export default function App() {
   }, [refreshBalance])
 
   useEffect(() => { start() }, [start])
+
+  // Usage stats (only with consent, see lib/stats.js): once a day app_open and the Stake tab's own numbers,
+  // and whatever an earlier open could not send. Read only; never waits on anything.
+  useEffect(() => {
+    if (!ready || !address) return
+    if (dailyDue('open')) { track('app_open', { lang }); markDaily('open') } else flush()
+    if (!dailyDue('snapshot')) return
+    readStaker(address).then((st) => {
+      const { total, earned } = stakeSummary(st, address)
+      const goalsActive = listGoals(address).filter((g) => g.status !== 'redeemed' && g.status !== 'withdrawn').length
+      track('snapshot', { stakedNim: total, earnedNim: earned, goalsActive })
+      markDaily('snapshot')
+    }).catch(() => { /* chain unreadable: try on the next open */ })
+  }, [ready, address]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     const onHash = () => setLabHash(location.hash === '#lab')
     window.addEventListener('hashchange', onHash)
