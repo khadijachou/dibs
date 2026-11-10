@@ -81,21 +81,28 @@ const MARK = (
 )
 export const CREAM = '#FFF6EC'
 export const INK = '#23212B'
+export const CORAL = '#E8482A' // the brand coral, same value as --gold in styles.css
 
-export function DibsMark({ className = '', color = CREAM }) {
-  return <svg className={className} aria-hidden="true" viewBox="0 0 192 246" fill={color}>{MARK}</svg>
+// The single "d" (brand mark): the same drawing and box as public/dibs-logo/dibs-mark-*.svg. The box is a little
+// taller than the stem (ring centre 153.5, radius 96, so the ring ends at 249.5): the ring is never cut.
+// Drawn inline, not loaded as a file, so the splash shows it on the first frame and its colour can be set.
+export function DibsMark({ className = '', color = CORAL }) {
+  return <svg className={className} aria-hidden="true" viewBox="-0.5 -0.5 193 250.5" fill={color}>{MARK}</svg>
 }
 
 // "dibs" wordmark (brand kit): the mark as the "d", then "ibs" in Poppins Bold (700), letter-spacing -0.012em.
 // The letters are Poppins Bold outlines (from the font file), so the wordmark never waits for the web font and
-// is sharp at any density. Box 360 x 138, the same as the old PNG: mark at x 0 to 98, baseline at y 136.6,
-// font size 169.8 in this box. Size it with CSS height only (.wordmark 26 px, .splash-word 34 px).
+// is sharp at any density. The mark is drawn in coral, "ibs" in cream (ink on light). Box 360 x 139, like
+// public/dibs-logo/dibs-wordmark-*.svg, so the ring of the "d" is not cut: mark at x 0 to 98, baseline at y 136.6,
+// font size 169.8 in this box. A color prop still makes the whole wordmark one colour.
+// Size it with CSS height only (.wordmark 26 px, .splash-word 34 px).
 const IBS = 'M117 16.43Q117 9.64 121.84 5.14Q126.68 0.64 134.32 0.64Q141.79 0.64 146.63 5.14Q151.47 9.64 151.47 16.43Q151.47 23.05 146.63 27.55Q141.79 32.05 134.32 32.05Q126.68 32.05 121.84 27.55Q117 23.05 117 16.43ZM148.75 41.9V136.64H119.72V41.9ZM226 40.54Q237.72 40.54 247.23 46.49Q256.73 52.43 262.25 63.46Q267.77 74.5 267.77 89.1Q267.77 103.7 262.25 114.82Q256.73 125.95 247.23 131.97Q237.72 138 226 138Q215.99 138 208.51 134.01Q201.04 130.02 196.8 123.4V136.64H167.77V11H196.8V55.31Q200.87 48.69 208.51 44.62Q216.16 40.54 226 40.54ZM217.34 65.84Q208.68 65.84 202.66 72.12Q196.63 78.41 196.63 89.27Q196.63 100.14 202.66 106.42Q208.68 112.7 217.34 112.7Q226 112.7 232.11 106.33Q238.23 99.97 238.23 89.1Q238.23 78.24 232.2 72.04Q226.17 65.84 217.34 65.84ZM275.92 105.57H304.61Q305.12 110.49 309.2 113.55Q313.27 116.61 319.22 116.61Q324.65 116.61 327.62 114.48Q330.59 112.36 330.59 108.97Q330.59 104.89 326.35 102.94Q322.1 100.99 312.59 98.61Q302.41 96.23 295.61 93.6Q288.82 90.97 283.9 85.28Q278.98 79.59 278.98 69.92Q278.98 61.77 283.48 55.06Q287.97 48.35 296.72 44.45Q305.46 40.54 317.52 40.54Q335.34 40.54 345.62 49.37Q355.89 58.2 357.42 72.8H330.59Q329.91 67.88 326.26 64.99Q322.61 62.11 316.67 62.11Q311.57 62.11 308.86 64.06Q306.14 66.01 306.14 69.41Q306.14 73.48 310.47 75.52Q314.8 77.56 323.97 79.59Q334.5 82.31 341.12 84.94Q347.74 87.57 352.75 93.43Q357.76 99.29 357.93 109.14Q357.93 117.46 353.26 123.99Q348.59 130.53 339.84 134.26Q331.1 138 319.55 138Q307.16 138 297.48 133.76Q287.8 129.51 282.2 122.13Q276.6 114.74 275.92 105.57Z'
 export function Wordmark({ cream = true, color, className = '' }) {
+  const letters = color || (cream ? CREAM : INK)
   return (
-    <svg className={`wordmark ${className}`} role="img" aria-label="Dibs" viewBox="0 0 360 138" fill={color || (cream ? CREAM : INK)}>
-      <g transform="translate(0 11) scale(0.510417)">{MARK}</g>
-      <path d={IBS} />
+    <svg className={`wordmark ${className}`} role="img" aria-label="Dibs" viewBox="0 0 360 139">
+      <g fill={color || CORAL} transform="translate(0 11) scale(0.510417)">{MARK}</g>
+      <path fill={letters} d={IBS} />
     </svg>
   )
 }

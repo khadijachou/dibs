@@ -117,7 +117,7 @@ function Hub({ goals }) {
     <>
       <Header langChip />
       <main className="screen">
-        <h2 className="title">{t('home_title')}</h2>
+        <h2 className="sr-only">{t('home_title')}</h2>
         {/* Several goals: the goals label shares its row with the carousel dots (GoalWallet). One goal: label, then the card. */}
         {/* Usage stats: asked once under the goals label to users who finished onboarding before the consent step. */}
         {live.length > 1 ? <GoalWallet goals={live} earned={earned} /> : <><GoalsLabel count={live.length} /><StatsCard />{active && <GoalHero goal={active} earned={earned} />}</>}

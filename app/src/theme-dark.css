@@ -168,7 +168,7 @@ svg circle:first-child[stroke="#e6dccf"], svg circle:first-child[stroke="#35323f
 .splash-arc { stroke-dashoffset: calc(var(--c) * .72); }
 .splash.out { opacity: 0; transition: opacity .3s ease-out; }
 .splash-loading { display: none; margin: 12px 0 0; font-size: 13px; color: var(--muted); }
-.splash-mark .splash-dmark { position: absolute; left: 50%; top: 50%; width: 52px; height: 66.6px; transform: translate(calc(-50% - 2px), -50%); }
+.splash-mark .splash-dmark { position: absolute; left: 50%; top: 50%; width: 52px; height: 67.5px; transform: translate(calc(-50% - 2px), -50%); }
 .splash-word { height: 34px; margin-top: 24px; } /* 24 px mark to wordmark, 40 px wordmark to slogan */
 .splash-tag { margin: 40px 0 0; display: flex; flex-direction: column; align-items: center; font: 700 34px/1.12 var(--font-display); letter-spacing: -.01em; text-align: center; }
 .splash-tag .last { color: var(--teal); }
