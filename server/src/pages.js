@@ -45,6 +45,10 @@ export const statsPage = `${HEAD('Dibs in numbers')}
 .asof { font-size: 13px; color: var(--muted); }
 .note { font-size: 13px; color: var(--muted); line-height: 1.55; }
 .err { color: var(--red); font-size: 14px; }
+.follow { margin: 4px 0 0; font-size: 14px; }
+.follow a { display: inline-flex; align-items: center; gap: 8px; color: var(--cream); font-weight: 600; text-decoration: none; }
+.follow a:hover { text-decoration: underline; }
+.follow svg { width: 14px; height: 14px; }
 @media (max-width: 340px) { .grid { grid-template-columns: 1fr; } }
 </style>
 <body>
@@ -59,6 +63,7 @@ export const statsPage = `${HEAD('Dibs in numbers')}
   <section class="grid" id="tiles"></section>
   <p class="asof" id="asof"></p>
   <p class="note">These numbers come from people who tapped Share stats. Goals, deposits and purchases are counted anonymously: never a name, an email or a gift card code. Deposits count only once they are found on the Nimiq blockchain. People who said no are not counted.</p>
+  <p class="follow"><a href="https://x.com/calldibs_app" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M14.234 10.162 22.977 0h-2.072l-7.591 8.824L7.251 0H.258l9.168 13.343L.258 24H2.33l8.016-9.318L16.749 24h6.993zm-2.837 3.299-.929-1.329L3.076 1.56h3.182l5.965 8.532.929 1.329 7.754 11.09h-3.182z"/></svg>Follow @calldibs_app on X</a></p>
 </main>
 <script>
 const fmt = (n) => Number(n || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })

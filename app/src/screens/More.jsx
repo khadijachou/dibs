@@ -4,9 +4,11 @@ import { Header, LangSwitch } from '../components/ui.jsx'
 import { NAME_MAX, getName, setName } from '../lib/name.js'
 import { catalogBrands } from '../lib/brands.js'
 import { NumbersCard, StatsSetting } from '../components/StatsConsent.jsx'
+import { siX } from 'simple-icons'
 
 const FAQ = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
 const HELP_EMAIL = 'calldibs.contact@gmail.com'
+const X_URL = 'https://x.com/calldibs_app'
 const soundOn = () => { try { return localStorage.getItem('dibs.sound') !== 'off' } catch { return true } }
 
 // Clipboard API first; the hidden textarea covers webviews where it is missing or refused.
@@ -38,6 +40,18 @@ const GridIcon = () => (
 const ShareIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="M12 15V3" /><path d="M7.5 7.5 12 3l4.5 4.5" /><path d="M5 12v6.5A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5V12" />
+  </svg>
+)
+
+// The X logo (simple-icons, official glyph), white on a black circle (.si.x).
+const XIcon = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d={siX.path} /></svg>
+)
+
+// An arrow pointing up and out: the row opens outside the app. A stroke icon: text arrows turn into emoji on iOS.
+const OutIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M7 17 17 7" /><path d="M8 7h9v9" />
   </svg>
 )
 
@@ -84,6 +98,11 @@ export default function More() {
             <span><b>{t('share_row')}</b><small>{t('share_row_sub')}</small></span>
             <span className="chev" aria-hidden="true">›</span>
           </button>
+          <a className="sheet-row" href={X_URL} target="_blank" rel="noopener noreferrer">
+            <span className="si x" aria-hidden="true"><XIcon /></span>
+            <span><b>{t('follow_row')}</b><small>{t('follow_row_sub')}</small></span>
+            <span className="chev ext" aria-hidden="true"><OutIcon /></span>
+          </a>
         </section>
 
         <section className="more-sec">

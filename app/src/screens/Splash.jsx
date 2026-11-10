@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useApp } from '../App.jsx'
-import { BrandLogo, DibsMark, Wordmark } from '../components/ui.jsx'
+import { BrandLogo, CREAM, DibsMark, Wordmark } from '../components/ui.jsx'
 import { detailText } from '../lib/itemName.js'
 
 // Logos are vector: the Dibs mark and wordmark (DibsMark, Wordmark) and the brand glyphs from simple-icons
@@ -77,7 +77,7 @@ export default function Splash({ done = false, onGone }) {
             <circle ref={arc} className="splash-arc" cx="78" cy="78" r={R} fill="none" stroke="#E8482A" strokeWidth="12" strokeLinecap="round"
               strokeDasharray={C.toFixed(1)} transform="rotate(-90 78 78)" style={{ '--c': `${C.toFixed(1)}px` }} />
           </svg>
-          <DibsMark className="splash-dmark" />
+          <DibsMark className="splash-dmark" color={CREAM} />
         </div>
         <p className="splash-loading" aria-hidden="true">{t('splash_loading')}</p>
         <Wordmark className="splash-word" />

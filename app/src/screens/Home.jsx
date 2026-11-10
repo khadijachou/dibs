@@ -2,7 +2,7 @@ import { CardIssue } from '../components/CardIssue.jsx'
 import { useRef, useState } from 'react'
 import { useApp } from '../App.jsx'
 import { detailText, fromText, itemLabel } from '../lib/itemName.js'
-import { BrandLogo, Header, Ring, DibsMark } from '../components/ui.jsx'
+import { BrandLogo, CREAM, Header, Ring, DibsMark } from '../components/ui.jsx'
 import { listGoals, progress } from '../lib/goals.js'
 import { BRANDS, catalogBrands, brandOf } from '../lib/brands.js'
 import { findItem } from '../lib/catalog.js'
@@ -63,7 +63,7 @@ function Welcome() {
             <circle cx="78" cy="78" r="66" fill="none" stroke="#35323f" strokeWidth="12" />
             <circle className="arc" cx="78" cy="78" r="66" fill="none" stroke="#E8482A" strokeWidth="12" strokeLinecap="round" transform="rotate(-90 78 78)" />
           </svg>
-          <DibsMark className="big-mark" />
+          <DibsMark className="big-mark" color={CREAM} />
         </div>
         <Hello />
         <p className="tl">{splitFirst(t('welcome_t1'))[0]} <span className="dim">{splitFirst(t('welcome_t1'))[1]}</span><br /><span className="last">{t('welcome_t2')}</span></p>
