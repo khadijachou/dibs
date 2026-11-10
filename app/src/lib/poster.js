@@ -140,20 +140,29 @@ function download(blob, filename) {
   setTimeout(() => URL.revokeObjectURL(url), 10_000)
 }
 
-// a) The system share sheet with the image where the browser can share files. b) Otherwise: copy the text, save the
-// image, open the X post page, and say so. The caller marks the share (Spread the word) and runs the badge check.
+// a) The system share sheet with the image where the browser can share files. b) Otherwise: save the image, open the
+// X post page, and say so. The post text is copied right at the tap in both cases (X sometimes drops shared text);
+// the copy is not awaited before navigator.share, so the share stays inside the tap.
+// Returns 'shared' (navigator.share resolved), 'cancelled' (AbortError), 'fallback' (copy + save + X page ran) or
+// 'failed'. The caller marks Spread the word only for a real share (lib/badges.js shareEarns).
 export async function shareBadge(badgeId, { t, name, toast }) {
-  const text = shareText(badgeId, t)
-  const filename = `dibs-badge-${badgeId}.png`
-  if (canShareFiles()) {
-    const blob = await drawPoster({ name, badgeId, t })
-    const file = new File([blob], filename, { type: 'image/png' })
-    if (navigator.canShare({ files: [file] })) {
-      try { await navigator.share({ files: [file], text }); return } catch (e) { if (e?.name === 'AbortError') return } // closed: nothing else
+  try {
+    const text = shareText(badgeId, t)
+    const copied = copyText(text)
+    const filename = `dibs-badge-${badgeId}.png`
+    if (canShareFiles()) {
+      const blob = await drawPoster({ name, badgeId, t })
+      const file = new File([blob], filename, { type: 'image/png' })
+      if (navigator.canShare({ files: [file] })) {
+        try { await navigator.share({ files: [file], text }); return 'shared' } catch (e) { if (e?.name === 'AbortError') return 'cancelled' }
+      }
     }
+    await copied
+    try { download(await drawPoster({ name, badgeId, t }), filename) } catch { /* the text is still copied */ }
+    try { window.open(`https://x.com/intent/post?text=${encodeURIComponent(text)}`, '_blank', 'noopener') } catch { /* blocked */ }
+    toast?.(t('share_badge_saved'))
+    return 'fallback'
+  } catch {
+    return 'failed'
   }
-  await copyText(text)
-  try { download(await drawPoster({ name, badgeId, t }), filename) } catch { /* the text is still copied */ }
-  try { window.open(`https://x.com/intent/post?text=${encodeURIComponent(text)}`, '_blank', 'noopener') } catch { /* blocked */ }
-  toast?.(t('share_badge_saved'))
 }

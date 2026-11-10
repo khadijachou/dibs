@@ -146,3 +146,12 @@ test('cycle3 is not recorded after 1 Dec on a new phone', async () => {
   await check({ goals: [], now: NOW }) // the clock went back: it holds again, and is announced
   assert.ok(getBadges().cycle3)
 })
+
+test('Spread the word counts a real share only', async () => {
+  const { shareEarns } = await import('./badges.js')
+  assert.equal(shareEarns('shared'), true)
+  assert.equal(shareEarns('fallback'), true)
+  assert.equal(shareEarns('cancelled'), false)
+  assert.equal(shareEarns('failed'), false)
+  assert.equal(shareEarns(undefined), false)
+})

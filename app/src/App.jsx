@@ -27,7 +27,7 @@ import { preloadAvatar } from './components/Avatar.jsx'
 import WelcomeBack from './components/WelcomeBack.jsx'
 import HowItWorks from './components/HowItWorks.jsx'
 import BadgeStamp from './components/BadgeStamp.jsx'
-import { check as checkBadges, setShared } from './lib/badges.js'
+import { check as checkBadges, setShared, shareEarns } from './lib/badges.js'
 import { shareBadge as sharePoster } from './lib/poster.js'
 import { getName } from './lib/name.js'
 
@@ -234,10 +234,15 @@ export default function App() {
   const canGoBack = history.length > 0 || Boolean(parentOf(route))
   const isBlocked = useCallback(() => blocks.current > 0, [])
   const endStamp = useCallback(() => setStamps((q) => q.slice(1)), [])
-  // Share on X (lib/poster.js). Any tap earns Spread the word, then the badge check runs.
+  // Share on X (lib/poster.js). Spread the word only after a real share (shared or fallback, never cancelled or
+  // failed); badges already earned stay. Then the badge check runs.
   const shareBadge = useCallback(async (badgeId) => {
-    setShared()
-    try { await sharePoster(badgeId, { t, name: getName(), toast }) } finally { runBadgeCheck() }
+    let result = 'failed'
+    try { result = await sharePoster(badgeId, { t, name: getName(), toast }) } finally {
+      if (shareEarns(result)) setShared()
+      runBadgeCheck()
+    }
+    return result
   }, [t, toast, runBadgeCheck])
 
   // Android back button. The page keeps at most two browser entries: a base entry, plus a guard entry on top of it

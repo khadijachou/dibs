@@ -103,6 +103,8 @@ function readRaw() {
 }
 export const getBadges = () => readRaw() || {}
 export const isShared = () => { try { return localStorage.getItem(SHARED) === '1' } catch { return false } }
+// Spread the word counts a real share only: the share sheet went through, or the copy + save + X page path ran.
+export const shareEarns = (result) => result === 'shared' || result === 'fallback'
 export const setShared = () => { try { localStorage.setItem(SHARED, '1') } catch { /* storage blocked */ } }
 
 // Records the badges met now that are not recorded yet, and returns their ids (to announce). The very first check on

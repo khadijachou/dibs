@@ -186,6 +186,7 @@ function BadgeSheet({ id, badges, goals, onClose }) {
   if (claim) return <ClaimSheet id={id} amount={amount} goals={goals} onClose={() => setClaim(false)} />
 
   const shareBtn = (cls) => <button type="button" className={cls} onClick={() => shareBadge(id)}>{t('badge_share')}</button>
+  const hint = <p className="small">{t('share_hint')}</p>
   const closeBtn = <button type="button" className="btn ghost" onClick={onClose}>{t('ob_close')}</button>
   return (
     <Sheet label={name} onClose={onClose}>
@@ -209,9 +210,10 @@ function BadgeSheet({ id, badges, goals, onClose }) {
             {st.state === 'wait' ? t('rw_state_wait', { date: fmtDate(st.date, lang) }) : t('rw_claim_btn')}
           </button>
           <div className="bsheet-pair">{shareBtn('btn ghost')}{closeBtn}</div>
+          {hint}
         </>
       ) : earned ? (
-        <>{shareBtn('btn')}{closeBtn}</>
+        <>{shareBtn('btn')}{hint}{closeBtn}</>
       ) : closeBtn}
     </Sheet>
   )
