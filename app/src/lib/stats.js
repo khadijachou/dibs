@@ -75,6 +75,16 @@ export async function flush() {
 }
 
 // Once a day: app_open, and the Stake tab's own numbers (stakedNim, earnedNim, goalsActive).
+// The snapshot payload from stakeSummary() (lib/earned.js), the one earned calculation in the app. Pure.
+// earnedRule 2 = only rewards on the principal Dibs tracks (inGoalsNim). The server counts earnedNim only with it.
+// earned unknown (null): no earnedNim at all, never 0 or a guess.
+export const EARNED_RULE = 2
+export function snapshotData(summary, goalsActive) {
+  const { total, inGoals, earned } = summary || {}
+  const out = { stakedNim: total ?? 0, goalsActive }
+  if (earned != null && Number.isFinite(earned)) Object.assign(out, { earnedNim: earned, inGoalsNim: inGoals ?? 0, earnedRule: EARNED_RULE })
+  return out
+}
 const today = () => new Date().toISOString().slice(0, 10)
 export function dailyDue(kind) {
   if (consent() !== 'yes') return false

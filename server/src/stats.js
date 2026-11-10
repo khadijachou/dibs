@@ -137,10 +137,21 @@ const hex64 = (v) => (typeof v === 'string' && /^[0-9a-f]{64}$/i.test(v) ? v.toL
 const nim = (v) => num(v, 0, 10_000_000)
 const usd = (v) => num(v, 0, 2_000)
 
+// Earned from staking: only snapshots made with the app's honest rule (earnedRule 2: rewards on the principal Dibs
+// tracks, inGoalsNim) count. Earlier phones sent "total staked minus goal deposits", which called stake from outside
+// Dibs "earned" (24,263 NIM for 47,797 saved): every earnedNim without the rule is ignored.
+export const EARNED_RULE = 2
+const MAX_EARNED_SHARE = 0.01 // sanity check: earned above 1 % of the NIM it covers is not believed
+export function reliableEarned(d) {
+  if (!d || d.earnedRule !== EARNED_RULE || typeof d.earnedNim !== 'number' || typeof d.inGoalsNim !== 'number') return null
+  if (d.earnedNim > d.inGoalsNim * MAX_EARNED_SHARE) return null
+  return d.earnedNim
+}
+
 // Allowed kinds and their fields. Anything else is dropped. A null for a required field drops the event.
 const KINDS = {
   app_open: { lang: oneOf(['en', 'fr', 'es']) },
-  snapshot: { stakedNim: nim, earnedNim: nim, goalsActive: (v) => num(v, 0, 1000) },
+  snapshot: { stakedNim: nim, earnedNim: nim, inGoalsNim: nim, earnedRule: oneOf([EARNED_RULE]), goalsActive: (v) => num(v, 0, 1000) },
   consent: { value: oneOf(['yes']) },
   goal_created: { goalId: id, brand: slug, itemId: id, usd, weeks: (v) => num(v, 0, 60) },
   deposit: { goalId: id, depositId: id, nim, tx: hex64 },
@@ -151,7 +162,7 @@ const KINDS = {
   error: { key: (v) => (typeof v === 'string' && /^[A-Z][A-Z0-9_]{1,39}$/.test(v) ? v : null) },
 }
 // Fields that may be missing (the event is kept without them).
-const OPTIONAL = { goal_created: ['brand', 'itemId', 'usd', 'weeks'], deposit: ['tx'], purchase: ['itemId', 'usd', 'tx'], app_open: ['lang'] }
+const OPTIONAL = { snapshot: ['earnedNim', 'inGoalsNim', 'earnedRule'], goal_created: ['brand', 'itemId', 'usd', 'weeks'], deposit: ['tx'], purchase: ['itemId', 'usd', 'tx'], app_open: ['lang'] }
 
 function clean(ev, now) {
   if (!ev || typeof ev !== 'object') return null
@@ -321,6 +332,7 @@ function compute() {
   const firstDeposit = new Map() // goal key -> earliest verified deposit time
   const bought = new Set()
   const snapshots = new Map() // h -> latest snapshot
+  const earnedBy = new Map() // h -> latest snapshot with a reliable earned figure (see reliableEarned)
   let nimAdded = 0, cardsBought = 0, cardsUsd = 0
   const verifiedDeposits = []
   let unverified = 0
@@ -357,14 +369,20 @@ function compute() {
       case 'goal_deleted': deletions += 1; ended.add(gk); break
       case 'move': moves += 1; movedNim += d.nim; break
       case 'error': errors[d.key] = (errors[d.key] || 0) + 1; break
-      case 'snapshot': { const s = snapshots.get(e.h); if (!s || e.at >= s.at) snapshots.set(e.h, { at: e.at, ...d }); break }
+      case 'snapshot': {
+        const s = snapshots.get(e.h); if (!s || e.at >= s.at) snapshots.set(e.h, { at: e.at, ...d })
+        const n = reliableEarned(d)
+        const r = earnedBy.get(e.h); if (n != null && (!r || e.at >= r.at)) earnedBy.set(e.h, { at: e.at, n })
+        break
+      }
       default: break
     }
   }
   unverified += queue.length ? queue.filter((q) => q.ev.kind === 'deposit').length : 0
 
   let staked = 0, earned = 0
-  for (const s of snapshots.values()) { staked += s.stakedNim || 0; earned += s.earnedNim || 0 }
+  for (const s of snapshots.values()) staked += s.stakedNim || 0
+  for (const r of earnedBy.values()) earned += r.n
   const created = [...goals.keys()]
   const pub = {
     since,
@@ -379,7 +397,8 @@ function compute() {
     cardsUsd: round(cardsUsd, 2),
     nimAddedVerified: round(nimAdded, 2),
     nimStakedNow: round(staked, 2),
-    nimEarned: round(earned, 2),
+    nimEarned: earnedBy.size ? round(earned, 2) : null, // null: no reliable report yet, the page says so
+    earnedReports: earnedBy.size,
   }
 
   const brands = {}

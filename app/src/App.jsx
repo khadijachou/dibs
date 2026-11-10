@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { connect, getBalanceNim, host, isDemo, listAccountsWithBalance, readStaker } from './lib/nimiq.js'
-import { configureStats, dailyDue, flush, markDaily, track } from './lib/stats.js'
+import { configureStats, dailyDue, flush, markDaily, snapshotData, track } from './lib/stats.js'
 import { stakeSummary } from './lib/earned.js'
 import { getPrices } from './lib/price.js'
 import { makeT } from './lib/i18n.js'
@@ -161,9 +161,8 @@ export default function App() {
     if (dailyDue('open')) { track('app_open', { lang }); markDaily('open') } else flush()
     if (!dailyDue('snapshot')) return
     readStaker(address).then((st) => {
-      const { total, earned } = stakeSummary(st, address)
       const goalsActive = listGoals(address).filter((g) => g.status !== 'redeemed' && g.status !== 'withdrawn').length
-      track('snapshot', { stakedNim: total, earnedNim: earned ?? 0, goalsActive })
+      track('snapshot', snapshotData(stakeSummary(st, address), goalsActive))
       markDaily('snapshot')
     }).catch(() => { /* chain unreadable: try on the next open */ })
   }, [ready, address]) // eslint-disable-line react-hooks/exhaustive-deps

@@ -56,3 +56,21 @@ test('nothing is queued or sent before Share stats, nor after No thanks', () => 
   assert.equal(localStorage.getItem('dibs.outbox'), null)
   assert.equal(calls.length, 0)
 })
+
+test('snapshot sends earned only with the honest rule, nothing when unknown', async () => {
+  const { snapshotData, EARNED_RULE } = await import('./stats.js')
+  const { stakeEarnings } = await import('./profileStats.js')
+  const g = { id: 'g1', status: 'saving', deposits: [{ id: 'd1', nim: 200, at: day(6) }] }
+  const st = (nim) => ({ address: 'NQ00', balance: nim * 1e5, inactiveBalance: 0, retiredBalance: 0 })
+  // Unknown (ledger above the chain): no earnedNim at all, never 0.
+  const unknown = snapshotData(stakeEarnings(st(100), [g]), 1)
+  assert.deepEqual(unknown, { stakedNim: 100, goalsActive: 1 })
+  // 1,362 NIM staked before Dibs: none of it is earned (old formula said 1,362).
+  const first = stakeEarnings(st(1562), [g], null, { now })
+  const s = snapshotData(first, 1)
+  assert.deepEqual(s, { stakedNim: 1562, goalsActive: 1, earnedNim: 0, inGoalsNim: 200, earnedRule: EARNED_RULE })
+  // Same function as the screens: the value sent is stakeEarnings().earned.
+  const later = stakeEarnings(st(1600), [g], first.base, { now: now + 30 * 864e5 })
+  assert.equal(snapshotData(later, 1).earnedNim, later.earned)
+  assert.ok(later.earned < 38)
+})

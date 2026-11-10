@@ -42,6 +42,7 @@ export const statsPage = `${HEAD('Dibs in numbers')}
 .tile .n { font-weight: 700; font-size: 26px; margin: 2px 0; }
 .tile .s { font-size: 12px; color: var(--muted); }
 .tile.mint .n { color: var(--mint); } .tile.butter .n { color: var(--butter); }
+.tile.nodata .n { font-size: 17px; line-height: 31px; color: var(--muted); }
 .asof { font-size: 13px; color: var(--muted); }
 .note { font-size: 13px; color: var(--muted); line-height: 1.55; }
 .err { color: var(--red); font-size: 14px; }
@@ -80,7 +81,7 @@ async function load() {
       tile('Goals created', fmt(d.goalsCreated), fmt(d.goalsActive) + ' active right now'),
       tile('Goals reached', fmt(d.goalsReached), 'saved up to 100%', 'mint'),
       tile('Cards bought', fmt(d.cardsBought), 'about ' + fmt(d.cardsUsd) + ' USD in total', 'butter'),
-      tile('NIM earned from staking', fmt(d.nimEarned), 'rewards so far', 'mint'),
+      d.nimEarned == null ? tile('NIM earned from staking', 'Not enough data yet', 'shown once phones report it', 'nodata') : tile('NIM earned from staking', fmt(d.nimEarned), 'rewards so far', 'mint'),
     ].join('')
     document.getElementById('asof').innerHTML = '<span class="dot" aria-hidden="true"></span>As of ' + esc(new Date(d.updatedAt).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }))
   } catch {
@@ -133,7 +134,7 @@ async function load() {
     if (!r.ok) { msg.innerHTML = '<span class="err">Not found. Check the key.</span>'; document.getElementById('out').innerHTML = ''; return }
     const d = await r.json()
     msg.innerHTML = '<span class="dot"></span>Updated ' + esc(new Date(d.updatedAt).toLocaleString()) + (d.durable ? '' : ' · storage durable: false')
-    const pub = ['people', 'savers', 'goalsCreated', 'goalsActive', 'goalsReached', 'cardsBought', 'cardsUsd', 'nimAddedVerified', 'nimStakedNow', 'nimEarned', 'since']
+    const pub = ['people', 'savers', 'goalsCreated', 'goalsActive', 'goalsReached', 'cardsBought', 'cardsUsd', 'nimAddedVerified', 'nimStakedNow', 'nimEarned', 'earnedReports', 'since']
     document.getElementById('out').innerHTML = [
       table('Public numbers', ['Number', 'Value'], pub.map((k) => [k, d[k]])),
       table('Brand funnel', ['Brand', 'Created', 'First deposit', 'Reached', 'Bought'], Object.entries(d.brands).sort((a, b) => b[1].created - a[1].created).map(([b, v]) => [b, v.created, v.firstDeposit, v.reached, v.bought])),
