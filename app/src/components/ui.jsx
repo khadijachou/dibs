@@ -120,7 +120,12 @@ export function BrandLogo({ brand, className = '' }) {
     )
   }
   if (brand?.logo) {
-    return <div className={`blogo img ${className}`} aria-hidden="true"><img className="blogo-glyph" src={brand.logo} alt="" /></div>
+    const plate = brand.logoPlate
+    return (
+      <div className={`blogo img${plate === 'fill' ? ' fill' : ''} ${className}`} style={plate && plate !== 'fill' ? { background: plate } : undefined} aria-hidden="true">
+        <img className="blogo-glyph" src={brand.logo} alt="" />
+      </div>
+    )
   }
   return (
     <div className={`blogo letter ${className}`} style={brand?.tile ? { background: brand.tile.bg, color: brand.tile.fg } : undefined} aria-hidden="true">

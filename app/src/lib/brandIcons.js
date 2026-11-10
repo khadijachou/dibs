@@ -8,8 +8,8 @@ import {
 } from 'simple-icons'
 
 // Brand key (lib/brands.js) → simple-icons entry.
-// Not in simple-icons 16.36: Amazon (keeps public/logos/amazon.png), Nintendo eShop, Xbox, Flightgift,
-// Best Buy, Disney (keep the letter tile).
+// Not in simple-icons 16.36: Amazon, Nintendo eShop, Xbox, Flightgift, Best Buy, Disney. They use files in
+// public/logos (lib/brands.js logo).
 export const BRAND_ICONS = {
   steam: siSteam,
   apple: siApple,

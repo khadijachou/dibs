@@ -8,9 +8,12 @@ import { notSold } from './availability.js'
 // curated order below.
 // Order = order on the "All" view. The first eight sit above the fold.
 // slugs marked "confirm" come from the shop site and must be checked on the server (`npm run catalog -- add <slug>`).
-// Logos: lib/brandIcons.js (simple-icons, by key) first; else logo (only Amazon: app/public/logos/amazon.png);
-// else tile: a letter tile in the brand's colour with a white letter. Used for Nintendo eShop, Xbox, Flightgift,
-// Best Buy and Disney, which simple-icons does not carry; the shop's catalogue data has no product image.
+// Logos: lib/brandIcons.js (simple-icons, by key) first; else logo, a file in app/public/logos (Amazon, Nintendo eShop,
+// Xbox, Flightgift, Best Buy, Disney: brands simple-icons does not carry; the shop's catalogue data has no product
+// image); else tile: a letter tile in the brand's colour with a white letter. tile and color still tint the cards.
+// logoPlate (logo files only): absent = white plate, logo contained at 84 % (Amazon); '#rrggbb' = that plate colour
+// (a light logo on a transparent background, or a wide logo with its own solid background: plate and picture blend);
+// 'fill' = the picture fills the tile, no plate, no padding (a square picture with its own background).
 export const BRANDS = [
   { key: 'steam',       name: 'Steam',             color: ['#2a475e', '#121a24'], chip: 'games',     logo: null,                     slugs: ['steam-usa'], popular: true, delivers: 'code', region: ['USA'], about: 'brand_about_steam' },
   { key: 'amazon',      name: 'Amazon',            color: ['#37475a', '#161c24'], chip: 'shopping',  logo: '/logos/amazon.png',      slugs: ['amazon_com-usa'], popular: true, delivers: 'code', region: ['USA'], about: 'brand_about_amazon' },
@@ -21,18 +24,18 @@ export const BRANDS = [
   { key: 'playstation', name: 'PlayStation Store', color: ['#0070d1', '#001a4d'], chip: 'games',     logo: null,                     slugs: ['sony-playstation-usa'], delivers: 'code', region: ['USA'], about: 'brand_about_playstation' },
   { key: 'ubereats',    name: 'Uber Eats',         color: ['#06a85a', '#05331f'], chip: 'food',      logo: null,                     slugs: ['uber-eats-usa'], delivers: 'code', region: ['USA'], about: 'brand_about_ubereats' },
   // below the fold
-  { key: 'nintendo',    name: 'Nintendo eShop',    color: ['#e60012', '#5c0008'], chip: 'games',     logo: null, tile: { bg: '#E60012', fg: '#fff', letter: 'N' }, slugs: ['nintendo-eshop-usa'], delivers: 'code', region: ['USA'], about: 'brand_about_nintendo' },            // confirm
+  { key: 'nintendo',    name: 'Nintendo eShop',    color: ['#e60012', '#5c0008'], chip: 'games',     logo: '/logos/nintendo-eshop.png', tile: { bg: '#E60012', fg: '#fff', letter: 'N' }, slugs: ['nintendo-eshop-usa'], delivers: 'code', region: ['USA'], about: 'brand_about_nintendo' },            // confirm
   { key: 'roblox',      name: 'Roblox',            color: ['#4a4c51', '#131315'], chip: 'games',     logo: null, tile: { bg: '#1b1b1f', fg: '#fff', letter: 'R' }, slugs: ['roblox-usa'], delivers: 'code', region: ['USA'], about: 'brand_about_roblox' },              // confirm
   { key: 'fortnite',    name: 'Fortnite',          color: ['#1d3a6b', '#0a1530'], chip: 'games',     logo: null, tile: { bg: '#1d3a6b', fg: '#fff', letter: 'F' }, slugs: ['fortnite-usa'] },            // confirm
   { key: 'valorant',    name: 'Valorant',          color: ['#ff4655', '#5c0f18'], chip: 'games',     logo: null, tile: { bg: '#ff4655', fg: '#fff', letter: 'V' }, slugs: ['valorant-usa'], delivers: 'code', region: ['USA'], about: 'brand_about_valorant' },            // confirm
   { key: 'riot',        name: 'Riot Access',       color: ['#d13639', '#4a1012'], chip: 'games',     logo: null, tile: { bg: '#d13639', fg: '#fff', letter: 'R' }, slugs: ['riot-access-usa'], delivers: 'code', region: ['USA'], about: 'brand_about_riot' },         // confirm
-  { key: 'xbox',        name: 'Xbox',              color: ['#14931a', '#062e08'], chip: 'games',     logo: null, tile: { bg: '#107C10', fg: '#fff', letter: 'X' }, slugs: ['xbox-usa'], delivers: 'code', region: ['USA'], about: 'brand_about_xbox' },                // confirm, out of stock on 5 Nov
+  { key: 'xbox',        name: 'Xbox',              color: ['#14931a', '#062e08'], chip: 'games',     logo: '/logos/xbox.png', tile: { bg: '#107C10', fg: '#fff', letter: 'X' }, slugs: ['xbox-usa'], delivers: 'code', region: ['USA'], about: 'brand_about_xbox' },                // confirm, out of stock on 5 Nov
   { key: 'discord',     name: 'Discord Nitro',     color: ['#5865f2', '#232782'], chip: 'games',     logo: null, tile: { bg: '#5865f2', fg: '#fff', letter: 'D' }, slugs: ['discord-nitro-usa'], delivers: 'link', region: ['USA'], about: 'brand_about_discord' },       // confirm, maybe refused by the tool
   { key: 'hotels',      name: 'Hotels.com',        color: ['#d32f2f', '#4f0f0f'], chip: 'travel',    logo: null, tile: { bg: '#d32f2f', fg: '#fff', letter: 'H' }, slugs: ['hotels_com-usa'], delivers: 'pin', region: ['USA'], about: 'brand_about_hotels' },          // confirm
-  { key: 'flightgift',  name: 'Flightgift',        color: ['#1f6feb', '#0a2558'], chip: 'travel',    logo: null, tile: { bg: '#1F6FEB', fg: '#fff', letter: 'F' }, slugs: ['flightgift-usa'], delivers: 'link', region: ['USA'], about: 'brand_about_flightgift' },          // confirm
+  { key: 'flightgift',  name: 'Flightgift',        color: ['#1f6feb', '#0a2558'], chip: 'travel',    logo: '/logos/flightgift.png', logoPlate: '#113857', tile: { bg: '#1F6FEB', fg: '#fff', letter: 'F' }, slugs: ['flightgift-usa'], delivers: 'link', region: ['USA'], about: 'brand_about_flightgift' },          // confirm
   { key: 'uber',        name: 'Uber',              color: ['#3a3a3e', '#050506'], chip: 'travel',    logo: null, tile: { bg: '#0b0b0d', fg: '#fff', letter: 'U' }, slugs: ['uber-usa'], delivers: 'code', region: ['USA'], about: 'brand_about_uber' },                // confirm
-  { key: 'bestbuy',     name: 'Best Buy',          color: ['#0046be', '#001a4a'], chip: 'shopping',  logo: null, tile: { bg: '#0046BE', fg: '#fff', letter: 'B' }, slugs: ['best-buy-usa'], delivers: 'pin', region: ['USA'], about: 'brand_about_bestbuy' },         // confirm
-  { key: 'disney',      name: 'Disney',            color: ['#1b4fe0', '#08185c'], chip: 'streaming', logo: null, tile: { bg: '#113CCF', fg: '#fff', letter: 'D' }, slugs: ['disney-usa'], delivers: 'code', region: ['USA'], about: 'brand_about_disney' },              // confirm
+  { key: 'bestbuy',     name: 'Best Buy',          color: ['#0046be', '#001a4a'], chip: 'shopping',  logo: '/logos/Best-Buy.png', logoPlate: 'fill', tile: { bg: '#0046BE', fg: '#fff', letter: 'B' }, slugs: ['best-buy-usa'], delivers: 'pin', region: ['USA'], about: 'brand_about_bestbuy' },         // confirm
+  { key: 'disney',      name: 'Disney',            color: ['#1b4fe0', '#08185c'], chip: 'streaming', logo: '/logos/DGC-Logo.png', tile: { bg: '#113CCF', fg: '#fff', letter: 'D' }, slugs: ['disney-usa'], delivers: 'code', region: ['USA'], about: 'brand_about_disney' },              // confirm
   { key: 'starbucks',   name: 'Starbucks',         color: ['#00845a', '#002e20'], chip: 'food',      logo: null, tile: { bg: '#00704a', fg: '#fff', letter: 'S' }, slugs: ['starbucks-usa'], delivers: 'pin', region: ['USA'], about: 'brand_about_starbucks' },           // confirm
   { key: 'doordash',    name: 'DoorDash',          color: ['#ff3008', '#6b1403'], chip: 'food',      logo: null, tile: { bg: '#ff3008', fg: '#fff', letter: 'D' }, slugs: ['doordash-usa'], delivers: 'code', region: ['USA'], about: 'brand_about_doordash' },            // confirm
 ]

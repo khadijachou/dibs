@@ -132,6 +132,14 @@ export default function Catalog({ moveFrom = null, changeFor = null }) {
             ))}
           </div>
         )}
+        <section className="cat-source">
+          <div className="cat-source-head">
+            <img className="cat-source-logo" src="/logos/bittrefill.png" alt="" aria-hidden="true" />
+            <h3>{t('cat_src_title')}</h3>
+          </div>
+          <p>{t('cat_src_body')}</p>
+          <p className="cat-source-legal">{t('cat_src_legal')}</p>
+        </section>
       </main>
       {sheetBrand && <BrandSheet brand={sheetBrand} onClose={() => setOpen(null)} onPick={pick} />}
     </>
