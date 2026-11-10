@@ -14,6 +14,7 @@ import { getName } from '../lib/name.js'
 import { MilestoneLine, useGoalMilestone } from '../components/Milestone.jsx'
 import { GoalDot, GoalStatus, goalPace } from '../components/GoalStatus.jsx'
 import { StatsCard } from '../components/StatsConsent.jsx'
+import BrandSheet from '../components/BrandSheet.jsx'
 
 // Welcome screen (no goal yet): "Welcome, Sam" when the user gave a name during onboarding or in More; nothing otherwise.
 function Hello() {
@@ -109,11 +110,13 @@ function Hub({ goals }) {
   const past = goals.filter(isPast).sort((a, b) => endOf(b).localeCompare(endOf(a)))
   const liveKeys = new Set(live.map((g) => goalBrand(g).key))
   const others = catalogBrands().filter((b) => !liveKeys.has(b.key)).slice(0, 4)
+  const [sheet, setSheet] = useState(null) // brand key whose sheet is open ("Call dibs on something else")
+  const sheetBrand = others.find((b) => b.key === sheet)
   return (
     <>
       <Header langChip />
       <main className="screen">
-        <h2 className="title">{t('tab_goals')}</h2>
+        <h2 className="title">{t('home_title')}</h2>
         {/* Several goals: the greeting shares its row with the carousel dots (GoalWallet). One goal: greeting, then the card. */}
         {/* Usage stats: asked once under the greeting to users who finished onboarding before the consent step. */}
         {live.length > 1 ? <GoalWallet goals={live} earned={earned} /> : <><Greeting /><StatsCard />{active && <GoalHero goal={active} earned={earned} />}</>}
@@ -125,15 +128,16 @@ function Hub({ goals }) {
           <div className="sec-head"><h3>{t('home_else')}</h3></div>
           <div className="bchips">
             {others.map((b) => (
-              <button type="button" key={b.key} className="bchip" onClick={() => go('plan', { brandKey: b.key })}><BrandLogo brand={b} />{b.name}</button>
+              <button type="button" key={b.key} className="bchip" aria-haspopup="dialog" onClick={() => setSheet(b.key)}><BrandLogo brand={b} />{b.name}</button>
             ))}
             <button type="button" className="bchip more" onClick={() => go('catalog')}>{t('see_all')} ›</button>
           </div>
         </section>
         <div className="bottom">
-          <button type="button" className="btn" onClick={() => go('catalog')}>{t('home_new2')}</button>
+          <button type="button" className="btn tall" onClick={() => go('catalog')}>{t('home_new2')}<small>{t('home_new2_sub')}</small></button>
         </div>
       </main>
+      {sheetBrand && <BrandSheet brand={sheetBrand} onClose={() => setSheet(null)} onPick={() => { setSheet(null); go('plan', { brandKey: sheetBrand.key }) }} />}
     </>
   )
 }

@@ -226,13 +226,6 @@ input.email { width: 100%; height: 48px; border-radius: 12px; border: 1.5px soli
 .cats { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: -4px 0 0; }
 .cat { background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; font-size: 13px; font-weight: 500; white-space: nowrap; cursor: pointer; }
 .cat.on { background: var(--navy); color: var(--ground); border-color: var(--navy); }
-.btile { background: var(--card); border: 2px solid transparent; border-radius: 16px; padding: 12px; position: relative; min-height: 112px; text-align: left; cursor: pointer; display: flex; flex-direction: column; }
-.btile.on { border-color: var(--gold); }
-.btile .blogo { margin-bottom: 12px; }
-.btile b { font-size: 15px; font-weight: 600; } .btile span { color: var(--muted); font-size: 12px; margin-top: 2px; }
-.btile .pop { position: absolute; top: 10px; right: 10px; background: var(--teal-soft); color: var(--teal); font-size: 10px; font-weight: 600; padding: 3px 7px; border-radius: 999px; }
-.btile .chk { position: absolute; top: 10px; right: 10px; width: 20px; height: 20px; border-radius: 50%; background: var(--gold); color: #fff; display: grid; place-items: center; }
-.scroll-fade { position: sticky; bottom: 0; height: 40px; margin-top: -40px; background: linear-gradient(transparent, var(--ground)); pointer-events: none; }
 
 /* Plan v2.2 */
 .plan-head { display: flex; gap: 12px; align-items: center; }

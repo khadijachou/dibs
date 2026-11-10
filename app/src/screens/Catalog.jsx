@@ -1,8 +1,7 @@
 import { useLayoutEffect, useRef, useState } from 'react'
 import { useApp } from '../App.jsx'
 import { BrandLogo, Header, Icon } from '../components/ui.jsx'
-import { CHIPS, catalogBrands } from '../lib/brands.js'
-import { brandColor } from '../lib/brandIcons.js'
+import { CHIPS, brandGrad, catalogBrands } from '../lib/brands.js'
 import { fromText } from '../lib/itemName.js'
 import { useReducedMotion } from '../components/UnlockTimer.jsx'
 import BrandSheet from '../components/BrandSheet.jsx'
@@ -10,6 +9,9 @@ import BrandSheet from '../components/BrandSheet.jsx'
 // Entrance stagger: 40 ms per tile, never more than 400 ms for the last one.
 const STAGGER_MS = 40
 const STAGGER_MAX_MS = 400
+
+// The Popular row, in this order (a brand missing from the live catalogue is skipped).
+const POPULAR = ['netflix', 'playstation', 'airbnb', 'starbucks']
 
 // Category chip highlight. It lives inside the active chip (inset 0), so at rest it covers that chip exactly,
 // whatever the fonts, language or screen width; nothing is measured ahead of time. On a switch it slides from the
@@ -43,20 +45,42 @@ export function useChipSlide(active, reduced) {
   return { hl, remember }
 }
 
-// One tile per brand; the amount is chosen on the Plan screen (UI v2.2).
+// A brand as a gift card: logo and delivery pill on top, name and lowest price at the bottom. A tap opens the sheet.
+export function GiftTile({ brand, big = false, style, onOpen }) {
+  const { t } = useApp()
+  return (
+    <button type="button" className={`gtile${big ? ' big' : ''}`} aria-haspopup="dialog"
+      style={{ ...style, background: brandGrad(brand.key) }} onClick={() => onOpen(brand)}>
+      <i className="gift-sheen" aria-hidden="true" />
+      <span className="gtile-top">
+        <BrandLogo brand={brand} />
+        {brand.delivers && <span className="gtile-pill">{t(`dlv_short_${brand.delivers}`)}</span>}
+      </span>
+      <span className="gtile-bot">
+        <b>{brand.name}</b>
+        <span>{fromText(t, brand)}</span>
+      </span>
+    </button>
+  )
+}
+
+// The one catalogue: Goals > New goal and See all, Move > A new goal, Change card, More > Catalogue.
+// A tile opens the brand sheet; its button starts the goal on Plan (the amount is chosen there).
 // moveFrom: opened from Move > "A new goal"; passed on to Plan and then to the new goal.
 // changeFor: a goal id whose card is no longer available (components/CardIssue.jsx); Plan then swaps that goal's card.
 export default function Catalog({ moveFrom = null, changeFor = null }) {
-  const { t, go, back, canGoBack, toast } = useApp()
+  const { t, go, back, canGoBack } = useApp()
   const reduced = useReducedMotion()
   const brands = catalogBrands()
   const [chip, setChip] = useState('all')
-  const [picked, setPicked] = useState(brands[0]?.key)
-  const [glow, setGlow] = useState(null) // { key, n }: the tile whose release glow is playing
-  const [info, setInfo] = useState(null) // brand key whose About sheet is open (never changes the pick)
-  const shown = chip === 'all' ? brands : brands.filter((b) => b.chip === chip)
+  const [q, setQ] = useState('')
+  const [open, setOpen] = useState(null) // brand key whose sheet is open
+  // Search: the start of any word in the brand name, any case ("st": Steam, PlayStation Store, Starbucks; not Best Buy).
+  const query = q.trim()
+  const match = query ? new RegExp(`(^|[^\\p{L}\\p{N}])${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'iu') : null
+  const shown = brands.filter((b) => (chip === 'all' || b.chip === chip) && (!match || match.test(b.name)))
+  const popular = POPULAR.map((k) => brands.find((b) => b.key === k)).filter(Boolean)
   const usedChips = CHIPS.filter((c) => brands.some((b) => b.chip === c))
-  const brand = brands.find((b) => b.key === picked)
   const slide = useChipSlide(chip, reduced)
   const pickChip = (c) => { if (c === chip) return; slide.remember(); setChip(c) }
   const chipBtn = (c, label) => (
@@ -65,11 +89,12 @@ export default function Catalog({ moveFrom = null, changeFor = null }) {
       <span>{label}</span>
     </button>
   )
-
-  // Soft brand glow after the press: a keyed layer, so a second tap restarts it (opacity only).
-  const pick = (key) => {
-    setPicked(key)
-    if (!reduced) setGlow((g) => ({ key, n: (g?.n || 0) + 1 }))
+  const openSheet = (b) => setOpen(b.key)
+  const sheetBrand = brands.find((b) => b.key === open)
+  const pick = () => {
+    const brandKey = sheetBrand.key
+    setOpen(null)
+    go('plan', { brandKey, moveFrom, changeFor })
   }
 
   return (
@@ -80,47 +105,35 @@ export default function Catalog({ moveFrom = null, changeFor = null }) {
           <h2 className="title">{t('cat_title')}</h2>
           <p className="sub" style={{ marginTop: 6 }}>{t(changeFor ? 'change_sub' : 'cat_sub')}</p>
         </div>
+        <label className="cat-search">
+          <Icon name="search" size={18} />
+          <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('cat_search', { count: brands.length })}
+            aria-label={t('cat_search', { count: brands.length })} autoComplete="off" enterKeyHint="search" />
+        </label>
+        {!query && chip === 'all' && popular.length > 0 && (
+          <section className="cat-pop">
+            <div className="sec-head"><h3>{t('cat_popular')}</h3></div>
+            <div className="pop-row">
+              {popular.map((b) => <GiftTile key={b.key} brand={b} big onOpen={openSheet} />)}
+            </div>
+          </section>
+        )}
         <div className="cats hl" role="group">
           {chipBtn('all', t('chip_all', { count: brands.length }))}
           {usedChips.map((c) => chipBtn(c, t('chip_' + c)))}
         </div>
-        {/* key: a new grid per category, so the entrance plays on first load and on each switch, never on scroll. */}
-        <div className={`grid cat-grid${reduced ? '' : ' enter'}`} key={chip}>
-          {shown.map((b, i) => (
-            // The "i" is a sibling of the tile button (no button inside a button); it opens the brand sheet only.
-            <div className="btile-wrap" key={b.key} style={{ '--brand': brandColor(b), '--delay': `${Math.min(i * STAGGER_MS, STAGGER_MAX_MS)}ms` }}>
-            <button type="button" className={`btile${b.key === picked ? ' on' : ''}`} aria-pressed={b.key === picked}
-              aria-describedby={b.estimated ? `est-${b.key}` : undefined}
-              onClick={() => pick(b.key)}>
-              {glow?.key === b.key && <i className="btile-glow" key={glow.n} aria-hidden="true" onAnimationEnd={() => setGlow(null)} />}
-              {b.key === picked
-                ? <span className="chk"><Icon name="check" size={13} stroke={3} /></span>
-                : b.popular && <span className="pop">{t('cat_popular')}</span>}
-              <BrandLogo brand={b} />
-              <b>{b.name}</b>
-              <span>{fromText(t, b)}</span>
-              {b.estimated && (
-                // One-line chip; a tap shows the full explanation (the tile itself still picks the brand elsewhere).
-                <span className="price-chip" onClick={(e) => { e.stopPropagation(); toast(t('price_checkout_info')) }}>
-                  <i aria-hidden="true">i</i>{t('price_chip')}
-                  <span className="sr-only" id={`est-${b.key}`}>{t('price_checkout_info')}</span>
-                </span>
-              )}
-            </button>
-            <button type="button" className="btile-info" aria-label={t('brand_info', { brand: b.name })} aria-haspopup="dialog"
-              onClick={() => setInfo(b.key)}><i aria-hidden="true">i</i></button>
-            </div>
-          ))}
-        </div>
-        {shown.length > 6 && <div className="scroll-fade" aria-hidden="true" />}
-        <div className="bottom">
-          <p className="small center">{t('cat_footer2')}</p>
-          <button type="button" className="btn tall" disabled={!brand} onClick={() => go('plan', { brandKey: picked, moveFrom, changeFor })}>
-            {brand && t('cat_cta', { brand: brand.name })}<small>{t('cat_cta_sub')}</small>
-          </button>
-        </div>
+        {shown.length === 0 ? (
+          <p className="small center cat-none">{t('cat_none', { q: query })}</p>
+        ) : (
+          // key: a new grid per category, so the entrance plays on first load and on each switch, never on scroll.
+          <div className={`grid gift-grid${reduced ? '' : ' enter'}`} key={chip}>
+            {shown.map((b, i) => (
+              <GiftTile key={b.key} brand={b} onOpen={openSheet} style={{ '--delay': `${Math.min(i * STAGGER_MS, STAGGER_MAX_MS)}ms` }} />
+            ))}
+          </div>
+        )}
       </main>
-      {info && brands.find((b) => b.key === info) && <BrandSheet brand={brands.find((b) => b.key === info)} onClose={() => setInfo(null)} />}
+      {sheetBrand && <BrandSheet brand={sheetBrand} onClose={() => setOpen(null)} onPick={pick} />}
     </>
   )
 }
