@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useApp } from '../App.jsx'
 import { Header, Sheet } from '../components/ui.jsx'
 import { Avatar } from '../components/Avatar.jsx'
@@ -16,6 +16,7 @@ import { itemLabel } from '../lib/itemName.js'
 import { copyText } from '../lib/clipboard.js'
 import { RANKS, XP } from '../lib/xp.js'
 import { useXp } from '../lib/useXp.js'
+import { levelToPlay, markBadges, newBadges, setLevelSeen } from '../lib/seen.js'
 
 const TOTAL = BADGES.length
 const longDate = (d, lang) => new Intl.DateTimeFormat(lang, { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(d)).replace(/ /g, ' ')
@@ -73,6 +74,17 @@ export default function Profile({ badge: askedBadge, badgeAt }) {
     { tone: 'cream', label: t('prof_since_s'), value: s.savingSince ? shortDate(s.savingSince, lang) : '-' },
   ]
   const earnedList = BADGES.filter((b) => badges[b.id])
+  // New badges pop once (lib/seen.js dibs.seen.badges): 120 ms apart, at most 6 animated, the rest just appear.
+  const earnedKey = earnedList.map((b) => b.id).join()
+  const [fresh, setFresh] = useState(() => newBadges(earnedList.map((b) => b.id)).slice(0, MAX_POPS))
+  useEffect(() => {
+    const ids = earnedList.map((b) => b.id)
+    const n = newBadges(ids)
+    if (!n.length) return
+    setFresh((f) => [...f, ...n.filter((id) => !f.includes(id))].slice(0, MAX_POPS))
+    markBadges(n)
+  }, [earnedKey]) // eslint-disable-line react-hooks/exhaustive-deps
+  const popOf = (id) => { const i = fresh.indexOf(id); return i < 0 ? null : i }
   const showRewards = rewardsActive()
   const xp = useXp(address)
   const [xpSheet, setXpSheet] = useState(null) // 'ranks' | 'xp'
@@ -125,12 +137,12 @@ export default function Profile({ badge: askedBadge, badgeAt }) {
               : <span className="small">{t('badges_count', { n: earnedList.length, total: TOTAL })}</span>}
           </div>
           {!expanded && (earnedList.length
-            ? <div className="bgrid">{earnedList.map((b) => <BadgeCell key={b.id} id={b.id} earned onOpen={setSheet} />)}</div>
+            ? <div className="bgrid">{earnedList.map((b) => <BadgeCell key={b.id} id={b.id} earned pop={popOf(b.id)} onOpen={setSheet} />)}</div>
             : <p className="small">{t('badges_none')}</p>)}
           {expanded && GROUPS.map((g) => (
             <div className="bgroup" key={g}>
               <h4>{t(`badge_g_${g}`)}</h4>
-              <div className="bgrid">{BADGES.filter((b) => b.group === g).map((b) => <BadgeCell key={b.id} id={b.id} earned={Boolean(badges[b.id])} onOpen={setSheet} />)}</div>
+              <div className="bgrid">{BADGES.filter((b) => b.group === g).map((b) => <BadgeCell key={b.id} id={b.id} earned={Boolean(badges[b.id])} pop={popOf(b.id)} onOpen={setSheet} />)}</div>
             </div>
           ))}
           {!expanded && <button type="button" className="btn ghost bsee" onClick={() => setExpanded(true)}>{t('badges_all', { total: TOTAL })} ›</button>}
@@ -145,10 +157,12 @@ export default function Profile({ badge: askedBadge, badgeAt }) {
   )
 }
 
-function BadgeCell({ id, earned, onOpen }) {
+const MAX_POPS = 6
+// pop: its place among the new badges (pops 120 ms after the one before), or null.
+function BadgeCell({ id, earned, pop = null, onOpen }) {
   const { t } = useApp()
   return (
-    <button type="button" className={`bcell${earned ? '' : ' locked'}`} onClick={() => onOpen(id)}>
+    <button type="button" className={`bcell${earned ? '' : ' locked'}${pop != null ? ' bnew' : ''}`} style={pop != null ? { '--d': `${pop * 120}ms` } : undefined} onClick={() => onOpen(id)}>
       <Medal id={id} earned={earned} size={58} />
       <span>{t(`badge_${id}`)}</span>
     </button>
@@ -245,27 +259,93 @@ function ClaimSheet({ id, amount, goals, onClose }) {
   )
 }
 
+// Level up on the Level card, once per level (lib/seen.js dibs.seen.level): the bar fills to 100 % (400 ms), the hexagon
+// flips to the new number (400 ms, 12 % scale bump), the bar empties and fills to the new progress (500 ms), the XP
+// text counting along. A level reached while Profile was closed plays the next time it opens. Reduced motion: the
+// final state at once. Returns the view to draw, or null for the live figures.
+const needOf = (level) => 100 + 50 * (level - 1)
+const reducedMotion = () => { try { return Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) } catch { return false } }
+function levelPlan(x) {
+  const p = levelToPlay(x.level, x.into)
+  if (!p) return null
+  if (reducedMotion()) { setLevelSeen(x.level, x.into); return null }
+  return { from: p.from, fromInto: Math.min(p.into, needOf(p.from)), to: x.level }
+}
+// The card as it was before the level up: the old level and its XP.
+const startView = (plan) => ({ level: plan.from, need: needOf(plan.from), into: plan.fromInto, pct: Math.round((plan.fromInto / needOf(plan.from)) * 100), barMs: 0, flip: false })
+function useLevelUp(x) {
+  const [plan, setPlan] = useState(() => levelPlan(x))
+  const [view, setView] = useState(null)
+  const xRef = useRef(x)
+  xRef.current = x
+  // No level up to play: keep the stored figures current. A level reached while Profile is open plays at once.
+  useEffect(() => {
+    if (plan) return
+    const p = levelPlan(x)
+    if (p) setPlan(p)
+    else setLevelSeen(x.level, x.into)
+  }, [x.level, x.into, plan]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!plan) { setView(null); return undefined }
+    const oldNeed = needOf(plan.from)
+    const timers = []
+    const raf = { id: 0 }
+    const at = (ms, fn) => timers.push(setTimeout(fn, ms))
+    const count = (from, to, ms) => {
+      const start = performance.now()
+      const tick = (now) => {
+        const k = Math.min(1, (now - start) / ms)
+        const e = 1 - Math.pow(1 - k, 3)
+        setView((v) => v && { ...v, into: from + (to - from) * e })
+        if (k < 1) raf.id = requestAnimationFrame(tick)
+      }
+      cancelAnimationFrame(raf.id)
+      raf.id = requestAnimationFrame(tick)
+    }
+    setView(startView(plan))
+    at(350, () => { setView((v) => ({ ...v, pct: 100, barMs: 400 })); count(plan.fromInto, oldNeed, 400) })
+    at(750, () => setView((v) => ({ ...v, flip: true })))
+    at(950, () => setView((v) => ({ ...v, level: plan.to })))
+    at(1150, () => {
+      const live = xRef.current
+      setView((v) => ({ ...v, flip: false, pct: 0, barMs: 0, into: 0, need: live.need }))
+    })
+    at(1190, () => {
+      const live = xRef.current
+      setView((v) => ({ ...v, pct: live.need ? Math.min(100, Math.round((live.into / live.need) * 100)) : 0, barMs: 500 }))
+      count(0, live.into, 500)
+    })
+    at(1750, () => { const live = xRef.current; setLevelSeen(Math.max(plan.to, live.level), live.into); setPlan(null) })
+    return () => { timers.forEach(clearTimeout); cancelAnimationFrame(raf.id) }
+  }, [plan])
+  return plan ? view || startView(plan) : null
+}
+
 // Level card: the level in a coral hexagon, the rank, the XP bar and the next rank. Opens the Ranks sheet.
 function LevelCard({ x, onRanks, onHow }) {
   const { t } = useApp()
-  const pct = x.need ? Math.min(100, Math.round((x.into / x.need) * 100)) : 0
+  const v = useLevelUp(x)
+  const level = v ? v.level : x.level
+  const into = v ? Math.round(v.into) : x.into
+  const need = v ? v.need : x.need
+  const pct = v ? v.pct : x.need ? Math.min(100, Math.round((x.into / x.need) * 100)) : 0
   return (
     <section className="lvl">
       <button type="button" className="lvl-card" onClick={onRanks}>
         <span className="lvl-top">
-          <span className="lvl-hex" aria-hidden="true">
+          <span className={`lvl-hex${v?.flip ? ' flip' : ''}`} aria-hidden="true">
             <svg viewBox="-1 -1 29 26"><path d={HEX} fill="#E8482A" /></svg>
-            <b>{x.level}</b>
+            <b>{level}</b>
           </span>
           <span className="lvl-mid">
-            <small>{t('level_rank_small', { n: x.level })}</small>
+            <small>{t('level_rank_small', { n: level })}</small>
             <b>{t(`rank_${x.rank.id}`)}</b>
           </span>
           <span className="chev" aria-hidden="true">›</span>
         </span>
-        <span className="lvl-bar" aria-hidden="true"><i style={{ width: `${pct}%` }} /></span>
+        <span className="lvl-bar" aria-hidden="true"><i style={{ width: `${pct}%`, ...(v ? { transition: v.barMs ? `width ${v.barMs}ms ease-out` : 'none' } : null) }} /></span>
         <span className="lvl-foot">
-          <span>{t('xp_of', { into: x.into, need: x.need })}</span>
+          <span>{t('xp_of', { into, need })}</span>
           <span>{x.next ? t('xp_next_rank', { rank: t(`rank_${x.next.id}`), level: x.next.level }) : t('xp_top_rank')}</span>
         </span>
       </button>

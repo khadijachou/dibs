@@ -7,7 +7,8 @@ import { configureStats, dailyDue, flush, markDaily, snapshotData, track } from 
 import { stakeSummary } from './lib/earned.js'
 import { getPrices } from './lib/price.js'
 import { makeT } from './lib/i18n.js'
-import { adoptGoals, getGoal, listGoals } from './lib/goals.js'
+import { adoptGoals, getGoal, listGoals, progress } from './lib/goals.js'
+import { initBurst, levelBandToAnnounce } from './lib/seen.js'
 import { loadCatalog } from './lib/catalog.js'
 import { readSimulateParam } from './lib/errors.js'
 import Home from './screens/Home.jsx'
@@ -149,7 +150,19 @@ export default function App() {
       } catch { /* chain unreadable: keep the last figure */ }
     }
     const ids = await checkBadges({ goals: listGoals(addr), earnedNim: c.value ?? 0 })
-    if (ids.length) setStamps((q) => [...q, ...ids.filter((id) => !q.includes(id))])
+    // Level up (lib/seen.js): a "lvl:N" item in the same queue, after any badge. The first run of this version stores
+    // the current level silently.
+    let lvl = null
+    try { lvl = levelBandToAnnounce(xpSummary({ goals: listGoals(addr), badges: getBadges() }).level) } catch { /* display only */ }
+    const add = [...ids, ...(lvl ? [`lvl:${lvl}`] : [])]
+    if (add.length) {
+      setStamps((q) => {
+        const [head, ...rest] = q // the item on screen keeps its place
+        const next = [...rest, ...add.filter((id) => !q.includes(id))]
+        const isLvl = (id) => id.startsWith('lvl:')
+        return [...(head ? [head] : []), ...next.filter((id) => !isLvl(id)), ...next.filter(isLvl)]
+      })
+    }
     // Quest of the week (lib/quests.js): picked at the first check of the week; a toast the first time it is done.
     try { if (checkQuest(listGoals(addr)).justDone) { toastRef.current?.(tRef.current('quest_done_toast')); playTing() } } catch { /* display only */ }
   }, [])
@@ -179,6 +192,7 @@ export default function App() {
       const funded = accounts.filter((a) => a.nim > 0).sort((a, b) => b.nim - a.nim)
       const addr = (funded[0] || accounts[0]).address
       adoptGoals(addr)
+      initBurst(listGoals(addr), (g) => progress(g) >= 1) // first run of this version: no burst for goals already full
       setAddress(addr)
       refreshBalance(addr)
       await loadCatalog()

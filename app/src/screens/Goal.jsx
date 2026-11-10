@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useApp, useBlockBack } from '../App.jsx'
 import { detailText, itemLabel, itemName, localName } from '../lib/itemName.js'
-import { BrandLogo, FieldError, Header, Notice, Ring, Stamp, WeekDots } from '../components/ui.jsx'
+import { BrandLogo, FieldError, Header, Notice, Stamp, WeekDots } from '../components/ui.jsx'
 import { classify, lastLogText } from '../lib/errors.js'
 import { deletable, getGoal, listGoals, openGoalFor, progress, savedNim, stakerFlag, unlockRunning } from '../lib/goals.js'
 import { planOf, poolName, shortAddress } from '../lib/pace.js'
@@ -10,6 +10,7 @@ import { MIN_NEW_STAKER_NIM } from '../lib/config.js'
 import { readStaker, stakeNim } from '../lib/nimiq.js'
 import { confirmPending, expired, pending, stakedLuna, startPending, waitForDeposit } from '../lib/deposit.js'
 import { audioContext, playDeposit } from '../lib/sound.js'
+import GoalRing from '../components/GoalRing.jsx'
 import { fmtDate, fmtEarned, fmtNim, fmtUsd, weeksUntil } from '../lib/format.js'
 import { findItem } from '../lib/catalog.js'
 import { DeleteSheet, ManageSheet, MoveSheet } from './GoalManage.jsx'
@@ -358,10 +359,7 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
             {canManage && <button type="button" className="more-btn" aria-label={t('manage_btn')} aria-haspopup="dialog" onClick={() => setSheet('manage')}>⋯</button>}
           </div>
           <div className="mid">
-            <div className={`ring-wrap${milestone ? ' ms-pulse' : ''}`}>
-              <Ring value={pct} size={100} label={`${Math.round(pct * 100)}%`} track="#35323f" color={pct >= 1 ? '#15896A' : '#E8482A'} />
-              <div className="pct">{Math.round(pct * 100)}%</div>
-            </div>
+            <GoalRing goal={goal} pct={pct} milestone={milestone} />
             <div>
               <div className="n">{fmtNim(Math.round(savedShown), lang)} NIM</div>
               <div className="m">{t('goal_of2', { target: fmtNim(goal.targetNim, lang) })}<br />{t('goal_to_go', { amount: fmtNim(Math.round(remainingShown), lang) })}</div>

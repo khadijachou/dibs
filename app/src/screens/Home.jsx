@@ -2,7 +2,7 @@ import { CardIssue } from '../components/CardIssue.jsx'
 import { useRef, useState } from 'react'
 import { useApp } from '../App.jsx'
 import { detailText, fromText, itemLabel } from '../lib/itemName.js'
-import { BrandLogo, CREAM, Header, Ring, DibsMark } from '../components/ui.jsx'
+import { BrandLogo, CREAM, Header, DibsMark } from '../components/ui.jsx'
 import { listGoals, progress } from '../lib/goals.js'
 import { BRANDS, catalogBrands, brandOf } from '../lib/brands.js'
 import { findItem } from '../lib/catalog.js'
@@ -15,6 +15,7 @@ import { MilestoneLine, useGoalMilestone } from '../components/Milestone.jsx'
 import { GoalDot, GoalStatus, goalPace } from '../components/GoalStatus.jsx'
 import { StatsCard } from '../components/StatsConsent.jsx'
 import HowSteps from '../components/HowSteps.jsx'
+import GoalRing from '../components/GoalRing.jsx'
 import PromoBanner from '../components/PromoBanner.jsx'
 import BrandSheet from '../components/BrandSheet.jsx'
 
@@ -199,10 +200,7 @@ function GoalHero({ goal, earned }) {
           <div><div className="t1">{itemLabel(t, goal)}</div><div className="t2">{fmtDate(goal.deadline, lang)} · {t(p.daysLeft === 1 ? 'days_left_one' : 'days_left_other', { count: p.daysLeft })}</div></div>
         </div>
         <div className="mid">
-          <div className={`ring-wrap${milestone ? ' ms-pulse' : ''}`}>
-            <Ring value={pct} size={100} label={`${Math.round(pct * 100)}%`} track="#35323f" color={pct >= 1 ? '#15896A' : '#E8482A'} />
-            <div className="pct">{Math.round(pct * 100)}%</div>
-          </div>
+          <GoalRing goal={goal} pct={pct} milestone={milestone} />
           <div>
             <div className="n">{fmtNim(Math.round(savedShown), lang)} NIM</div>
             <div className="m">{t('goal_of2', { target: fmtNim(goal.targetNim, lang) })} · {t('goal_to_go', { amount: fmtNim(Math.round(remainingShown), lang) })}</div>
