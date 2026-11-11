@@ -3,6 +3,8 @@
 //
 // A goal is an envelope over the user's single staker: the chain holds one stake,
 // this ledger says how much of it belongs to each goal.
+import { versionOf } from './version.js'
+
 const key = (address) => `dibs.goals.${address}`
 
 function read(address) {
@@ -30,6 +32,7 @@ export function createGoal(address, { item, targetNim, deadline, brand = null, n
     itemDetail: item.detail,
     usd: item.usd,
     faceValue: item.faceValue || null,
+    ...versionOf(item), // region, currency, worksWith: the card version the user picked (lib/version.js)
     targetNim,
     deadline,
     brandKey: brand?.key || null,

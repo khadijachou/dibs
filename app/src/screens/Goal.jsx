@@ -3,7 +3,7 @@ import { useApp, useBlockBack } from '../App.jsx'
 import { detailText, itemLabel, itemName, localName } from '../lib/itemName.js'
 import { BrandLogo, FieldError, Header, Notice, Stamp, WeekDots } from '../components/ui.jsx'
 import { classify, lastLogText } from '../lib/errors.js'
-import { deletable, getGoal, listGoals, openGoalFor, progress, savedNim, stakerFlag, unlockRunning } from '../lib/goals.js'
+import { deletable, getGoal, listGoals, openGoalFor, progress, savedNim, stakerFlag, unlockRunning, updateGoal } from '../lib/goals.js'
 import { planOf, poolName, shortAddress } from '../lib/pace.js'
 import { goalBrand, PaceLine } from './Home.jsx'
 import { MIN_NEW_STAKER_NIM } from '../lib/config.js'
@@ -19,7 +19,9 @@ import { useCountUp } from '../lib/useCountUp.js'
 import { useDuplicateText } from '../components/useDuplicateText.js'
 import { CardFlip, GiftFace, useCardFlip } from '../components/CardFlip.jsx'
 import { CardIssue } from '../components/CardIssue.jsx'
-import { goalCardIssue, payLockedFor } from '../lib/availability.js'
+import { goalCardIssue, payLockedFor, readyReturnPatch } from '../lib/availability.js'
+import { goalVersion } from '../lib/version.js'
+import { worksLine } from '../lib/brands.js'
 import { stakeSummary } from '../lib/earned.js'
 import { track } from '../lib/stats.js'
 import { txHash } from '../lib/history.js'
@@ -182,13 +184,24 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
   const overBalance = !cantOpen && !underMin && tooMuch
   const invalid = !amountNim || tooMuch || underMin || cantOpen
   // Quick picks scale with the goal: the weekly suggestion, a quarter of the target, everything left.
-  // Manage (⋯): saving goals, and any goal with 0 NIM and no unlock in progress (Delete). Only this goal's own
-  // pending deposit or pay lock closes it.
-  const canManage = (goal.status === 'saving' || deletable(goal)) && !(pend && pend.goalId === goal.id) && !payLockedFor(goal.id)
+  // Manage (⋯): saving goals, ready goals (Change card, Get my NIM back), and any goal with 0 NIM and no unlock in
+  // progress (Delete). Never while unlocking. Only this goal's own pending deposit or pay lock closes it.
+  const canManage = (goal.status === 'saving' || goal.status === 'ready' || deletable(goal)) && !(pend && pend.goalId === goal.id) && !payLockedFor(goal.id)
   const empty = goal.status === 'saving' && saved === 0 && (goal.deposits.length > 0 || Boolean(twin)) && canManage
   // Add only while there is something to add; a goal at 100 % or past saving shows Details.
   const adding = mode === 'add' && goal.status === 'saving' && !reached
   const withdraw = () => { setSheet(null); go('unlock', { goalId: goal.id, mode: 'withdraw' }) }
+  // A ready goal's NIM is already unlocked and back in the wallet: Get my NIM back only records it as returned
+  // (the same readyReturnPatch path as CardIssue). No transaction.
+  const returnReady = () => {
+    setSheet(null)
+    const g = getGoal(address, goal.id)
+    if (!g || g.status !== 'ready' || payLockedFor(g.id)) return
+    const nim = savedNim(g)
+    updateGoal(address, g.id, readyReturnPatch(g, nim))
+    toast(t('withdraw_done', { nim: fmtNim(nim, lang) }))
+    reset('home')
+  }
   const withdrawing = goal.status === 'unlocking' && goal.unlockMode === 'withdraw'
   const returned = goal.status === 'withdrawn' ? goal.deposits.filter((d) => d.kind === 'withdraw').reduce((s, d) => s - d.nim, 0) : 0
   const rowLabel = (d) => d.kind === 'move' ? t(d.to ? 'row_moved_to' : 'row_moved_from', { name: localName(t, d.name || '', { title: true }) }) : d.kind === 'withdraw' ? t('row_returned') : null
@@ -269,8 +282,9 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
     <>
       {sheet === 'manage' && (
         <ManageSheet goal={goal} onClose={closeSheet}
+          onChange={() => { setSheet(null); go('catalog', { changeFor: goal.id }) }}
           onMove={() => setSheet('move')}
-          onWithdraw={withdraw}
+          onWithdraw={goal.status === 'ready' ? returnReady : withdraw}
           onDelete={() => setSheet('delete')} />
       )}
       {sheet === 'move' && <MoveSheet goal={goal} onClose={closeSheet} onMoved={(r) => { setGoal(r.from); setSheet(null) }} />}
@@ -444,13 +458,14 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
   )
 }
 
-// About this card (Details): what the card is, where it works, how the shop delivers it, and its price under the
-// same rule as the catalogue tiles (the live price, or "Price confirmed at checkout" when the shop gave none).
+// About this card (Details): what the card is, the goal's own version and which accounts it works with, how the shop
+// delivers it, and its price under the same rule as the catalogue tiles (the live price, or "Price confirmed at
+// checkout" when the shop gave none). Never the brand's list of versions: a USA card says USA.
 function AboutCard({ goal, brand }) {
   const { t, lang, toast } = useApp()
   const item = findItem(goal.itemId)
-  const regions = (brand.region || []).map((r) => t(`region_${r}`))
-  const region = regions.length > 1 ? t('region_join', { a: regions[0], b: regions[1] }) : regions[0]
+  const version = goalVersion(goal)
+  const region = t(`region_${version.region}`)
   const estimated = item?.live === false
   return (
     <section className="card about-card">
@@ -462,6 +477,7 @@ function AboutCard({ goal, brand }) {
           {brand.delivers && <div><dt>{t('about_delivered')}</dt><dd>{t(`delivers_${brand.delivers}`)}</dd></div>}
         </dl>
       )}
+      {version.worksWith && <p className="small works-line">{worksLine(t, version.worksWith)}</p>}
       {brand.about && <p className="small">{t(brand.about)}</p>}
       {estimated ? (
         <button type="button" className="price-chip" onClick={() => toast(t('price_checkout_info'))}>

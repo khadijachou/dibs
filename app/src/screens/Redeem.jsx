@@ -3,7 +3,9 @@ import { useApp, useBlockBack } from '../App.jsx'
 import { itemLabel, itemName } from '../lib/itemName.js'
 import { ErrorBox, FieldError, Header, Notice } from '../components/ui.jsx'
 import { classify, lastLogText } from '../lib/errors.js'
-import { getGoal, updateGoal } from '../lib/goals.js'
+import { getGoal, savedNim, updateGoal } from '../lib/goals.js'
+import { goalVersion } from '../lib/version.js'
+import { worksLine } from '../lib/brands.js'
 import { findItem, refreshCatalog } from '../lib/catalog.js'
 import { goalCardIssue } from '../lib/availability.js'
 import { CardIssue } from '../components/CardIssue.jsx'
@@ -28,7 +30,7 @@ const clearPayLock = (goalId) => { try { if (readPayLock(goalId)) localStorage.r
 const emailOk = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(e || ''))
 
 export default function Redeem({ goalId }) {
-  const { t, lang, address, prices, refreshBalance, back, reset, toast } = useApp()
+  const { t, lang, address, prices, refreshBalance, back, go, reset, toast } = useApp()
   const goal = getGoal(address, goalId)
   const item = goal && findItem(goal.itemId)
   const [email, setEmail] = useState(() => { try { return localStorage.getItem(EMAIL_KEY) || '' } catch { return '' } })
@@ -115,6 +117,11 @@ export default function Redeem({ goalId }) {
   const invoiceUsd = apiMode ? orderUsd : check?.invoiceUsd ?? null
   const payNim = parsed && invoiceUsd != null && prices?.nimUsd ? usdToNim(invoiceUsd, prices.nimUsd) : null
   const emailBad = !emailOk(email)
+  // Display only. The invoice asks more NIM than the goal saved: say so before Nimiq Pay opens (the extra comes from
+  // the wallet; Nimiq Pay still confirms the real amount). And which accounts the card works with, with Change card.
+  const saved = savedNim(goal)
+  const priceUp = payNim != null && !expired && !locked && (!check || check.ok) && payNim > saved
+  const works = goalVersion(goal).worksWith
 
   // Card no longer available (catalogue check at launch, or the shop's answer at checkout): the same message and
   // choices as on the goal, instead of a generic error. Never while a payment outcome is unknown or an invoice exists.
@@ -194,6 +201,12 @@ export default function Redeem({ goalId }) {
         ) : apiMode ? (
           <section className="card">
             <div className="row"><span className="sub">{itemLabel(t, goal)}</span><b>{fmtUsd(orderUsd ?? goal.usd, lang)} USD</b></div>
+            {(works || !locked) && (
+              <div className="pay-works">
+                {works && <p className="small works-line">{worksLine(t, works)}</p>}
+                {!locked && <button type="button" className="link-sm" onClick={() => go('catalog', { changeFor: goal.id })}>{t('avail_change')}</button>}
+              </div>
+            )}
             <p className="small plan-note">{t('plan_price_note')}</p>
             {!order && (
               <>
@@ -255,6 +268,16 @@ export default function Redeem({ goalId }) {
         {!unknown && !problem && <ErrorBox error={error} />}
         {!unavailable && <p className="small">{t('redeem_refund')}</p>}
 
+        {priceUp && (
+          <Notice tone="info" title={t('err_PAY_PRICE_CHANGED_title')}
+            sub={t('err_PAY_PRICE_CHANGED_sub', { usd: fmtUsd(invoiceUsd, lang), nim: fmtNim(payNim, lang), saved: fmtNim(saved, lang), extra: fmtNim(payNim - saved, lang) })}>
+            <div className="pc-rows">
+              <div><span>{t('err_PAY_PRICE_CHANGED_rowSaved')}</span><b>{fmtNim(saved, lang)} NIM</b></div>
+              <div><span>{t('err_PAY_PRICE_CHANGED_rowWallet')}</span><b>{fmtNim(payNim - saved, lang)} NIM</b></div>
+              <div><span>{t('err_PAY_PRICE_CHANGED_rowPay')}</span><b>{fmtNim(payNim, lang)} NIM</b></div>
+            </div>
+          </Notice>
+        )}
         {payNim != null && !expired && !locked && (!check || check.ok) && (
           <div className="pay-sum" role="status">
             <b>{t('redeem_pay_about', { nim: fmtNim(payNim, lang), usd: fmtUsd(invoiceUsd, lang) })}</b>

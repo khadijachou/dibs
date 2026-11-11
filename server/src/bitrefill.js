@@ -6,7 +6,8 @@ import { callTool, mcpEnabled } from './mcp.js'
 
 export const bitrefillEnabled = mcpEnabled
 
-// Returns { slug, name, inStock, recipientType, packages: [{ value, currency, price, priceCurrency }] }
+// Returns { slug, name, country, currency, inStock, recipientType, lightning, note, categories,
+//   packages: [{ value, currency, price, priceCurrency }] }
 export async function getProduct(slug) {
   const text = await callTool('get-product-details', { product_id: slug, currency: 'USD' })
   const get = (key) => {
@@ -39,6 +40,9 @@ export async function getProduct(slug) {
     inStock: get('in_stock') === 'true',
     recipientType: get('recipient_type') || 'none',
     lightning: methods.includes('lightning'),
+    // The shop's own note on who can use the card ("Make sure your Steam account is set to USD currency"). Not on
+    // every product, and on some it is about something else (Amazon: add a payment card first).
+    note: get('specialNote'),
     categories,
     packages,
   }

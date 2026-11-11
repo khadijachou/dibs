@@ -86,7 +86,7 @@ function Welcome() {
           </button>
         </div>
       </main>
-      {sheetBrand && <BrandSheet brand={sheetBrand} onClose={() => setSheet(null)} onPick={() => { setSheet(null); go('plan', { brandKey: sheetBrand.key }) }} />}
+      {sheetBrand && <BrandSheet brand={sheetBrand} onClose={() => setSheet(null)} onPick={(region) => { setSheet(null); go('plan', { brandKey: sheetBrand.key, region }) }} />}
     </>
   )
 }
@@ -113,7 +113,7 @@ function Hub({ goals }) {
           <button type="button" className="btn tall" onClick={() => go('catalog')}>{t('home_new2')}<small>{t('home_new2_sub')}</small></button>
         </div>
       </main>
-      {sheetBrand && <BrandSheet brand={sheetBrand} onClose={() => setSheet(null)} onPick={() => { setSheet(null); go('plan', { brandKey: sheetBrand.key }) }} />}
+      {sheetBrand && <BrandSheet brand={sheetBrand} onClose={() => setSheet(null)} onPick={(region) => { setSheet(null); go('plan', { brandKey: sheetBrand.key, region }) }} />}
     </>
   )
 }

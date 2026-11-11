@@ -15,33 +15,34 @@ import { notSold } from './availability.js'
 // (a light logo on a transparent background, or a wide logo with its own solid background: plate and picture blend);
 // 'fill' = the picture fills the tile, no plate, no padding (a square picture with its own background).
 export const BRANDS = [
-  { key: 'steam',       name: 'Steam',             color: ['#2a475e', '#121a24'], chip: 'games',     logo: null,                     slugs: ['steam-usa'], popular: true, delivers: 'code', region: ['USA'], about: 'brand_about_steam' },
-  { key: 'amazon',      name: 'Amazon',            color: ['#37475a', '#161c24'], chip: 'shopping',  logo: '/logos/amazon.png',      slugs: ['amazon_com-usa'], popular: true, delivers: 'code', region: ['USA'], about: 'brand_about_amazon' },
-  { key: 'apple',       name: 'Apple',             color: ['#3a3a3c', '#0b0b0c'], chip: 'shopping',  logo: null,                     slugs: ['apple-usa'], popular: true, delivers: 'code', region: ['USA'], about: 'brand_about_apple' },
-  { key: 'netflix',     name: 'Netflix',           color: ['#c40812', '#3b0306'], chip: 'streaming', logo: null,                     slugs: ['netflix-usa', 'netflix-eu'], delivers: 'code', region: ['USA', 'Europe'], about: 'brand_about_netflix' },
-  { key: 'airbnb',      name: 'Airbnb',            color: ['#ff5a5f', '#7a1b2c'], chip: 'travel',    logo: null,                     slugs: ['airbnb-usa'], delivers: 'link', region: ['USA'], about: 'brand_about_airbnb' },
-  { key: 'googleplay',  name: 'Google Play',       color: ['#0a8f66', '#0b2e24'], chip: 'games',     logo: null,                     slugs: ['google-play-usa'], delivers: 'code', region: ['USA'], about: 'brand_about_googleplay' },
-  { key: 'playstation', name: 'PlayStation Store', color: ['#0070d1', '#001a4d'], chip: 'games',     logo: null,                     slugs: ['sony-playstation-usa'], delivers: 'code', region: ['USA'], about: 'brand_about_playstation' },
+  { key: 'steam',       name: 'Steam',             color: ['#2a475e', '#121a24'], chip: 'games',     logo: null,                     slugs: ['steam-usa', 'steam-eur-international'], popular: true, delivers: 'code', region: ['USA', 'Europe'], about: 'brand_about_steam' },
+  { key: 'amazon',      name: 'Amazon',            color: ['#37475a', '#161c24'], chip: 'shopping',  logo: '/logos/amazon.png',      slugs: ['amazon_com-usa', 'amazon-uk'], popular: true, delivers: 'code', region: ['USA', 'UK'], about: 'brand_about_amazon' },
+  { key: 'apple',       name: 'Apple',             color: ['#3a3a3c', '#0b0b0c'], chip: 'shopping',  logo: null,                     slugs: ['apple-usa', 'apple-united-kingdom'], popular: true, delivers: 'code', region: ['USA', 'UK'], about: 'brand_about_apple' },
+  { key: 'netflix',     name: 'Netflix',           color: ['#c40812', '#3b0306'], chip: 'streaming', logo: null,                     slugs: ['netflix-usa', 'netflix-eu', 'netflix-united-kingdom'], delivers: 'code', region: ['USA', 'Europe', 'UK'], about: 'brand_about_netflix' },
+  { key: 'airbnb',      name: 'Airbnb',            color: ['#ff5a5f', '#7a1b2c'], chip: 'travel',    logo: null,                     slugs: ['airbnb-usa', 'airbnb-united-kingdom'], delivers: 'link', region: ['USA', 'UK'], about: 'brand_about_airbnb' },
+  { key: 'googleplay',  name: 'Google Play',       color: ['#0a8f66', '#0b2e24'], chip: 'games',     logo: null,                     slugs: ['google-play-usa', 'google-play-united-kingdom'], delivers: 'code', region: ['USA', 'UK'], about: 'brand_about_googleplay' },
+  { key: 'playstation', name: 'PlayStation Store', color: ['#0070d1', '#001a4d'], chip: 'games',     logo: null,                     slugs: ['sony-playstation-usa', 'playstation-united-kingdom'], delivers: 'code', region: ['USA', 'UK'], about: 'brand_about_playstation' },
   { key: 'ubereats',    name: 'Uber Eats',         color: ['#06a85a', '#05331f'], chip: 'food',      logo: null,                     slugs: ['uber-eats-usa'], delivers: 'code', region: ['USA'], about: 'brand_about_ubereats' },
   // below the fold
-  { key: 'nintendo',    name: 'Nintendo eShop',    color: ['#e60012', '#5c0008'], chip: 'games',     logo: '/logos/nintendo-eshop.png', tile: { bg: '#E60012', fg: '#fff', letter: 'N' }, slugs: ['nintendo-eshop-usa'], delivers: 'code', region: ['USA'], about: 'brand_about_nintendo' },            // confirm
-  { key: 'roblox',      name: 'Roblox',            color: ['#4a4c51', '#131315'], chip: 'games',     logo: null, tile: { bg: '#1b1b1f', fg: '#fff', letter: 'R' }, slugs: ['roblox-usa'], delivers: 'code', region: ['USA'], about: 'brand_about_roblox' },              // confirm
-  { key: 'fortnite',    name: 'Fortnite',          color: ['#1d3a6b', '#0a1530'], chip: 'games',     logo: null, tile: { bg: '#1d3a6b', fg: '#fff', letter: 'F' }, slugs: ['fortnite-usa'] },            // confirm
-  { key: 'valorant',    name: 'Valorant',          color: ['#ff4655', '#5c0f18'], chip: 'games',     logo: null, tile: { bg: '#ff4655', fg: '#fff', letter: 'V' }, slugs: ['valorant-usa'], delivers: 'code', region: ['USA'], about: 'brand_about_valorant' },            // confirm
-  { key: 'riot',        name: 'Riot Access',       color: ['#d13639', '#4a1012'], chip: 'games',     logo: null, tile: { bg: '#d13639', fg: '#fff', letter: 'R' }, slugs: ['riot-access-usa'], delivers: 'code', region: ['USA'], about: 'brand_about_riot' },         // confirm
-  { key: 'xbox',        name: 'Xbox',              color: ['#14931a', '#062e08'], chip: 'games',     logo: '/logos/xbox.png', tile: { bg: '#107C10', fg: '#fff', letter: 'X' }, slugs: ['xbox-usa'], delivers: 'code', region: ['USA'], about: 'brand_about_xbox' },                // confirm, out of stock on 5 Nov
+  { key: 'nintendo',    name: 'Nintendo eShop',    color: ['#e60012', '#5c0008'], chip: 'games',     logo: '/logos/nintendo-eshop.png', tile: { bg: '#E60012', fg: '#fff', letter: 'N' }, slugs: ['nintendo-eshop-usa', 'nintendo-uk'], delivers: 'code', region: ['USA', 'UK'], about: 'brand_about_nintendo' },            // confirm
+  { key: 'roblox',      name: 'Roblox',            color: ['#4a4c51', '#131315'], chip: 'games',     logo: null, tile: { bg: '#1b1b1f', fg: '#fff', letter: 'R' }, slugs: ['roblox-usa', 'roblox-european-union', 'roblox-united-kingdom'], delivers: 'code', region: ['USA', 'Europe', 'UK'], about: 'brand_about_roblox' },              // confirm
+  { key: 'fortnite',    name: 'Fortnite',          color: ['#1d3a6b', '#0a1530'], chip: 'games',     logo: null, tile: { bg: '#1d3a6b', fg: '#fff', letter: 'F' }, slugs: ['fortnite-uk-united-kingdom'], delivers: 'code', region: ['UK'], about: 'brand_about_fortnite' },            // confirm
+  { key: 'valorant',    name: 'Valorant',          color: ['#ff4655', '#5c0f18'], chip: 'games',     logo: null, tile: { bg: '#ff4655', fg: '#fff', letter: 'V' }, slugs: ['valorant-usa', 'valorant-eu'], delivers: 'code', region: ['USA', 'Europe'], about: 'brand_about_valorant' },            // confirm
+  { key: 'riot',        name: 'Riot Access',       color: ['#d13639', '#4a1012'], chip: 'games',     logo: null, tile: { bg: '#d13639', fg: '#fff', letter: 'R' }, slugs: ['riot-access-usa', 'riot-access-eu', 'valorant-uk-united-kingdom'], delivers: 'code', region: ['USA', 'Europe', 'UK'], about: 'brand_about_riot' },         // confirm
+  { key: 'xbox',        name: 'Xbox',              color: ['#14931a', '#062e08'], chip: 'games',     logo: '/logos/xbox.png', tile: { bg: '#107C10', fg: '#fff', letter: 'X' }, slugs: ['xbox-usa', 'xbox-currency-united-kingdom'], delivers: 'code', region: ['USA', 'UK'], about: 'brand_about_xbox' },                // confirm, out of stock on 5 Nov
   { key: 'discord',     name: 'Discord Nitro',     color: ['#5865f2', '#232782'], chip: 'games',     logo: null, tile: { bg: '#5865f2', fg: '#fff', letter: 'D' }, slugs: ['discord-nitro-usa'], delivers: 'link', region: ['USA'], about: 'brand_about_discord' },       // confirm, maybe refused by the tool
-  { key: 'hotels',      name: 'Hotels.com',        color: ['#d32f2f', '#4f0f0f'], chip: 'travel',    logo: null, tile: { bg: '#d32f2f', fg: '#fff', letter: 'H' }, slugs: ['hotels_com-usa'], delivers: 'pin', region: ['USA'], about: 'brand_about_hotels' },          // confirm
-  { key: 'flightgift',  name: 'Flightgift',        color: ['#1f6feb', '#0a2558'], chip: 'travel',    logo: '/logos/flightgift.jpg', logoPlate: 'fill', tile: { bg: '#1F6FEB', fg: '#fff', letter: 'F' }, slugs: ['flightgift-usa'], delivers: 'link', region: ['USA'], about: 'brand_about_flightgift' },          // confirm
-  { key: 'uber',        name: 'Uber',              color: ['#3a3a3e', '#050506'], chip: 'travel',    logo: null, tile: { bg: '#0b0b0d', fg: '#fff', letter: 'U' }, slugs: ['uber-usa'], delivers: 'code', region: ['USA'], about: 'brand_about_uber' },                // confirm
+  { key: 'hotels',      name: 'Hotels.com',        color: ['#d32f2f', '#4f0f0f'], chip: 'travel',    logo: null, tile: { bg: '#d32f2f', fg: '#fff', letter: 'H' }, slugs: ['hotels_com-usa', 'hotels_com-uk'], delivers: 'pin', region: ['USA', 'UK'], about: 'brand_about_hotels' },          // confirm
+  { key: 'flightgift',  name: 'Flightgift',        color: ['#1f6feb', '#0a2558'], chip: 'travel',    logo: '/logos/flightgift.jpg', logoPlate: 'fill', tile: { bg: '#1F6FEB', fg: '#fff', letter: 'F' }, slugs: ['flightgift-usa', 'flightgift-eu', 'flightgift-gb'], delivers: 'link', region: ['USA', 'Europe', 'UK'], about: 'brand_about_flightgift' },          // confirm
+  { key: 'uber',        name: 'Uber',              color: ['#3a3a3e', '#050506'], chip: 'travel',    logo: null, tile: { bg: '#0b0b0d', fg: '#fff', letter: 'U' }, slugs: ['uber-usa', 'uber-and-uber-eats-eu', 'uber-rides-uk'], delivers: 'code', region: ['USA', 'Europe', 'UK'], about: 'brand_about_uber' },                // confirm
   { key: 'bestbuy',     name: 'Best Buy',          color: ['#0046be', '#001a4a'], chip: 'shopping',  logo: '/logos/Best-Buy.png', logoPlate: 'fill', tile: { bg: '#0046BE', fg: '#fff', letter: 'B' }, slugs: ['best-buy-usa'], delivers: 'pin', region: ['USA'], about: 'brand_about_bestbuy' },         // confirm
   { key: 'disney',      name: 'Disney',            color: ['#1b4fe0', '#08185c'], chip: 'streaming', logo: '/logos/DGC-Logo.png', tile: { bg: '#113CCF', fg: '#fff', letter: 'D' }, slugs: ['disney-usa'], delivers: 'code', region: ['USA'], about: 'brand_about_disney' },              // confirm
-  { key: 'starbucks',   name: 'Starbucks',         color: ['#00845a', '#002e20'], chip: 'food',      logo: null, tile: { bg: '#00704a', fg: '#fff', letter: 'S' }, slugs: ['starbucks-usa'], delivers: 'pin', region: ['USA'], about: 'brand_about_starbucks' },           // confirm
+  { key: 'starbucks',   name: 'Starbucks',         color: ['#00845a', '#002e20'], chip: 'food',      logo: null, tile: { bg: '#00704a', fg: '#fff', letter: 'S' }, slugs: ['starbucks-usa', 'starbucks-uk'], delivers: 'pin', region: ['USA', 'UK'], about: 'brand_about_starbucks' },           // confirm
   { key: 'doordash',    name: 'DoorDash',          color: ['#ff3008', '#6b1403'], chip: 'food',      logo: null, tile: { bg: '#ff3008', fg: '#fff', letter: 'D' }, slugs: ['doordash-usa'], delivers: 'code', region: ['USA'], about: 'brand_about_doordash' },            // confirm
 ]
 
 // About this card (Goal Details): about = i18n key of the one-line description; delivers = what the shop sends
-// ('code' | 'pin' = card number + PIN | 'link'); region = where the card works. Airbnb, Discord, Flightgift and
+// ('code' | 'pin' = card number + PIN | 'link'); region = the versions it sells (USA, Europe, UK, Nigeria; the live catalogue
+// decides what shows: catalogBrands().regions). Airbnb, Discord, Flightgift and
 // Disney: the shop's product data does not state the delivery form, so these follow the brand sheet (9 Nov).
 export const CHIPS = ['games', 'travel', 'shopping', 'streaming', 'food']
 
@@ -61,42 +62,70 @@ export function brandGrad(key) {
   return `linear-gradient(145deg, ${from} 0%, ${to} 100%)`
 }
 
-// Brands that have at least one item in the live catalogue, with their items sorted by value.
-export function catalogBrands() {
+// Card versions: USA (USD), Europe (EUR), UK (GBP), Nigeria (NGN), in this order. A version is the shop's own
+// product (steam-usa, steam-eur-international); what a card works with depends on the brand (Steam: the wallet
+// currency; Riot: the account region; others: the store country), so Dibs never guesses it: each version carries
+// the shop's line (worksWith, from the server catalogue) and the user picks.
+export const REGION_ORDER = ['USA', 'Europe', 'UK', 'Nigeria']
+const CURRENCY_OF = { USA: 'USD', Europe: 'EUR', UK: 'GBP', Nigeria: 'NGN' }
+const regionRank = (k) => { const i = REGION_ORDER.indexOf(k); return i < 0 ? 99 : i }
+const byValue = (x, y) => (Number(x.faceValue) || 0) - (Number(y.faceValue) || 0) || (x.usd ?? 0) - (y.usd ?? 0)
+
+// The version a brand opens on: the user's last pick for that brand (dibs.region.<brandKey>), else USA, else the
+// brand's first version. Never derived from the Nimiq Pay currency or language.
+const regionKey = (brandKey) => `dibs.region.${brandKey}`
+export function defaultRegion(brand) {
+  const regions = brand?.regions || []
+  let saved = null
+  try { saved = localStorage.getItem(regionKey(brand.key)) } catch { /* storage blocked, or node */ }
+  return regions.find((r) => r.key === saved) || regions.find((r) => r.key === 'USA') || regions[0] || null
+}
+export function rememberRegion(brandKey, key) {
+  try { localStorage.setItem(regionKey(brandKey), key) } catch { /* storage blocked */ }
+}
+// One version of a brand by key, or the default one.
+export const brandRegion = (brand, key) => brand?.regions?.find((r) => r.key === key) || defaultRegion(brand)
+
+// Brands that have at least one item in the live catalogue.
+//   regions: [{ key, currency, worksWith, items }] (items sorted by value; order USA, Europe, UK, Nigeria)
+//   items:   the default version's items, so screens that show one list (tiles, Home) keep working
+export function catalogBrands(all = getCatalog()) {
   const map = new Map()
-  const all = getCatalog()
   for (const item of all) {
     // Hidden: out of stock, or a value the shop does not sell (lib/availability.js notSold). Goals already on such a
     // card keep working; they get the "not available" choices instead.
     if (item.inStock === false || notSold(item, all)) continue
     const b = brandOf(item)
-    if (!map.has(b.key)) map.set(b.key, { ...b, items: [] })
-    map.get(b.key).items.push(item)
+    if (!map.has(b.key)) map.set(b.key, { ...b, byRegion: new Map() })
+    const r = item.region || 'USA'
+    const by = map.get(b.key).byRegion
+    if (!by.has(r)) by.set(r, [])
+    by.get(r).push(item)
   }
   const order = (k) => { const i = BRANDS.findIndex((b) => b.key === k); return i < 0 ? 99 : i }
   return [...map.values()]
-    .map((b) => {
-      const items = b.items.slice().sort((x, y) => Number(x.faceValue || 0) - Number(y.faceValue || 0))
+    .map(({ byRegion, ...b }) => {
+      const regions = [...byRegion.entries()]
+        .map(([key, list]) => {
+          const items = list.slice().sort(byValue)
+          return { key, currency: items[0].currency || CURRENCY_OF[key] || null, worksWith: items.find((i) => i.worksWith)?.worksWith || null, items }
+        })
+        .sort((x, y) => regionRank(x.key) - regionRank(y.key))
+      const brand = { ...b, regions }
+      const def = defaultRegion(brand)
       // estimated: at least one value has no live shop quote (live: false), so its price is the catalogue's
       // stored placeholder (server fallbackUsd) and is only confirmed at checkout.
       // Price line: lib/itemName.js fromText() formats items[0] in the user's language.
-      return { ...b, items, estimated: items.some((i) => i.live === false) }
+      return { ...brand, region: regions.map((r) => r.key), defaultRegion: def.key, items: def.items, estimated: def.items.some((i) => i.live === false) }
     })
     .sort((a, b) => order(a.key) - order(b.key))
-}
-
-// Three amounts at most: smallest, a middle one, largest.
-export function pickAmounts(items) {
-  if (items.length <= 3) return items
-  return [items[0], items[Math.floor(items.length / 2)], items[items.length - 1]]
 }
 
 export function brandLogo(item) {
   return brandOf(item)?.logo || null
 }
 
-// Where a brand's card works, in the user's language: "USA", "USA and Europe". Empty when unknown.
-export function regionText(t, brand) {
-  const regions = (brand?.region || []).map((r) => t(`region_${r}`))
-  return regions.length > 1 ? t('region_join', { a: regions[0], b: regions[1] }) : regions[0] || ''
-}
+// A works-with line ({ en, fr, es }) in the user's language, and the sentence shown under a card's values:
+// "For Steam accounts with a USD wallet. Check your account before you call dibs." Empty when unknown.
+export const worksText = (t, w) => (w ? w[t.lang] || w.en || '' : '')
+export const worksLine = (t, w) => (w ? t('works_line', { worksWith: worksText(t, w) }) : '')

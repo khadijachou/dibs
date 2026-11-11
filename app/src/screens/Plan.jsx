@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useApp } from '../App.jsx'
-import { detailText, isAmountDetail, itemName } from '../lib/itemName.js'
+import { detailText, isAmountDetail, itemLabel } from '../lib/itemName.js'
 import { BrandLogo, Header, Notice, WeekDots } from '../components/ui.jsx'
-import { brandOf, catalogBrands, pickAmounts } from '../lib/brands.js'
+import { brandOf, brandRegion, catalogBrands, worksLine } from '../lib/brands.js'
 import { findItem } from '../lib/catalog.js'
 import { cardTakenBy, createGoal, getGoal, listGoals, openGoalFor, savedNim, updateGoal } from '../lib/goals.js'
 import { cardChangePatch, payLockedFor } from '../lib/availability.js'
@@ -32,16 +32,18 @@ const OPTIONS = [
   { key: 'plan_m6', days: 183 },
 ]
 
-// Accepts { brandKey } (v2.2) or the old { itemId }.
+// Accepts { brandKey, region } (region: the version picked on the brand sheet) or the old { itemId }.
+// Every value of that version is shown, 3 per row; the version itself is picked on the brand sheet.
 // changeFor: swap this goal's card instead of creating a goal (its card is no longer available). The goal keeps its
 // deposits, saved NIM, deadline and history; only the card and the target (today's price) change. No transaction.
-export default function Plan({ brandKey, itemId, moveFrom = null, changeFor = null }) {
+export default function Plan({ brandKey, region = null, itemId, moveFrom = null, changeFor = null }) {
   const { t, lang, address, prices, back, reset, toast } = useApp()
   const changing = changeFor ? getGoal(address, changeFor) : null
   const fromItem = itemId ? findItem(itemId) : null
   const key = brandKey || brandOf(fromItem)?.key
   const brand = catalogBrands().find((b) => b.key === key)
-  const amounts = brand ? pickAmounts(brand.items) : fromItem ? [fromItem] : []
+  const version = brand ? brandRegion(brand, region || fromItem?.region) : null
+  const amounts = version ? version.items : fromItem ? [fromItem] : []
   const [pickedId, setPickedId] = useState(itemId || amounts[0]?.id)
   const [days, setDays] = useState(61)
   const [now, setNow] = useState(Date.now())
@@ -66,6 +68,9 @@ export default function Plan({ brandKey, itemId, moveFrom = null, changeFor = nu
   const mins = Math.floor((now - (prices.at || now)) / 60000)
   const ago = mins < 1 ? t('ago_now') : t('ago_min', { n: mins })
   const b = brand || brandOf(item)
+  // The version, once in the card line ("Steam gift card · 20 USD · USA") and its works-with line above the button.
+  const regionKey = item.region || version?.key || null
+  const works = item.worksWith || version?.worksWith || null
 
   const switchCard = () => {
     const g = getGoal(address, changing.id)
@@ -99,14 +104,14 @@ export default function Plan({ brandKey, itemId, moveFrom = null, changeFor = nu
           <BrandLogo brand={b} />
           <div>
             <p className="small">{t(changing ? 'change_label' : 'plan_label')}</p>
-            <h2 className="title">{itemName(t, item, { title: true })}</h2>
+            <h2 className="title">{itemLabel(t, item)}{regionKey ? ` · ${t(`region_${regionKey}`)}` : ''}</h2>
           </div>
         </div>
         <section className="card">
           {amounts.length > 1 && (
             <>
               <span className="plan-label">{t('plan_card_value')}</span>
-              <div className="pills" role="group" aria-label={t('plan_card_value')}>
+              <div className="pills grid3" role="group" aria-label={t('plan_card_value')}>
                 {amounts.map((a) => (
                   <button type="button" key={a.id} className={`pill tall${a.id === item.id ? ' on' : ''}`} aria-pressed={a.id === item.id} onClick={() => setPickedId(a.id)}>
                     {detailText(t, a, { short: true })}<small>{t('plan_you_pay', { price: (a.live === false ? '≈ ' : '') + fmtUsd(a.usd, lang) })}</small>
@@ -145,6 +150,7 @@ export default function Plan({ brandKey, itemId, moveFrom = null, changeFor = nu
           <div className="fact"><b className="dot red">{t('plan_wait_t', { min: 12, max: 24 })}</b>{t('plan_wait_b')}</div>
         </div>
         <div className="bottom">
+          {works && <p className="small works-line">{worksLine(t, works)}</p>}
           {changing && taken && (
             <Notice tone="info" title={takenText} actions={[{ label: t('change_exists_open'), onClick: () => reset('goal', { goalId: taken.id }) }]} />
           )}

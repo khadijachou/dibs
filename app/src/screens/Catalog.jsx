@@ -91,10 +91,10 @@ export default function Catalog({ moveFrom = null, changeFor = null, chip: initi
   )
   const openSheet = (b) => setOpen(b.key)
   const sheetBrand = brands.find((b) => b.key === open)
-  const pick = () => {
+  const pick = (region) => {
     const brandKey = sheetBrand.key
     setOpen(null)
-    go('plan', { brandKey, moveFrom, changeFor })
+    go('plan', { brandKey, region, moveFrom, changeFor })
   }
 
   return (

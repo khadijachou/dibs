@@ -50,18 +50,27 @@ async function saveInvoices() {
   await writeFile(DATA_FILE, JSON.stringify(invoices, null, 2))
 }
 
-// Live prices: one shop lookup per product, cached 5 minutes, last good answer kept 24 h (src/prices.js).
+// Live prices: one shop lookup per product, last good answer kept 24 h (src/prices.js). A background round refreshes
+// every catalogue product after boot and every 4 minutes; the catalogue reads that cache and never waits on the shop
+// (except once, on a cold cache at boot). Checkout still asks the shop again (fresh: true).
 const prices = createPriceBook({ getProduct, enabled: bitrefillEnabled, log: (slug, e) => console.error('price lookup failed:', slug, e.message) })
 const priceFor = async (item, opts) => priceOf(item, await prices.product(item.slug, opts))
+prices.start(() => catalog().map((i) => i.slug))
 
 app.get('/api/health', (c) => c.json({ ok: true, bitrefill: bitrefillEnabled() }))
 
+// region (USA, Europe, UK, Nigeria), currency (the card's face currency) and worksWith ({ en, fr, es }: which
+// accounts the card works with) come from catalog.json.
 app.get('/api/catalog', async (c) => {
   const items = catalog()
-  const out = await Promise.all(items.map(async (i) => {
-    const p = await priceFor(i)
-    return { id: i.id, name: i.name, detail: i.detail, icon: i.icon, faceValue: i.packageValue, usd: p.usd, live: p.live, sold: p.sold, inStock: p.inStock, shopUrl: `https://www.bitrefill.com/${i.slug}/` }
-  }))
+  await prices.warm()
+  const out = items.map((i) => {
+    const p = priceOf(i, prices.cached(i.slug))
+    return {
+      id: i.id, name: i.name, detail: i.detail, icon: i.icon, faceValue: i.packageValue, usd: p.usd, live: p.live, sold: p.sold, inStock: p.inStock,
+      region: i.region || 'USA', currency: i.currency || null, worksWith: i.worksWith || null, shopUrl: `https://www.bitrefill.com/${i.slug}/`,
+    }
+  })
   if (out.some((i) => !i.live)) countCatalogFallback() // admin view: daily count of answers with fallback prices
   return c.json(out)
 })

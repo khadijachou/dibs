@@ -1,17 +1,24 @@
+import { useState } from 'react'
 import { useApp } from '../App.jsx'
 import { BrandLogo, Sheet } from './ui.jsx'
-import { brandGrad, regionText } from '../lib/brands.js'
+import { brandGrad, brandRegion, defaultRegion, rememberRegion, worksLine } from '../lib/brands.js'
 import { detailText } from '../lib/itemName.js'
 import { fmtNim } from '../lib/format.js'
 import { usdToNim } from '../lib/price.js'
 
 // Brand sheet (catalogue tiles, Home "Call dibs on something else"): the card as a big gift card, what it is, where it
 // works, how the shop delivers it, and every value in the live catalogue with its rough NIM price.
-// onPick: the sticky "Call dibs on {brand}" button (starts the goal); without it, Close is the only action.
+// onPick(regionKey): the sticky "Call dibs on {brand}" button (starts the goal on the version shown); without it,
+// Close is the only action.
+// Versions (USA, Europe, UK, Nigeria): with more than one, the Region fact becomes chips; a chip swaps the range, the
+// values, their NIM and the count, and is remembered for that brand (dibs.region.<brandKey>).
 export default function BrandSheet({ brand, onClose, onPick }) {
   const { t, lang, toast, prices } = useApp()
-  const region = regionText(t, brand)
-  const items = brand.items || []
+  const regions = brand.regions || []
+  const [regionKey, setRegionKey] = useState(() => defaultRegion(brand)?.key || null)
+  const version = brandRegion(brand, regionKey)
+  const items = version?.items || brand.items || []
+  const pickRegion = (key) => { setRegionKey(key); rememberRegion(brand.key, key) }
   const lo = items[0]
   const hi = items[items.length - 1]
   const range = !lo ? '' : items.length > 1
@@ -32,8 +39,21 @@ export default function BrandSheet({ brand, onClose, onPick }) {
         </div>
       </div>
       {brand.about && <p className="bs-lead">{t(brand.about)}</p>}
-      <div className="bs-facts">
-        <div><span>{t('about_region')}</span><b>{region || '-'}</b></div>
+      <div className={`bs-facts${regions.length > 1 ? ' versions' : ''}`}>
+        {regions.length > 1 ? (
+          <div className="bs-region">
+            <span>{t('about_region')}</span>
+            <div className="pills bs-region-pills" role="group" aria-label={t('about_region')}>
+              {regions.map((r) => (
+                <button type="button" key={r.key} className={`pill${r.key === version?.key ? ' on' : ''}`} aria-pressed={r.key === version?.key} onClick={() => pickRegion(r.key)}>
+                  {t(`region_${r.key}`)}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div><span>{t('about_region')}</span><b>{version ? t(`region_${version.key}`) : '-'}</b></div>
+        )}
         <div><span>{t('about_delivered')}</span><b>{brand.delivers ? t(`delivers_${brand.delivers}`) : '-'}</b></div>
         <div><span>{t('bs_values')}</span><b>{items.length}</b></div>
       </div>
@@ -46,7 +66,7 @@ export default function BrandSheet({ brand, onClose, onPick }) {
                 <b>{detailText(t, it, { short: true })}</b>
                 {prices && it.usd != null && (
                   <span className={it.live === false ? 'est' : undefined}>
-                    {it.live === false ? '≈ ' : ''}{t('bs_nim', { nim: fmtNim(usdToNim(it.usd, prices.nimUsd), lang) })}
+                    {t('bs_nim', { nim: fmtNim(usdToNim(it.usd, prices.nimUsd), lang) })}
                   </span>
                 )}
               </div>
@@ -59,13 +79,14 @@ export default function BrandSheet({ brand, onClose, onPick }) {
           )}
         </div>
       )}
+      {version?.worksWith && <p className="small works-line">{worksLine(t, version.worksWith)}</p>}
       <p className="bs-how">
         <i aria-hidden="true" />
         <span>{brand.delivers && <>{t(`bs_how_${brand.delivers}`)} </>}{t('bs_prices')}</span>
       </p>
       <div className="bs-acts">
         {onPick && (
-          <button type="button" className="btn tall" onClick={onPick}>
+          <button type="button" className="btn tall" onClick={() => onPick(version?.key || null)}>
             {t('cat_cta', { brand: brand.name })}<small>{t('cat_cta_sub')}</small>
           </button>
         )}

@@ -6,12 +6,18 @@
 // showed 5 USD only). Now every item of a product shares one answer, and "the shop does not sell this value"
 // (sold: false) is only said when the shop's list was actually read.
 
+// 11 Nov: the catalogue grew to 43 products (versions USA, Europe, UK). /api/catalog no longer asks the shop: a
+// background round refreshes every product every 4 minutes (under FRESH_MS) and the catalogue reads the cache only.
+// It waits for the shop once, on a cold cache at boot.
+
 export const FRESH_MS = 5 * 60_000 // a shop answer younger than this is used without asking again
 export const MAX_AGE_MS = 24 * 3600_000 // the last good answer is used up to this age when the shop cannot be read
+export const REFRESH_MS = 4 * 60_000 // background round: every product, under FRESH_MS so the cache stays fresh
 const CONCURRENCY = 4
 
 // getProduct(slug) -> { inStock, packages: [{ value, price }] }; log(slug, err) on a failed lookup.
-export function createPriceBook({ getProduct, enabled = () => true, now = () => Date.now(), log = () => {} }) {
+// timers: injected in tests (fake clock); setInterval's handle is unref'd so it never keeps the process alive.
+export function createPriceBook({ getProduct, enabled = () => true, now = () => Date.now(), log = () => {}, timers = globalThis }) {
   const cache = new Map() // slug -> { product, at }
   const inflight = new Map() // slug -> Promise<{ product, at }>
   let running = 0
@@ -41,7 +47,54 @@ export function createPriceBook({ getProduct, enabled = () => true, now = () => 
     return hit && now() - hit.at < MAX_AGE_MS ? hit : null
   }
 
-  return { product }
+  // The cache only, never the shop: the last good answer up to 24 h old, else null (an estimate).
+  const cached = (slug) => {
+    const hit = cache.get(slug)
+    return hit && now() - hit.at < MAX_AGE_MS ? hit : null
+  }
+
+  // One background round: every product once, through the same lookup (4 at a time, shared with checkout).
+  // Never two rounds at once: a call during a round gets that round. A failure keeps the last good answer; a 429
+  // stops the round (no more calls until the next one). One log line per round.
+  let round = null
+  function refresh(slugs) {
+    if (!enabled()) return Promise.resolve()
+    if (round) return round
+    const list = [...new Set(slugs)]
+    let next = 0
+    let failed = 0
+    let first = null
+    let stopped = false
+    const worker = async () => {
+      while (!stopped && next < list.length) {
+        const slug = list[next++]
+        try { await lookup(slug) } catch (e) {
+          failed++
+          first ??= e
+          if (/\b429\b|rate.?limit/i.test(e?.message || '')) stopped = true
+        }
+      }
+    }
+    round = Promise.all(Array.from({ length: Math.min(CONCURRENCY, list.length) }, worker))
+      .then(() => { if (failed) log('refresh', new Error(`${failed} of ${list.length} product(s) not refreshed${stopped ? ' (rate limited, round stopped)' : ''}: ${first?.message || first}`)) })
+      .finally(() => { round = null })
+    return round
+  }
+
+  // After boot and then every REFRESH_MS. Nothing when the shop is not configured.
+  let boot = null
+  let timer = null
+  function start(slugs) {
+    if (!enabled() || timer) return
+    boot = refresh(slugs())
+    timer = timers.setInterval(() => { refresh(slugs()) }, REFRESH_MS)
+    timer?.unref?.()
+  }
+  const stop = () => { if (timer) timers.clearInterval(timer); timer = null }
+  // Resolves at once, except while the first round runs on a cold cache (the catalogue waits for it, once).
+  const warm = () => boot || Promise.resolve()
+
+  return { product, cached, refresh, start, stop, warm }
 }
 
 // One catalogue item's price from its product's answer.

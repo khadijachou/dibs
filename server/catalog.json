@@ -6,7 +6,14 @@
     "name": "Steam gift card",
     "detail": "50 USD",
     "icon": "game",
-    "fallbackUsd": 56.23
+    "fallbackUsd": 56.23,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Steam accounts with a USD wallet",
+      "fr": "Pour les comptes Steam avec un portefeuille en USD",
+      "es": "Para cuentas de Steam con billetera en USD"
+    }
   },
   {
     "id": "steam-20",
@@ -15,7 +22,14 @@
     "name": "Steam gift card",
     "detail": "20 USD",
     "icon": "game",
-    "fallbackUsd": 22.48
+    "fallbackUsd": 22.48,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Steam accounts with a USD wallet",
+      "fr": "Pour les comptes Steam avec un portefeuille en USD",
+      "es": "Para cuentas de Steam con billetera en USD"
+    }
   },
   {
     "id": "steam-5",
@@ -24,7 +38,30 @@
     "name": "Steam gift card",
     "detail": "5 USD",
     "icon": "game",
-    "fallbackUsd": 5.62
+    "fallbackUsd": 5.62,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Steam accounts with a USD wallet",
+      "fr": "Pour les comptes Steam avec un portefeuille en USD",
+      "es": "Para cuentas de Steam con billetera en USD"
+    }
+  },
+  {
+    "id": "steam-usa-30",
+    "slug": "steam-usa",
+    "packageValue": "30",
+    "name": "Steam gift card",
+    "detail": "30 USD",
+    "icon": "game",
+    "fallbackUsd": 32.1,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Steam accounts with a USD wallet",
+      "fr": "Pour les comptes Steam avec un portefeuille en USD",
+      "es": "Para cuentas de Steam con billetera en USD"
+    }
   },
   {
     "id": "amazon_com-usa-10",
@@ -33,7 +70,14 @@
     "name": "Amazon gift card",
     "detail": "10 USD",
     "icon": "bag",
-    "fallbackUsd": 10.49
+    "fallbackUsd": 10.49,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Amazon.com accounts (USA)",
+      "fr": "Pour les comptes Amazon.com (États-Unis)",
+      "es": "Para cuentas de Amazon.com (EE. UU.)"
+    }
   },
   {
     "id": "amazon_com-usa-20",
@@ -42,7 +86,14 @@
     "name": "Amazon gift card",
     "detail": "20 USD",
     "icon": "bag",
-    "fallbackUsd": 21
+    "fallbackUsd": 21,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Amazon.com accounts (USA)",
+      "fr": "Pour les comptes Amazon.com (États-Unis)",
+      "es": "Para cuentas de Amazon.com (EE. UU.)"
+    }
   },
   {
     "id": "amazon_com-usa-50",
@@ -51,7 +102,30 @@
     "name": "Amazon gift card",
     "detail": "50 USD",
     "icon": "bag",
-    "fallbackUsd": 52.5
+    "fallbackUsd": 52.5,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Amazon.com accounts (USA)",
+      "fr": "Pour les comptes Amazon.com (États-Unis)",
+      "es": "Para cuentas de Amazon.com (EE. UU.)"
+    }
+  },
+  {
+    "id": "amazon_com-usa-5",
+    "slug": "amazon_com-usa",
+    "packageValue": "5",
+    "name": "Amazon gift card",
+    "detail": "5 USD",
+    "icon": "bag",
+    "fallbackUsd": 5.25,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Amazon.com accounts (USA)",
+      "fr": "Pour les comptes Amazon.com (États-Unis)",
+      "es": "Para cuentas de Amazon.com (EE. UU.)"
+    }
   },
   {
     "id": "netflix-usa-60",
@@ -60,7 +134,30 @@
     "name": "Netflix",
     "detail": "60 USD",
     "icon": "play",
-    "fallbackUsd": 60
+    "fallbackUsd": 60,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Netflix accounts in the USA",
+      "fr": "Pour les comptes Netflix aux États-Unis",
+      "es": "Para cuentas de Netflix en EE. UU."
+    }
+  },
+  {
+    "id": "netflix-usa-30",
+    "slug": "netflix-usa",
+    "packageValue": "30",
+    "name": "Netflix",
+    "detail": "30 USD",
+    "icon": "play",
+    "fallbackUsd": 30,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Netflix accounts in the USA",
+      "fr": "Pour les comptes Netflix aux États-Unis",
+      "es": "Para cuentas de Netflix en EE. UU."
+    }
   },
   {
     "id": "apple-usa-10",
@@ -69,7 +166,14 @@
     "name": "Apple gift card",
     "detail": "10 USD",
     "icon": "bag",
-    "fallbackUsd": 10.49
+    "fallbackUsd": 10.49,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Apple accounts in the USA",
+      "fr": "Pour les comptes Apple aux États-Unis",
+      "es": "Para cuentas de Apple en EE. UU."
+    }
   },
   {
     "id": "apple-usa-25",
@@ -78,7 +182,14 @@
     "name": "Apple gift card",
     "detail": "25 USD",
     "icon": "bag",
-    "fallbackUsd": 26.25
+    "fallbackUsd": 26.25,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Apple accounts in the USA",
+      "fr": "Pour les comptes Apple aux États-Unis",
+      "es": "Para cuentas de Apple en EE. UU."
+    }
   },
   {
     "id": "apple-usa-50",
@@ -87,7 +198,30 @@
     "name": "Apple gift card",
     "detail": "50 USD",
     "icon": "bag",
-    "fallbackUsd": 52.5
+    "fallbackUsd": 52.5,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Apple accounts in the USA",
+      "fr": "Pour les comptes Apple aux États-Unis",
+      "es": "Para cuentas de Apple en EE. UU."
+    }
+  },
+  {
+    "id": "apple-usa-20",
+    "slug": "apple-usa",
+    "packageValue": "20",
+    "name": "Apple gift card",
+    "detail": "20 USD",
+    "icon": "bag",
+    "fallbackUsd": 21,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Apple accounts in the USA",
+      "fr": "Pour les comptes Apple aux États-Unis",
+      "es": "Para cuentas de Apple en EE. UU."
+    }
   },
   {
     "id": "sony-playstation-usa-50",
@@ -96,7 +230,14 @@
     "name": "PlayStation Store",
     "detail": "50 USD",
     "icon": "game",
-    "fallbackUsd": 50
+    "fallbackUsd": 50,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For PlayStation accounts set to the USA",
+      "fr": "Pour les comptes PlayStation réglés sur les États-Unis",
+      "es": "Para cuentas de PlayStation configuradas en EE. UU."
+    }
   },
   {
     "id": "sony-playstation-usa-100",
@@ -105,25 +246,62 @@
     "name": "PlayStation Store",
     "detail": "100 USD",
     "icon": "game",
-    "fallbackUsd": 100
+    "fallbackUsd": 100,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For PlayStation accounts set to the USA",
+      "fr": "Pour les comptes PlayStation réglés sur les États-Unis",
+      "es": "Para cuentas de PlayStation configuradas en EE. UU."
+    }
   },
   {
     "id": "netflix-eu-25",
     "slug": "netflix-eu",
     "packageValue": "25",
-    "name": "Netflix Europe",
+    "name": "Netflix",
     "detail": "25 EUR",
     "icon": "play",
-    "fallbackUsd": 28.12
+    "fallbackUsd": 28.12,
+    "region": "Europe",
+    "currency": "EUR",
+    "worksWith": {
+      "en": "For Netflix accounts in Europe",
+      "fr": "Pour les comptes Netflix en Europe",
+      "es": "Para cuentas de Netflix en Europa"
+    }
   },
   {
     "id": "netflix-eu-50",
     "slug": "netflix-eu",
     "packageValue": "50",
-    "name": "Netflix Europe",
+    "name": "Netflix",
     "detail": "50 EUR",
     "icon": "play",
-    "fallbackUsd": 56.25
+    "fallbackUsd": 56.25,
+    "region": "Europe",
+    "currency": "EUR",
+    "worksWith": {
+      "en": "For Netflix accounts in Europe",
+      "fr": "Pour les comptes Netflix en Europe",
+      "es": "Para cuentas de Netflix en Europa"
+    }
+  },
+  {
+    "id": "netflix-eu-75",
+    "slug": "netflix-eu",
+    "packageValue": "75",
+    "name": "Netflix",
+    "detail": "75 EUR",
+    "icon": "play",
+    "fallbackUsd": 83.37,
+    "region": "Europe",
+    "currency": "EUR",
+    "worksWith": {
+      "en": "For Netflix accounts in Europe",
+      "fr": "Pour les comptes Netflix en Europe",
+      "es": "Para cuentas de Netflix en Europa"
+    }
   },
   {
     "id": "uber-eats-usa-50",
@@ -132,7 +310,14 @@
     "name": "Uber Eats",
     "detail": "50 USD",
     "icon": "food",
-    "fallbackUsd": 50
+    "fallbackUsd": 50,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Uber Eats accounts in the USA",
+      "fr": "Pour les comptes Uber Eats aux États-Unis",
+      "es": "Para cuentas de Uber Eats en EE. UU."
+    }
   },
   {
     "id": "uber-eats-usa-20",
@@ -141,7 +326,30 @@
     "name": "Uber Eats",
     "detail": "20 USD",
     "icon": "food",
-    "fallbackUsd": 20
+    "fallbackUsd": 20,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Uber Eats accounts in the USA",
+      "fr": "Pour les comptes Uber Eats aux États-Unis",
+      "es": "Para cuentas de Uber Eats en EE. UU."
+    }
+  },
+  {
+    "id": "uber-eats-usa-100",
+    "slug": "uber-eats-usa",
+    "packageValue": "100",
+    "name": "Uber Eats",
+    "detail": "100 USD",
+    "icon": "food",
+    "fallbackUsd": 100,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Uber Eats accounts in the USA",
+      "fr": "Pour les comptes Uber Eats aux États-Unis",
+      "es": "Para cuentas de Uber Eats en EE. UU."
+    }
   },
   {
     "id": "airbnb-usa-50",
@@ -150,7 +358,14 @@
     "name": "Airbnb gift card",
     "detail": "50 USD",
     "icon": "travel",
-    "fallbackUsd": 50
+    "fallbackUsd": 50,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Airbnb accounts in the USA",
+      "fr": "Pour les comptes Airbnb aux États-Unis",
+      "es": "Para cuentas de Airbnb en EE. UU."
+    }
   },
   {
     "id": "airbnb-usa-100",
@@ -159,7 +374,14 @@
     "name": "Airbnb gift card",
     "detail": "100 USD",
     "icon": "travel",
-    "fallbackUsd": 100.01
+    "fallbackUsd": 100.01,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Airbnb accounts in the USA",
+      "fr": "Pour les comptes Airbnb aux États-Unis",
+      "es": "Para cuentas de Airbnb en EE. UU."
+    }
   },
   {
     "id": "airbnb-usa-200",
@@ -168,7 +390,14 @@
     "name": "Airbnb gift card",
     "detail": "200 USD",
     "icon": "travel",
-    "fallbackUsd": 200
+    "fallbackUsd": 200,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Airbnb accounts in the USA",
+      "fr": "Pour les comptes Airbnb aux États-Unis",
+      "es": "Para cuentas de Airbnb en EE. UU."
+    }
   },
   {
     "id": "google-play-usa-5",
@@ -177,7 +406,14 @@
     "name": "Google Play gift card",
     "detail": "5 USD",
     "icon": "game",
-    "fallbackUsd": 5
+    "fallbackUsd": 5,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Google accounts set to the USA, with a US IP",
+      "fr": "Pour les comptes Google réglés sur les États-Unis, avec une adresse IP américaine",
+      "es": "Para cuentas de Google configuradas en EE. UU., con una IP de EE. UU."
+    }
   },
   {
     "id": "google-play-usa-10",
@@ -186,7 +422,14 @@
     "name": "Google Play gift card",
     "detail": "10 USD",
     "icon": "game",
-    "fallbackUsd": 10
+    "fallbackUsd": 10,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Google accounts set to the USA, with a US IP",
+      "fr": "Pour les comptes Google réglés sur les États-Unis, avec une adresse IP américaine",
+      "es": "Para cuentas de Google configuradas en EE. UU., con una IP de EE. UU."
+    }
   },
   {
     "id": "google-play-usa-20",
@@ -195,7 +438,78 @@
     "name": "Google Play gift card",
     "detail": "20 USD",
     "icon": "game",
-    "fallbackUsd": 20
+    "fallbackUsd": 20,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Google accounts set to the USA, with a US IP",
+      "fr": "Pour les comptes Google réglés sur les États-Unis, avec une adresse IP américaine",
+      "es": "Para cuentas de Google configuradas en EE. UU., con una IP de EE. UU."
+    }
+  },
+  {
+    "id": "google-play-usa-40",
+    "slug": "google-play-usa",
+    "packageValue": "40",
+    "name": "Google Play gift card",
+    "detail": "40 USD",
+    "icon": "game",
+    "fallbackUsd": 40.01,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Google accounts set to the USA, with a US IP",
+      "fr": "Pour les comptes Google réglés sur les États-Unis, avec une adresse IP américaine",
+      "es": "Para cuentas de Google configuradas en EE. UU., con una IP de EE. UU."
+    }
+  },
+  {
+    "id": "google-play-usa-60",
+    "slug": "google-play-usa",
+    "packageValue": "60",
+    "name": "Google Play gift card",
+    "detail": "60 USD",
+    "icon": "game",
+    "fallbackUsd": 60,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Google accounts set to the USA, with a US IP",
+      "fr": "Pour les comptes Google réglés sur les États-Unis, avec une adresse IP américaine",
+      "es": "Para cuentas de Google configuradas en EE. UU., con una IP de EE. UU."
+    }
+  },
+  {
+    "id": "google-play-usa-80",
+    "slug": "google-play-usa",
+    "packageValue": "80",
+    "name": "Google Play gift card",
+    "detail": "80 USD",
+    "icon": "game",
+    "fallbackUsd": 80,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Google accounts set to the USA, with a US IP",
+      "fr": "Pour les comptes Google réglés sur les États-Unis, avec une adresse IP américaine",
+      "es": "Para cuentas de Google configuradas en EE. UU., con una IP de EE. UU."
+    }
+  },
+  {
+    "id": "google-play-usa-100",
+    "slug": "google-play-usa",
+    "packageValue": "100",
+    "name": "Google Play gift card",
+    "detail": "100 USD",
+    "icon": "game",
+    "fallbackUsd": 100,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Google accounts set to the USA, with a US IP",
+      "fr": "Pour les comptes Google réglés sur les États-Unis, avec une adresse IP américaine",
+      "es": "Para cuentas de Google configuradas en EE. UU., con una IP de EE. UU."
+    }
   },
   {
     "id": "nintendo-eshop-usa-10",
@@ -204,7 +518,14 @@
     "name": "Nintendo eShop gift card",
     "detail": "10 USD",
     "icon": "game",
-    "fallbackUsd": 10
+    "fallbackUsd": 10,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Nintendo accounts set to the USA",
+      "fr": "Pour les comptes Nintendo réglés sur les États-Unis",
+      "es": "Para cuentas de Nintendo configuradas en EE. UU."
+    }
   },
   {
     "id": "nintendo-eshop-usa-20",
@@ -213,7 +534,14 @@
     "name": "Nintendo eShop gift card",
     "detail": "20 USD",
     "icon": "game",
-    "fallbackUsd": 20
+    "fallbackUsd": 20,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Nintendo accounts set to the USA",
+      "fr": "Pour les comptes Nintendo réglés sur les États-Unis",
+      "es": "Para cuentas de Nintendo configuradas en EE. UU."
+    }
   },
   {
     "id": "nintendo-eshop-usa-50",
@@ -222,7 +550,78 @@
     "name": "Nintendo eShop gift card",
     "detail": "50 USD",
     "icon": "game",
-    "fallbackUsd": 50
+    "fallbackUsd": 50,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Nintendo accounts set to the USA",
+      "fr": "Pour les comptes Nintendo réglés sur les États-Unis",
+      "es": "Para cuentas de Nintendo configuradas en EE. UU."
+    }
+  },
+  {
+    "id": "nintendo-eshop-usa-5",
+    "slug": "nintendo-eshop-usa",
+    "packageValue": "5",
+    "name": "Nintendo eShop gift card",
+    "detail": "5 USD",
+    "icon": "game",
+    "fallbackUsd": 5,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Nintendo accounts set to the USA",
+      "fr": "Pour les comptes Nintendo réglés sur les États-Unis",
+      "es": "Para cuentas de Nintendo configuradas en EE. UU."
+    }
+  },
+  {
+    "id": "nintendo-eshop-usa-35",
+    "slug": "nintendo-eshop-usa",
+    "packageValue": "35",
+    "name": "Nintendo eShop gift card",
+    "detail": "35 USD",
+    "icon": "game",
+    "fallbackUsd": 35,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Nintendo accounts set to the USA",
+      "fr": "Pour les comptes Nintendo réglés sur les États-Unis",
+      "es": "Para cuentas de Nintendo configuradas en EE. UU."
+    }
+  },
+  {
+    "id": "nintendo-eshop-usa-70",
+    "slug": "nintendo-eshop-usa",
+    "packageValue": "70",
+    "name": "Nintendo eShop gift card",
+    "detail": "70 USD",
+    "icon": "game",
+    "fallbackUsd": 70,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Nintendo accounts set to the USA",
+      "fr": "Pour les comptes Nintendo réglés sur les États-Unis",
+      "es": "Para cuentas de Nintendo configuradas en EE. UU."
+    }
+  },
+  {
+    "id": "nintendo-eshop-usa-100",
+    "slug": "nintendo-eshop-usa",
+    "packageValue": "100",
+    "name": "Nintendo eShop gift card",
+    "detail": "100 USD",
+    "icon": "game",
+    "fallbackUsd": 100,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Nintendo accounts set to the USA",
+      "fr": "Pour les comptes Nintendo réglés sur les États-Unis",
+      "es": "Para cuentas de Nintendo configuradas en EE. UU."
+    }
   },
   {
     "id": "roblox-usa-10",
@@ -231,7 +630,14 @@
     "name": "Roblox gift card",
     "detail": "10 USD",
     "icon": "game",
-    "fallbackUsd": 10
+    "fallbackUsd": 10,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Roblox accounts paying in USD",
+      "fr": "Pour les comptes Roblox qui paient en USD",
+      "es": "Para cuentas de Roblox que pagan en USD"
+    }
   },
   {
     "id": "roblox-usa-20",
@@ -240,7 +646,14 @@
     "name": "Roblox gift card",
     "detail": "20 USD",
     "icon": "game",
-    "fallbackUsd": 20
+    "fallbackUsd": 20,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Roblox accounts paying in USD",
+      "fr": "Pour les comptes Roblox qui paient en USD",
+      "es": "Para cuentas de Roblox que pagan en USD"
+    }
   },
   {
     "id": "roblox-usa-50",
@@ -249,7 +662,30 @@
     "name": "Roblox gift card",
     "detail": "50 USD",
     "icon": "game",
-    "fallbackUsd": 50
+    "fallbackUsd": 50,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Roblox accounts paying in USD",
+      "fr": "Pour les comptes Roblox qui paient en USD",
+      "es": "Para cuentas de Roblox que pagan en USD"
+    }
+  },
+  {
+    "id": "roblox-usa-100",
+    "slug": "roblox-usa",
+    "packageValue": "100",
+    "name": "Roblox gift card",
+    "detail": "100 USD",
+    "icon": "game",
+    "fallbackUsd": 100,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Roblox accounts paying in USD",
+      "fr": "Pour les comptes Roblox qui paient en USD",
+      "es": "Para cuentas de Roblox que pagan en USD"
+    }
   },
   {
     "id": "valorant-usa-9-99",
@@ -258,7 +694,14 @@
     "name": "Valorant gift card",
     "detail": "9.99 USD",
     "icon": "game",
-    "fallbackUsd": 9.99
+    "fallbackUsd": 9.99,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Riot accounts in the USA",
+      "fr": "Pour les comptes Riot aux États-Unis",
+      "es": "Para cuentas de Riot en EE. UU."
+    }
   },
   {
     "id": "valorant-usa-24-99",
@@ -267,7 +710,14 @@
     "name": "Valorant gift card",
     "detail": "24.99 USD",
     "icon": "game",
-    "fallbackUsd": 24.99
+    "fallbackUsd": 24.99,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Riot accounts in the USA",
+      "fr": "Pour les comptes Riot aux États-Unis",
+      "es": "Para cuentas de Riot en EE. UU."
+    }
   },
   {
     "id": "valorant-usa-49-99",
@@ -276,7 +726,94 @@
     "name": "Valorant gift card",
     "detail": "49.99 USD",
     "icon": "game",
-    "fallbackUsd": 49.99
+    "fallbackUsd": 49.99,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Riot accounts in the USA",
+      "fr": "Pour les comptes Riot aux États-Unis",
+      "es": "Para cuentas de Riot en EE. UU."
+    }
+  },
+  {
+    "id": "valorant-usa-4-99",
+    "slug": "valorant-usa",
+    "packageValue": "4.99",
+    "name": "Valorant gift card",
+    "detail": "4.99 USD",
+    "icon": "game",
+    "fallbackUsd": 4.99,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Riot accounts in the USA",
+      "fr": "Pour les comptes Riot aux États-Unis",
+      "es": "Para cuentas de Riot en EE. UU."
+    }
+  },
+  {
+    "id": "valorant-usa-14-99",
+    "slug": "valorant-usa",
+    "packageValue": "14.99",
+    "name": "Valorant gift card",
+    "detail": "14.99 USD",
+    "icon": "game",
+    "fallbackUsd": 15,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Riot accounts in the USA",
+      "fr": "Pour les comptes Riot aux États-Unis",
+      "es": "Para cuentas de Riot en EE. UU."
+    }
+  },
+  {
+    "id": "valorant-usa-19-99",
+    "slug": "valorant-usa",
+    "packageValue": "19.99",
+    "name": "Valorant gift card",
+    "detail": "19.99 USD",
+    "icon": "game",
+    "fallbackUsd": 19.99,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Riot accounts in the USA",
+      "fr": "Pour les comptes Riot aux États-Unis",
+      "es": "Para cuentas de Riot en EE. UU."
+    }
+  },
+  {
+    "id": "valorant-usa-34-99",
+    "slug": "valorant-usa",
+    "packageValue": "34.99",
+    "name": "Valorant gift card",
+    "detail": "34.99 USD",
+    "icon": "game",
+    "fallbackUsd": 34.99,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Riot accounts in the USA",
+      "fr": "Pour les comptes Riot aux États-Unis",
+      "es": "Para cuentas de Riot en EE. UU."
+    }
+  },
+  {
+    "id": "valorant-usa-79-99",
+    "slug": "valorant-usa",
+    "packageValue": "79.99",
+    "name": "Valorant gift card",
+    "detail": "79.99 USD",
+    "icon": "game",
+    "fallbackUsd": 79.99,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Riot accounts in the USA",
+      "fr": "Pour les comptes Riot aux États-Unis",
+      "es": "Para cuentas de Riot en EE. UU."
+    }
   },
   {
     "id": "riot-access-usa-9-99",
@@ -285,7 +822,14 @@
     "name": "Riot Access gift card",
     "detail": "9.99 USD",
     "icon": "game",
-    "fallbackUsd": 9.99
+    "fallbackUsd": 9.99,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Riot accounts set to the USA",
+      "fr": "Pour les comptes Riot réglés sur les États-Unis",
+      "es": "Para cuentas de Riot configuradas en EE. UU."
+    }
   },
   {
     "id": "riot-access-usa-24-99",
@@ -294,7 +838,14 @@
     "name": "Riot Access gift card",
     "detail": "24.99 USD",
     "icon": "game",
-    "fallbackUsd": 24.99
+    "fallbackUsd": 24.99,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Riot accounts set to the USA",
+      "fr": "Pour les comptes Riot réglés sur les États-Unis",
+      "es": "Para cuentas de Riot configuradas en EE. UU."
+    }
   },
   {
     "id": "riot-access-usa-49-99",
@@ -303,7 +854,110 @@
     "name": "Riot Access gift card",
     "detail": "49.99 USD",
     "icon": "game",
-    "fallbackUsd": 49.99
+    "fallbackUsd": 49.99,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Riot accounts set to the USA",
+      "fr": "Pour les comptes Riot réglés sur les États-Unis",
+      "es": "Para cuentas de Riot configuradas en EE. UU."
+    }
+  },
+  {
+    "id": "riot-access-usa-4-99",
+    "slug": "riot-access-usa",
+    "packageValue": "4.99",
+    "name": "Riot Access gift card",
+    "detail": "4.99 USD",
+    "icon": "game",
+    "fallbackUsd": 4.99,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Riot accounts set to the USA",
+      "fr": "Pour les comptes Riot réglés sur les États-Unis",
+      "es": "Para cuentas de Riot configuradas en EE. UU."
+    }
+  },
+  {
+    "id": "riot-access-usa-14-99",
+    "slug": "riot-access-usa",
+    "packageValue": "14.99",
+    "name": "Riot Access gift card",
+    "detail": "14.99 USD",
+    "icon": "game",
+    "fallbackUsd": 15,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Riot accounts set to the USA",
+      "fr": "Pour les comptes Riot réglés sur les États-Unis",
+      "es": "Para cuentas de Riot configuradas en EE. UU."
+    }
+  },
+  {
+    "id": "riot-access-usa-20",
+    "slug": "riot-access-usa",
+    "packageValue": "20",
+    "name": "Riot Access gift card",
+    "detail": "20 USD",
+    "icon": "game",
+    "fallbackUsd": 20,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Riot accounts set to the USA",
+      "fr": "Pour les comptes Riot réglés sur les États-Unis",
+      "es": "Para cuentas de Riot configuradas en EE. UU."
+    }
+  },
+  {
+    "id": "riot-access-usa-25",
+    "slug": "riot-access-usa",
+    "packageValue": "25",
+    "name": "Riot Access gift card",
+    "detail": "25 USD",
+    "icon": "game",
+    "fallbackUsd": 25,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Riot accounts set to the USA",
+      "fr": "Pour les comptes Riot réglés sur les États-Unis",
+      "es": "Para cuentas de Riot configuradas en EE. UU."
+    }
+  },
+  {
+    "id": "riot-access-usa-34-99",
+    "slug": "riot-access-usa",
+    "packageValue": "34.99",
+    "name": "Riot Access gift card",
+    "detail": "34.99 USD",
+    "icon": "game",
+    "fallbackUsd": 34.99,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Riot accounts set to the USA",
+      "fr": "Pour les comptes Riot réglés sur les États-Unis",
+      "es": "Para cuentas de Riot configuradas en EE. UU."
+    }
+  },
+  {
+    "id": "riot-access-usa-79-99",
+    "slug": "riot-access-usa",
+    "packageValue": "79.99",
+    "name": "Riot Access gift card",
+    "detail": "79.99 USD",
+    "icon": "game",
+    "fallbackUsd": 79.99,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Riot accounts set to the USA",
+      "fr": "Pour les comptes Riot réglés sur les États-Unis",
+      "es": "Para cuentas de Riot configuradas en EE. UU."
+    }
   },
   {
     "id": "xbox-usa-10",
@@ -312,7 +966,14 @@
     "name": "Xbox gift card",
     "detail": "10 USD",
     "icon": "game",
-    "fallbackUsd": 10
+    "fallbackUsd": 10,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Xbox accounts set to the USA",
+      "fr": "Pour les comptes Xbox réglés sur les États-Unis",
+      "es": "Para cuentas de Xbox configuradas en EE. UU."
+    }
   },
   {
     "id": "xbox-usa-25",
@@ -321,7 +982,14 @@
     "name": "Xbox gift card",
     "detail": "25 USD",
     "icon": "game",
-    "fallbackUsd": 25
+    "fallbackUsd": 25,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Xbox accounts set to the USA",
+      "fr": "Pour les comptes Xbox réglés sur les États-Unis",
+      "es": "Para cuentas de Xbox configuradas en EE. UU."
+    }
   },
   {
     "id": "xbox-usa-50",
@@ -330,7 +998,94 @@
     "name": "Xbox gift card",
     "detail": "50 USD",
     "icon": "game",
-    "fallbackUsd": 50
+    "fallbackUsd": 50,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Xbox accounts set to the USA",
+      "fr": "Pour les comptes Xbox réglés sur les États-Unis",
+      "es": "Para cuentas de Xbox configuradas en EE. UU."
+    }
+  },
+  {
+    "id": "xbox-usa-5",
+    "slug": "xbox-usa",
+    "packageValue": "5",
+    "name": "Xbox gift card",
+    "detail": "5 USD",
+    "icon": "game",
+    "fallbackUsd": 5,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Xbox accounts set to the USA",
+      "fr": "Pour les comptes Xbox réglés sur les États-Unis",
+      "es": "Para cuentas de Xbox configuradas en EE. UU."
+    }
+  },
+  {
+    "id": "xbox-usa-15",
+    "slug": "xbox-usa",
+    "packageValue": "15",
+    "name": "Xbox gift card",
+    "detail": "15 USD",
+    "icon": "game",
+    "fallbackUsd": 15,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Xbox accounts set to the USA",
+      "fr": "Pour les comptes Xbox réglés sur les États-Unis",
+      "es": "Para cuentas de Xbox configuradas en EE. UU."
+    }
+  },
+  {
+    "id": "xbox-usa-20",
+    "slug": "xbox-usa",
+    "packageValue": "20",
+    "name": "Xbox gift card",
+    "detail": "20 USD",
+    "icon": "game",
+    "fallbackUsd": 20,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Xbox accounts set to the USA",
+      "fr": "Pour les comptes Xbox réglés sur les États-Unis",
+      "es": "Para cuentas de Xbox configuradas en EE. UU."
+    }
+  },
+  {
+    "id": "xbox-usa-60",
+    "slug": "xbox-usa",
+    "packageValue": "60",
+    "name": "Xbox gift card",
+    "detail": "60 USD",
+    "icon": "game",
+    "fallbackUsd": 60,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Xbox accounts set to the USA",
+      "fr": "Pour les comptes Xbox réglés sur les États-Unis",
+      "es": "Para cuentas de Xbox configuradas en EE. UU."
+    }
+  },
+  {
+    "id": "xbox-usa-70",
+    "slug": "xbox-usa",
+    "packageValue": "70",
+    "name": "Xbox gift card",
+    "detail": "70 USD",
+    "icon": "game",
+    "fallbackUsd": 70,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Xbox accounts set to the USA",
+      "fr": "Pour les comptes Xbox réglés sur les États-Unis",
+      "es": "Para cuentas de Xbox configuradas en EE. UU."
+    }
   },
   {
     "id": "discord-nitro-usa-1-year",
@@ -339,7 +1094,46 @@
     "name": "Discord Nitro",
     "detail": "1 Year",
     "icon": "game",
-    "fallbackUsd": 101.99
+    "fallbackUsd": 101.99,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Discord accounts (USD card)",
+      "fr": "Pour les comptes Discord (carte en USD)",
+      "es": "Para cuentas de Discord (tarjeta en USD)"
+    }
+  },
+  {
+    "id": "discord-nitro-usa-basic",
+    "slug": "discord-nitro-usa",
+    "packageValue": "Basic",
+    "name": "Discord Nitro",
+    "detail": "Basic",
+    "icon": "game",
+    "fallbackUsd": 5.09,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Discord accounts (USD card)",
+      "fr": "Pour les comptes Discord (carte en USD)",
+      "es": "Para cuentas de Discord (tarjeta en USD)"
+    }
+  },
+  {
+    "id": "discord-nitro-usa-1-month",
+    "slug": "discord-nitro-usa",
+    "packageValue": "1 Month",
+    "name": "Discord Nitro",
+    "detail": "1 Month",
+    "icon": "game",
+    "fallbackUsd": 10.19,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Discord accounts (USD card)",
+      "fr": "Pour les comptes Discord (carte en USD)",
+      "es": "Para cuentas de Discord (tarjeta en USD)"
+    }
   },
   {
     "id": "flightgift-usa-50",
@@ -348,7 +1142,14 @@
     "name": "Flightgift",
     "detail": "50 USD",
     "icon": "travel",
-    "fallbackUsd": 50
+    "fallbackUsd": 50,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "Works worldwide, in USD",
+      "fr": "Fonctionne partout dans le monde, en USD",
+      "es": "Funciona en todo el mundo, en USD"
+    }
   },
   {
     "id": "flightgift-usa-100",
@@ -357,7 +1158,14 @@
     "name": "Flightgift",
     "detail": "100 USD",
     "icon": "travel",
-    "fallbackUsd": 100.01
+    "fallbackUsd": 100.01,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "Works worldwide, in USD",
+      "fr": "Fonctionne partout dans le monde, en USD",
+      "es": "Funciona en todo el mundo, en USD"
+    }
   },
   {
     "id": "flightgift-usa-200",
@@ -366,7 +1174,14 @@
     "name": "Flightgift",
     "detail": "200 USD",
     "icon": "travel",
-    "fallbackUsd": 200
+    "fallbackUsd": 200,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "Works worldwide, in USD",
+      "fr": "Fonctionne partout dans le monde, en USD",
+      "es": "Funciona en todo el mundo, en USD"
+    }
   },
   {
     "id": "starbucks-usa-10",
@@ -375,7 +1190,14 @@
     "name": "Starbucks gift card",
     "detail": "10 USD",
     "icon": "food",
-    "fallbackUsd": 10
+    "fallbackUsd": 10,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Starbucks in the USA",
+      "fr": "Pour Starbucks aux États-Unis",
+      "es": "Para Starbucks en EE. UU."
+    }
   },
   {
     "id": "starbucks-usa-50",
@@ -384,7 +1206,62 @@
     "name": "Starbucks gift card",
     "detail": "50 USD",
     "icon": "food",
-    "fallbackUsd": 50
+    "fallbackUsd": 50,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Starbucks in the USA",
+      "fr": "Pour Starbucks aux États-Unis",
+      "es": "Para Starbucks en EE. UU."
+    }
+  },
+  {
+    "id": "starbucks-usa-5",
+    "slug": "starbucks-usa",
+    "packageValue": "5",
+    "name": "Starbucks gift card",
+    "detail": "5 USD",
+    "icon": "food",
+    "fallbackUsd": 5.04,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Starbucks in the USA",
+      "fr": "Pour Starbucks aux États-Unis",
+      "es": "Para Starbucks en EE. UU."
+    }
+  },
+  {
+    "id": "starbucks-usa-20",
+    "slug": "starbucks-usa",
+    "packageValue": "20",
+    "name": "Starbucks gift card",
+    "detail": "20 USD",
+    "icon": "food",
+    "fallbackUsd": 20,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Starbucks in the USA",
+      "fr": "Pour Starbucks aux États-Unis",
+      "es": "Para Starbucks en EE. UU."
+    }
+  },
+  {
+    "id": "starbucks-usa-100",
+    "slug": "starbucks-usa",
+    "packageValue": "100",
+    "name": "Starbucks gift card",
+    "detail": "100 USD",
+    "icon": "food",
+    "fallbackUsd": 100,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Starbucks in the USA",
+      "fr": "Pour Starbucks aux États-Unis",
+      "es": "Para Starbucks en EE. UU."
+    }
   },
   {
     "id": "best-buy-usa-50",
@@ -393,7 +1270,14 @@
     "name": "Best Buy gift card",
     "detail": "50 USD",
     "icon": "bag",
-    "fallbackUsd": 50
+    "fallbackUsd": 50,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Best Buy in the USA",
+      "fr": "Pour Best Buy aux États-Unis",
+      "es": "Para Best Buy en EE. UU."
+    }
   },
   {
     "id": "best-buy-usa-100",
@@ -402,7 +1286,14 @@
     "name": "Best Buy gift card",
     "detail": "100 USD",
     "icon": "bag",
-    "fallbackUsd": 100.01
+    "fallbackUsd": 100.01,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Best Buy in the USA",
+      "fr": "Pour Best Buy aux États-Unis",
+      "es": "Para Best Buy en EE. UU."
+    }
   },
   {
     "id": "hotels_com-usa-50",
@@ -411,7 +1302,14 @@
     "name": "Hotels.com gift card",
     "detail": "50 USD",
     "icon": "travel",
-    "fallbackUsd": 50
+    "fallbackUsd": 50,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Hotels.com accounts set to USD",
+      "fr": "Pour les comptes Hotels.com réglés en USD",
+      "es": "Para cuentas de Hotels.com configuradas en USD"
+    }
   },
   {
     "id": "hotels_com-usa-100",
@@ -420,7 +1318,14 @@
     "name": "Hotels.com gift card",
     "detail": "100 USD",
     "icon": "travel",
-    "fallbackUsd": 100.01
+    "fallbackUsd": 100.01,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Hotels.com accounts set to USD",
+      "fr": "Pour les comptes Hotels.com réglés en USD",
+      "es": "Para cuentas de Hotels.com configuradas en USD"
+    }
   },
   {
     "id": "hotels_com-usa-200",
@@ -429,7 +1334,46 @@
     "name": "Hotels.com gift card",
     "detail": "200 USD",
     "icon": "travel",
-    "fallbackUsd": 200
+    "fallbackUsd": 200,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Hotels.com accounts set to USD",
+      "fr": "Pour les comptes Hotels.com réglés en USD",
+      "es": "Para cuentas de Hotels.com configuradas en USD"
+    }
+  },
+  {
+    "id": "hotels_com-usa-10",
+    "slug": "hotels_com-usa",
+    "packageValue": "10",
+    "name": "Hotels.com gift card",
+    "detail": "10 USD",
+    "icon": "travel",
+    "fallbackUsd": 10,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Hotels.com accounts set to USD",
+      "fr": "Pour les comptes Hotels.com réglés en USD",
+      "es": "Para cuentas de Hotels.com configuradas en USD"
+    }
+  },
+  {
+    "id": "hotels_com-usa-20",
+    "slug": "hotels_com-usa",
+    "packageValue": "20",
+    "name": "Hotels.com gift card",
+    "detail": "20 USD",
+    "icon": "travel",
+    "fallbackUsd": 20,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Hotels.com accounts set to USD",
+      "fr": "Pour les comptes Hotels.com réglés en USD",
+      "es": "Para cuentas de Hotels.com configuradas en USD"
+    }
   },
   {
     "id": "uber-usa-50",
@@ -438,7 +1382,14 @@
     "name": "Uber gift card",
     "detail": "50 USD",
     "icon": "travel",
-    "fallbackUsd": 50
+    "fallbackUsd": 50,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Uber accounts set to USD",
+      "fr": "Pour les comptes Uber réglés en USD",
+      "es": "Para cuentas de Uber configuradas en USD"
+    }
   },
   {
     "id": "uber-usa-100",
@@ -447,7 +1398,30 @@
     "name": "Uber gift card",
     "detail": "100 USD",
     "icon": "travel",
-    "fallbackUsd": 100.01
+    "fallbackUsd": 100.01,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Uber accounts set to USD",
+      "fr": "Pour les comptes Uber réglés en USD",
+      "es": "Para cuentas de Uber configuradas en USD"
+    }
+  },
+  {
+    "id": "uber-usa-20",
+    "slug": "uber-usa",
+    "packageValue": "20",
+    "name": "Uber gift card",
+    "detail": "20 USD",
+    "icon": "travel",
+    "fallbackUsd": 20,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Uber accounts set to USD",
+      "fr": "Pour les comptes Uber réglés en USD",
+      "es": "Para cuentas de Uber configuradas en USD"
+    }
   },
   {
     "id": "disney-usa-50",
@@ -456,7 +1430,14 @@
     "name": "Disney gift card",
     "detail": "50 USD",
     "icon": "play",
-    "fallbackUsd": 50
+    "fallbackUsd": 50,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Disney in USD. Disney+ only in the USA",
+      "fr": "Pour Disney en USD. Disney+ seulement aux États-Unis",
+      "es": "Para Disney en USD. Disney+ solo en EE. UU."
+    }
   },
   {
     "id": "disney-usa-100",
@@ -465,7 +1446,46 @@
     "name": "Disney gift card",
     "detail": "100 USD",
     "icon": "play",
-    "fallbackUsd": 100.01
+    "fallbackUsd": 100.01,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Disney in USD. Disney+ only in the USA",
+      "fr": "Pour Disney en USD. Disney+ seulement aux États-Unis",
+      "es": "Para Disney en USD. Disney+ solo en EE. UU."
+    }
+  },
+  {
+    "id": "disney-usa-10",
+    "slug": "disney-usa",
+    "packageValue": "10",
+    "name": "Disney gift card",
+    "detail": "10 USD",
+    "icon": "play",
+    "fallbackUsd": 10,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Disney in USD. Disney+ only in the USA",
+      "fr": "Pour Disney en USD. Disney+ seulement aux États-Unis",
+      "es": "Para Disney en USD. Disney+ solo en EE. UU."
+    }
+  },
+  {
+    "id": "disney-usa-20",
+    "slug": "disney-usa",
+    "packageValue": "20",
+    "name": "Disney gift card",
+    "detail": "20 USD",
+    "icon": "play",
+    "fallbackUsd": 20,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Disney in USD. Disney+ only in the USA",
+      "fr": "Pour Disney en USD. Disney+ seulement aux États-Unis",
+      "es": "Para Disney en USD. Disney+ solo en EE. UU."
+    }
   },
   {
     "id": "doordash-usa-50",
@@ -474,7 +1494,14 @@
     "name": "DoorDash gift card",
     "detail": "50 USD",
     "icon": "food",
-    "fallbackUsd": 50
+    "fallbackUsd": 50,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For DoorDash accounts in the USA",
+      "fr": "Pour les comptes DoorDash aux États-Unis",
+      "es": "Para cuentas de DoorDash en EE. UU."
+    }
   },
   {
     "id": "doordash-usa-100",
@@ -483,6 +1510,1485 @@
     "name": "DoorDash gift card",
     "detail": "100 USD",
     "icon": "food",
-    "fallbackUsd": 100.01
+    "fallbackUsd": 100.01,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For DoorDash accounts in the USA",
+      "fr": "Pour les comptes DoorDash aux États-Unis",
+      "es": "Para cuentas de DoorDash en EE. UU."
+    }
+  },
+  {
+    "id": "doordash-usa-5",
+    "slug": "doordash-usa",
+    "packageValue": "5",
+    "name": "DoorDash gift card",
+    "detail": "5 USD",
+    "icon": "food",
+    "fallbackUsd": 5,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For DoorDash accounts in the USA",
+      "fr": "Pour les comptes DoorDash aux États-Unis",
+      "es": "Para cuentas de DoorDash en EE. UU."
+    }
+  },
+  {
+    "id": "doordash-usa-10",
+    "slug": "doordash-usa",
+    "packageValue": "10",
+    "name": "DoorDash gift card",
+    "detail": "10 USD",
+    "icon": "food",
+    "fallbackUsd": 10,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For DoorDash accounts in the USA",
+      "fr": "Pour les comptes DoorDash aux États-Unis",
+      "es": "Para cuentas de DoorDash en EE. UU."
+    }
+  },
+  {
+    "id": "doordash-usa-20",
+    "slug": "doordash-usa",
+    "packageValue": "20",
+    "name": "DoorDash gift card",
+    "detail": "20 USD",
+    "icon": "food",
+    "fallbackUsd": 20,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For DoorDash accounts in the USA",
+      "fr": "Pour les comptes DoorDash aux États-Unis",
+      "es": "Para cuentas de DoorDash en EE. UU."
+    }
+  },
+  {
+    "id": "doordash-usa-40",
+    "slug": "doordash-usa",
+    "packageValue": "40",
+    "name": "DoorDash gift card",
+    "detail": "40 USD",
+    "icon": "food",
+    "fallbackUsd": 40.01,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For DoorDash accounts in the USA",
+      "fr": "Pour les comptes DoorDash aux États-Unis",
+      "es": "Para cuentas de DoorDash en EE. UU."
+    }
+  },
+  {
+    "id": "doordash-usa-60",
+    "slug": "doordash-usa",
+    "packageValue": "60",
+    "name": "DoorDash gift card",
+    "detail": "60 USD",
+    "icon": "food",
+    "fallbackUsd": 60,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For DoorDash accounts in the USA",
+      "fr": "Pour les comptes DoorDash aux États-Unis",
+      "es": "Para cuentas de DoorDash en EE. UU."
+    }
+  },
+  {
+    "id": "doordash-usa-80",
+    "slug": "doordash-usa",
+    "packageValue": "80",
+    "name": "DoorDash gift card",
+    "detail": "80 USD",
+    "icon": "food",
+    "fallbackUsd": 80,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For DoorDash accounts in the USA",
+      "fr": "Pour les comptes DoorDash aux États-Unis",
+      "es": "Para cuentas de DoorDash en EE. UU."
+    }
+  },
+  {
+    "id": "steam-eur-international-20",
+    "slug": "steam-eur-international",
+    "packageValue": "20",
+    "name": "Steam gift card",
+    "detail": "20 EUR",
+    "icon": "game",
+    "fallbackUsd": 23.34,
+    "region": "Europe",
+    "currency": "EUR",
+    "worksWith": {
+      "en": "For Steam accounts with a EUR wallet",
+      "fr": "Pour les comptes Steam avec un portefeuille en EUR",
+      "es": "Para cuentas de Steam con billetera en EUR"
+    }
+  },
+  {
+    "id": "steam-eur-international-30",
+    "slug": "steam-eur-international",
+    "packageValue": "30",
+    "name": "Steam gift card",
+    "detail": "30 EUR",
+    "icon": "game",
+    "fallbackUsd": 35.01,
+    "region": "Europe",
+    "currency": "EUR",
+    "worksWith": {
+      "en": "For Steam accounts with a EUR wallet",
+      "fr": "Pour les comptes Steam avec un portefeuille en EUR",
+      "es": "Para cuentas de Steam con billetera en EUR"
+    }
+  },
+  {
+    "id": "amazon-uk-5",
+    "slug": "amazon-uk",
+    "packageValue": "5",
+    "name": "Amazon gift card",
+    "detail": "5 GBP",
+    "icon": "bag",
+    "fallbackUsd": 6.98,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Amazon.co.uk accounts (UK)",
+      "fr": "Pour les comptes Amazon.co.uk (Royaume-Uni)",
+      "es": "Para cuentas de Amazon.co.uk (Reino Unido)"
+    }
+  },
+  {
+    "id": "amazon-uk-10",
+    "slug": "amazon-uk",
+    "packageValue": "10",
+    "name": "Amazon gift card",
+    "detail": "10 GBP",
+    "icon": "bag",
+    "fallbackUsd": 13.96,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Amazon.co.uk accounts (UK)",
+      "fr": "Pour les comptes Amazon.co.uk (Royaume-Uni)",
+      "es": "Para cuentas de Amazon.co.uk (Reino Unido)"
+    }
+  },
+  {
+    "id": "amazon-uk-20",
+    "slug": "amazon-uk",
+    "packageValue": "20",
+    "name": "Amazon gift card",
+    "detail": "20 GBP",
+    "icon": "bag",
+    "fallbackUsd": 27.93,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Amazon.co.uk accounts (UK)",
+      "fr": "Pour les comptes Amazon.co.uk (Royaume-Uni)",
+      "es": "Para cuentas de Amazon.co.uk (Reino Unido)"
+    }
+  },
+  {
+    "id": "amazon-uk-25",
+    "slug": "amazon-uk",
+    "packageValue": "25",
+    "name": "Amazon gift card",
+    "detail": "25 GBP",
+    "icon": "bag",
+    "fallbackUsd": 34.91,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Amazon.co.uk accounts (UK)",
+      "fr": "Pour les comptes Amazon.co.uk (Royaume-Uni)",
+      "es": "Para cuentas de Amazon.co.uk (Reino Unido)"
+    }
+  },
+  {
+    "id": "amazon-uk-50",
+    "slug": "amazon-uk",
+    "packageValue": "50",
+    "name": "Amazon gift card",
+    "detail": "50 GBP",
+    "icon": "bag",
+    "fallbackUsd": 69.81,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Amazon.co.uk accounts (UK)",
+      "fr": "Pour les comptes Amazon.co.uk (Royaume-Uni)",
+      "es": "Para cuentas de Amazon.co.uk (Reino Unido)"
+    }
+  },
+  {
+    "id": "apple-united-kingdom-5",
+    "slug": "apple-united-kingdom",
+    "packageValue": "5",
+    "name": "Apple gift card",
+    "detail": "5 GBP",
+    "icon": "bag",
+    "fallbackUsd": 6.78,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Apple accounts in the UK",
+      "fr": "Pour les comptes Apple au Royaume-Uni",
+      "es": "Para cuentas de Apple en el Reino Unido"
+    }
+  },
+  {
+    "id": "apple-united-kingdom-10",
+    "slug": "apple-united-kingdom",
+    "packageValue": "10",
+    "name": "Apple gift card",
+    "detail": "10 GBP",
+    "icon": "bag",
+    "fallbackUsd": 13.56,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Apple accounts in the UK",
+      "fr": "Pour les comptes Apple au Royaume-Uni",
+      "es": "Para cuentas de Apple en el Reino Unido"
+    }
+  },
+  {
+    "id": "apple-united-kingdom-20",
+    "slug": "apple-united-kingdom",
+    "packageValue": "20",
+    "name": "Apple gift card",
+    "detail": "20 GBP",
+    "icon": "bag",
+    "fallbackUsd": 27.13,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Apple accounts in the UK",
+      "fr": "Pour les comptes Apple au Royaume-Uni",
+      "es": "Para cuentas de Apple en el Reino Unido"
+    }
+  },
+  {
+    "id": "apple-united-kingdom-50",
+    "slug": "apple-united-kingdom",
+    "packageValue": "50",
+    "name": "Apple gift card",
+    "detail": "50 GBP",
+    "icon": "bag",
+    "fallbackUsd": 67.82,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Apple accounts in the UK",
+      "fr": "Pour les comptes Apple au Royaume-Uni",
+      "es": "Para cuentas de Apple en el Reino Unido"
+    }
+  },
+  {
+    "id": "netflix-united-kingdom-50",
+    "slug": "netflix-united-kingdom",
+    "packageValue": "50",
+    "name": "Netflix",
+    "detail": "50 GBP",
+    "icon": "play",
+    "fallbackUsd": 66.49,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Netflix accounts in the UK",
+      "fr": "Pour les comptes Netflix au Royaume-Uni",
+      "es": "Para cuentas de Netflix en el Reino Unido"
+    }
+  },
+  {
+    "id": "airbnb-united-kingdom-50",
+    "slug": "airbnb-united-kingdom",
+    "packageValue": "50",
+    "name": "Airbnb gift card",
+    "detail": "50 GBP",
+    "icon": "travel",
+    "fallbackUsd": 66.49,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Airbnb accounts set to the UK",
+      "fr": "Pour les comptes Airbnb réglés sur le Royaume-Uni",
+      "es": "Para cuentas de Airbnb configuradas en el Reino Unido"
+    }
+  },
+  {
+    "id": "google-play-united-kingdom-5",
+    "slug": "google-play-united-kingdom",
+    "packageValue": "5",
+    "name": "Google Play gift card",
+    "detail": "5 GBP",
+    "icon": "game",
+    "fallbackUsd": 6.65,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Google accounts in the UK, with a UK IP",
+      "fr": "Pour les comptes Google au Royaume-Uni, avec une adresse IP britannique",
+      "es": "Para cuentas de Google del Reino Unido, con una IP del Reino Unido"
+    }
+  },
+  {
+    "id": "google-play-united-kingdom-10",
+    "slug": "google-play-united-kingdom",
+    "packageValue": "10",
+    "name": "Google Play gift card",
+    "detail": "10 GBP",
+    "icon": "game",
+    "fallbackUsd": 13.3,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Google accounts in the UK, with a UK IP",
+      "fr": "Pour les comptes Google au Royaume-Uni, avec une adresse IP britannique",
+      "es": "Para cuentas de Google del Reino Unido, con una IP del Reino Unido"
+    }
+  },
+  {
+    "id": "google-play-united-kingdom-20",
+    "slug": "google-play-united-kingdom",
+    "packageValue": "20",
+    "name": "Google Play gift card",
+    "detail": "20 GBP",
+    "icon": "game",
+    "fallbackUsd": 26.6,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Google accounts in the UK, with a UK IP",
+      "fr": "Pour les comptes Google au Royaume-Uni, avec une adresse IP britannique",
+      "es": "Para cuentas de Google del Reino Unido, con una IP del Reino Unido"
+    }
+  },
+  {
+    "id": "google-play-united-kingdom-25",
+    "slug": "google-play-united-kingdom",
+    "packageValue": "25",
+    "name": "Google Play gift card",
+    "detail": "25 GBP",
+    "icon": "game",
+    "fallbackUsd": 33.24,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Google accounts in the UK, with a UK IP",
+      "fr": "Pour les comptes Google au Royaume-Uni, avec une adresse IP britannique",
+      "es": "Para cuentas de Google del Reino Unido, con una IP del Reino Unido"
+    }
+  },
+  {
+    "id": "google-play-united-kingdom-50",
+    "slug": "google-play-united-kingdom",
+    "packageValue": "50",
+    "name": "Google Play gift card",
+    "detail": "50 GBP",
+    "icon": "game",
+    "fallbackUsd": 66.49,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Google accounts in the UK, with a UK IP",
+      "fr": "Pour les comptes Google au Royaume-Uni, avec une adresse IP britannique",
+      "es": "Para cuentas de Google del Reino Unido, con una IP del Reino Unido"
+    }
+  },
+  {
+    "id": "playstation-united-kingdom-10",
+    "slug": "playstation-united-kingdom",
+    "packageValue": "10",
+    "name": "PlayStation Store",
+    "detail": "10 GBP",
+    "icon": "game",
+    "fallbackUsd": 13.3,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For PlayStation accounts set to the UK",
+      "fr": "Pour les comptes PlayStation réglés sur le Royaume-Uni",
+      "es": "Para cuentas de PlayStation configuradas en el Reino Unido"
+    }
+  },
+  {
+    "id": "playstation-united-kingdom-20",
+    "slug": "playstation-united-kingdom",
+    "packageValue": "20",
+    "name": "PlayStation Store",
+    "detail": "20 GBP",
+    "icon": "game",
+    "fallbackUsd": 26.6,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For PlayStation accounts set to the UK",
+      "fr": "Pour les comptes PlayStation réglés sur le Royaume-Uni",
+      "es": "Para cuentas de PlayStation configuradas en el Reino Unido"
+    }
+  },
+  {
+    "id": "playstation-united-kingdom-40",
+    "slug": "playstation-united-kingdom",
+    "packageValue": "40",
+    "name": "PlayStation Store",
+    "detail": "40 GBP",
+    "icon": "game",
+    "fallbackUsd": 53.19,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For PlayStation accounts set to the UK",
+      "fr": "Pour les comptes PlayStation réglés sur le Royaume-Uni",
+      "es": "Para cuentas de PlayStation configuradas en el Reino Unido"
+    }
+  },
+  {
+    "id": "playstation-united-kingdom-50",
+    "slug": "playstation-united-kingdom",
+    "packageValue": "50",
+    "name": "PlayStation Store",
+    "detail": "50 GBP",
+    "icon": "game",
+    "fallbackUsd": 66.49,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For PlayStation accounts set to the UK",
+      "fr": "Pour les comptes PlayStation réglés sur le Royaume-Uni",
+      "es": "Para cuentas de PlayStation configuradas en el Reino Unido"
+    }
+  },
+  {
+    "id": "playstation-united-kingdom-60",
+    "slug": "playstation-united-kingdom",
+    "packageValue": "60",
+    "name": "PlayStation Store",
+    "detail": "60 GBP",
+    "icon": "game",
+    "fallbackUsd": 79.79,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For PlayStation accounts set to the UK",
+      "fr": "Pour les comptes PlayStation réglés sur le Royaume-Uni",
+      "es": "Para cuentas de PlayStation configuradas en el Reino Unido"
+    }
+  },
+  {
+    "id": "uber-and-uber-eats-eu-25",
+    "slug": "uber-and-uber-eats-eu",
+    "packageValue": "25",
+    "name": "Uber gift card",
+    "detail": "25 EUR",
+    "icon": "travel",
+    "fallbackUsd": 28.07,
+    "region": "Europe",
+    "currency": "EUR",
+    "worksWith": {
+      "en": "For Uber and Uber Eats accounts in EUR",
+      "fr": "Pour les comptes Uber et Uber Eats en EUR",
+      "es": "Para cuentas de Uber y Uber Eats en EUR"
+    }
+  },
+  {
+    "id": "uber-and-uber-eats-eu-50",
+    "slug": "uber-and-uber-eats-eu",
+    "packageValue": "50",
+    "name": "Uber gift card",
+    "detail": "50 EUR",
+    "icon": "travel",
+    "fallbackUsd": 56.13,
+    "region": "Europe",
+    "currency": "EUR",
+    "worksWith": {
+      "en": "For Uber and Uber Eats accounts in EUR",
+      "fr": "Pour les comptes Uber et Uber Eats en EUR",
+      "es": "Para cuentas de Uber y Uber Eats en EUR"
+    }
+  },
+  {
+    "id": "uber-rides-uk-15",
+    "slug": "uber-rides-uk",
+    "packageValue": "15",
+    "name": "Uber gift card",
+    "detail": "15 GBP",
+    "icon": "travel",
+    "fallbackUsd": 20.15,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Uber and Uber Eats accounts in GBP",
+      "fr": "Pour les comptes Uber et Uber Eats en GBP",
+      "es": "Para cuentas de Uber y Uber Eats en GBP"
+    }
+  },
+  {
+    "id": "uber-rides-uk-20",
+    "slug": "uber-rides-uk",
+    "packageValue": "20",
+    "name": "Uber gift card",
+    "detail": "20 GBP",
+    "icon": "travel",
+    "fallbackUsd": 26.86,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Uber and Uber Eats accounts in GBP",
+      "fr": "Pour les comptes Uber et Uber Eats en GBP",
+      "es": "Para cuentas de Uber y Uber Eats en GBP"
+    }
+  },
+  {
+    "id": "uber-rides-uk-30",
+    "slug": "uber-rides-uk",
+    "packageValue": "30",
+    "name": "Uber gift card",
+    "detail": "30 GBP",
+    "icon": "travel",
+    "fallbackUsd": 40.29,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Uber and Uber Eats accounts in GBP",
+      "fr": "Pour les comptes Uber et Uber Eats en GBP",
+      "es": "Para cuentas de Uber y Uber Eats en GBP"
+    }
+  },
+  {
+    "id": "uber-rides-uk-40",
+    "slug": "uber-rides-uk",
+    "packageValue": "40",
+    "name": "Uber gift card",
+    "detail": "40 GBP",
+    "icon": "travel",
+    "fallbackUsd": 53.72,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Uber and Uber Eats accounts in GBP",
+      "fr": "Pour les comptes Uber et Uber Eats en GBP",
+      "es": "Para cuentas de Uber y Uber Eats en GBP"
+    }
+  },
+  {
+    "id": "uber-rides-uk-50",
+    "slug": "uber-rides-uk",
+    "packageValue": "50",
+    "name": "Uber gift card",
+    "detail": "50 GBP",
+    "icon": "travel",
+    "fallbackUsd": 67.15,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Uber and Uber Eats accounts in GBP",
+      "fr": "Pour les comptes Uber et Uber Eats en GBP",
+      "es": "Para cuentas de Uber y Uber Eats en GBP"
+    }
+  },
+  {
+    "id": "uber-rides-uk-60",
+    "slug": "uber-rides-uk",
+    "packageValue": "60",
+    "name": "Uber gift card",
+    "detail": "60 GBP",
+    "icon": "travel",
+    "fallbackUsd": 80.58,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Uber and Uber Eats accounts in GBP",
+      "fr": "Pour les comptes Uber et Uber Eats en GBP",
+      "es": "Para cuentas de Uber y Uber Eats en GBP"
+    }
+  },
+  {
+    "id": "nintendo-uk-15",
+    "slug": "nintendo-uk",
+    "packageValue": "15",
+    "name": "Nintendo eShop gift card",
+    "detail": "15 GBP",
+    "icon": "game",
+    "fallbackUsd": 19.95,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Nintendo accounts set to the UK",
+      "fr": "Pour les comptes Nintendo réglés sur le Royaume-Uni",
+      "es": "Para cuentas de Nintendo configuradas en el Reino Unido"
+    }
+  },
+  {
+    "id": "nintendo-uk-25",
+    "slug": "nintendo-uk",
+    "packageValue": "25",
+    "name": "Nintendo eShop gift card",
+    "detail": "25 GBP",
+    "icon": "game",
+    "fallbackUsd": 33.24,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Nintendo accounts set to the UK",
+      "fr": "Pour les comptes Nintendo réglés sur le Royaume-Uni",
+      "es": "Para cuentas de Nintendo configuradas en el Reino Unido"
+    }
+  },
+  {
+    "id": "nintendo-uk-50",
+    "slug": "nintendo-uk",
+    "packageValue": "50",
+    "name": "Nintendo eShop gift card",
+    "detail": "50 GBP",
+    "icon": "game",
+    "fallbackUsd": 66.49,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Nintendo accounts set to the UK",
+      "fr": "Pour les comptes Nintendo réglés sur le Royaume-Uni",
+      "es": "Para cuentas de Nintendo configuradas en el Reino Unido"
+    }
+  },
+  {
+    "id": "nintendo-uk-75",
+    "slug": "nintendo-uk",
+    "packageValue": "75",
+    "name": "Nintendo eShop gift card",
+    "detail": "75 GBP",
+    "icon": "game",
+    "fallbackUsd": 99.73,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Nintendo accounts set to the UK",
+      "fr": "Pour les comptes Nintendo réglés sur le Royaume-Uni",
+      "es": "Para cuentas de Nintendo configuradas en el Reino Unido"
+    }
+  },
+  {
+    "id": "roblox-european-union-10",
+    "slug": "roblox-european-union",
+    "packageValue": "10",
+    "name": "Roblox gift card",
+    "detail": "10 EUR",
+    "icon": "game",
+    "fallbackUsd": 11.12,
+    "region": "Europe",
+    "currency": "EUR",
+    "worksWith": {
+      "en": "For Roblox accounts paying in EUR",
+      "fr": "Pour les comptes Roblox qui paient en EUR",
+      "es": "Para cuentas de Roblox que pagan en EUR"
+    }
+  },
+  {
+    "id": "roblox-european-union-20",
+    "slug": "roblox-european-union",
+    "packageValue": "20",
+    "name": "Roblox gift card",
+    "detail": "20 EUR",
+    "icon": "game",
+    "fallbackUsd": 22.23,
+    "region": "Europe",
+    "currency": "EUR",
+    "worksWith": {
+      "en": "For Roblox accounts paying in EUR",
+      "fr": "Pour les comptes Roblox qui paient en EUR",
+      "es": "Para cuentas de Roblox que pagan en EUR"
+    }
+  },
+  {
+    "id": "roblox-european-union-40",
+    "slug": "roblox-european-union",
+    "packageValue": "40",
+    "name": "Roblox gift card",
+    "detail": "40 EUR",
+    "icon": "game",
+    "fallbackUsd": 44.46,
+    "region": "Europe",
+    "currency": "EUR",
+    "worksWith": {
+      "en": "For Roblox accounts paying in EUR",
+      "fr": "Pour les comptes Roblox qui paient en EUR",
+      "es": "Para cuentas de Roblox que pagan en EUR"
+    }
+  },
+  {
+    "id": "roblox-european-union-60",
+    "slug": "roblox-european-union",
+    "packageValue": "60",
+    "name": "Roblox gift card",
+    "detail": "60 EUR",
+    "icon": "game",
+    "fallbackUsd": 66.69,
+    "region": "Europe",
+    "currency": "EUR",
+    "worksWith": {
+      "en": "For Roblox accounts paying in EUR",
+      "fr": "Pour les comptes Roblox qui paient en EUR",
+      "es": "Para cuentas de Roblox que pagan en EUR"
+    }
+  },
+  {
+    "id": "roblox-european-union-80",
+    "slug": "roblox-european-union",
+    "packageValue": "80",
+    "name": "Roblox gift card",
+    "detail": "80 EUR",
+    "icon": "game",
+    "fallbackUsd": 88.93,
+    "region": "Europe",
+    "currency": "EUR",
+    "worksWith": {
+      "en": "For Roblox accounts paying in EUR",
+      "fr": "Pour les comptes Roblox qui paient en EUR",
+      "es": "Para cuentas de Roblox que pagan en EUR"
+    }
+  },
+  {
+    "id": "roblox-united-kingdom-10",
+    "slug": "roblox-united-kingdom",
+    "packageValue": "10",
+    "name": "Roblox gift card",
+    "detail": "10 GBP",
+    "icon": "game",
+    "fallbackUsd": 13.3,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Roblox accounts paying in GBP",
+      "fr": "Pour les comptes Roblox qui paient en GBP",
+      "es": "Para cuentas de Roblox que pagan en GBP"
+    }
+  },
+  {
+    "id": "roblox-united-kingdom-20",
+    "slug": "roblox-united-kingdom",
+    "packageValue": "20",
+    "name": "Roblox gift card",
+    "detail": "20 GBP",
+    "icon": "game",
+    "fallbackUsd": 26.6,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Roblox accounts paying in GBP",
+      "fr": "Pour les comptes Roblox qui paient en GBP",
+      "es": "Para cuentas de Roblox que pagan en GBP"
+    }
+  },
+  {
+    "id": "roblox-united-kingdom-40",
+    "slug": "roblox-united-kingdom",
+    "packageValue": "40",
+    "name": "Roblox gift card",
+    "detail": "40 GBP",
+    "icon": "game",
+    "fallbackUsd": 53.19,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Roblox accounts paying in GBP",
+      "fr": "Pour les comptes Roblox qui paient en GBP",
+      "es": "Para cuentas de Roblox que pagan en GBP"
+    }
+  },
+  {
+    "id": "roblox-united-kingdom-50",
+    "slug": "roblox-united-kingdom",
+    "packageValue": "50",
+    "name": "Roblox gift card",
+    "detail": "50 GBP",
+    "icon": "game",
+    "fallbackUsd": 66.49,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Roblox accounts paying in GBP",
+      "fr": "Pour les comptes Roblox qui paient en GBP",
+      "es": "Para cuentas de Roblox que pagan en GBP"
+    }
+  },
+  {
+    "id": "roblox-united-kingdom-60",
+    "slug": "roblox-united-kingdom",
+    "packageValue": "60",
+    "name": "Roblox gift card",
+    "detail": "60 GBP",
+    "icon": "game",
+    "fallbackUsd": 79.79,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Roblox accounts paying in GBP",
+      "fr": "Pour les comptes Roblox qui paient en GBP",
+      "es": "Para cuentas de Roblox que pagan en GBP"
+    }
+  },
+  {
+    "id": "valorant-eu-2-5",
+    "slug": "valorant-eu",
+    "packageValue": "2.5",
+    "name": "Valorant gift card",
+    "detail": "2.5 EUR",
+    "icon": "game",
+    "fallbackUsd": 2.78,
+    "region": "Europe",
+    "currency": "EUR",
+    "worksWith": {
+      "en": "For Riot accounts in Europe",
+      "fr": "Pour les comptes Riot en Europe",
+      "es": "Para cuentas de Riot en Europa"
+    }
+  },
+  {
+    "id": "valorant-eu-5",
+    "slug": "valorant-eu",
+    "packageValue": "5",
+    "name": "Valorant gift card",
+    "detail": "5 EUR",
+    "icon": "game",
+    "fallbackUsd": 5.56,
+    "region": "Europe",
+    "currency": "EUR",
+    "worksWith": {
+      "en": "For Riot accounts in Europe",
+      "fr": "Pour les comptes Riot en Europe",
+      "es": "Para cuentas de Riot en Europa"
+    }
+  },
+  {
+    "id": "valorant-eu-10",
+    "slug": "valorant-eu",
+    "packageValue": "10",
+    "name": "Valorant gift card",
+    "detail": "10 EUR",
+    "icon": "game",
+    "fallbackUsd": 11.12,
+    "region": "Europe",
+    "currency": "EUR",
+    "worksWith": {
+      "en": "For Riot accounts in Europe",
+      "fr": "Pour les comptes Riot en Europe",
+      "es": "Para cuentas de Riot en Europa"
+    }
+  },
+  {
+    "id": "valorant-eu-20",
+    "slug": "valorant-eu",
+    "packageValue": "20",
+    "name": "Valorant gift card",
+    "detail": "20 EUR",
+    "icon": "game",
+    "fallbackUsd": 22.23,
+    "region": "Europe",
+    "currency": "EUR",
+    "worksWith": {
+      "en": "For Riot accounts in Europe",
+      "fr": "Pour les comptes Riot en Europe",
+      "es": "Para cuentas de Riot en Europa"
+    }
+  },
+  {
+    "id": "valorant-eu-50",
+    "slug": "valorant-eu",
+    "packageValue": "50",
+    "name": "Valorant gift card",
+    "detail": "50 EUR",
+    "icon": "game",
+    "fallbackUsd": 55.58,
+    "region": "Europe",
+    "currency": "EUR",
+    "worksWith": {
+      "en": "For Riot accounts in Europe",
+      "fr": "Pour les comptes Riot en Europe",
+      "es": "Para cuentas de Riot en Europa"
+    }
+  },
+  {
+    "id": "riot-access-eu-2-5",
+    "slug": "riot-access-eu",
+    "packageValue": "2.5",
+    "name": "Riot Access gift card",
+    "detail": "2.5 EUR",
+    "icon": "game",
+    "fallbackUsd": 2.78,
+    "region": "Europe",
+    "currency": "EUR",
+    "worksWith": {
+      "en": "For Riot accounts in Europe",
+      "fr": "Pour les comptes Riot en Europe",
+      "es": "Para cuentas de Riot en Europa"
+    }
+  },
+  {
+    "id": "riot-access-eu-5",
+    "slug": "riot-access-eu",
+    "packageValue": "5",
+    "name": "Riot Access gift card",
+    "detail": "5 EUR",
+    "icon": "game",
+    "fallbackUsd": 5.56,
+    "region": "Europe",
+    "currency": "EUR",
+    "worksWith": {
+      "en": "For Riot accounts in Europe",
+      "fr": "Pour les comptes Riot en Europe",
+      "es": "Para cuentas de Riot en Europa"
+    }
+  },
+  {
+    "id": "riot-access-eu-10",
+    "slug": "riot-access-eu",
+    "packageValue": "10",
+    "name": "Riot Access gift card",
+    "detail": "10 EUR",
+    "icon": "game",
+    "fallbackUsd": 11.12,
+    "region": "Europe",
+    "currency": "EUR",
+    "worksWith": {
+      "en": "For Riot accounts in Europe",
+      "fr": "Pour les comptes Riot en Europe",
+      "es": "Para cuentas de Riot en Europa"
+    }
+  },
+  {
+    "id": "riot-access-eu-20",
+    "slug": "riot-access-eu",
+    "packageValue": "20",
+    "name": "Riot Access gift card",
+    "detail": "20 EUR",
+    "icon": "game",
+    "fallbackUsd": 22.23,
+    "region": "Europe",
+    "currency": "EUR",
+    "worksWith": {
+      "en": "For Riot accounts in Europe",
+      "fr": "Pour les comptes Riot en Europe",
+      "es": "Para cuentas de Riot en Europa"
+    }
+  },
+  {
+    "id": "riot-access-eu-25",
+    "slug": "riot-access-eu",
+    "packageValue": "25",
+    "name": "Riot Access gift card",
+    "detail": "25 EUR",
+    "icon": "game",
+    "fallbackUsd": 27.79,
+    "region": "Europe",
+    "currency": "EUR",
+    "worksWith": {
+      "en": "For Riot accounts in Europe",
+      "fr": "Pour les comptes Riot en Europe",
+      "es": "Para cuentas de Riot en Europa"
+    }
+  },
+  {
+    "id": "riot-access-eu-35",
+    "slug": "riot-access-eu",
+    "packageValue": "35",
+    "name": "Riot Access gift card",
+    "detail": "35 EUR",
+    "icon": "game",
+    "fallbackUsd": 38.91,
+    "region": "Europe",
+    "currency": "EUR",
+    "worksWith": {
+      "en": "For Riot accounts in Europe",
+      "fr": "Pour les comptes Riot en Europe",
+      "es": "Para cuentas de Riot en Europa"
+    }
+  },
+  {
+    "id": "riot-access-eu-50",
+    "slug": "riot-access-eu",
+    "packageValue": "50",
+    "name": "Riot Access gift card",
+    "detail": "50 EUR",
+    "icon": "game",
+    "fallbackUsd": 55.58,
+    "region": "Europe",
+    "currency": "EUR",
+    "worksWith": {
+      "en": "For Riot accounts in Europe",
+      "fr": "Pour les comptes Riot en Europe",
+      "es": "Para cuentas de Riot en Europa"
+    }
+  },
+  {
+    "id": "valorant-uk-united-kingdom-5",
+    "slug": "valorant-uk-united-kingdom",
+    "packageValue": "5",
+    "name": "Riot Access gift card",
+    "detail": "5 GBP",
+    "icon": "game",
+    "fallbackUsd": 6.65,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Riot accounts in the UK",
+      "fr": "Pour les comptes Riot au Royaume-Uni",
+      "es": "Para cuentas de Riot en el Reino Unido"
+    }
+  },
+  {
+    "id": "valorant-uk-united-kingdom-10",
+    "slug": "valorant-uk-united-kingdom",
+    "packageValue": "10",
+    "name": "Riot Access gift card",
+    "detail": "10 GBP",
+    "icon": "game",
+    "fallbackUsd": 13.3,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Riot accounts in the UK",
+      "fr": "Pour les comptes Riot au Royaume-Uni",
+      "es": "Para cuentas de Riot en el Reino Unido"
+    }
+  },
+  {
+    "id": "valorant-uk-united-kingdom-15",
+    "slug": "valorant-uk-united-kingdom",
+    "packageValue": "15",
+    "name": "Riot Access gift card",
+    "detail": "15 GBP",
+    "icon": "game",
+    "fallbackUsd": 19.95,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Riot accounts in the UK",
+      "fr": "Pour les comptes Riot au Royaume-Uni",
+      "es": "Para cuentas de Riot en el Reino Unido"
+    }
+  },
+  {
+    "id": "valorant-uk-united-kingdom-20",
+    "slug": "valorant-uk-united-kingdom",
+    "packageValue": "20",
+    "name": "Riot Access gift card",
+    "detail": "20 GBP",
+    "icon": "game",
+    "fallbackUsd": 26.6,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Riot accounts in the UK",
+      "fr": "Pour les comptes Riot au Royaume-Uni",
+      "es": "Para cuentas de Riot en el Reino Unido"
+    }
+  },
+  {
+    "id": "valorant-uk-united-kingdom-35",
+    "slug": "valorant-uk-united-kingdom",
+    "packageValue": "35",
+    "name": "Riot Access gift card",
+    "detail": "35 GBP",
+    "icon": "game",
+    "fallbackUsd": 46.54,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Riot accounts in the UK",
+      "fr": "Pour les comptes Riot au Royaume-Uni",
+      "es": "Para cuentas de Riot en el Reino Unido"
+    }
+  },
+  {
+    "id": "valorant-uk-united-kingdom-50",
+    "slug": "valorant-uk-united-kingdom",
+    "packageValue": "50",
+    "name": "Riot Access gift card",
+    "detail": "50 GBP",
+    "icon": "game",
+    "fallbackUsd": 66.49,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Riot accounts in the UK",
+      "fr": "Pour les comptes Riot au Royaume-Uni",
+      "es": "Para cuentas de Riot en el Reino Unido"
+    }
+  },
+  {
+    "id": "fortnite-uk-united-kingdom-10",
+    "slug": "fortnite-uk-united-kingdom",
+    "packageValue": "10",
+    "name": "Fortnite gift card",
+    "detail": "10 GBP",
+    "icon": "game",
+    "fallbackUsd": 13.67,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Epic Games accounts in the UK",
+      "fr": "Pour les comptes Epic Games au Royaume-Uni",
+      "es": "Para cuentas de Epic Games en el Reino Unido"
+    }
+  },
+  {
+    "id": "fortnite-uk-united-kingdom-20",
+    "slug": "fortnite-uk-united-kingdom",
+    "packageValue": "20",
+    "name": "Fortnite gift card",
+    "detail": "20 GBP",
+    "icon": "game",
+    "fallbackUsd": 27.35,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Epic Games accounts in the UK",
+      "fr": "Pour les comptes Epic Games au Royaume-Uni",
+      "es": "Para cuentas de Epic Games en el Reino Unido"
+    }
+  },
+  {
+    "id": "fortnite-uk-united-kingdom-40",
+    "slug": "fortnite-uk-united-kingdom",
+    "packageValue": "40",
+    "name": "Fortnite gift card",
+    "detail": "40 GBP",
+    "icon": "game",
+    "fallbackUsd": 54.69,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Epic Games accounts in the UK",
+      "fr": "Pour les comptes Epic Games au Royaume-Uni",
+      "es": "Para cuentas de Epic Games en el Reino Unido"
+    }
+  },
+  {
+    "id": "xbox-currency-united-kingdom-5",
+    "slug": "xbox-currency-united-kingdom",
+    "packageValue": "5",
+    "name": "Xbox gift card",
+    "detail": "5 GBP",
+    "icon": "game",
+    "fallbackUsd": 6.65,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Xbox accounts set to the UK",
+      "fr": "Pour les comptes Xbox réglés sur le Royaume-Uni",
+      "es": "Para cuentas de Xbox configuradas en el Reino Unido"
+    }
+  },
+  {
+    "id": "xbox-currency-united-kingdom-10",
+    "slug": "xbox-currency-united-kingdom",
+    "packageValue": "10",
+    "name": "Xbox gift card",
+    "detail": "10 GBP",
+    "icon": "game",
+    "fallbackUsd": 13.3,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Xbox accounts set to the UK",
+      "fr": "Pour les comptes Xbox réglés sur le Royaume-Uni",
+      "es": "Para cuentas de Xbox configuradas en el Reino Unido"
+    }
+  },
+  {
+    "id": "xbox-currency-united-kingdom-12",
+    "slug": "xbox-currency-united-kingdom",
+    "packageValue": "12",
+    "name": "Xbox gift card",
+    "detail": "12 GBP",
+    "icon": "game",
+    "fallbackUsd": 15.96,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Xbox accounts set to the UK",
+      "fr": "Pour les comptes Xbox réglés sur le Royaume-Uni",
+      "es": "Para cuentas de Xbox configuradas en el Reino Unido"
+    }
+  },
+  {
+    "id": "xbox-currency-united-kingdom-20",
+    "slug": "xbox-currency-united-kingdom",
+    "packageValue": "20",
+    "name": "Xbox gift card",
+    "detail": "20 GBP",
+    "icon": "game",
+    "fallbackUsd": 26.6,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Xbox accounts set to the UK",
+      "fr": "Pour les comptes Xbox réglés sur le Royaume-Uni",
+      "es": "Para cuentas de Xbox configuradas en el Reino Unido"
+    }
+  },
+  {
+    "id": "xbox-currency-united-kingdom-25",
+    "slug": "xbox-currency-united-kingdom",
+    "packageValue": "25",
+    "name": "Xbox gift card",
+    "detail": "25 GBP",
+    "icon": "game",
+    "fallbackUsd": 33.24,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Xbox accounts set to the UK",
+      "fr": "Pour les comptes Xbox réglés sur le Royaume-Uni",
+      "es": "Para cuentas de Xbox configuradas en el Reino Unido"
+    }
+  },
+  {
+    "id": "xbox-currency-united-kingdom-30",
+    "slug": "xbox-currency-united-kingdom",
+    "packageValue": "30",
+    "name": "Xbox gift card",
+    "detail": "30 GBP",
+    "icon": "game",
+    "fallbackUsd": 39.89,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Xbox accounts set to the UK",
+      "fr": "Pour les comptes Xbox réglés sur le Royaume-Uni",
+      "es": "Para cuentas de Xbox configuradas en el Reino Unido"
+    }
+  },
+  {
+    "id": "xbox-currency-united-kingdom-40",
+    "slug": "xbox-currency-united-kingdom",
+    "packageValue": "40",
+    "name": "Xbox gift card",
+    "detail": "40 GBP",
+    "icon": "game",
+    "fallbackUsd": 53.19,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Xbox accounts set to the UK",
+      "fr": "Pour les comptes Xbox réglés sur le Royaume-Uni",
+      "es": "Para cuentas de Xbox configuradas en el Reino Unido"
+    }
+  },
+  {
+    "id": "xbox-currency-united-kingdom-50",
+    "slug": "xbox-currency-united-kingdom",
+    "packageValue": "50",
+    "name": "Xbox gift card",
+    "detail": "50 GBP",
+    "icon": "game",
+    "fallbackUsd": 66.49,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Xbox accounts set to the UK",
+      "fr": "Pour les comptes Xbox réglés sur le Royaume-Uni",
+      "es": "Para cuentas de Xbox configuradas en el Reino Unido"
+    }
+  },
+  {
+    "id": "hotels_com-uk-10",
+    "slug": "hotels_com-uk",
+    "packageValue": "10",
+    "name": "Hotels.com gift card",
+    "detail": "10 GBP",
+    "icon": "travel",
+    "fallbackUsd": 13.3,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Hotels.com accounts set to GBP",
+      "fr": "Pour les comptes Hotels.com réglés en GBP",
+      "es": "Para cuentas de Hotels.com configuradas en GBP"
+    }
+  },
+  {
+    "id": "hotels_com-uk-20",
+    "slug": "hotels_com-uk",
+    "packageValue": "20",
+    "name": "Hotels.com gift card",
+    "detail": "20 GBP",
+    "icon": "travel",
+    "fallbackUsd": 26.6,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Hotels.com accounts set to GBP",
+      "fr": "Pour les comptes Hotels.com réglés en GBP",
+      "es": "Para cuentas de Hotels.com configuradas en GBP"
+    }
+  },
+  {
+    "id": "hotels_com-uk-50",
+    "slug": "hotels_com-uk",
+    "packageValue": "50",
+    "name": "Hotels.com gift card",
+    "detail": "50 GBP",
+    "icon": "travel",
+    "fallbackUsd": 66.49,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Hotels.com accounts set to GBP",
+      "fr": "Pour les comptes Hotels.com réglés en GBP",
+      "es": "Para cuentas de Hotels.com configuradas en GBP"
+    }
+  },
+  {
+    "id": "flightgift-eu-50",
+    "slug": "flightgift-eu",
+    "packageValue": "50",
+    "name": "Flightgift",
+    "detail": "50 EUR",
+    "icon": "travel",
+    "fallbackUsd": 55.58,
+    "region": "Europe",
+    "currency": "EUR",
+    "worksWith": {
+      "en": "Works worldwide, in EUR",
+      "fr": "Fonctionne partout dans le monde, en EUR",
+      "es": "Funciona en todo el mundo, en EUR"
+    }
+  },
+  {
+    "id": "flightgift-gb-50",
+    "slug": "flightgift-gb",
+    "packageValue": "50",
+    "name": "Flightgift",
+    "detail": "50 GBP",
+    "icon": "travel",
+    "fallbackUsd": 66.49,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "Works worldwide, in GBP",
+      "fr": "Fonctionne partout dans le monde, en GBP",
+      "es": "Funciona en todo el mundo, en GBP"
+    }
+  },
+  {
+    "id": "starbucks-uk-10",
+    "slug": "starbucks-uk",
+    "packageValue": "10",
+    "name": "Starbucks gift card",
+    "detail": "10 GBP",
+    "icon": "food",
+    "fallbackUsd": 13.3,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Starbucks in the UK",
+      "fr": "Pour Starbucks au Royaume-Uni",
+      "es": "Para Starbucks en el Reino Unido"
+    }
+  },
+  {
+    "id": "starbucks-uk-20",
+    "slug": "starbucks-uk",
+    "packageValue": "20",
+    "name": "Starbucks gift card",
+    "detail": "20 GBP",
+    "icon": "food",
+    "fallbackUsd": 26.6,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Starbucks in the UK",
+      "fr": "Pour Starbucks au Royaume-Uni",
+      "es": "Para Starbucks en el Reino Unido"
+    }
+  },
+  {
+    "id": "starbucks-uk-30",
+    "slug": "starbucks-uk",
+    "packageValue": "30",
+    "name": "Starbucks gift card",
+    "detail": "30 GBP",
+    "icon": "food",
+    "fallbackUsd": 39.89,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Starbucks in the UK",
+      "fr": "Pour Starbucks au Royaume-Uni",
+      "es": "Para Starbucks en el Reino Unido"
+    }
+  },
+  {
+    "id": "starbucks-uk-40",
+    "slug": "starbucks-uk",
+    "packageValue": "40",
+    "name": "Starbucks gift card",
+    "detail": "40 GBP",
+    "icon": "food",
+    "fallbackUsd": 53.19,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Starbucks in the UK",
+      "fr": "Pour Starbucks au Royaume-Uni",
+      "es": "Para Starbucks en el Reino Unido"
+    }
+  },
+  {
+    "id": "starbucks-uk-50",
+    "slug": "starbucks-uk",
+    "packageValue": "50",
+    "name": "Starbucks gift card",
+    "detail": "50 GBP",
+    "icon": "food",
+    "fallbackUsd": 66.49,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Starbucks in the UK",
+      "fr": "Pour Starbucks au Royaume-Uni",
+      "es": "Para Starbucks en el Reino Unido"
+    }
+  },
+  {
+    "id": "starbucks-uk-60",
+    "slug": "starbucks-uk",
+    "packageValue": "60",
+    "name": "Starbucks gift card",
+    "detail": "60 GBP",
+    "icon": "food",
+    "fallbackUsd": 79.79,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Starbucks in the UK",
+      "fr": "Pour Starbucks au Royaume-Uni",
+      "es": "Para Starbucks en el Reino Unido"
+    }
+  },
+  {
+    "id": "starbucks-uk-70",
+    "slug": "starbucks-uk",
+    "packageValue": "70",
+    "name": "Starbucks gift card",
+    "detail": "70 GBP",
+    "icon": "food",
+    "fallbackUsd": 93.08,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Starbucks in the UK",
+      "fr": "Pour Starbucks au Royaume-Uni",
+      "es": "Para Starbucks en el Reino Unido"
+    }
   }
 ]

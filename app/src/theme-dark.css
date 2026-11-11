@@ -1044,3 +1044,17 @@ html.is-fullscreen .bstamp-live { top: calc(58px + var(--fs-top)); }
   .sheet-row:active, .bcell:active, .rw-row:active, .lvl-card:has(button:active),
   .goal-card:active, .quest-card:active, .card.unstake:active { transform: none; }
 }
+
+/* Card versions (USA, Europe, UK, Nigeria): brand sheet chips, Plan values 3 per row, works-with lines. */
+.bs-facts.versions { grid-template-columns: 1fr 1fr; }
+.bs-facts > .bs-region { grid-column: 1 / -1; gap: 6px; }
+.bs-region-pills { flex-wrap: wrap; gap: 6px; overflow: visible; }
+.bs-region-pills .pill { flex: 1 1 0; min-width: 0; height: 36px; padding: 0 8px; font-size: 13px; }
+.works-line { margin: 0; font-size: 12.5px; line-height: 1.45; color: var(--muted); }
+.pills.grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; overflow: visible; }
+.pills.grid3 .pill, .pills.grid3 .pill.tall { min-width: 0; white-space: normal; padding: 9px 4px; overflow-wrap: anywhere; }
+.pay-works { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.pay-works .works-line { flex: 1 1 200px; }
+.link-sm { background: none; border: 0; padding: 0; font: 600 12.5px var(--font-body); color: var(--gold); text-decoration: underline; cursor: pointer; }
+.pc-rows { display: grid; gap: 4px; margin-top: 8px; font-size: 13px; }
+.pc-rows > div { display: flex; justify-content: space-between; gap: 12px; }
