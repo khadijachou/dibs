@@ -270,7 +270,7 @@ svg circle:first-child[stroke="#e6dccf"], svg circle:first-child[stroke="#35323f
 .sheet-row b { display: block; font-size: 14.5px; font-weight: 600; }
 .sheet-row small { display: block; color: var(--muted); font-size: 12.5px; margin-top: 2px; }
 .sheet-row:disabled { opacity: .5; cursor: default; }
-.sheet-row .si { width: 34px; height: 34px; flex-shrink: 0; border-radius: 50%; display: grid; place-items: center; font: 700 16px var(--font-body); background: #2a2733; color: var(--cream); }
+.sheet-row .si:not(.blogo) { width: 34px; height: 34px; flex-shrink: 0; border-radius: 50%; display: grid; place-items: center; font: 700 16px var(--font-body); background: #2a2733; color: var(--cream); }
 .sheet-row .si.back { background: var(--teal-soft); color: var(--teal); }
 .sheet-row .si.del { background: var(--red-soft); color: var(--red); }
 .sheet-row.danger:not(:disabled) b { color: var(--red); }
@@ -1080,6 +1080,9 @@ html.is-fullscreen .bstamp-live { top: calc(58px + var(--fs-top)); }
 .acc-list { display: flex; flex-direction: column; gap: 8px; }
 .acc-row { display: flex; align-items: center; gap: 12px; background: var(--card); border: 1.5px solid #2b2834; border-radius: 14px; padding: 12px; }
 .acc-row .blogo { width: 36px; height: 36px; flex-shrink: 0; }
+/* Brand logos in sheet rows (Add a preference, Move) keep BrandLogo's own plate: white, or the brand's dark colour for
+   logos drawn in white (Steam, Apple, Uber). The menu-icon circle (.sheet-row .si) never applies to them. */
+.sheet-row .blogo { border-radius: 10px; }
 .acc-row .acc-main { flex: 1; min-width: 0; }
 .acc-row .acc-main b { display: block; font-size: 14.5px; font-weight: 600; color: var(--cream); }
 .acc-row .acc-main small { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; line-height: 1.35; }
