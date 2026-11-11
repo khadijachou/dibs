@@ -19,6 +19,7 @@ import GoalRing from '../components/GoalRing.jsx'
 import Num from '../components/Num.jsx'
 import PromoBanner from '../components/PromoBanner.jsx'
 import BrandSheet from '../components/BrandSheet.jsx'
+import { ReadyBox, useReady } from '../components/ReadyState.jsx'
 
 // Welcome screen (no goal yet): "Welcome, Sam" when the user gave a name during onboarding or in More; nothing otherwise.
 function Hello() {
@@ -178,6 +179,7 @@ function GoalHero({ goal, earned }) {
   const next = Math.max(1, Math.min(p.remaining, p.pace.amount || p.weekly))
   const savedShown = useCountUp(p.saved)
   const remainingShown = useCountUp(p.remaining)
+  const rs = useReady(goal) // ready goals: does the saved NIM still cover the card at today's price (display only)
   return (
       <section className={`hero goal-card${goalPace(goal) ? ' has-dot' : ''}`}>
         <GoalDot goal={goal} />
@@ -186,13 +188,16 @@ function GoalHero({ goal, earned }) {
           <div><div className="t1">{itemLabel(t, goal)}</div><div className="t2">{fmtDate(goal.deadline, lang)} · {t(p.daysLeft === 1 ? 'days_left_one' : 'days_left_other', { count: p.daysLeft })}</div></div>
         </div>
         <div className="mid">
-          <GoalRing goal={goal} pct={pct} milestone={milestone} />
+          <GoalRing goal={goal} pct={pct} milestone={milestone} ready={rs} />
           <div>
             <div className="n"><Num value={fmtNim(Math.round(savedShown), lang)} /> NIM</div>
-            <div className="m">{t('goal_of2', { target: fmtNim(goal.targetNim, lang) })} · {t('goal_to_go', { amount: fmtNim(Math.round(remainingShown), lang) })}</div>
-            <GoalStatus goal={goal} earned={earned?.byGoal[goal.id]} />
+            {rs
+              ? <div className="m">{t('ready_home_line', { price: fmtNim(rs.price, lang) })}</div>
+              : <div className="m">{t('goal_of2', { target: fmtNim(goal.targetNim, lang) })} · {t('goal_to_go', { amount: fmtNim(Math.round(remainingShown), lang) })}</div>}
+            <GoalStatus goal={goal} earned={earned?.byGoal[goal.id]} ready={rs} />
           </div>
         </div>
+        {rs && <ReadyBox rs={rs} compact />}
         <MilestoneLine milestone={milestone} />
         <CardIssue goal={goal} />
         <div className="acts">

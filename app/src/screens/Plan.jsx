@@ -7,6 +7,7 @@ import { findItem } from '../lib/catalog.js'
 import { cardTakenBy, createGoal, getGoal, listGoals, openGoalFor, savedNim, updateGoal } from '../lib/goals.js'
 import { cardChangePatch, payLockedFor } from '../lib/availability.js'
 import { usdToNim } from '../lib/price.js'
+import { targetUsdOf } from '../lib/readyState.js'
 import { poolName } from '../lib/pace.js'
 import { playPop } from '../lib/sound.js'
 import Num from '../components/Num.jsx'
@@ -18,10 +19,8 @@ import { duplicateMessage, duplicateText, needsChainRead } from '../lib/duplicat
 import { useDuplicateText } from '../components/useDuplicateText.js'
 import { readyTimeText } from '../components/ReleaseClock.jsx'
 
-// BUG-17: an item with live: false has no shop quote; its usd is the catalogue's stored placeholder.
-// Its target gets a 10 % safety margin so the user does not fall short when the shop confirms the price.
-const SAFETY_MARGIN = 0.1
-const targetUsdOf = (item) => (item.live === false ? item.usd * (1 + SAFETY_MARGIN) : item.usd)
+// BUG-17: targetUsdOf (lib/readyState.js) adds a 10 % safety margin to an item with no live shop quote. Ready goals
+// use the same rule for today's price.
 
 // "add about **4,273 NIM** a week" -> text with the ** parts in <b>. Text nodes only, never HTML.
 const Bold = ({ text }) => text.split('**').map((part, i) => (i % 2 ? <b key={i}>{part}</b> : part))

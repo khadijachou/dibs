@@ -9,7 +9,9 @@ import { getPrices } from './lib/price.js'
 import { makeT } from './lib/i18n.js'
 import { adoptGoals, getGoal, listGoals, progress } from './lib/goals.js'
 import { initBurst, levelBandToAnnounce } from './lib/seen.js'
-import { loadCatalog } from './lib/catalog.js'
+import { catalogFromServer, loadCatalog } from './lib/catalog.js'
+import { migratePrefs, prunePrefs } from './lib/prefs.js'
+import { catalogBrands } from './lib/brands.js'
 import { readSimulateParam } from './lib/errors.js'
 import Home from './screens/Home.jsx'
 import Catalog from './screens/Catalog.jsx'
@@ -27,6 +29,8 @@ import More from './screens/More.jsx'
 import Profile from './screens/Profile.jsx'
 import Legal from './screens/Legal.jsx'
 import Faq from './screens/Faq.jsx'
+import Accounts, { AddPreference } from './screens/Accounts.jsx'
+import Preferences from './screens/Preferences.jsx'
 import { TabBar, TAB_ROUTES } from './components/ui.jsx'
 import { preloadAvatar } from './components/Avatar.jsx'
 import WelcomeBack from './components/WelcomeBack.jsx'
@@ -49,7 +53,7 @@ const hostLang = () => { try { const l = String(host.language() || '').slice(0, 
 const AppCtx = createContext(null)
 export const useApp = () => useContext(AppCtx)
 
-const SCREENS = { home: Home, catalog: Catalog, plan: Plan, goal: Goal, unlock: Unlock, redeem: Redeem, done: Done, stake: Stake, history: History, profile: Profile, more: More, browse: Catalog, legal: Legal, faq: Faq }
+const SCREENS = { home: Home, catalog: Catalog, plan: Plan, goal: Goal, unlock: Unlock, redeem: Redeem, done: Done, stake: Stake, history: History, profile: Profile, more: More, browse: Catalog, legal: Legal, faq: Faq, accounts: Accounts, prefAdd: AddPreference, prefs: Preferences }
 
 // Back with nothing behind (after a reload, or a screen opened with reset): where each screen goes.
 // Goals (home) has no parent: back from there leaves the app.
@@ -60,6 +64,8 @@ function parentOf(route) {
   if (route.name === 'browse') return { name: 'more', params: {} }
   if (route.name === 'legal') return { name: 'more', params: {} }
   if (route.name === 'faq') return { name: 'more', params: {} }
+  if (route.name === 'accounts' || route.name === 'prefs') return { name: 'more', params: {} }
+  if (route.name === 'prefAdd') return { name: 'accounts', params: {} }
   if (route.name === 'plan') return { name: 'catalog', params: route.params?.changeFor ? { changeFor: route.params.changeFor } : {} }
   if ((route.name === 'unlock' || route.name === 'redeem') && goalId) return { name: 'goal', params: { goalId } }
   return HOME
@@ -183,6 +189,7 @@ export default function App() {
   const start = useCallback(async () => {
     setFatal(null)
     initLastVisit() // the last visit's earned figure, read before this launch writes it
+    migratePrefs() // 1.0.1 dibs.region.<brand> keys -> dibs.prefs (Your accounts)
     try {
       await connect()
       startFullscreen() // supported only inside Nimiq Pay; never blocks the start
@@ -199,6 +206,7 @@ export default function App() {
       setAddress(addr)
       refreshBalance(addr)
       await loadCatalog()
+      if (catalogFromServer()) prunePrefs(catalogBrands()) // never judged from the 3-item fallback list
       getPrices().then(setPrices)
       // Home shows the welcome screen to new users and the hub to returning ones (UI v2.2).
       // After a reload, the screen that was open comes back (its back goes to the screen's parent).

@@ -3,6 +3,7 @@
 // Brand is derived from the Bitrefill slug in shopUrl, so the server needs no change.
 import { getCatalog } from './catalog.js'
 import { notSold } from './availability.js'
+import { getPref } from './prefs.js'
 
 // popular: the "Popular" badge, a static flag (there is no pick count to rank by). Set on the first three of the
 // curated order below.
@@ -71,17 +72,13 @@ const CURRENCY_OF = { USA: 'USD', Europe: 'EUR', UK: 'GBP', Nigeria: 'NGN' }
 const regionRank = (k) => { const i = REGION_ORDER.indexOf(k); return i < 0 ? 99 : i }
 const byValue = (x, y) => (Number(x.faceValue) || 0) - (Number(y.faceValue) || 0) || (x.usd ?? 0) - (y.usd ?? 0)
 
-// The version a brand opens on: the user's last pick for that brand (dibs.region.<brandKey>), else USA, else the
-// brand's first version. Never derived from the Nimiq Pay currency or language.
-const regionKey = (brandKey) => `dibs.region.${brandKey}`
+// The version a brand opens on: the user's saved version for that brand (Your accounts, dibs.prefs), else USA, else
+// the brand's first version. Never derived from the Nimiq Pay currency or language. A chip on the brand sheet only
+// changes what is shown; nothing is saved from it (lib/prefs.js).
 export function defaultRegion(brand) {
   const regions = brand?.regions || []
-  let saved = null
-  try { saved = localStorage.getItem(regionKey(brand.key)) } catch { /* storage blocked, or node */ }
+  const saved = getPref(brand?.key)
   return regions.find((r) => r.key === saved) || regions.find((r) => r.key === 'USA') || regions[0] || null
-}
-export function rememberRegion(brandKey, key) {
-  try { localStorage.setItem(regionKey(brandKey), key) } catch { /* storage blocked */ }
 }
 // One version of a brand by key, or the default one.
 export const brandRegion = (brand, key) => brand?.regions?.find((r) => r.key === key) || defaultRegion(brand)
@@ -129,3 +126,17 @@ export function brandLogo(item) {
 // "For Steam accounts with a USD wallet. Check your account before you call dibs." Empty when unknown.
 export const worksText = (t, w) => (w ? w[t.lang] || w.en || '' : '')
 export const worksLine = (t, w) => (w ? t('works_line', { worksWith: worksText(t, w) }) : '')
+
+// Catalogue search: the start of any word in the brand name, any case ("st": Steam, PlayStation Store, Starbucks;
+// not Best Buy). chip: a category or 'all'.
+export function filterBrands(brands, { q = '', chip = 'all' } = {}) {
+  const query = String(q).trim()
+  const match = query ? new RegExp(`(^|[^\\p{L}\\p{N}])${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'iu') : null
+  return brands.filter((b) => (chip === 'all' || b.chip === chip) && (!match || match.test(b.name)))
+}
+
+// Add a preference: brands sold in more than one version (one version: nothing to choose), with their versions and
+// the saved one (prefs: { [brandKey]: versionKey }).
+export const prefBrands = (brands, prefs = {}) => brands
+  .filter((b) => (b.regions || []).length > 1)
+  .map((b) => ({ brand: b, versions: b.regions.map((r) => r.key), saved: b.regions.some((r) => r.key === prefs[b.key]) ? prefs[b.key] : null }))

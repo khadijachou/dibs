@@ -4,6 +4,7 @@
 // A goal is an envelope over the user's single staker: the chain holds one stake,
 // this ledger says how much of it belongs to each goal.
 import { versionOf } from './version.js'
+import { savePref } from './prefs.js'
 
 const key = (address) => `dibs.goals.${address}`
 
@@ -46,6 +47,7 @@ export function createGoal(address, { item, targetNim, deadline, brand = null, n
     createdAt: new Date().toISOString(),
   }
   write(address, [goal, ...read(address)])
+  savePref(brand, goal.region) // Your accounts: the version just used, for brands with 2+ versions (last one wins)
   return goal
 }
 

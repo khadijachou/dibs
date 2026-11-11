@@ -257,7 +257,7 @@ svg circle:first-child[stroke="#e6dccf"], svg circle:first-child[stroke="#35323f
 
 /* Goal management: "⋯" button, bottom sheets (Manage, Move, Delete), move rows, withdraw. */
 .hero .top .grow { flex: 1; min-width: 0; }
-.more-btn { width: 36px; height: 36px; flex-shrink: 0; border-radius: 50%; border: 1px solid #3a3744; background: #2a2733; color: var(--cream); font: 700 18px/1 var(--font-body); cursor: pointer; display: grid; place-items: center; padding: 0 0 4px; }
+.more-btn { width: 36px; height: 36px; flex-shrink: 0; border-radius: 50%; border: 1px solid #3a3744; background: #2a2733; color: var(--cream); font: 700 18px/1 var(--font-body); cursor: pointer; display: grid; place-items: center; padding: 0; }
 .more-btn:active { transform: scale(.95); }
 .sheet-bg { position: fixed; inset: 0; z-index: 20; background: rgba(10, 9, 14, .62); display: flex; align-items: flex-end; justify-content: center; animation: sheet-fade .18s ease-out; }
 .sheet { width: min(480px, 100%); max-height: 88vh; overflow-y: auto; background: #1c1a23; color: var(--cream); border: 1px solid #2b2834; border-bottom: 0; border-radius: 22px 22px 0 0; padding: 10px 20px calc(20px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 12px; animation: sheet-up .22s ease-out; }
@@ -1058,3 +1058,32 @@ html.is-fullscreen .bstamp-live { top: calc(58px + var(--fs-top)); }
 .link-sm { background: none; border: 0; padding: 0; font: 600 12.5px var(--font-body); color: var(--gold); text-decoration: underline; cursor: pointer; }
 .pc-rows { display: grid; gap: 4px; margin-top: 8px; font-size: 13px; }
 .pc-rows > div { display: flex; justify-content: space-between; gap: 12px; }
+
+/* v1.0.2 Ready goal states (lib/readyState.js): one colour per state for the ring, centre, status and box. */
+.ready-covered { --rs: var(--teal); --rs-soft: rgba(43, 196, 143, .12); --rs-line: rgba(43, 196, 143, .35); }
+.ready-wallet { --rs: #FFC94D; --rs-soft: rgba(255, 201, 77, .12); --rs-line: rgba(255, 201, 77, .4); }
+.ready-short { --rs: var(--red); --rs-soft: var(--red-soft); --rs-line: rgba(255, 106, 92, .45); }
+.ring-wrap.ready .pct { color: var(--rs); flex-direction: column; gap: 0; display: flex; align-items: center; justify-content: center; text-align: center; }
+.ring-wrap.ready .pct .gap { font: 600 17px/1.05 var(--font-display); }
+.ring-wrap.ready .pct small { display: block; font: 500 10.5px/1.2 var(--font-body); margin-top: 2px; opacity: .95; }
+.goal-status.rs { color: var(--rs); }
+.goal-status.rs::before { background: var(--rs); box-shadow: 0 0 0 3px var(--rs-soft); }
+.ready-box { margin-top: 12px; padding: 10px 12px; border-radius: 12px; background: var(--rs-soft); border: 1px solid var(--rs-line); color: var(--cream); font-size: 13px; line-height: 1.45; }
+.ready-box.compact { font-size: 12.5px; padding: 8px 11px; }
+/* History: a card change (no NIM moved). */
+.tl-row.change .tl-ic { background: rgba(255, 201, 77, .14); color: #FFC94D; }
+/* Brand sheet: My region isn't here. */
+.region-link { align-self: flex-start; background: none; border: 0; padding: 2px 0; margin: -2px 0 2px; color: var(--muted); font: 500 12.5px var(--font-body); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.region-card { display: flex; flex-direction: column; gap: 8px; }
+.region-card p { margin: 0; }
+/* Your accounts, Add a preference. */
+.acc-list { display: flex; flex-direction: column; gap: 8px; }
+.acc-row { display: flex; align-items: center; gap: 12px; background: var(--card); border: 1.5px solid #2b2834; border-radius: 14px; padding: 12px; }
+.acc-row .blogo { width: 36px; height: 36px; flex-shrink: 0; }
+.acc-row .acc-main { flex: 1; min-width: 0; }
+.acc-row .acc-main b { display: block; font-size: 14.5px; font-weight: 600; color: var(--cream); }
+.acc-row .acc-main small { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; line-height: 1.35; }
+.acc-pill { flex-shrink: 0; padding: 4px 10px; border-radius: 999px; background: #2a2733; color: var(--cream); font: 600 12px var(--font-body); }
+.acc-change { flex-shrink: 0; background: none; border: 0; color: var(--gold); font: 600 13.5px var(--font-body); padding: 6px 2px; cursor: pointer; }
+.pref-tag { display: inline-block; margin-top: 4px; padding: 2px 8px; border-radius: 999px; background: var(--teal-soft); color: var(--teal); font: 600 11.5px var(--font-body); }
+.btn-text-danger { background: none; border: 0; color: var(--red); font: 600 14px var(--font-body); padding: 10px; cursor: pointer; align-self: center; }

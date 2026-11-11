@@ -10,7 +10,8 @@ globalThis.localStorage = {
   clear: () => store.clear(),
 }
 
-const { catalogBrands, defaultRegion, rememberRegion, worksLine } = await import('./brands.js')
+const { catalogBrands, defaultRegion, worksLine } = await import('./brands.js')
+const { setPref } = await import('./prefs.js')
 const { goalVersion } = await import('./version.js')
 const { cardChangePatch } = await import('./availability.js')
 const { detailText, itemLabel } = await import('./itemName.js')
@@ -52,20 +53,20 @@ test('catalogBrands: brand.items is the default version, never USA and Europe mi
   const nf = brand('netflix')
   assert.deepEqual(nf.items, nf.regions.find((r) => r.key === nf.defaultRegion).items)
   assert.ok(nf.items.every((i) => i.region === 'USA'))
-  rememberRegion('netflix', 'Europe')
+  setPref('netflix', 'Europe')
   const again = brand('netflix')
   assert.equal(again.defaultRegion, 'Europe')
   assert.ok(again.items.every((i) => i.region === 'Europe'))
 })
 
-test('default version: the last pick wins, else USA, else the first; a EUR host fiat or language changes nothing', () => {
+test('default version: the saved version wins, else USA, else the first; a EUR host fiat or language changes nothing', () => {
   // Anything the app might know about the user's money or language: none of it is read.
   store.set('dibs.fiat', 'EUR')
   store.set('dibs.lang', 'fr')
   assert.equal(defaultRegion(brand('netflix')).key, 'USA')
-  store.set('dibs.region.netflix', 'UK')
+  store.set('dibs.prefs', JSON.stringify({ netflix: 'UK' }))
   assert.equal(defaultRegion(brand('netflix')).key, 'UK')
-  store.set('dibs.region.netflix', 'Nigeria') // not sold for this brand: ignored
+  store.set('dibs.prefs', JSON.stringify({ netflix: 'Nigeria' })) // not sold for this brand: ignored
   assert.equal(defaultRegion(brand('netflix')).key, 'USA')
   assert.equal(defaultRegion(brand('fortnite')).key, 'UK', 'no USA version: the brand\'s first')
 })

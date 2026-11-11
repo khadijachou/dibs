@@ -10,7 +10,7 @@ export const HELP_EMAIL = 'calldibs.contact@gmail.com'
 // Sections per page (privacy_1h..7b, terms_1h..7b, rewards_1h..6b).
 const SECTIONS = { privacy: 7, terms: 7, rewards: 6 }
 // What's new, newest first. Add one line here and its news_N string per release.
-const NEWS = [{ date: '2026-11-11', key: 'news_3' }, { date: '2026-11-10', key: 'news_1' }, { date: '2026-11-09', key: 'news_2' }]
+const NEWS = [{ date: '2026-11-11', key: 'news_4' }, { date: '2026-11-11', key: 'news_3' }, { date: '2026-11-10', key: 'news_1' }, { date: '2026-11-09', key: 'news_2' }]
 const longDate = (d, lang) => new Date(`${d}T12:00:00Z`).toLocaleDateString(lang, { day: 'numeric', month: 'long', year: 'numeric' })
 
 export function LegalText({ page }) {

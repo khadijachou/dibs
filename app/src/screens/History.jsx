@@ -9,7 +9,7 @@ import { fmtDate, fmtNim } from '../lib/format.js'
 import { goalBrand } from './Home.jsx'
 import { dayKey } from '../lib/xp.js'
 
-const ICON = { deposit: '+', move: '⇄', unlock: '↧', withdraw: '↩', purchase: '✓' }
+const ICON = { deposit: '+', move: '⇄', unlock: '↧', withdraw: '↩', purchase: '✓', change: '⇄' }
 const EXPLORER = 'https://nimiq.watch/#'
 const STEP = { deactivate: 'unlock_s1', retire: 'unlock_s2', remove: 'unlock_s3' }
 
@@ -21,7 +21,9 @@ export default function History({ focus }) {
   const goals = listGoals(address)
   // Newest purchase first, like the timeline.
   const cards = boughtGoals(goals).sort((a, b) => String(b.payment?.at || b.createdAt).localeCompare(String(a.payment?.at || a.createdAt)))
-  const events = buildTimeline(goals, (g) => itemLabel(t, g), (s) => localName(t, s, { title: true }))
+  // Each row names the card in effect at its time; a card change row names both cards with their version.
+  const cardName = (c) => `${itemLabel(t, c)}${c.region ? ` · ${t(`region_${c.region}`)}` : ''}`
+  const events = buildTimeline(goals, (g) => itemLabel(t, g), (s) => localName(t, s, { title: true }), cardName)
   // Grouped by local day (the timeline is newest first): Today, Yesterday, else the date as the rows showed it.
   const today = dayKey(Date.now())
   const yesterday = dayKey(new Date().setDate(new Date().getDate() - 1))
@@ -38,6 +40,7 @@ export default function History({ focus }) {
     if (e.type === 'move') return t('hist_move', { from: e.from, to: e.to })
     if (e.type === 'unlock') return t('hist_unlock', { step: t(STEP[e.step] || 'unlock_s1') })
     if (e.type === 'withdraw') return t('hist_withdraw')
+    if (e.type === 'change') return t('hist_card_changed')
     return t('hist_purchase')
   }
   // Tap the short hash to copy the full one. Nimiq transactions also link to the explorer; a purchase's hash is
@@ -80,14 +83,19 @@ export default function History({ focus }) {
                       <span className="tl-ic" aria-hidden="true">{ICON[e.type]}</span>
                       <div className="tl-main">
                         <b>{title(e)}</b>
-                        {e.type !== 'move' && <span className="tl-goal">{e.goal}</span>}
+                        {e.type === 'change' ? (
+                          <>
+                            <span className="tl-goal">{e.from} → {e.to}</span>
+                            <span className="tl-meta">{t('hist_card_changed_meta')}</span>
+                          </>
+                        ) : e.type !== 'move' && <span className="tl-goal">{e.goal}</span>}
                         {e.tx && <span className="tl-meta">
                           {e.type === 'purchase' && <span>{t('hist_payment_ref')}</span>}
                           <button type="button" className="tl-tx" aria-label={t('hist_copy_tx')} onClick={() => copy(e.tx)}>{shortHash(e.tx)}</button>
                           {e.type !== 'purchase' && <a className="tl-link" href={`${EXPLORER}${e.tx}`} target="_blank" rel="noopener noreferrer">{t('hist_view_tx')}</a>}
                         </span>}
                       </div>
-                      <span className="tl-amt">{e.type === 'deposit' ? '+' : ''}{fmtNim(e.nim, lang)} NIM</span>
+                      {e.type !== 'change' && <span className="tl-amt">{e.type === 'deposit' ? '+' : ''}{fmtNim(e.nim, lang)} NIM</span>}
                     </li>
                   ))}
                 </ol>

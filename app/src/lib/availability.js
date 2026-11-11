@@ -2,6 +2,7 @@
 // saved NIM; a goal's NIM stays in its ledger whatever happens to its card.
 import { catalogFromServer, getCatalog } from './catalog.js'
 import { versionOf } from './version.js'
+import { savePref } from './prefs.js'
 
 // A value the shop does not sell: the server read the shop's list and this value is not in it (sold: false).
 // Example (9 Nov): Riot Access "24.99" (the shop's package is "25", priced 24.99). It cannot be bought: the order
@@ -35,8 +36,10 @@ export const payLockedFor = (goalId) => {
 
 // Swaps the goal's card (also on a 'ready' goal: Manage > Change card). Keeps id, deposits (and so the saved NIM), unlock steps, status, deadline and history; the
 // target is the new card at today's price. The old card is kept in cardChanges. Returns the patch for updateGoal().
+// Also saves the new card's version as the brand's preference when the brand has 2+ versions (Your accounts, lib/prefs.js): the last one used wins.
 export function cardChangePatch(goal, { item, targetNim, brand, nimUsd }) {
   const at = new Date().toISOString()
+  savePref(brand, versionOf(item).region)
   return {
     itemId: item.id,
     itemName: item.name,

@@ -1,20 +1,16 @@
 import { useRef, useState } from 'react'
 import { useApp } from '../App.jsx'
-import { Header, LangSwitch } from '../components/ui.jsx'
+import { Header } from '../components/ui.jsx'
 import { NAME_MAX, getName, setName } from '../lib/name.js'
 import { catalogBrands } from '../lib/brands.js'
-import { NumbersCard, StatsSetting } from '../components/StatsConsent.jsx'
+import { NumbersCard } from '../components/StatsConsent.jsx'
+import { prefCount } from '../lib/prefs.js'
 import { siX } from 'simple-icons'
 import { APP_VERSION, HELP_EMAIL } from '../components/LegalText.jsx'
 import { copyText } from '../lib/clipboard.js'
 import { FAQ } from './Faq.jsx'
-import { useFullscreen } from '../lib/fullscreen.js'
-import FullscreenSheet from '../components/FullscreenSheet.jsx'
-import { audioContext, playTing } from '../lib/sound.js'
 
 const X_URL = 'https://x.com/calldibs_app'
-// Sound is on unless the user turned it off: dibs.sound missing (a new user) = on, as in lib/sound.js.
-const soundOn = () => { try { return localStorage.getItem('dibs.sound') !== 'off' } catch { return true } }
 
 // Four rounded squares (Browse the catalogue). A stroke icon: text glyphs turn into emoji on iOS.
 const GridIcon = () => (
@@ -28,6 +24,20 @@ const GridIcon = () => (
 const ShareIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="M12 15V3" /><path d="M7.5 7.5 12 3l4.5 4.5" /><path d="M5 12v6.5A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5V12" />
+  </svg>
+)
+
+// A card (Your accounts).
+const CardIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect x="3" y="6" width="18" height="12" rx="2" /><path d="M3 10h18M7 15h4" />
+  </svg>
+)
+
+// Three sliders (Preferences).
+const SlidersIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0" /><circle cx="16" cy="6" r="2" /><circle cx="10" cy="12" r="2" /><circle cx="18" cy="18" r="2" />
   </svg>
 )
 
@@ -73,15 +83,7 @@ const OutIcon = () => (
 
 export default function More() {
   const { t, go, showHowTo, toast } = useApp()
-  const [sound, setSound] = useState(soundOn)
-  const fs = useFullscreen()
-  const [fsAsk, setFsAsk] = useState(false)
-
-  const toggleSound = () => {
-    const next = !sound
-    try { localStorage.setItem('dibs.sound', next ? 'on' : 'off') } catch { /* private mode */ }
-    setSound(next)
-  }
+  const nPrefs = prefCount()
   const followX = () => { copyText(X_URL).then((ok) => { if (ok) toast(t('follow_copied')) }) }
   const copyEmail = async () => { if (await copyText(HELP_EMAIL)) toast(t('help_copied')) }
   // Share Dibs: the system share sheet where there is one, else copy the text and link. Nothing goes to our server.
@@ -134,25 +136,16 @@ export default function More() {
           <div className="sec-head"><h3>{t('more_settings')}</h3></div>
           <NameRow />
           <p className="small">{t('name_device')}</p>
-          <div className="set-row"><span>{t('lang_label')}</span><LangSwitch /></div>
-          <div className="set-row">
-            <span>{t('more_sound')}</span>
-            <button type="button" role="switch" aria-checked={sound} aria-label={t('more_sound')} className={`switch${sound ? ' on' : ''}`} onClick={toggleSound}><i /></button>
-          </div>
-          {/* From the tap: audioContext() creates or resumes the shared context, then the ting plays on it. */}
-          {sound && <button type="button" className="txt-link sound-test" onClick={() => { audioContext(); playTing() }}>{t('sound_test')}</button>}
-          {fs.supported && (fs.on ? (
-            <button type="button" className="set-row fs-row" onClick={fs.leave}>
-              <span><b>{t('fs_row_on')}</b></span>
-            </button>
-          ) : (
-            <button type="button" className="set-row fs-row" onClick={() => setFsAsk(true)}>
-              <span><b>{t('fs_row')}</b><small>{t('fs_row_sub')}</small></span>
-              <span className="chev" aria-hidden="true">›</span>
-            </button>
-          ))}
-          {fsAsk && <FullscreenSheet onClose={() => setFsAsk(false)} />}
-          <StatsSetting />
+          <button type="button" className="sheet-row" onClick={() => go('accounts')}>
+            <span className="si" aria-hidden="true"><CardIcon /></span>
+            <span><b>{t('accounts_row')}</b><small>{nPrefs ? t('accounts_row_sub', { n: nPrefs }) : t('accounts_row_none')}</small></span>
+            <span className="chev" aria-hidden="true">›</span>
+          </button>
+          <button type="button" className="sheet-row" onClick={() => go('prefs')}>
+            <span className="si" aria-hidden="true"><SlidersIcon /></span>
+            <span><b>{t('prefs_row')}</b><small>{t('prefs_row_sub')}</small></span>
+            <span className="chev" aria-hidden="true">›</span>
+          </button>
         </section>
 
         <section className="help-card">

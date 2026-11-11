@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef, useState } from 'react'
 import { useApp } from '../App.jsx'
 import { BrandLogo, Header, Icon } from '../components/ui.jsx'
-import { CHIPS, brandGrad, catalogBrands } from '../lib/brands.js'
+import { CHIPS, brandGrad, catalogBrands, filterBrands } from '../lib/brands.js'
 import { fromText } from '../lib/itemName.js'
 import { useReducedMotion } from '../components/UnlockTimer.jsx'
 import BrandSheet from '../components/BrandSheet.jsx'
@@ -45,6 +45,38 @@ export function useChipSlide(active, reduced) {
   return { hl, remember }
 }
 
+// The catalogue's search field and category chips (Catalog, Add a preference). Counts come from `brands`.
+export function BrandSearch({ brands, q, onQ }) {
+  const { t } = useApp()
+  return (
+    <label className="cat-search">
+      <Icon name="search" size={18} />
+      <input type="search" value={q} onChange={(e) => onQ(e.target.value)} placeholder={t('cat_search', { count: brands.length })}
+        aria-label={t('cat_search', { count: brands.length })} autoComplete="off" enterKeyHint="search" />
+    </label>
+  )
+}
+
+export function BrandChips({ brands, chip, onChip }) {
+  const { t } = useApp()
+  const reduced = useReducedMotion()
+  const usedChips = CHIPS.filter((c) => brands.some((b) => b.chip === c))
+  const slide = useChipSlide(chip, reduced)
+  const pickChip = (c) => { if (c === chip) return; slide.remember(); onChip(c) }
+  const chipBtn = (c, label) => (
+    <button type="button" key={c} className={`cat${chip === c ? ' on' : ''}`} aria-pressed={chip === c} onClick={() => pickChip(c)}>
+      {chip === c && <i className="cat-hl" ref={slide.hl} aria-hidden="true" />}
+      <span>{label}</span>
+    </button>
+  )
+  return (
+    <div className="cats hl" role="group">
+      {chipBtn('all', t('chip_all', { count: brands.length }))}
+      {usedChips.map((c) => chipBtn(c, t('chip_' + c)))}
+    </div>
+  )
+}
+
 // A brand as a gift card: logo and delivery pill on top, name and lowest price at the bottom. A tap opens the sheet.
 export function GiftTile({ brand, big = false, style, onOpen }) {
   const { t } = useApp()
@@ -75,20 +107,9 @@ export default function Catalog({ moveFrom = null, changeFor = null, chip: initi
   const [chip, setChip] = useState(() => (CHIPS.includes(initialChip) ? initialChip : 'all')) // initial category (Quest of the week)
   const [q, setQ] = useState('')
   const [open, setOpen] = useState(null) // brand key whose sheet is open
-  // Search: the start of any word in the brand name, any case ("st": Steam, PlayStation Store, Starbucks; not Best Buy).
   const query = q.trim()
-  const match = query ? new RegExp(`(^|[^\\p{L}\\p{N}])${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'iu') : null
-  const shown = brands.filter((b) => (chip === 'all' || b.chip === chip) && (!match || match.test(b.name)))
+  const shown = filterBrands(brands, { q, chip })
   const popular = POPULAR.map((k) => brands.find((b) => b.key === k)).filter(Boolean)
-  const usedChips = CHIPS.filter((c) => brands.some((b) => b.chip === c))
-  const slide = useChipSlide(chip, reduced)
-  const pickChip = (c) => { if (c === chip) return; slide.remember(); setChip(c) }
-  const chipBtn = (c, label) => (
-    <button type="button" key={c} className={`cat${chip === c ? ' on' : ''}`} aria-pressed={chip === c} onClick={() => pickChip(c)}>
-      {chip === c && <i className="cat-hl" ref={slide.hl} aria-hidden="true" />}
-      <span>{label}</span>
-    </button>
-  )
   const openSheet = (b) => setOpen(b.key)
   const sheetBrand = brands.find((b) => b.key === open)
   const pick = (region) => {
@@ -105,11 +126,7 @@ export default function Catalog({ moveFrom = null, changeFor = null, chip: initi
           <h2 className="title">{t('cat_title')}</h2>
           <p className="sub" style={{ marginTop: 6 }}>{t(changeFor ? 'change_sub' : 'cat_sub')}</p>
         </div>
-        <label className="cat-search">
-          <Icon name="search" size={18} />
-          <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('cat_search', { count: brands.length })}
-            aria-label={t('cat_search', { count: brands.length })} autoComplete="off" enterKeyHint="search" />
-        </label>
+        <BrandSearch brands={brands} q={q} onQ={setQ} />
         {!query && chip === 'all' && popular.length > 0 && (
           <section className="cat-pop">
             <div className="sec-head"><h3>{t('cat_popular')}</h3></div>
@@ -118,10 +135,7 @@ export default function Catalog({ moveFrom = null, changeFor = null, chip: initi
             </div>
           </section>
         )}
-        <div className="cats hl" role="group">
-          {chipBtn('all', t('chip_all', { count: brands.length }))}
-          {usedChips.map((c) => chipBtn(c, t('chip_' + c)))}
-        </div>
+        <BrandChips brands={brands} chip={chip} onChip={setChip} />
         {shown.length === 0 ? (
           <p className="small center cat-none">{t('cat_none', { q: query })}</p>
         ) : (

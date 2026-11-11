@@ -1,7 +1,10 @@
 import { useState } from 'react'
 import { useApp } from '../App.jsx'
 import { BrandLogo, Sheet } from './ui.jsx'
-import { brandGrad, brandRegion, defaultRegion, rememberRegion, worksLine } from '../lib/brands.js'
+import { brandGrad, brandRegion, defaultRegion, worksLine } from '../lib/brands.js'
+import { getPref } from '../lib/prefs.js'
+import { copyText } from '../lib/clipboard.js'
+import { HELP_EMAIL } from './LegalText.jsx'
 import { detailText } from '../lib/itemName.js'
 import { fmtNim } from '../lib/format.js'
 import { usdToNim } from '../lib/price.js'
@@ -11,14 +14,21 @@ import { usdToNim } from '../lib/price.js'
 // onPick(regionKey): the sticky "Call dibs on {brand}" button (starts the goal on the version shown); without it,
 // Close is the only action.
 // Versions (USA, Europe, UK, Nigeria): with more than one, the Region fact becomes chips; a chip swaps the range, the
-// values, their NIM and the count, and is remembered for that brand (dibs.region.<brandKey>).
-export default function BrandSheet({ brand, onClose, onPick }) {
+// values, their NIM and the count. It only changes what is shown: the version is saved when the user calls dibs
+// (lib/prefs.js), or in More > Your accounts. With several versions and none saved, "My region isn't here" opens a
+// sheet with the help email.
+// pref: Your accounts' version step (card face, chips, works-with line; no values). onSave(versionKey) saves it;
+// onRemove (a brand already saved) removes it.
+export default function BrandSheet({ brand, onClose, onPick, pref = false, onSave, onRemove }) {
   const { t, lang, toast, prices } = useApp()
   const regions = brand.regions || []
   const [regionKey, setRegionKey] = useState(() => defaultRegion(brand)?.key || null)
+  const [missing, setMissing] = useState(false)
+  const saved = getPref(brand.key)
   const version = brandRegion(brand, regionKey)
   const items = version?.items || brand.items || []
-  const pickRegion = (key) => { setRegionKey(key); rememberRegion(brand.key, key) }
+  const pickRegion = (key) => setRegionKey(key)
+  const regionLink = regions.length > 1 && !saved
   const lo = items[0]
   const hi = items[items.length - 1]
   const range = !lo ? '' : items.length > 1
@@ -54,10 +64,11 @@ export default function BrandSheet({ brand, onClose, onPick }) {
         ) : (
           <div><span>{t('about_region')}</span><b>{version ? t(`region_${version.key}`) : '-'}</b></div>
         )}
-        <div><span>{t('about_delivered')}</span><b>{brand.delivers ? t(`delivers_${brand.delivers}`) : '-'}</b></div>
-        <div><span>{t('bs_values')}</span><b>{items.length}</b></div>
+        {!pref && <div><span>{t('about_delivered')}</span><b>{brand.delivers ? t(`delivers_${brand.delivers}`) : '-'}</b></div>}
+        {!pref && <div><span>{t('bs_values')}</span><b>{items.length}</b></div>}
       </div>
-      {items.length > 0 && (
+      {regionLink && <button type="button" className="region-link" onClick={() => setMissing(true)}>{t('region_missing_link')}</button>}
+      {!pref && items.length > 0 && (
         <div className="bs-vals">
           <span className="small sheet-label">{t('plan_card_value')}</span>
           <div className="bs-val-grid">
@@ -80,10 +91,21 @@ export default function BrandSheet({ brand, onClose, onPick }) {
         </div>
       )}
       {version?.worksWith && <p className="small works-line">{worksLine(t, version.worksWith)}</p>}
-      <p className="bs-how">
-        <i aria-hidden="true" />
-        <span>{brand.delivers && <>{t(`bs_how_${brand.delivers}`)} </>}{t('bs_prices')}</span>
-      </p>
+      {!pref && (
+        <p className="bs-how">
+          <i aria-hidden="true" />
+          <span>{brand.delivers && <>{t(`bs_how_${brand.delivers}`)} </>}{t('bs_prices')}</span>
+        </p>
+      )}
+      {pref ? (
+        <div className="bs-acts">
+          <button type="button" className="btn tall" disabled={!version} onClick={() => onSave?.(version.key)}>
+            {t(saved ? 'pref_save_cta' : 'pref_add_cta')}<small>{t('pref_cta_sub', { brand: brand.name, version: version ? t(`region_${version.key}`) : '' })}</small>
+          </button>
+          <button type="button" className="btn ghost" onClick={onClose}>{t('manage_cancel')}</button>
+          {saved && onRemove && <button type="button" className="btn-text-danger" onClick={onRemove}>{t('pref_remove')}</button>}
+        </div>
+      ) : (
       <div className="bs-acts">
         {onPick && (
           <button type="button" className="btn tall" onClick={() => onPick(version?.key || null)}>
@@ -92,6 +114,32 @@ export default function BrandSheet({ brand, onClose, onPick }) {
         )}
         <button type="button" className="btn ghost" onClick={onClose}>{t('ob_close')}</button>
       </div>
+      )}
+      {missing && <RegionMissingSheet onClose={() => setMissing(false)} />}
+    </Sheet>
+  )
+}
+
+// "Your region isn't here?": the help email (copied on tap, like Need help). As a sheet (brand sheet link) or a card
+// (Your accounts).
+export function RegionMissing({ card = false }) {
+  const { t, toast } = useApp()
+  const copyEmail = async () => { if (await copyText(HELP_EMAIL)) toast(t('help_copied')) }
+  const body = (
+    <>
+      <p className={card ? undefined : 'small'}>{t('region_missing_body')}</p>
+      <button type="button" className="help-email" aria-label={t('help_email')} onClick={copyEmail}>{HELP_EMAIL}</button>
+    </>
+  )
+  return card ? <section className="help-card region-card"><h3>{t('region_missing_title')}</h3>{body}</section> : body
+}
+
+export function RegionMissingSheet({ onClose }) {
+  const { t } = useApp()
+  return (
+    <Sheet title={t('region_missing_title')} onClose={onClose}>
+      <div className="region-card"><RegionMissing /></div>
+      <button type="button" className="btn ghost" onClick={onClose}>{t('ob_close')}</button>
     </Sheet>
   )
 }

@@ -29,6 +29,7 @@ import { MilestoneLine, useGoalMilestone } from '../components/Milestone.jsx'
 import { GoalDot, GoalStatus } from '../components/GoalStatus.jsx'
 import { getUnlockState, settleGoal } from '../lib/unlockFlow.js'
 import { readyTimeText } from '../components/ReleaseClock.jsx'
+import { ReadyBox, useReady } from '../components/ReadyState.jsx'
 
 const parseNim = (v) => Math.floor(Number(String(v).replace(/[^\d.]/g, ''))) || 0
 
@@ -166,6 +167,7 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
   // An empty goal next to another open goal for the same card (a duplicate after a recovery): offer to delete it.
   const twin = goal && goal.status === 'saving' && saved === 0 ? openGoalFor(listGoals(address).filter((g) => g.id !== goal.id), goal.itemId) : null
   const twinText = useDuplicateText('merge', twin)
+  const rs = useReady(goal) // ready goals: does the saved NIM still cover the card at today's price (display only)
 
   if (!goal) return null
   const reached = saved >= goal.targetNim
@@ -371,19 +373,26 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
           <div className="top">
             <BrandLogo brand={brand} />
             <div className="grow"><div className="t1">{itemLabel(t, goal)}</div><div className="t2">{fmtDate(goal.deadline, lang)} · {t(p.daysLeft === 1 ? 'days_left_one' : 'days_left_other', { count: p.daysLeft })}</div></div>
-            {canManage && <button type="button" className="more-btn" aria-label={t('manage_btn')} aria-haspopup="dialog" onClick={() => setSheet('manage')}>⋯</button>}
+            {canManage && <button type="button" className="more-btn" aria-label={t('manage_btn')} aria-haspopup="dialog" onClick={() => setSheet('manage')}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" /></svg>
+            </button>}
           </div>
           <div className="mid">
-            <GoalRing goal={goal} pct={pct} milestone={milestone} />
+            <GoalRing goal={goal} pct={pct} milestone={milestone} ready={rs} />
             <div>
               <div className="n"><Num value={fmtNim(Math.round(savedShown), lang)} /> NIM</div>
-              <div className="m">{t('goal_of2', { target: fmtNim(goal.targetNim, lang) })}<br />{t('goal_to_go', { amount: fmtNim(Math.round(remainingShown), lang) })}</div>
-              <GoalStatus goal={goal} earned={earned} />
+              {rs
+                ? <div className="m">{t('ready_saved_line')}<br />{t('ready_card_about', { price: fmtNim(rs.price, lang) })}</div>
+                : <div className="m">{t('goal_of2', { target: fmtNim(goal.targetNim, lang) })}<br />{t('goal_to_go', { amount: fmtNim(Math.round(remainingShown), lang) })}</div>}
+              <GoalStatus goal={goal} earned={earned} ready={rs} />
             </div>
           </div>
-          <WeekDots total={p.totalWeeks} done={done100 && reached ? p.totalWeeks : p.weeksDone} now={p.weekIdx}
-            left={done100 ? null : t('week_of', { n: Math.min(p.totalWeeks, p.weekIdx + 1), total: p.totalWeeks })}
-            right={done100 ? null : t('goal_this_week', { amount: fmtNim(Math.min(remaining, p.pace.amount || p.weekly), lang) })} />
+          {rs && <ReadyBox rs={rs} />}
+          {!rs && (
+            <WeekDots total={p.totalWeeks} done={done100 && reached ? p.totalWeeks : p.weeksDone} now={p.weekIdx}
+              left={done100 ? null : t('week_of', { n: Math.min(p.totalWeeks, p.weekIdx + 1), total: p.totalWeeks })}
+              right={done100 ? null : t('goal_this_week', { amount: fmtNim(Math.min(remaining, p.pace.amount || p.weekly), lang) })} />
+          )}
           <MilestoneLine milestone={milestone} />
           {saved > 0 && stakerAddress && <div className="acct">{t('goal_account', { address: '' }).trim()} <b>{shortAddress(stakerAddress)}</b><span className="pool">● {pool}</span></div>}
         </section>
@@ -404,7 +413,6 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
         <CardIssue goal={goal} />
 
         {reached && goal.status === 'saving' && <div className="ok">{t('goal_reached')}</div>}
-        {goal.status === 'ready' && <div className="ok">{t('goal_ready')}</div>}
         {empty && (
           twin
             ? <Notice tone="info" title={twinText} actions={[{ label: t('change_exists_open'), onClick: () => go('goal', { goalId: twin.id }) }, { label: t('manage_delete'), onClick: () => setSheet('delete') }]} />
@@ -449,7 +457,7 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
               : <button type="button" className="btn gold" onClick={() => go('unlock', { goalId: goal.id })}>{t('goal_unlock')}</button>
           )}
           {goal.status === 'ready' && !goalCardIssue(goal) && (
-            <button type="button" className="btn gold" onClick={flip.start}>{t('goal_buy', { name: itemName(t, goal) })}</button>
+            <button type="button" className="btn gold" onClick={flip.start}>{t('goal_buy', { name: itemName(t, goal) })}{rs?.kind === 'short' && <small>{t('ready_buy_sub')}</small>}</button>
           )}
         </div>
       </main>

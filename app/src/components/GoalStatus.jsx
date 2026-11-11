@@ -19,9 +19,11 @@ export function goalState(goal) {
 
 // The one status line under the amount on the goal card (Home) and the goal hero (Goal).
 // earned: this goal's share of the rewards (Stake's figure), when known.
-export function GoalStatus({ goal, earned }) {
+// ready: the goal's ready state (components/ReadyState.jsx useReady), which colours the line and its dot.
+export function GoalStatus({ goal, earned, ready = null }) {
   const { t, lang } = useApp()
   const state = goalState(goal)
+  if (ready) return <div className={`goal-status rs ready-${ready.kind}`}>{t(ready.kind === 'short' ? 'status_ready_add' : 'status_ready_buy')}</div>
   if (state === 'unlocking') return <div className="goal-status wait"><Releasing goal={goal} /></div>
   if (state === 'saving' && savedNim(goal) <= 0) return null // nothing staked yet
   const text = {
