@@ -139,6 +139,9 @@
 :where(:root[data-theme="light"]) .ob-trust { border: 1px solid var(--line); color: var(--cream); }
 :where(:root[data-theme="light"]) .cdots i { background: #d9d0c3; }
 :where(:root[data-theme="light"]) .cat-source .cat-source-legal { color: var(--muted); }
+/* Plan facts card (v1.0.9): line colour, and the clock in the yellow text shade on the soft butter (mint uses the variables). */
+:where(:root[data-theme="light"]) .plan-facts, :where(:root[data-theme="light"]) .pf-row + .pf-row { border-color: var(--line); }
+:where(:root[data-theme="light"]) .pf-ico.wait { background: var(--gold-soft); color: #906607; }
 :where(:root[data-theme="light"]) .news-rel::before { background: #e3dacd; }
 :where(:root[data-theme="light"]) .news-rel::after { background: #bdb4c2; }
 :where(:root[data-theme="light"]) .news-rel.latest::after { background: #e8482a; box-shadow: 0 0 0 3px rgba(232, 72, 42, .16); }

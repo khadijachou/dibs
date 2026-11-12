@@ -36,3 +36,27 @@ test('no item is empty, cut inside an abbreviation, or uses an em dash', () => {
     }
   }
 })
+
+// The timeline (components/LegalText.jsx NEWS): every block's news_N is one of the keys checked above, newest first,
+// and the newest version is the app's version. Read as text: LegalText.jsx is JSX and does not load under node --test.
+const legal = readFileSync(new URL('../components/LegalText.jsx', import.meta.url), 'utf8')
+const timeline = [...legal.matchAll(/\{ date: '([\d-]+)', key: '(news_\d+)'(?:, v: '([\d.]+)')? \}/g)].map((m) => ({ date: m[1], key: m[2], v: m[3] || null }))
+const pkg = JSON.parse(readFileSync(new URL('../../package.json', import.meta.url), 'utf8'))
+const vNum = (v) => v.split('.').map(Number).reduce((a, n, i) => a + n * 1000 ** (2 - i), 0)
+
+test('every What’s new block uses a checked news_N, versions newest first', () => {
+  assert.ok(timeline.length >= 10)
+  for (const b of timeline) assert.ok(keys.includes(b.key), `${b.key} is in the timeline but not in i18n.js`)
+  const versions = timeline.filter((b) => b.v).map((b) => b.v)
+  for (let i = 1; i < versions.length; i++) assert.ok(vNum(versions[i - 1]) > vNum(versions[i]), `${versions[i - 1]} before ${versions[i]}`)
+  assert.equal(versions[0], pkg.version.replace(/\.0$/, ''), 'the newest block is the app version')
+})
+
+test('v1.0.5 (news_10) sits between 1.0.6 and 1.0.4, with the same items in en, fr and es', () => {
+  const vs = timeline.map((b) => b.v)
+  const i = vs.indexOf('1.0.5')
+  assert.equal(timeline[i].key, 'news_10')
+  assert.equal(vs[i - 1], '1.0.6')
+  assert.equal(vs[i + 1], '1.0.4')
+  for (const l of ['en', 'fr', 'es']) assert.equal(items(T[l]('news_10')).length, 2, `news_10 ${l}`)
+})

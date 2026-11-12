@@ -119,7 +119,8 @@ export default function More() {
             <span><b>{t('share_row')}</b><small>{t('share_row_sub')}</small></span>
             <span className="chev" aria-hidden="true">›</span>
           </button>
-          {/* Inside Nimiq Pay the link opens nothing: the tap also copies it. No preventDefault, so X opens where links work. */}
+          {/* Inside Nimiq Pay a link to x.com opens nothing (the same plain link opens nimiq.watch from History), so the tap
+              copies it and the second line says so. No preventDefault, so X opens in a new tab where links work. */}
           <a className="sheet-row" href={X_URL} target="_blank" rel="noopener noreferrer" onClick={followX}>
             <span className="si x" aria-hidden="true"><XIcon /></span>
             <span><b>{t('follow_row')}</b><small>{t('follow_row_sub')}</small></span>

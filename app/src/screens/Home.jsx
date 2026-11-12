@@ -111,8 +111,15 @@ function Hub({ goals }) {
         {/* Usage stats: asked once under the goals label to users who finished onboarding before the consent step. */}
         {live.length > 1 ? <GoalWallet goals={live} earned={earned} /> : <><GoalsLabel count={live.length} /><StatsCard />{active && <GoalHero goal={active} earned={earned} />}</>}
         <PromoBanner onOpen={setSheet} />
-        {/* v1.0.8: a quiet outline button in the page, right under the photos (no longer sticky at the bottom here). */}
-        <button type="button" className="btn tall quiet" onClick={() => go('catalog')}>{'+ '}{t('home_new2')}<small>{t('home_new2_sub')}</small></button>
+        {/* At least one live goal: a quiet outline button right under the photos (v1.0.8). No live goal (all bought or
+            withdrawn): the coral button sticky at the bottom, as before v1.0.8 (v1.0.9). */}
+        {live.length > 0
+          ? <button type="button" className="btn tall quiet" onClick={() => go('catalog')}>{'+ '}{t('home_new2')}<small>{t('home_new2_sub')}</small></button>
+          : (
+            <div className="bottom">
+              <button type="button" className="btn tall" onClick={() => go('catalog')}>{t('home_new2')}<small>{t('home_new2_sub')}</small></button>
+            </div>
+          )}
       </main>
       {sheetBrand && <BrandSheet brand={sheetBrand} onClose={() => setSheet(null)} onPick={(region) => { setSheet(null); go('plan', { brandKey: sheetBrand.key, region }) }} />}
     </>

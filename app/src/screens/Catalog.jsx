@@ -149,10 +149,15 @@ export default function Catalog({ moveFrom = null, changeFor = null, chip: initi
         <section className="cat-source">
           <div className="cat-source-head">
             <img className="cat-source-logo" src="/logos/bittrefill.png" alt="" aria-hidden="true" />
-            <h3>{t('cat_src_title')}</h3>
           </div>
           <p>{t('cat_src_body')}</p>
-          <p className="cat-source-legal">{t('cat_src_legal')}</p>
+          {/* v1.0.9: an "i" in a circle before the sentence, aligned with its first line; the text wraps beside it. */}
+          <p className="cat-source-legal">
+            <svg className="cat-source-i" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="9.5" /><path d="M12 11v6" /><path d="M12 7.5v.01" />
+            </svg>
+            <span>{t('cat_src_legal')}</span>
+          </p>
         </section>
       </main>
       {sheetBrand && <BrandSheet brand={sheetBrand} onClose={() => setOpen(null)} onPick={pick} />}
