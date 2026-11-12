@@ -1,0 +1,245 @@
+/* Light theme (v1.0.4): chosen in More > Preferences > Appearance; dark stays the default. Loaded after
+   theme-dark.css and scoped to :root[data-theme="light"], which index.html sets before the first paint.
+   Overrides only: the variables first, then the colours theme-dark.css hard-codes. Each override repeats the dark
+   selector behind :where(...), which adds no specificity, so it wins over that rule only (it loads later) and the
+   dark variants that are more specific keep working.
+   Brand colours stay as they are in both themes: card gradients (brandGrad), logo plates, the promo photos, coral
+   buttons with white text, the gift face, the code card.
+   Text shades (4.5:1 on white, the ground, --card-2 and their soft backgrounds): mint #137b5f, red #c43825,
+   yellow #906607, coral #cc3316, muted #6d6877. Rings, fills and borders keep #15896a, #d8432f and #d99a0b. */
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --ground: #fbf6ef;
+  --card: #ffffff;
+  --card-2: #f6f0e8;
+  --line: #e9e1d6;
+  --cream: #23212b;        /* main text */
+  --muted: #6d6877;
+  --navy-2: #f1ebe3;
+  --gold-soft: #fff1d6;
+  --teal: #137b5f;         /* mint as text (fills set back to #15896a below) */
+  --teal-deep: #15896a;    /* mint as a surface */
+  --teal-soft: #e2f3ec;
+  --red: #c43825;          /* red as text (fills set back to #d8432f below) */
+  --red-soft: #fde8e4;
+  --glow: rgba(232, 72, 42, .18);
+}
+
+/* ---- Fills keep the ring colours (the variables above are the text shades) ---- */
+:where(:root[data-theme="light"]) .earning::before, :where(:root[data-theme="light"]) .fact b.dot::before,
+:where(:root[data-theme="light"]) .rate::before, :where(:root[data-theme="light"]) .gc-check,
+:where(:root[data-theme="light"]) .cc-bolt, :where(:root[data-theme="light"]) .stake-facts .dot,
+:where(:root[data-theme="light"]) .earned-chip::before, :where(:root[data-theme="light"]) .goal-status::before,
+:where(:root[data-theme="light"]) .weeks .d.done, :where(:root[data-theme="light"]) .weeks .ln.done,
+:where(:root[data-theme="light"]) .hero .weeks .d.done, :where(:root[data-theme="light"]) .hero .weeks .ln.done,
+:where(:root[data-theme="light"]) .wbar .fill, :where(:root[data-theme="light"]) .wbar .end.done,
+:where(:root[data-theme="light"]) .goal-dot, :where(:root[data-theme="light"]) .prof-pill > i,
+:where(:root[data-theme="light"]) .numbers-card .nc-live i, :where(:root[data-theme="light"]) .bs-how > i { background: #15896a; }
+:where(:root[data-theme="light"]) .pill.fix, :where(:root[data-theme="light"]) .wbar .end.done { border-color: #15896a; }
+:where(:root[data-theme="light"]) .ferr::before, :where(:root[data-theme="light"]) .fact b.dot.red::before,
+:where(:root[data-theme="light"]) .goal-dot.late { background: #d8432f; }
+:where(:root[data-theme="light"]) .amount.bad { border-bottom-color: #d8432f; }
+:where(:root[data-theme="light"]) .email.bad { border-color: #d8432f; }
+:where(:root[data-theme="light"]) .goal-dot.behind { background: #d99a0b; }
+
+/* ---- Ready states: rings and boxes in the ring colours, their text in the text shades ---- */
+:where(:root[data-theme="light"]) .ready-covered { --rs: #15896a; --rs-soft: rgba(21, 137, 106, .08); --rs-line: rgba(21, 137, 106, .35); }
+:where(:root[data-theme="light"]) .ready-wallet { --rs: #d99a0b; --rs-soft: rgba(217, 154, 11, .10); --rs-line: rgba(217, 154, 11, .45); }
+:where(:root[data-theme="light"]) .ready-short { --rs: #d8432f; --rs-soft: var(--red-soft); --rs-line: rgba(216, 67, 47, .40); }
+:where(:root[data-theme="light"]) .ring-wrap.ready.ready-covered .pct, :where(:root[data-theme="light"]) .goal-status.rs.ready-covered { color: #137b5f; }
+:where(:root[data-theme="light"]) .ring-wrap.ready.ready-wallet .pct, :where(:root[data-theme="light"]) .goal-status.rs.ready-wallet { color: #906607; }
+:where(:root[data-theme="light"]) .ring-wrap.ready.ready-short .pct, :where(:root[data-theme="light"]) .goal-status.rs.ready-short { color: #c43825; }
+
+/* ---- SVG presentation attributes set in JSX (CSS wins over them): ring tracks and the onboarding ring ---- */
+:where(:root[data-theme="light"]) svg circle:first-child[stroke="#e6dccf"],
+:where(:root[data-theme="light"]) svg circle:first-child[stroke="#35323f"],
+:where(:root[data-theme="light"]) svg circle:first-child[stroke="#2b2834"] { stroke: #e9e1d6; }
+:where(:root[data-theme="light"]) svg circle[stroke="#2bc48f"] { stroke: #15896a; }
+
+/* ---- Hero surfaces ---- */
+:where(:root[data-theme="light"]) .card-dark, :where(:root[data-theme="light"]) .hero, :where(:root[data-theme="light"]) .welcome-hero {
+  background: linear-gradient(160deg, #ffffff 0%, #fbf6ef 100%); border: 1px solid rgba(35, 33, 43, .08); box-shadow: 0 24px 48px rgba(35, 33, 43, .10);
+}
+:where(:root[data-theme="light"]) .welcome-hero { background: linear-gradient(160deg, #ffffff 0%, #fbf6ef 100%); }
+:where(:root[data-theme="light"]) .hero.reached::before { background: radial-gradient(circle, rgba(21, 137, 106, .18), transparent 65%); }
+:where(:root[data-theme="light"]) .acct b { color: var(--cream); }
+:where(:root[data-theme="light"]) .acct { border-top-color: var(--line); }
+:where(:root[data-theme="light"]) .hero .acts .btn.outline { border-color: #d9d0c3; color: var(--cream); }
+:where(:root[data-theme="light"]) .hero .weeks .d, :where(:root[data-theme="light"]) .hero .weeks .ln,
+:where(:root[data-theme="light"]) .weeks .d, :where(:root[data-theme="light"]) .weeks .ln,
+:where(:root[data-theme="light"]) .hero .weeks .d.last { background: #e9e1d6; }
+:where(:root[data-theme="light"]) .prof-hero { border: 1px solid rgba(35, 33, 43, .08); background: radial-gradient(120% 140% at 100% 0%, rgba(232, 72, 42, .12), transparent 60%), linear-gradient(160deg, #ffffff, #fbf6ef); box-shadow: 0 24px 48px rgba(35, 33, 43, .10); }
+:where(:root[data-theme="light"]) .stats-card { background: linear-gradient(160deg, #eef8f3, #ffffff); border: 1px solid #cfe9de; }
+:where(:root[data-theme="light"]) .splash { background: radial-gradient(90% 55% at 50% 32%, #fde3dc 0%, #fbf6ef 72%); }
+:where(:root[data-theme="light"]) .intro-bg { background: radial-gradient(90% 60% at 50% 30%, #fde3dc 0%, #fbf6ef 70%); }
+
+/* ---- Buttons, pills, chips ---- */
+:where(:root[data-theme="light"]) .btn, :where(:root[data-theme="light"]) .btn.gold { box-shadow: 0 10px 24px rgba(232, 72, 42, .22); }
+:where(:root[data-theme="light"]) .btn:disabled, :where(:root[data-theme="light"]) .btn.mint:disabled { background: #ece5db; color: #8f8999; }
+:where(:root[data-theme="light"]) .btn.ink { background: #23212b; color: #ffffff; box-shadow: 0 10px 24px rgba(35, 33, 43, .18); }
+:where(:root[data-theme="light"]) .btn.ghost { color: var(--cream); border-color: #d9d0c3; }
+:where(:root[data-theme="light"]) .btn.mint { box-shadow: 0 10px 24px rgba(21, 137, 106, .22); }
+:where(:root[data-theme="light"]) .pill { border-color: var(--line); }
+:where(:root[data-theme="light"]) .pill.on { background: #fff1ea; }
+:where(:root[data-theme="light"]) .cat { color: var(--muted); }
+:where(:root[data-theme="light"]) .cat.on { background: #23212b; color: #ffffff; border-color: #23212b; } /* active filter chip */
+:where(:root[data-theme="light"]) .chip, :where(:root[data-theme="light"]) .on-ink .chip { background: var(--card); border: 1px solid var(--line); }
+:where(:root[data-theme="light"]) .chip.sk::after { background: #e9e1d6; }
+:where(:root[data-theme="light"]) .nbtn { background: var(--card); border-color: var(--line); }
+:where(:root[data-theme="light"]) .nbtn.pri { background: #23212b; color: #ffffff; border-color: #23212b; }
+:where(:root[data-theme="light"]) .lang-seg { border: 1px solid var(--line); }
+:where(:root[data-theme="light"]) .lang-seg button.on { background: #23212b; color: #ffffff; }
+:where(:root[data-theme="light"]) .lang-pop { border: 1px solid var(--line); box-shadow: 0 16px 40px rgba(35, 33, 43, .12); }
+:where(:root[data-theme="light"]) .more-btn { border: 1px solid var(--line); background: var(--card); }
+:where(:root[data-theme="light"]) .stamp { box-shadow: 0 30px 80px rgba(232, 72, 42, .30); }
+:where(:root[data-theme="light"]) .tab-pill { background: rgba(232, 72, 42, .12); }
+
+/* ---- Switches: white knob, light track, mint on ---- */
+:where(:root[data-theme="light"]) .switch { background: #e9e1d6; }
+:where(:root[data-theme="light"]) .switch i { background: #ffffff; box-shadow: 0 1px 3px rgba(35, 33, 43, .25); }
+
+/* ---- Tiles, rows, cards, borders ---- */
+:where(:root[data-theme="light"]) .tile { border: 1.5px solid var(--line); }
+:where(:root[data-theme="light"]) .tile.on, :where(:root[data-theme="light"]) .pick.on { background: #fff1ea; }
+:where(:root[data-theme="light"]) .tile .ico, :where(:root[data-theme="light"]) .step .n, :where(:root[data-theme="light"]) .bar { background: #efe8de; }
+:where(:root[data-theme="light"]) .amount { border-bottom-color: #d9d0c3; }
+:where(:root[data-theme="light"]) input.email, :where(:root[data-theme="light"]) textarea.invoice { border-color: var(--line); }
+:where(:root[data-theme="light"]) .screen > .bottom { background: linear-gradient(rgba(251, 246, 239, 0), var(--ground) 14px); }
+:where(:root[data-theme="light"]) .acc-row, :where(:root[data-theme="light"]) .sheet-row, :where(:root[data-theme="light"]) .name-input { border: 1.5px solid var(--line); }
+:where(:root[data-theme="light"]) .empty-row, :where(:root[data-theme="light"]) .tl-row, :where(:root[data-theme="light"]) .faq,
+:where(:root[data-theme="light"]) .set-row, :where(:root[data-theme="light"]) .help-card, :where(:root[data-theme="light"]) .prof-tile,
+:where(:root[data-theme="light"]) .consent-card, :where(:root[data-theme="light"]) .numbers-card, :where(:root[data-theme="light"]) .cat-search,
+:where(:root[data-theme="light"]) .hiw-panel, :where(:root[data-theme="light"]) .wk-card, :where(:root[data-theme="light"]) .facts > div,
+:where(:root[data-theme="light"]) .ranks-list li { border: 1px solid var(--line); }
+:where(:root[data-theme="light"]) .stake-facts, :where(:root[data-theme="light"]) .cat-source, :where(:root[data-theme="light"]) .wk-next { border-top: 1px solid var(--line); }
+:where(:root[data-theme="light"]) .pstats-row { border-top: 1px solid var(--line); }
+:where(:root[data-theme="light"]) .lvl-how { border-top: 1px solid rgba(35, 33, 43, .08); }
+:where(:root[data-theme="light"]) .cat-search:focus-within { border-color: #b9b1a5; }
+:where(:root[data-theme="light"]) .acc-pill, :where(:root[data-theme="light"]) .tl-ic, :where(:root[data-theme="light"]) .hist-empty-ic,
+:where(:root[data-theme="light"]) .sheet-row .si:not(.blogo), :where(:root[data-theme="light"]) .sheet-row .si.x { background: #f1ebe3; }
+:where(:root[data-theme="light"]) .tl-tx, :where(:root[data-theme="light"]) .past .code.returned { background: #f1ebe3; color: var(--muted); }
+:where(:root[data-theme="light"]) .tl-row.change .tl-ic { background: rgba(217, 154, 11, .14); color: #906607; }
+:where(:root[data-theme="light"]) .list .row.move > span:first-child, :where(:root[data-theme="light"]) .list .row.withdraw > span:first-child { color: var(--muted); }
+:where(:root[data-theme="light"]) .help-email { background: var(--card-2); border: 1px solid var(--line); }
+:where(:root[data-theme="light"]) .help-email:active { background: #efe8de; }
+:where(:root[data-theme="light"]) .name-clear { background: #e9e1d6; }
+:where(:root[data-theme="light"]) .avatar-ph { background: #e9e1d6; }
+:where(:root[data-theme="light"]) .avatar img { filter: drop-shadow(0 6px 14px rgba(35, 33, 43, .18)); }
+:where(:root[data-theme="light"]) .fc { box-shadow: 0 20px 40px rgba(35, 33, 43, .12); border: 1px solid rgba(35, 33, 43, .06); }
+:where(:root[data-theme="light"]) .fc span { color: var(--muted); }
+:where(:root[data-theme="light"]) .ob-dots i { background: #e0d7cb; }
+:where(:root[data-theme="light"]) .ob-trust { border: 1px solid var(--line); color: var(--cream); }
+:where(:root[data-theme="light"]) .cdots i { background: #d9d0c3; }
+:where(:root[data-theme="light"]) .cat-source .cat-source-legal { color: var(--muted); }
+:where(:root[data-theme="light"]) .wk-dots > span { background: var(--card-2); color: var(--cream); }
+
+/* "Price confirmed at checkout": --card-2 with a --line border */
+:where(:root[data-theme="light"]) .about-card .price-chip, :where(:root[data-theme="light"]) .bs-vals .price-chip { background: var(--card-2); border: 1px solid var(--line); }
+:where(:root[data-theme="light"]) .about-card .price-chip > i, :where(:root[data-theme="light"]) .bs-vals .price-chip > i { background: #e9e1d6; }
+
+/* ---- Sheets, overlays, tab bar ---- */
+:where(:root[data-theme="light"]) .sheet-bg { background: rgba(35, 33, 43, .38); }
+:where(:root[data-theme="light"]) .sheet { background: var(--card); border: 1px solid var(--line); }
+:where(:root[data-theme="light"]) .sheet-grab { background: #d9d0c3; }
+:where(:root[data-theme="light"]) .sheet-row.pick-goal.on { background: #fff1ea; }
+:where(:root[data-theme="light"]) .sheet-row .radio { border: 2px solid #b9b1a5; }
+:where(:root[data-theme="light"]) .sheet-row.on .radio { box-shadow: inset 0 0 0 4px #fff1ea; }
+:where(:root[data-theme="light"]) .bs-facts > div, :where(:root[data-theme="light"]) .bs-val { background: var(--card-2); border: 1px solid var(--line); }
+:where(:root[data-theme="light"]) .bs-acts { background: var(--card); border-top: 1px solid var(--line); }
+:where(:root[data-theme="light"]) .tabbar { background: rgba(255, 255, 255, .94); border-top: 1px solid var(--line); }
+:where(:root[data-theme="light"]) .tab:active { background: #f1ebe3; }
+:where(:root[data-theme="light"]) .wb { background: rgba(251, 246, 239, .62); }
+@media (prefers-reduced-motion: reduce) { :where(:root[data-theme="light"]) .wb { background: rgba(251, 246, 239, .9); } }
+:where(:root[data-theme="light"]) .wb-kept { color: #906607; }
+:where(:root[data-theme="light"]) .wb-status { color: var(--cream); }
+:where(:root[data-theme="light"]) .hiw { background: rgba(35, 33, 43, .38); }
+:where(:root[data-theme="light"]) .hiw-card { background: var(--card); border: 1px solid var(--line); box-shadow: 0 24px 60px rgba(35, 33, 43, .16); }
+:where(:root[data-theme="light"]) .toast { background: var(--teal-soft); color: var(--cream); border: 1px solid #bfe3d4; box-shadow: 0 16px 40px rgba(35, 33, 43, .12); }
+html.is-fullscreen:where([data-theme="light"]) body::before { background: linear-gradient(var(--ground) 0, var(--ground) var(--fs-inset), rgba(251, 246, 239, 0) 100%); }
+
+/* ---- Notices and bands ---- */
+:where(:root[data-theme="light"]) .band-mint { color: var(--teal); }
+:where(:root[data-theme="light"]) .band-warn { background: #fff1d6; color: #906607; }
+:where(:root[data-theme="light"]) .band-warn .goal-dot { border-color: #fff1d6; }
+:where(:root[data-theme="light"]) .err { color: var(--red); }
+:where(:root[data-theme="light"]) .n-info, :where(:root[data-theme="light"]) .n-wait { border-color: var(--line); }
+:where(:root[data-theme="light"]) .n-info .ic { background: #efe8de; }
+:where(:root[data-theme="light"]) .n-stop { border-color: #f3c2b9; }
+:where(:root[data-theme="light"]) .n-stop .ns { color: var(--red); }
+:where(:root[data-theme="light"]) .n-ok { border-color: #bfe3d4; }
+:where(:root[data-theme="light"]) .n-ok .ns { color: var(--teal); }
+:where(:root[data-theme="light"]) .notice .safe.g { background: var(--teal-soft); color: var(--teal); }
+:where(:root[data-theme="light"]) .notice .safe.r { background: var(--red-soft); color: var(--red); border-color: #f3c2b9; }
+:where(:root[data-theme="light"]) .ms-line { background: rgba(217, 154, 11, .10); border: 1px solid rgba(217, 154, 11, .30); }
+
+/* ---- Goal status, plan, weeks ---- */
+:where(:root[data-theme="light"]) .goal-status::before { box-shadow: 0 0 0 3px rgba(21, 137, 106, .18); }
+:where(:root[data-theme="light"]) .goal-status.withdrawn, :where(:root[data-theme="light"]) .goal-status.bought { color: var(--muted); }
+:where(:root[data-theme="light"]) .goal-status.wait { color: var(--cream); }
+:where(:root[data-theme="light"]) .wbar, :where(:root[data-theme="light"]) .wbar .end, :where(:root[data-theme="light"]) .lvl-bar { background: #e9e1d6; }
+:where(:root[data-theme="light"]) .ring-wrap.burst .pct { color: var(--teal); }
+:where(:root[data-theme="light"]) .gift-face { color: #fff6ec; } /* on the coral gift face, as in dark */
+:where(:root[data-theme="light"]) .hello.on-ink { color: var(--muted); }
+
+/* ---- Profile, stats, levels, rewards, quests ---- */
+:where(:root[data-theme="light"]) .prof-hero-head { color: var(--cream); }
+:where(:root[data-theme="light"]) .prof-total small, :where(:root[data-theme="light"]) .prof-usd,
+:where(:root[data-theme="light"]) .pstats-total b small, :where(:root[data-theme="light"]) .pstats-usd,
+:where(:root[data-theme="light"]) .stats-card p, :where(:root[data-theme="light"]) .ranks-p,
+:where(:root[data-theme="light"]) .bsheet-head p, :where(:root[data-theme="light"]) .bsheet-locked,
+:where(:root[data-theme="light"]) .bcell.locked span, :where(:root[data-theme="light"]) .rw-state,
+:where(:root[data-theme="light"]) .rw-note { color: var(--muted); }
+:where(:root[data-theme="light"]) .rw-state.wait, :where(:root[data-theme="light"]) .rw-steps, :where(:root[data-theme="light"]) .quest-text { color: var(--cream); }
+:where(:root[data-theme="light"]) .prof-pill { background: var(--teal-soft); }
+:where(:root[data-theme="light"]) .prof-pill > i { box-shadow: 0 0 0 4px rgba(21, 137, 106, .18); }
+:where(:root[data-theme="light"]) .prof-ic.coral { background: rgba(232, 72, 42, .12); color: #cc3316; }
+:where(:root[data-theme="light"]) .prof-ic.mint { background: var(--teal-soft); }
+:where(:root[data-theme="light"]) .prof-ic.butter { background: rgba(217, 154, 11, .14); color: #906607; }
+:where(:root[data-theme="light"]) .prof-ic.cream { background: rgba(35, 33, 43, .06); color: var(--muted); }
+:where(:root[data-theme="light"]) .prof-tile.coral { --tint: rgba(232, 72, 42, .08); }
+:where(:root[data-theme="light"]) .prof-tile.mint { --tint: rgba(21, 137, 106, .08); }
+:where(:root[data-theme="light"]) .prof-tile.butter { --tint: rgba(217, 154, 11, .10); }
+:where(:root[data-theme="light"]) .prof-tile.cream { --tint: rgba(35, 33, 43, .03); }
+:where(:root[data-theme="light"]) .prof-tile.coral b, :where(:root[data-theme="light"]) .pstat.coral b,
+:where(:root[data-theme="light"]) .ranks-list li.you b { color: #cc3316; }
+:where(:root[data-theme="light"]) .prof-tile.butter b, :where(:root[data-theme="light"]) .pstat.butter b,
+:where(:root[data-theme="light"]) .numbers-card .nc-grid b.butter, :where(:root[data-theme="light"]) .ranks-now,
+:where(:root[data-theme="light"]) .facts > div.rw dd, :where(:root[data-theme="light"]) .rw-head span,
+:where(:root[data-theme="light"]) .rw-mid em, :where(:root[data-theme="light"]) .quest-meta { color: #906607; }
+:where(:root[data-theme="light"]) .consent-ring { background: var(--teal-soft); box-shadow: 0 0 0 10px rgba(21, 137, 106, .06); }
+:where(:root[data-theme="light"]) .consent-card .ch.c-no, :where(:root[data-theme="light"]) .consent-card .cl.c-no svg,
+:where(:root[data-theme="light"]) .stats-delete { color: var(--red); }
+:where(:root[data-theme="light"]) .stats-card .sc-icon { background: var(--teal-soft); }
+:where(:root[data-theme="light"]) .numbers-card .nc-live i { box-shadow: 0 0 0 3px rgba(21, 137, 106, .18); }
+:where(:root[data-theme="light"]) .pstats { border: 1px solid var(--line); background-image: radial-gradient(110% 120% at 100% 0%, rgba(232, 72, 42, .08), transparent 60%); }
+:where(:root[data-theme="light"]) .lvl-card { border: 1px solid var(--line); background-image: radial-gradient(90% 120% at 0% 0%, rgba(232, 72, 42, .07), transparent 60%); }
+:where(:root[data-theme="light"]) .lvl-pill { background: rgba(217, 154, 11, .14); color: #906607; }
+:where(:root[data-theme="light"]) .ranks-list li.you { border-color: rgba(232, 72, 42, .45); background: rgba(232, 72, 42, .07); }
+:where(:root[data-theme="light"]) .facts > div.rw, :where(:root[data-theme="light"]) .rw-card { border: 1px solid #f0dcae; background: linear-gradient(160deg, #fff7e6, #ffffff); }
+:where(:root[data-theme="light"]) .rw-row { border: 1px solid #f0dcae; background: rgba(255, 255, 255, .7); }
+:where(:root[data-theme="light"]) .rw-box { border: 1.5px dashed #d9d0c3; background: var(--card-2); }
+:where(:root[data-theme="light"]) .quest-card { border: 1.5px solid rgba(217, 154, 11, .35); background: linear-gradient(160deg, #fff7e6, #ffffff); }
+:where(:root[data-theme="light"]) .quest-bar { background: #f3e6c6; }
+:where(:root[data-theme="light"]) .quest-bar i { background: #d99a0b; }
+
+/* ---- Brand surfaces keep their colours; only their shadows get lighter on a light ground ---- */
+:where(:root[data-theme="light"]) .codecard .face.b { box-shadow: 0 30px 60px rgba(35, 33, 43, .20); }
+:where(:root[data-theme="light"]) .gcard { box-shadow: 0 30px 60px rgba(35, 33, 43, .25); }
+:where(:root[data-theme="light"]) .ccard { box-shadow: 0 30px 60px rgba(35, 33, 43, .20), 0 0 60px rgba(232, 72, 42, .15); }
+:where(:root[data-theme="light"]) .gtile { box-shadow: 0 10px 24px rgba(35, 33, 43, .18), inset 0 1px 0 rgba(255, 255, 255, .12); }
+:where(:root[data-theme="light"]) .bs-card { box-shadow: 0 18px 40px rgba(35, 33, 43, .20); }
+:where(:root[data-theme="light"]) .bstamp { box-shadow: 0 14px 36px rgba(35, 33, 43, .20); }
+
+/* ---- Found on the first light screenshots ---- */
+/* The Dibs wordmark's letters are an SVG fill (cream in dark): ink on the light ground. */
+:where(:root[data-theme="light"]) svg.wordmark path[fill="#FFF6EC"] { fill: #23212b; }
+/* The active chip's sliding highlight (Catalog): dark fill, white text. */
+:where(:root[data-theme="light"]) .cat-hl { background: #23212b; }
+/* The shop's white wordmark in the catalogue footer: dark on light. */
+:where(:root[data-theme="light"]) .cat-source-logo { filter: brightness(0); opacity: .8; }
+/* Butter as text reads on ink or coral only: the yellow text shade on light surfaces; butter borders get the light yellow. */
+:where(:root[data-theme="light"]) .ms-line, :where(:root[data-theme="light"]) .card-dark .item { color: #906607; }
+:where(:root[data-theme="light"]) .wbar .end { border-color: #d99a0b; }
+:where(:root[data-theme="light"]) .hero .weeks .d.last { border-color: #d99a0b; }
+:where(:root[data-theme="light"]) .welcome-hero .tl .last { animation: none; color: #906607; }

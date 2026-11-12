@@ -29,15 +29,16 @@ const bold = (s) => `${B0}${s}${B1}`
 // item(goal) -> the goal's short name (WeekCard's). delta: earned since the last visit, or null when unknown.
 // ready(goal) -> the goal's ready state (lib/readyState.js) for ready goals and goals unlocking for their card, or null
 // (any other goal, or the free NIM could not be read: then the lines below stay as they were).
-//   covered: "{item} is 100% there."   wallet / short: the goal screen's short line, no percentage.
+//   covered: a ready goal "{item} is ready. Time to get your card." (it can be bought now), an unlocking goal
+//   "{item} is 100% there."   wallet / short: the goal screen's short line, no percentage.
 export function statusLine(goals, { t, lang = 'en', item, delta = null, ready = () => null }) {
   const s = pickStatus(goals)
   if (s.kind === 'none') return t('greet_none')
   const rs = ready(s.goal)
   if (rs && rs.kind !== 'covered') return t(`ready_home_${rs.kind}`, { gap: bold(fmtNim(rs.gap, lang)), toAdd: bold(fmtNim(rs.toAdd, lang)) })
-  if (!rs && s.kind === 'ready') return t('greet_ready', { item: item(s.goal) })
+  if (s.kind === 'ready') return t('greet_ready', { item: item(s.goal) })
   let line = t('greet_goal', { item: item(s.goal), pct: bold(rs ? 100 : s.pct) })
-  if (s.goal.status !== 'ready' && showEarned(delta)) line += ' ' + t('greet_earned', { earned: bold(fmtEarned(delta, lang).replace(/^\+/, '')) })
+  if (showEarned(delta)) line += ' ' + t('greet_earned', { earned: bold(fmtEarned(delta, lang).replace(/^\+/, '')) })
   return line
 }
 

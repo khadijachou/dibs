@@ -54,9 +54,9 @@ const card = { id: 'steam-20', usd: 20, live: true }
 const readyOf = (free) => (g) => (hasReadyState(g) ? readyState(g, card, prices, free) : null)
 const line = (g, free) => plainText(statusLine([goal('s', 30, 100_000), g], { t, item, ready: readyOf(free), delta: 3 }))
 
-test('covered: "{card} is 100% there", on an unlocking goal and a ready goal', () => {
+test('covered: an unlocking goal is "100% there", a ready goal invites to get the card (v1.0.4)', () => {
   assert.equal(line(goal('u', 100_000, 100_000, 'unlocking'), 0), 'u is 100% there. Staking added +3.00 NIM since your last visit.')
-  assert.equal(line(goal('r', 100_000, 100_000, 'ready'), 0), 'r is 100% there.')
+  assert.equal(line(goal('r', 100_000, 100_000, 'ready'), 0), 'r is ready. Time to get your card.')
 })
 
 test('wallet: the goal screen short line, no percentage', () => {

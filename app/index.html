@@ -4,6 +4,16 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#E8482A" />
+    <!-- Appearance before the first paint (no dark flash in light). Same rule as src/lib/theme.js: dibs.theme 'light'
+         = light, anything else = dark (the default). -->
+    <script>
+      (function () {
+        var th = 'dark'
+        try { if (localStorage.getItem('dibs.theme') === 'light') th = 'light' } catch (e) { /* storage blocked */ }
+        document.documentElement.setAttribute('data-theme', th)
+        if (th === 'light') document.querySelector('meta[name="theme-color"]').setAttribute('content', '#fbf6ef')
+      })()
+    </script>
     <title>Dibs</title>
     <meta name="application-name" content="Dibs" />
     <meta name="description" content="Save for a gift card with NIM. It earns while you wait." />
