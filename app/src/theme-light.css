@@ -136,6 +136,13 @@
 :where(:root[data-theme="light"]) .ob-trust { border: 1px solid var(--line); color: var(--cream); }
 :where(:root[data-theme="light"]) .cdots i { background: #d9d0c3; }
 :where(:root[data-theme="light"]) .cat-source .cat-source-legal { color: var(--muted); }
+:where(:root[data-theme="light"]) .news-rel::before { background: #e3dacd; }
+:where(:root[data-theme="light"]) .news-rel::after { background: #bdb4c2; }
+:where(:root[data-theme="light"]) .news-rel.latest::after { background: #e8482a; box-shadow: 0 0 0 3px rgba(232, 72, 42, .16); }
+:where(:root[data-theme="light"]) .news-pill { background: var(--card); border-color: var(--line); }
+:where(:root[data-theme="light"]) .latest .news-pill { background: #e8482a; border-color: #e8482a; color: #fff; }
+:where(:root[data-theme="light"]) .news-more { border-color: #d6ccbf; }
+:where(:root[data-theme="light"]) .news-more:active { background: var(--card-2); }
 :where(:root[data-theme="light"]) .wk-dots > span { background: var(--card-2); color: var(--cream); }
 
 /* "Price confirmed at checkout": --card-2 with a --line border */
