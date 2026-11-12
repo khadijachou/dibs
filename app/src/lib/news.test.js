@@ -61,10 +61,25 @@ test('v1.0.5 (news_10) sits between 1.0.6 and 1.0.4, with the same items in en, 
   for (const l of ['en', 'fr', 'es']) assert.equal(items(T[l]('news_10')).length, 2, `news_10 ${l}`)
 })
 
-test('a two-digit patch is newer: 1.0.10 after 1.0.9, and it heads the timeline', () => {
+test('a two-digit patch is newer: 1.0.10 after 1.0.9', () => {
   assert.ok(vNum('1.0.10') > vNum('1.0.9'))
-  assert.equal(timeline[0].v, '1.0.10')
-  assert.equal(timeline[1].v, '1.0.9')
+  const vs = timeline.map((b) => b.v)
+  assert.equal(vs[vs.indexOf('1.0.10') + 1], '1.0.9')
+})
+
+test('1.1.0 (shown as 1.1, like 1.0.0 as 1.0) heads the timeline, after 1.0.10', () => {
+  assert.ok(vNum('1.1') > vNum('1.0.10'))
+  assert.equal(timeline[0].v, '1.1')
+  assert.equal(timeline[0].key, 'news_13')
+  assert.equal(timeline[1].v, '1.0.10')
+})
+
+test('1.1.0 (news_13) has one item in en, fr and es, naming the five new brands', () => {
+  for (const l of ['en', 'fr', 'es']) {
+    const list = items(T[l]('news_13'))
+    assert.equal(list.length, 1, `news_13 ${l}`)
+    for (const b of ['Bolt', 'Twitch', 'H&M', 'Nike', 'Burger King']) assert.ok(list[0].includes(b), `news_13 ${l} names ${b}`)
+  }
 })
 
 test('1.0.10 (news_12) has three items in en, fr and es', () => {

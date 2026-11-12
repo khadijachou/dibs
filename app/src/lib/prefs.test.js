@@ -108,9 +108,9 @@ test('Add a preference: search and category filter over that list', () => {
   assert.deepEqual(filterBrands(list, { q: 'zzz' }), [])
 })
 
-test('the static brand list has 16 brands with more than one version', async () => {
+test('the static brand list has 20 brands with more than one version (v1.1.0: Bolt, Twitch, H&M, Nike)', async () => {
   const { BRANDS } = await import('./brands.js')
-  assert.equal(BRANDS.filter((b) => b.region.length > 1).length, 16)
+  assert.equal(BRANDS.filter((b) => b.region.length > 1).length, 20)
 })
 
 test('a brand sold in one version is never saved, on createGoal or on Change card', () => {

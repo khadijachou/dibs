@@ -11,7 +11,7 @@ import { getCurrency, regionForCurrency } from './currency.js'
 // Order = order on the "All" view. The first eight sit above the fold.
 // slugs marked "confirm" come from the shop site and must be checked on the server (`npm run catalog -- add <slug>`).
 // Logos: lib/brandIcons.js (simple-icons, by key) first; else logo, a file in app/public/logos (Amazon, Nintendo eShop,
-// Xbox, Flightgift, Best Buy, Disney: brands simple-icons does not carry; the shop's catalogue data has no product
+// Xbox, Flightgift, Best Buy, Disney, Bolt: brands simple-icons does not carry; the shop's catalogue data has no product
 // image); else tile: a letter tile in the brand's colour with a white letter. tile and color still tint the cards.
 // logoPlate (logo files only): absent = white plate, logo contained at 84 % (Amazon); '#rrggbb' = that plate colour
 // (a light logo on a transparent background, or a wide logo with its own solid background: plate and picture blend);
@@ -36,10 +36,16 @@ export const BRANDS = [
   { key: 'hotels',      name: 'Hotels.com',        color: ['#d32f2f', '#4f0f0f'], chip: 'travel',    logo: null, tile: { bg: '#d32f2f', fg: '#fff', letter: 'H' }, slugs: ['hotels_com-usa', 'hotels_com-uk'], delivers: 'pin', region: ['USA', 'UK'], about: 'brand_about_hotels' },          // confirm
   { key: 'flightgift',  name: 'Flightgift',        color: ['#1f6feb', '#0a2558'], chip: 'travel',    logo: '/logos/flightgift.jpg', logoPlate: 'fill', tile: { bg: '#1F6FEB', fg: '#fff', letter: 'F' }, slugs: ['flightgift-usa', 'flightgift-eu', 'flightgift-gb'], delivers: 'link', region: ['USA', 'Europe', 'UK'], about: 'brand_about_flightgift' },          // confirm
   { key: 'uber',        name: 'Uber',              color: ['#3a3a3e', '#050506'], chip: 'travel',    logo: null, tile: { bg: '#0b0b0d', fg: '#fff', letter: 'U' }, slugs: ['uber-usa', 'uber-and-uber-eats-eu', 'uber-rides-uk'], delivers: 'code', region: ['USA', 'Europe', 'UK'], about: 'brand_about_uber' },                // confirm
+  // v1.1.0. Bolt: ride and food credit added with a code in the app (Promotions), no USA version: it opens on UK.
+  { key: 'bolt',        name: 'Bolt',              color: ['#11894c', '#06301b'], chip: 'travel',    logo: '/logos/bolt.png', tile: { bg: '#11894C', fg: '#fff', letter: 'B' }, slugs: ['bolt-uk', 'bolt-nigeria'], delivers: 'code', region: ['UK', 'Nigeria'], about: 'brand_about_bolt' },
   { key: 'bestbuy',     name: 'Best Buy',          color: ['#0046be', '#001a4a'], chip: 'shopping',  logo: '/logos/Best-Buy.png', logoPlate: 'fill', tile: { bg: '#0046BE', fg: '#fff', letter: 'B' }, slugs: ['best-buy-usa'], delivers: 'pin', region: ['USA'], about: 'brand_about_bestbuy' },         // confirm
+  { key: 'handm',       name: 'H&M',               color: ['#cf000f', '#4a0006'], chip: 'shopping',  logo: null, tile: { bg: '#E50010', fg: '#fff', letter: 'H' }, slugs: ['handm-usa', 'handm-uk'], delivers: 'pin', region: ['USA', 'UK'], about: 'brand_about_handm' },
+  { key: 'nike',        name: 'Nike',              color: ['#3a3a3c', '#0b0b0c'], chip: 'shopping',  logo: null, tile: { bg: '#111111', fg: '#fff', letter: 'N' }, slugs: ['nike-usa', 'nike-uk'], delivers: 'pin', region: ['USA', 'UK'], about: 'brand_about_nike' },
   { key: 'disney',      name: 'Disney',            color: ['#1b4fe0', '#08185c'], chip: 'streaming', logo: '/logos/DGC-Logo.png', tile: { bg: '#113CCF', fg: '#fff', letter: 'D' }, slugs: ['disney-usa'], delivers: 'code', region: ['USA'], about: 'brand_about_disney' },              // confirm
+  { key: 'twitch',      name: 'Twitch',            color: ['#7d3ce6', '#1f0f45'], chip: 'streaming', logo: null, tile: { bg: '#9146FF', fg: '#fff', letter: 'T' }, slugs: ['twitch-usa', 'twitch-eu', 'twitch-uk'], delivers: 'code', region: ['USA', 'Europe', 'UK'], about: 'brand_about_twitch' },
   { key: 'starbucks',   name: 'Starbucks',         color: ['#00845a', '#002e20'], chip: 'food',      logo: null, tile: { bg: '#00704a', fg: '#fff', letter: 'S' }, slugs: ['starbucks-usa', 'starbucks-uk'], delivers: 'pin', region: ['USA', 'UK'], about: 'brand_about_starbucks' },           // confirm
   { key: 'doordash',    name: 'DoorDash',          color: ['#ff3008', '#6b1403'], chip: 'food',      logo: null, tile: { bg: '#ff3008', fg: '#fff', letter: 'D' }, slugs: ['doordash-usa'], delivers: 'code', region: ['USA'], about: 'brand_about_doordash' },            // confirm
+  { key: 'burgerking',  name: 'Burger King',       color: ['#d62300', '#502314'], chip: 'food',      logo: null, tile: { bg: '#D62300', fg: '#fff', letter: 'B' }, slugs: ['burger-king-usa'], delivers: 'code', region: ['USA'], about: 'brand_about_burgerking' },
 ]
 
 // About this card (Goal Details): about = i18n key of the one-line description; delivers = what the shop sends
@@ -128,7 +134,8 @@ export function brandLogo(item) {
 // A works-with line ({ en, fr, es }) in the user's language, and the sentence shown under a card's values:
 // "For Steam accounts with a USD wallet. Check your account before you call dibs." Empty when unknown.
 export const worksText = (t, w) => (w ? w[t.lang] || w.en || '' : '')
-export const worksLine = (t, w) => (w ? t('works_line', { worksWith: worksText(t, w) }) : '')
+// A line that already ends with a period ("EE. UU.") does not get a second one from the template.
+export const worksLine = (t, w) => (w ? t('works_line', { worksWith: worksText(t, w).replace(/\.\s*$/, '') }) : '')
 
 // Catalogue search: the start of any word in the brand name, any case ("st": Steam, PlayStation Store, Starbucks;
 // not Best Buy). chip: a category or 'all'.

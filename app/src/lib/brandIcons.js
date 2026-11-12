@@ -3,12 +3,12 @@
 // The shop's catalogue data has no product image, so this is the only logo source besides the
 // existing PNG files in public/logos (kept for brands simple-icons does not have).
 import {
-  siAirbnb, siApple, siDiscord, siDoordash, siFortnite, siGoogleplay, siHotelsdotcom, siNetflix,
-  siPlaystation, siRiotgames, siRoblox, siStarbucks, siSteam, siUber, siUbereats, siValorant,
+  siAirbnb, siApple, siBurgerking, siDiscord, siDoordash, siFortnite, siGoogleplay, siHandm, siHotelsdotcom, siNetflix,
+  siNike, siPlaystation, siRiotgames, siRoblox, siStarbucks, siSteam, siTwitch, siUber, siUbereats, siValorant,
 } from 'simple-icons'
 
 // Brand key (lib/brands.js) → simple-icons entry.
-// Not in simple-icons 16.36: Amazon, Nintendo eShop, Xbox, Flightgift, Best Buy, Disney. They use files in
+// Not in simple-icons 16.36: Amazon, Nintendo eShop, Xbox, Flightgift, Best Buy, Disney, Bolt. They use files in
 // public/logos (lib/brands.js logo).
 export const BRAND_ICONS = {
   steam: siSteam,
@@ -27,6 +27,10 @@ export const BRAND_ICONS = {
   uber: siUber,
   starbucks: siStarbucks,
   doordash: siDoordash,
+  handm: siHandm,
+  nike: siNike, // #111111: black swoosh on the white plate (brandColor falls back to the neutral tint)
+  twitch: siTwitch,
+  burgerking: siBurgerking,
 }
 
 export const brandIcon = (key) => BRAND_ICONS[key] || null

@@ -166,6 +166,52 @@ test('currency: Auto (or nothing stored) behaves exactly as before, whatever the
   }
 })
 
+test('worksLine: a line ending in "EE. UU." gets one period, not two', () => {
+  const w = { en: 'For H&M in the USA', fr: 'Pour H&M aux États-Unis', es: 'Para H&M en EE. UU.' }
+  assert.equal(worksLine(makeT('es'), w), 'Para H&M en EE. UU. Revisa tu cuenta antes de apartarla.')
+  assert.equal(worksLine(makeT('en'), w), 'For H&M in the USA. Check your account before you call dibs.')
+})
+
+// v1.1.0 brands with several versions: Twitch (USA, Europe, UK), H&M and Nike (USA, UK), Bolt (UK, Nigeria: no USA).
+const NEW = [
+  ...['twitch-usa:20:USA:USD', 'twitch-eu:20:Europe:EUR', 'twitch-uk:20:UK:GBP', 'handm-usa:20:USA:USD', 'handm-uk:20:UK:GBP',
+    'nike-usa:20:USA:USD', 'nike-uk:20:UK:GBP', 'bolt-uk:10:UK:GBP', 'bolt-nigeria:1000:Nigeria:NGN']
+    .map((s) => { const [slug, v, r, c] = s.split(':'); return item(slug, v, r, c, W(`For ${slug}`)) }),
+]
+const newBrand = (key) => catalogBrands(NEW).find((b) => b.key === key)
+const opens = () => Object.fromEntries(['twitch', 'handm', 'nike', 'bolt'].map((k) => [k, defaultRegion(newBrand(k)).key]))
+
+test('v1.1.0 brands: their versions, in order', () => {
+  assert.deepEqual(newBrand('twitch').regions.map((r) => r.key), ['USA', 'Europe', 'UK'])
+  assert.deepEqual(newBrand('handm').regions.map((r) => r.key), ['USA', 'UK'])
+  assert.deepEqual(newBrand('nike').regions.map((r) => r.key), ['USA', 'UK'])
+  assert.deepEqual(newBrand('bolt').regions.map((r) => r.key), ['UK', 'Nigeria'])
+})
+
+test('v1.1.0 brands: Auto and USD open USA; Bolt (no USA version) opens its first, UK', () => {
+  for (const v of [null, 'auto', 'USD']) {
+    if (v) store.set('dibs.currency', v); else store.delete('dibs.currency')
+    assert.deepEqual(opens(), { twitch: 'USA', handm: 'USA', nike: 'USA', bolt: 'UK' }, `currency ${v}`)
+  }
+})
+
+test('v1.1.0 brands: EUR, GBP and NGN open their version when the brand has it, else USA, else the first', () => {
+  store.set('dibs.currency', 'EUR')
+  assert.deepEqual(opens(), { twitch: 'Europe', handm: 'USA', nike: 'USA', bolt: 'UK' })
+  store.set('dibs.currency', 'GBP')
+  assert.deepEqual(opens(), { twitch: 'UK', handm: 'UK', nike: 'UK', bolt: 'UK' })
+  store.set('dibs.currency', 'NGN')
+  assert.deepEqual(opens(), { twitch: 'USA', handm: 'USA', nike: 'USA', bolt: 'Nigeria' })
+})
+
+test('v1.1.0 brands: a saved account wins over the currency', () => {
+  store.set('dibs.currency', 'EUR')
+  setPref('twitch', 'UK')
+  setPref('nike', 'UK')
+  setPref('bolt', 'Nigeria')
+  assert.deepEqual(opens(), { twitch: 'UK', handm: 'USA', nike: 'UK', bolt: 'Nigeria' })
+})
+
 test('currency: an existing goal keeps its own version', () => {
   store.set('dibs.currency', 'EUR')
   const goal = { id: 'g', itemId: 'netflix-usa-30', itemName: 'Netflix', itemDetail: '30 USD', region: 'USA', currency: 'USD', status: 'saving', deposits: [] }
