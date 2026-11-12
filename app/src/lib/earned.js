@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react'
-import { listGoals } from './goals.js'
+import { listGoals, savedNim } from './goals.js'
 import { readStaker } from './nimiq.js'
 import { stakeEarnings } from './profileStats.js'
 import { pending } from './deposit.js'
-import { activeNim, earnState } from './earnState.js'
+import { activeNim, earnState, leavingNim } from './earnState.js'
 
 // Savings, Profile, the goal screen and the goal cards all read rewards through this one function:
 // { total, inGoals, other, earned, byGoal, since } (see profileStats.stakeEarnings), plus active (active stake, NIM)
-// and state (stopped | first | earning, see earnState.js: why earned shows what it shows). earned is null when it cannot
+// leaving (NIM leaving staking) and state (stopped | partial | first | earning, see earnState.js: why earned shows what it shows). earned is null when it cannot
 // be computed reliably: screens hide it then. The only write is the "other stake" base kept on this device.
 const BASE_KEY = 'dibs.stakeBase'
 const readBase = () => { try { return JSON.parse(localStorage.getItem(BASE_KEY) || 'null') } catch { return null } }
@@ -25,7 +25,13 @@ export function stakeSummary(st, address) {
   const base = readBase()
   const r = stakeEarnings(st, goals, base, { settling: settlingNow(st, goals, address) })
   if (r.base && r.base !== base) writeBase(r.base)
-  return { ...r, active: activeNim(st), state: earnState({ st, inGoals: r.inGoals, earned: r.earned, since: r.since }) }
+  const unlockingNim = goals.filter((g) => g.status === 'unlocking').reduce((s, g) => s + savedNim(g), 0)
+  return {
+    ...r,
+    active: activeNim(st),
+    leaving: leavingNim(st, unlockingNim), // NIM leaving staking (shown with "partial")
+    state: earnState({ st, inGoals: r.inGoals, unlockingNim, earned: r.earned, since: r.since }),
+  }
 }
 
 // The summary for screens that only display it; null while unknown (chain not read yet, or unreadable).

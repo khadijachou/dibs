@@ -37,7 +37,8 @@ export default function Stake() {
     body = <Notice tone="wait" title={t('stake_reading')} />
   } else {
     const st = state.staker
-    const { total, earned, other, state: earnState } = stakeSummary(st, address)
+    const { total, earned, other, leaving, state: earnState } = stakeSummary(st, address)
+    const why = { first: t('stake_earned_first'), stopped: t('stake_earned_stopped'), partial: t('stake_earned_partial', { amount: fmtNim(leaving, lang) }) }[earnState]
     body = (
       <>
         <section className="hero stake-hero">
@@ -46,8 +47,8 @@ export default function Stake() {
           <div className="stake-facts">
             <div><span>{t('stake_validator')}</span><b><i className="dot" aria-hidden="true" />{poolName()}</b></div>
             {earned != null && <div><span>{t('stake_earned')}</span><b className="mint">{fmtEarned(earned, lang)} NIM</b></div>}
-            {/* Why earned shows what it shows (lib/earnState.js): first payout pending, or NIM leaving staking. */}
-            {earned != null && earnState !== 'earning' && <p className="earn-why">{t(earnState === 'first' ? 'stake_earned_first' : 'stake_earned_stopped')}</p>}
+            {/* Why earned shows what it shows (lib/earnState.js): first payout pending, part or all of the NIM leaving staking. */}
+            {earned != null && why && <p className="earn-why">{why}</p>}
             {other >= 1 && <div><span>{t('stake_other')}</span><b>{fmtNim(Math.floor(other), lang)} NIM</b></div>}
           </div>
           {other >= 1 && <p className="small">{t('stake_other_note')}</p>}
