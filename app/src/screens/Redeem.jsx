@@ -281,6 +281,7 @@ export default function Redeem({ goalId }) {
         {payNim != null && !expired && !locked && (!check || check.ok) && (
           <div className="pay-sum" role="status">
             <b>{t('redeem_pay_about', { nim: fmtNim(payNim, lang), usd: fmtUsd(invoiceUsd, lang) })}</b>
+            <span className="small pay-nim">{t('redeem_pay_nim')}</span>{/* Nimiq Pay may ask NIM or USDT: Dibs cannot preselect NIM */}
             {apiMode && left != null && <span className="small countdown">{t('redeem_expires', { time: mmss(left) })}</span>}
           </div>
         )}

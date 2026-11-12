@@ -6,6 +6,7 @@ import { listGoals, moveNim, progress, removeGoal, savedNim } from '../lib/goals
 import { goalBrand } from './Home.jsx'
 import { fmtNim } from '../lib/format.js'
 import { track } from '../lib/stats.js'
+import { manageRows } from '../lib/manage.js'
 
 const parseNim = (v) => Math.floor(Number(String(v).replace(/[^\d.]/g, ''))) || 0
 // title: at the start of a line or title; false inside a sentence.
@@ -20,37 +21,41 @@ const IconBack = () => <Icon><path d="M9 14 4 9l5-5" /><path d="M4 9h10.5a5.5 5.
 const IconCard = () => <Icon><rect x="3" y="6" width="18" height="12" rx="2" /><path d="M3 10h18M7 15h4" /></Icon>
 const IconDelete = () =><Icon><path d="M6 6l12 12M18 6 6 18" /></Icon>
 
-// Frame 2: Change card (saving and ready goals), Move (saving only: the ledger moves NIM between saving goals),
+// Frame 2: Change card (saving, ready, and unlocking for the card: then Change card only), Move (saving only: the ledger moves NIM between saving goals),
 // Get my NIM back, Delete (off while the goal still holds NIM).
 // Change card opens the catalogue in change mode (Catalog changeFor → Plan), exactly as CardIssue's Change card: no
 // transaction, NIM and history kept, the old card kept in cardChanges.
 export function ManageSheet({ goal, onClose, onChange, onMove, onWithdraw, onDelete }) {
   const { t, lang } = useApp()
   const saved = savedNim(goal)
-  const canChange = goal.status === 'saving' || goal.status === 'ready'
+  const rows = manageRows(goal) // unlocking for the card: Change card only
   return (
     <Sheet title={t('manage_title')} onClose={onClose}>
       <div className="sheet-list">
-        {canChange && onChange && (
+        {rows.includes('change') && onChange && (
           <button type="button" className="sheet-row" onClick={onChange}>
             <span className="si move" aria-hidden="true"><IconCard /></span>
             <span><b>{t('manage_change')}</b><small>{t('manage_change_sub')}</small></span>
           </button>
         )}
-        {goal.status !== 'ready' && (
+        {rows.includes('move') && (
           <button type="button" className="sheet-row" disabled={saved <= 0} onClick={onMove}>
             <span className="si move" aria-hidden="true"><IconMove /></span>
             <span><b>{t('manage_move')}</b><small>{t('manage_move_sub')}</small></span>
           </button>
         )}
-        <button type="button" className="sheet-row" disabled={saved <= 0} onClick={onWithdraw}>
-          <span className="si back" aria-hidden="true"><IconBack /></span>
-          <span><b>{t('manage_back')}</b><small>{goal.status === 'ready' ? t('goal_ready') : t('manage_back_sub')}</small></span>
-        </button>
-        <button type="button" className="sheet-row danger" disabled={saved > 0} onClick={onDelete}>
-          <span className="si del" aria-hidden="true"><IconDelete /></span>
-          <span><b>{t('manage_delete')}</b><small>{saved > 0 ? t('manage_delete_blocked', { nim: fmtNim(saved, lang) }) : t('manage_delete_empty')}</small></span>
-        </button>
+        {rows.includes('back') && (
+          <button type="button" className="sheet-row" disabled={saved <= 0} onClick={onWithdraw}>
+            <span className="si back" aria-hidden="true"><IconBack /></span>
+            <span><b>{t('manage_back')}</b><small>{goal.status === 'ready' ? t('goal_ready') : t('manage_back_sub')}</small></span>
+          </button>
+        )}
+        {rows.includes('delete') && (
+          <button type="button" className="sheet-row danger" disabled={saved > 0} onClick={onDelete}>
+            <span className="si del" aria-hidden="true"><IconDelete /></span>
+            <span><b>{t('manage_delete')}</b><small>{saved > 0 ? t('manage_delete_blocked', { nim: fmtNim(saved, lang) }) : t('manage_delete_empty')}</small></span>
+          </button>
+        )}
       </div>
       <button type="button" className="btn ghost" onClick={onClose}>{t('manage_cancel')}</button>
     </Sheet>

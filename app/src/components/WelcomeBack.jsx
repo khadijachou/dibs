@@ -8,6 +8,7 @@ import { playWelcome } from '../lib/sound.js'
 import { Avatar } from './Avatar.jsx'
 import { MARK_RIBBON } from './ui.jsx'
 import { goalShortName } from './WeekCard.jsx'
+import { readWallet, readyFor } from './ReadyState.jsx'
 
 // Welcome back, the Dibs way. Returning users, once per launch, right after the splash (App.jsx); first: the first-run
 // "Welcome, Sam" before How Dibs works. Over a blurred Goals screen: the user's Nimiq Pay avatar pops into the hole of
@@ -36,10 +37,11 @@ const DROP = -(H + 140) / SCALE // in mark units: the box height + 140 px above 
 const reducedMotion = () => { try { return Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) } catch { return false } }
 
 export default function WelcomeBack({ onDone, first = false }) {
-  const { t, lang, walletAddress, address } = useApp()
+  const { t, lang, walletAddress, address, prices, balance } = useApp()
   const name = getName()
   const [out, setOut] = useState(false)
   const [delta, setDelta] = useState(null)
+  const [wallet, setWallet] = useState(null) // spendable NIM, for a ready or unlocking goal's line (readyState)
   const done = useRef(onDone)
   const sound = useRef(null)
   const reduced = useMemo(reducedMotion, [])
@@ -52,6 +54,7 @@ export default function WelcomeBack({ onDone, first = false }) {
     if (!first) {
       const prev = previousEarned()
       currentEarned(1200).then((cur) => { if (live) setDelta(earnedDelta(cur, prev?.value ?? null)) })
+      Promise.race([readWallet(), new Promise((r) => setTimeout(() => r(null), 1200))]).then((n) => { if (live && n != null) setWallet(n) })
     }
     return () => { live = false; clearTimeout(a); clearTimeout(b); sound.current?.stop() }
   }, [first, reduced])
@@ -68,7 +71,7 @@ export default function WelcomeBack({ onDone, first = false }) {
   if (!first) {
     let goals = []
     try { goals = address ? listGoals(address) : [] } catch { /* display only */ }
-    line3 = statusLine(goals, { t, lang, delta, item: (g) => goalShortName(t, g) })
+    line3 = statusLine(goals, { t, lang, delta, item: (g) => goalShortName(t, g), ready: (g) => readyFor(g, { goals, prices, wallet, balance }) })
   }
 
   return (

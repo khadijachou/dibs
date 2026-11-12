@@ -3,7 +3,8 @@ import { useApp, useBlockBack } from '../App.jsx'
 import { detailText, itemLabel, itemName, localName } from '../lib/itemName.js'
 import { BrandLogo, FieldError, Header, Notice, Stamp, WeekDots } from '../components/ui.jsx'
 import { classify, lastLogText } from '../lib/errors.js'
-import { deletable, getGoal, listGoals, openGoalFor, progress, savedNim, stakerFlag, unlockRunning, updateGoal } from '../lib/goals.js'
+import { canManageGoal } from '../lib/manage.js'
+import { getGoal, listGoals, openGoalFor, progress, savedNim, stakerFlag, unlockRunning, updateGoal } from '../lib/goals.js'
 import { planOf, poolName, shortAddress } from '../lib/pace.js'
 import { goalBrand, PaceLine } from './Home.jsx'
 import { MIN_NEW_STAKER_NIM } from '../lib/config.js'
@@ -187,8 +188,9 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
   const invalid = !amountNim || tooMuch || underMin || cantOpen
   // Quick picks scale with the goal: the weekly suggestion, a quarter of the target, everything left.
   // Manage (⋯): saving goals, ready goals (Change card, Get my NIM back), and any goal with 0 NIM and no unlock in
-  // progress (Delete). Never while unlocking. Only this goal's own pending deposit or pay lock closes it.
-  const canManage = (goal.status === 'saving' || goal.status === 'ready' || deletable(goal)) && !(pend && pend.goalId === goal.id) && !payLockedFor(goal.id)
+  // progress (Delete). Unlocking for the card: Change card only; never while unlocking to get the NIM back.
+  // Only this goal's own pending deposit or pay lock closes it.
+  const canManage = canManageGoal(goal, { pending: Boolean(pend && pend.goalId === goal.id), payLocked: payLockedFor(goal.id) })
   const empty = goal.status === 'saving' && saved === 0 && (goal.deposits.length > 0 || Boolean(twin)) && canManage
   // Add only while there is something to add; a goal at 100 % or past saving shows Details.
   const adding = mode === 'add' && goal.status === 'saving' && !reached
@@ -387,7 +389,7 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
               <GoalStatus goal={goal} earned={earned} ready={rs} />
             </div>
           </div>
-          {rs && <ReadyBox rs={rs} />}
+          {rs && <ReadyBox rs={rs} compact={goal.status !== 'ready'} /> /* unlocking: the short lines (the NIM is not back yet) */}
           {!rs && (
             <WeekDots total={p.totalWeeks} done={done100 && reached ? p.totalWeeks : p.weeksDone} now={p.weekIdx}
               left={done100 ? null : t('week_of', { n: Math.min(p.totalWeeks, p.weekIdx + 1), total: p.totalWeeks })}

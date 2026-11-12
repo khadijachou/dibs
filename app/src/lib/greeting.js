@@ -2,7 +2,7 @@
 // First match wins: a goal ready to buy (100 % saved, or unlocked and waiting) > the goal closest to done > none.
 // Staking earned since the last visit is appended to the goal line from +0.01 NIM.
 import { progress, savedNim } from './goals.js'
-import { fmtEarned } from './format.js'
+import { fmtEarned, fmtNim } from './format.js'
 
 const OPEN = (g) => g.status !== 'redeemed' && g.status !== 'withdrawn'
 
@@ -27,12 +27,17 @@ export const B1 = '\u0003'
 const bold = (s) => `${B0}${s}${B1}`
 
 // item(goal) -> the goal's short name (WeekCard's). delta: earned since the last visit, or null when unknown.
-export function statusLine(goals, { t, lang = 'en', item, delta = null }) {
+// ready(goal) -> the goal's ready state (lib/readyState.js) for ready goals and goals unlocking for their card, or null
+// (any other goal, or the free NIM could not be read: then the lines below stay as they were).
+//   covered: "{item} is 100% there."   wallet / short: the goal screen's short line, no percentage.
+export function statusLine(goals, { t, lang = 'en', item, delta = null, ready = () => null }) {
   const s = pickStatus(goals)
-  if (s.kind === 'ready') return t('greet_ready', { item: item(s.goal) })
   if (s.kind === 'none') return t('greet_none')
-  let line = t('greet_goal', { item: item(s.goal), pct: bold(s.pct) })
-  if (showEarned(delta)) line += ' ' + t('greet_earned', { earned: bold(fmtEarned(delta, lang).replace(/^\+/, '')) })
+  const rs = ready(s.goal)
+  if (rs && rs.kind !== 'covered') return t(`ready_home_${rs.kind}`, { gap: bold(fmtNim(rs.gap, lang)), toAdd: bold(fmtNim(rs.toAdd, lang)) })
+  if (!rs && s.kind === 'ready') return t('greet_ready', { item: item(s.goal) })
+  let line = t('greet_goal', { item: item(s.goal), pct: bold(rs ? 100 : s.pct) })
+  if (s.goal.status !== 'ready' && showEarned(delta)) line += ' ' + t('greet_earned', { earned: bold(fmtEarned(delta, lang).replace(/^\+/, '')) })
   return line
 }
 

@@ -2,6 +2,11 @@
 // Display only. Nothing here sends a transaction or changes the goal's target; checkout gives the exact price.
 import { savedNim } from './goals.js'
 import { usdToNim } from './price.js'
+import { unlockingForCard } from './manage.js'
+
+// Goals that show the ready state: ready goals, and goals unlocking for their card (their card may have changed
+// while unlocking: the ring and the box then follow today's price, never a ring under 100 %).
+export const hasReadyState = (goal) => goal?.status === 'ready' || unlockingForCard(goal)
 
 // BUG-17: an item with live: false has no shop quote; its usd is the catalogue's stored placeholder.
 // Its NIM price gets a 10 % safety margin so the user does not fall short when the shop confirms the price.

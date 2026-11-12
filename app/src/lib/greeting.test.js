@@ -2,6 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { boldParts, earnedDelta, pickStatus, plainText, showEarned, statusLine } from './greeting.js'
 import { makeT } from './i18n.js'
+import { hasReadyState, readyState } from './readyState.js'
 
 const goal = (id, saved, target = 100, status = 'saving') =>
   ({ id, itemName: id, targetNim: target, status, deposits: saved ? [{ nim: saved, tx: 'x' }] : [] })
@@ -44,4 +45,33 @@ test('numbers come out bold', () => {
   const parts = boldParts(statusLine([goal('b', 64)], { t, item, delta: 12 }))
   assert.deepEqual(parts.filter((p) => p.bold).map((p) => p.text), ['64', '12'])
   assert.equal(makeT('fr')('greet_goal', { item: 'b', pct: 64 }), 'b est à 64 %.')
+})
+
+// v1.0.3: Welcome back follows the ready state (lib/readyState.js) for ready goals and goals unlocking for their card.
+// 1 NIM = 0.0002 USD: a 20 USD live card costs 100,000 NIM.
+const prices = { nimUsd: 0.0002 }
+const card = { id: 'steam-20', usd: 20, live: true }
+const readyOf = (free) => (g) => (hasReadyState(g) ? readyState(g, card, prices, free) : null)
+const line = (g, free) => plainText(statusLine([goal('s', 30, 100_000), g], { t, item, ready: readyOf(free), delta: 3 }))
+
+test('covered: "{card} is 100% there", on an unlocking goal and a ready goal', () => {
+  assert.equal(line(goal('u', 100_000, 100_000, 'unlocking'), 0), 'u is 100% there. Staking added +3.00 NIM since your last visit.')
+  assert.equal(line(goal('r', 100_000, 100_000, 'ready'), 0), 'r is 100% there.')
+})
+
+test('wallet: the goal screen short line, no percentage', () => {
+  // The new card costs more than the saved NIM (Change card while unlocking): 80,000 saved, 20,000 more, 50,000 free.
+  for (const status of ['unlocking', 'ready']) {
+    assert.equal(line(goal('g', 80_000, 101_000, status), 50_000), 'About 20,000 NIM more from your wallet. You’re covered.', status)
+  }
+})
+
+test('short: the goal screen short line, no percentage', () => {
+  for (const status of ['unlocking', 'ready']) {
+    assert.equal(line(goal('g', 80_000, 101_000, status), 5_000), 'Add about 15,000 NIM to your wallet first.', status)
+  }
+})
+
+test('free NIM unknown (ready returns null): the lines as before', () => {
+  assert.equal(statusLine([goal('r', 100_000, 100_000, 'ready')], { t, item }), 'r is ready. Time to get your card.')
 })

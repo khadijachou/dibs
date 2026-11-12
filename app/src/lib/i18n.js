@@ -70,6 +70,7 @@ const en = {
   redeem_ready: 'Invoice ready: {sats} sats. Pay it from your NIM in one tap.',
   redeem_expires: 'Price locked for {time}',
   redeem_pay_about: 'Pay about {nim} NIM ({usd} USD)',
+  redeem_pay_nim: 'If Nimiq Pay asks NIM or USDT, choose NIM to pay with your saved NIM.',
   redeem_expired: 'This invoice has expired. Get a new one; nothing was charged.',
   redeem_new_invoice: 'Get a new invoice',
   done_paid: 'Payment sent. Your code is on its way.',
@@ -389,7 +390,7 @@ const en = {
   faq_10q: "What if the card is gone when I reach 100%?",
   faq_10a: "Dibs checks the shop before you buy. If the card is out of stock or its price changed, you see it on the goal and can change the card, keep the NIM for another goal, or get it back. Nothing is bought without your tap in Nimiq Pay.",
   faq_region_q: "Which version of a card should I pick?",
-  faq_region_a: "The one your account accepts. Each card says which accounts it works with: a USD Steam card works on any Steam wallet in USD, wherever you live, but a USA Valorant card does not work on a European Riot account. Picked the wrong one? Open the goal, tap ⋯, then Change card: your NIM stays. To set the version Dibs opens each brand on, go to More, Your accounts.",
+  faq_region_a: "The one your account accepts. Each card says which accounts it works with: a USD Steam card works on any Steam wallet in USD, wherever you live, but a USA Valorant card does not work on a European Riot account. Picked the wrong one? Open the goal, tap ⋯, then Change card: your NIM stays. This also works while your NIM is unlocking. To set the version Dibs opens each brand on, go to More, Your accounts.",
   faq_11q: "What if a purchase fails?",
   faq_11a: "If the payment did not go through, your NIM stays in your wallet. If Bitrefill has not confirmed yet, Dibs keeps checking the order and never pays twice. Your code lands on the goal, and Bitrefill emails it too.",
   stats_title: "Help Dibs count real users?",
@@ -895,6 +896,7 @@ const en = {
   pref_remove: "Remove preference",
   prefs_title: "Preferences",
   prefs_foot: "All of this stays on this phone. Usage stats leave it only if you turn them on, and never with your name, a code or an address.",
+  news_5: "Change card now works while your NIM is unlocking. Pay reminds you to choose NIM if Nimiq Pay asks NIM or USDT. Card prices stay fresher.",
   news_4: "Your accounts: Dibs remembers the card version that fits each of your accounts, saved when you call dibs, and you can change it in More. A Preferences page for language, sound and usage stats. A goal that is ready to buy now shows how much NIM the card still needs and whether your wallet covers it. History keeps the card each step was made for.",
 }
 
@@ -970,6 +972,7 @@ const fr = {
   redeem_ready: 'Facture prête : {sats} sats. Payez-la avec vos NIM en un geste.',
   redeem_expires: 'Prix garanti pendant {time}',
   redeem_pay_about: 'Payez environ {nim} NIM ({usd} USD)',
+  redeem_pay_nim: 'Si Nimiq Pay vous demande NIM ou USDT, choisissez NIM pour payer avec vos NIM épargnés.',
   redeem_expired: 'Cette facture a expiré. Demandez-en une nouvelle; rien n’a été débité.',
   redeem_new_invoice: 'Nouvelle facture',
   done_paid: 'Paiement envoyé. Votre code arrive.',
@@ -1289,7 +1292,7 @@ const fr = {
   faq_10q: "Et si la carte-cadeau n’est plus offerte quand j’atteins 100\u00a0%?",
   faq_10a: "Dibs vérifie auprès de la boutique avant votre achat. Si la carte-cadeau est en rupture de stock ou si son prix a changé, vous le voyez sur l’objectif et pouvez changer de carte-cadeau, garder les NIM pour un autre objectif ou les récupérer. Rien n’est acheté sans votre accord dans Nimiq Pay.",
   faq_region_q: "Quelle version de la carte choisir?",
-  faq_region_a: "Celle que votre compte accepte. Chaque carte indique avec quels comptes elle fonctionne : une carte Steam en USD fonctionne sur tout portefeuille Steam en USD, peu importe où vous habitez, mais une carte Valorant USA ne fonctionne pas sur un compte Riot européen. Mauvais choix? Ouvrez l’objectif, touchez ⋯, puis Changer de carte : vos NIM restent. Pour choisir la version sur laquelle Dibs ouvre chaque marque, allez dans Plus, Vos comptes.",
+  faq_region_a: "Celle que votre compte accepte. Chaque carte indique avec quels comptes elle fonctionne : une carte Steam en USD fonctionne sur tout portefeuille Steam en USD, peu importe où vous habitez, mais une carte Valorant USA ne fonctionne pas sur un compte Riot européen. Mauvais choix? Ouvrez l’objectif, touchez ⋯, puis Changer de carte : vos NIM restent. Cela fonctionne aussi pendant que vos NIM se débloquent. Pour choisir la version sur laquelle Dibs ouvre chaque marque, allez dans Plus, Vos comptes.",
   faq_11q: "Et si un achat échoue?",
   faq_11a: "Si le paiement n’est pas passé, vos NIM restent dans votre portefeuille. Si Bitrefill n’a pas encore confirmé, Dibs continue de vérifier la commande et ne paie jamais deux fois. Votre code arrive sur l’objectif, et Bitrefill vous l’envoie aussi par courriel.",
   stats_title: "Aidez Dibs à compter ses vrais utilisateurs?",
@@ -1795,6 +1798,7 @@ const fr = {
   pref_remove: "Retirer la préférence",
   prefs_title: "Préférences",
   prefs_foot: "Tout ceci reste sur ce téléphone. Les statistiques d’utilisation n’en sortent que si vous les activez, et jamais avec votre nom, un code ou une adresse.",
+  news_5: "Changer de carte fonctionne maintenant pendant que vos NIM se débloquent. L’écran Payer vous rappelle de choisir NIM si Nimiq Pay vous demande NIM ou USDT. Les prix des cartes restent plus à jour.",
   news_4: "Vos comptes : Dibs retient la version de carte qui convient à chacun de vos comptes, enregistrée quand vous réservez, et vous pouvez la changer dans Plus. Une page Préférences pour la langue, le son et les statistiques d’utilisation. Un objectif prêt à acheter indique maintenant combien de NIM la carte demande encore et si votre portefeuille le couvre. L’historique garde la carte pour laquelle chaque étape a été faite.",
 }
 
@@ -1870,6 +1874,7 @@ const es = {
   redeem_ready: 'Factura lista: {sats} sats. Págala con tus NIM con un toque.',
   redeem_expires: 'Precio garantizado durante {time}',
   redeem_pay_about: 'Paga unos {nim} NIM ({usd} USD)',
+  redeem_pay_nim: 'Si Nimiq Pay te pregunta NIM o USDT, elige NIM para pagar con tus NIM ahorrados.',
   redeem_expired: 'Esta factura caducó. Pide una nueva; no se cobró nada.',
   redeem_new_invoice: 'Nueva factura',
   done_paid: 'Pago enviado. Tu código está en camino.',
@@ -2189,7 +2194,7 @@ const es = {
   faq_10q: "¿Y si la tarjeta ya no está cuando llego al 100\u00a0%?",
   faq_10a: "Dibs consulta la tienda antes de que compres. Si la tarjeta está agotada o cambió de precio, lo ves en la meta y puedes cambiar de tarjeta, guardar los NIM para otra meta o recuperarlos. No se compra nada sin tu toque en Nimiq Pay.",
   faq_region_q: "¿Qué versión de la tarjeta elijo?",
-  faq_region_a: "La que acepta tu cuenta. Cada tarjeta indica con qué cuentas funciona: una tarjeta Steam en USD funciona en cualquier billetera de Steam en USD, vivas donde vivas, pero una tarjeta Valorant de EE. UU. no funciona en una cuenta de Riot de Europa. ¿Elegiste la equivocada? Abre la meta, toca ⋯ y luego Cambiar tarjeta: tus NIM se quedan. Para fijar la versión con la que Dibs abre cada marca, ve a Más, Tus cuentas.",
+  faq_region_a: "La que acepta tu cuenta. Cada tarjeta indica con qué cuentas funciona: una tarjeta Steam en USD funciona en cualquier billetera de Steam en USD, vivas donde vivas, pero una tarjeta Valorant de EE. UU. no funciona en una cuenta de Riot de Europa. ¿Elegiste la equivocada? Abre la meta, toca ⋯ y luego Cambiar tarjeta: tus NIM se quedan. También funciona mientras tus NIM se desbloquean. Para fijar la versión con la que Dibs abre cada marca, ve a Más, Tus cuentas.",
   faq_11q: "¿Y si falla una compra?",
   faq_11a: "Si el pago no se completó, tus NIM se quedan en tu billetera. Si Bitrefill aún no ha confirmado, Dibs sigue revisando el pedido y nunca paga dos veces. Tu código llega a la meta, y Bitrefill también te lo envía por correo.",
   stats_title: "¿Ayudas a Dibs a contar sus usuarios reales?",
@@ -2695,6 +2700,7 @@ const es = {
   pref_remove: "Quitar preferencia",
   prefs_title: "Preferencias",
   prefs_foot: "Todo esto se queda en este teléfono. Las estadísticas de uso solo salen de él si las activas, y nunca con tu nombre, un código o una dirección.",
+  news_5: "Cambiar tarjeta ahora funciona mientras tus NIM se desbloquean. Pagar te recuerda elegir NIM si Nimiq Pay te pregunta NIM o USDT. Los precios de las tarjetas se mantienen más al día.",
   news_4: "Tus cuentas: Dibs recuerda la versión de tarjeta que sirve para cada una de tus cuentas, guardada cuando reservas, y puedes cambiarla en Más. Una página de Preferencias para el idioma, el sonido y las estadísticas de uso. Una meta lista para comprar ahora muestra cuántos NIM necesita aún la tarjeta y si tu billetera lo cubre. El historial guarda la tarjeta para la que se hizo cada paso.",
 }
 

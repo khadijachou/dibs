@@ -23,7 +23,8 @@ export function goalState(goal) {
 export function GoalStatus({ goal, earned, ready = null }) {
   const { t, lang } = useApp()
   const state = goalState(goal)
-  if (ready) return <div className={`goal-status rs ready-${ready.kind}`}>{t(ready.kind === 'short' ? 'status_ready_add' : 'status_ready_buy')}</div>
+  // An unlocking goal keeps its release clock: "Released" only once the NIM is back.
+  if (ready && state === 'ready') return <div className={`goal-status rs ready-${ready.kind}`}>{t(ready.kind === 'short' ? 'status_ready_add' : 'status_ready_buy')}</div>
   if (state === 'unlocking') return <div className="goal-status wait"><Releasing goal={goal} /></div>
   if (state === 'saving' && savedNim(goal) <= 0) return null // nothing staked yet
   const text = {

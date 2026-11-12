@@ -4,22 +4,22 @@ import { listGoals } from '../lib/goals.js'
 import { findItem } from '../lib/catalog.js'
 import { walletNim } from '../lib/nimiq.js'
 import { fmtNim } from '../lib/format.js'
-import { freeNimOf, readyState } from '../lib/readyState.js'
+import { freeNimOf, hasReadyState, readyState } from '../lib/readyState.js'
 
 // Spendable NIM over every shared address, read at most every 15 s for all the ready goals on screen. Read only.
 let cache = { at: 0, promise: null }
-function readWallet() {
+export function readWallet() {
   if (!cache.promise || Date.now() - cache.at > 15_000) {
     cache = { at: Date.now(), promise: walletNim().catch(() => null) }
   }
   return cache.promise
 }
 
-// The ready state of a goal (status 'ready'), or null for any other goal. Until the wallet is read (or when it
-// cannot be), the header balance stands in for it.
+// The ready state of a goal (status 'ready', or unlocking for its card), or null for any other goal. Until the wallet
+// is read (or when it cannot be), the header balance stands in for it. Welcome back uses readyFor below.
 export function useReady(goal) {
   const { address, balance, prices } = useApp()
-  const isReady = goal?.status === 'ready'
+  const isReady = hasReadyState(goal)
   const [wallet, setWallet] = useState(null)
   useEffect(() => {
     if (!isReady) return undefined
@@ -30,6 +30,15 @@ export function useReady(goal) {
   if (!isReady) return null
   const free = freeNimOf(wallet ?? balance ?? 0, listGoals(address))
   return readyState(goal, findItem(goal.itemId), prices, free)
+}
+
+// Outside a hook (Welcome back): the same ready state from a wallet already read. wallet null: the header balance;
+// both unknown: null for a goal that needs more NIM (never a guess), the state for a covered one.
+export function readyFor(goal, { goals, prices, wallet, balance }) {
+  if (!hasReadyState(goal)) return null
+  const known = wallet ?? balance
+  const rs = readyState(goal, findItem(goal.itemId), prices, freeNimOf(known ?? 0, goals))
+  return known == null && rs.kind !== 'covered' ? null : rs
 }
 
 // The box under a ready goal's ring. compact: the one-line version on the Home card.

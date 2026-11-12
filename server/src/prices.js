@@ -60,7 +60,11 @@ export function createPriceBook({ getProduct, enabled = () => true, now = () => 
   function refresh(slugs) {
     if (!enabled()) return Promise.resolve()
     if (round) return round
-    const list = [...new Set(slugs)]
+    // Stalest first: never fetched, then the oldest answer (12 Nov: a 429 stopped every round at the same place, so
+    // the products at the end of the catalogue were rarely refreshed). A stopped round resumes there next time,
+    // with no cursor to store. Ties keep the catalogue order (stable sort).
+    const age = (slug) => cache.get(slug)?.at ?? -Infinity
+    const list = [...new Set(slugs)].sort((a, b) => age(a) - age(b))
     let next = 0
     let failed = 0
     let first = null

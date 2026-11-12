@@ -127,6 +127,50 @@ test('a failing round (error or 429) keeps the last good answer and logs once', 
   assert.equal(logs.length, 2)
 })
 
+// 12 Nov: every round walked the catalogue in the same order and a 429 stopped it at the same place, so the last
+// products were rarely refreshed. Rounds now go stalest first.
+const stagedShop = () => {
+  const s = { calls: [], fail429: null }
+  s.getProduct = async (slug) => {
+    s.calls.push(slug)
+    if (slug === s.fail429) throw new Error('Bitrefill MCP HTTP 429: rate_limit_reached') // fails at once
+    await new Promise((r) => setTimeout(r, 5)) // the others answer after it
+    return { slug, inStock: true, packages: [] }
+  }
+  return s
+}
+
+test('a round stopped by a 429 at product 3 of 6: the next round asks for the products it did not refresh first', async () => {
+  const s = stagedShop()
+  const c = clock()
+  const book = createPriceBook({ getProduct: s.getProduct, now: c.now })
+  const six = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6']
+  await book.refresh(six) // all six cached at t0
+  c.t += REFRESH_MS
+  s.calls = []; s.fail429 = 'p3'
+  await book.refresh(six)
+  // 4 at a time: p1 to p4 were asked together, p3's 429 stopped the round, p5 and p6 were never asked.
+  assert.deepEqual(s.calls, ['p1', 'p2', 'p3', 'p4'])
+  c.t += REFRESH_MS
+  s.calls = []; s.fail429 = null
+  await book.refresh(six)
+  // Stalest first: p3, p5, p6 (still from t0, catalogue order kept), then p1, p2, p4 (refreshed in the stopped round).
+  assert.deepEqual(s.calls, ['p3', 'p5', 'p6', 'p1', 'p2', 'p4'])
+})
+
+test('a product never fetched goes before every cached one, whatever its place in the catalogue', async () => {
+  const s = stagedShop()
+  const c = clock()
+  const book = createPriceBook({ getProduct: s.getProduct, now: c.now })
+  await book.refresh(['p1'])
+  c.t += 1000
+  await book.refresh(['p2'])
+  c.t += REFRESH_MS
+  s.calls = []
+  await book.refresh(['p2', 'p1', 'p3', 'p4'])
+  assert.deepEqual(s.calls, ['p3', 'p4', 'p1', 'p2'])
+})
+
 test('two rounds never overlap', async () => {
   const s = shop({ delay: 5 })
   const book = createPriceBook({ getProduct: s.getProduct })
