@@ -4,6 +4,7 @@
 import { getCatalog } from './catalog.js'
 import { notSold } from './availability.js'
 import { getPref } from './prefs.js'
+import { getCurrency, regionForCurrency } from './currency.js'
 
 // popular: the "Popular" badge, a static flag (there is no pick count to rank by). Set on the first three of the
 // curated order below.
@@ -72,13 +73,15 @@ const CURRENCY_OF = { USA: 'USD', Europe: 'EUR', UK: 'GBP', Nigeria: 'NGN' }
 const regionRank = (k) => { const i = REGION_ORDER.indexOf(k); return i < 0 ? 99 : i }
 const byValue = (x, y) => (Number(x.faceValue) || 0) - (Number(y.faceValue) || 0) || (x.usd ?? 0) - (y.usd ?? 0)
 
-// The version a brand opens on: the user's saved version for that brand (Your accounts, dibs.prefs), else USA, else
-// the brand's first version. Never derived from the Nimiq Pay currency or language. A chip on the brand sheet only
-// changes what is shown; nothing is saved from it (lib/prefs.js).
+// The version a brand opens on: the user's saved version for that brand (Your accounts, dibs.prefs), else the version
+// for the currency the user chose in Dibs (More > Preferences > Currency, lib/currency.js: USD USA, EUR Europe, GBP UK,
+// NGN Nigeria; Auto chooses none), else USA, else the brand's first version. Never derived from the Nimiq Pay currency
+// or the language. Choosing a currency saves nothing to Your accounts. A chip on the brand sheet only changes what is
+// shown; nothing is saved from it (lib/prefs.js). A goal keeps its own version and never reads this again.
 export function defaultRegion(brand) {
   const regions = brand?.regions || []
-  const saved = getPref(brand?.key)
-  return regions.find((r) => r.key === saved) || regions.find((r) => r.key === 'USA') || regions[0] || null
+  const find = (key) => (key ? regions.find((r) => r.key === key) : null)
+  return find(getPref(brand?.key)) || find(regionForCurrency(getCurrency())) || find('USA') || regions[0] || null
 }
 // One version of a brand by key, or the default one.
 export const brandRegion = (brand, key) => brand?.regions?.find((r) => r.key === key) || defaultRegion(brand)

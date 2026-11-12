@@ -13,6 +13,7 @@ const SECTIONS = { privacy: 7, terms: 7, rewards: 6 }
 // What's new, newest first: one block per release (v = the version pill; news_2 has none, its date is the header).
 // Add one line here and its news_N string per release; a news_N holds one item per line ("\n"), same count in en/fr/es.
 export const NEWS = [
+  { date: '2026-11-12', key: 'news_8', v: '1.0.7' },
   { date: '2026-11-12', key: 'news_7', v: '1.0.6' },
   { date: '2026-11-12', key: 'news_6', v: '1.0.4' },
   { date: '2026-11-12', key: 'news_5', v: '1.0.3' },

@@ -1,11 +1,13 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { createPortal } from 'react-dom'
 import { useApp } from '../App.jsx'
 import { fmtNim } from '../lib/format.js'
 import { useCountUp } from '../lib/useCountUp.js'
 import { brandIcon, DARK_TILES } from '../lib/brandIcons.js'
 import { useFullscreen } from '../lib/fullscreen.js'
-import { fmtFiatValue } from '../lib/fiatValue.js'
+import { fmtFiatValue, pickFiat } from '../lib/fiatValue.js'
+import { CURRENCY_EVENT, effectiveCurrency, getCurrency } from '../lib/currency.js'
+import { host } from '../lib/nimiq.js'
 import FullscreenSheet from './FullscreenSheet.jsx'
 
 const PATHS = {
@@ -249,16 +251,22 @@ function useValueFits(headerRef, finalValue, deps) {
   return fits
 }
 
+// The Currency choice (More > Preferences > Currency, lib/currency.js); re-renders on every change, without a reload.
+const onCurrency = (cb) => { window.addEventListener(CURRENCY_EVENT, cb); return () => window.removeEventListener(CURRENCY_EVENT, cb) }
+export const useCurrencyChoice = () => useSyncExternalStore(onCurrency, getCurrency)
+
 export function Header({ onBack, onInk = false, langChip = false }) {
   const { t, balance, demo, lang, reset, prices } = useApp()
   const balanceShown = useCountUp(balance)
   const fs = useFullscreen()
   const [fsAsk, setFsAsk] = useState(false)
   const headerRef = useRef(null)
-  // The balance's value in the Nimiq Pay currency (lib/price.js fiat): only with a live rate.
-  const fiat = prices?.live ? prices.fiat : null
+  // The balance's value in the Currency choice, in Auto the Nimiq Pay currency (lib/price.js rates): only with a live
+  // rate; a missing rate falls back to USD, then to nothing (lib/fiatValue.js pickFiat).
+  const choice = useCurrencyChoice()
+  const fiat = prices?.live ? pickFiat(prices.rates, effectiveCurrency(host.fiat())) : null
   const finalValue = balance == null ? null : fmtFiatValue(balance, fiat, lang)
-  const fits = useValueFits(headerRef, finalValue, [lang, demo, onBack ? 1 : 0, langChip, fs.supported && !fs.on])
+  const fits = useValueFits(headerRef, finalValue, [lang, choice, demo, onBack ? 1 : 0, langChip, fs.supported && !fs.on])
   const valueShown = finalValue && fits ? fmtFiatValue(Math.round(balanceShown), fiat, lang) : null
   return (
     <header ref={headerRef} className={`header${onInk ? ' on-ink' : ''}`}>

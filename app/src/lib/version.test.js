@@ -111,3 +111,63 @@ test('detailText: "<value> <currency>" in the user\'s language, thousands separa
   assert.equal(plain(detailText(makeT('fr'), { detail: '5000 NGN' })), '5 000 NGN')
   assert.ok(detailText(makeT('en'), { detail: '20 EUR' }).includes(`20${NBSP}EUR`), 'number and currency never split')
 })
+
+// v1.0.7: More > Preferences > Currency (dibs.currency). The saved account first, then the currency's version, then USA.
+const CUR = [
+  ...CATALOG,
+  item('netflix-usa', '5000', 'Nigeria', 'NGN', W('For Netflix accounts in Nigeria'), 3.4),
+  { ...item('steam-eur-international', '20', 'Europe', 'EUR', W('For Steam accounts with a EUR wallet'), 22.2), name: 'Steam gift card' },
+  { ...item('valorant-usa', '10', 'USA', 'USD', W('For Riot accounts in the USA')), name: 'Valorant gift card' },
+]
+const curBrand = (key) => catalogBrands(CUR).find((b) => b.key === key)
+
+test('currency: a saved account wins over the currency', () => {
+  store.set('dibs.currency', 'EUR')
+  setPref('steam', 'USA')
+  assert.equal(defaultRegion(curBrand('steam')).key, 'USA')
+  setPref('netflix', 'UK')
+  store.set('dibs.currency', 'NGN')
+  assert.equal(defaultRegion(curBrand('netflix')).key, 'UK')
+})
+
+test('currency: EUR, GBP and NGN open their version when the brand has it, else USA, else the first', () => {
+  store.set('dibs.currency', 'EUR')
+  assert.equal(defaultRegion(curBrand('steam')).key, 'Europe')
+  assert.equal(defaultRegion(curBrand('netflix')).key, 'Europe')
+  assert.equal(defaultRegion(curBrand('valorant')).key, 'USA', 'no Europe version: USA')
+  store.set('dibs.currency', 'GBP')
+  assert.equal(defaultRegion(curBrand('netflix')).key, 'UK')
+  assert.equal(defaultRegion(curBrand('steam')).key, 'USA', 'no UK version: USA')
+  assert.equal(defaultRegion(curBrand('fortnite')).key, 'UK')
+  store.set('dibs.currency', 'NGN')
+  assert.equal(defaultRegion(curBrand('netflix')).key, 'Nigeria')
+  assert.equal(defaultRegion(curBrand('steam')).key, 'USA', 'no Nigeria version: USA')
+  assert.equal(defaultRegion(curBrand('fortnite')).key, 'UK', 'no Nigeria and no USA version: the first')
+  store.set('dibs.currency', 'USD')
+  assert.equal(defaultRegion(curBrand('netflix')).key, 'USA')
+  assert.equal(defaultRegion(curBrand('fortnite')).key, 'UK')
+})
+
+test('currency: the tiles follow (brand.items is the currency\'s version); choosing a currency saves nothing', () => {
+  store.set('dibs.currency', 'EUR')
+  const steam = curBrand('steam')
+  assert.equal(steam.defaultRegion, 'Europe')
+  assert.ok(steam.items.every((i) => i.region === 'Europe'))
+  assert.equal(store.get('dibs.prefs'), undefined)
+})
+
+test('currency: Auto (or nothing stored) behaves exactly as before, whatever the Nimiq Pay currency', () => {
+  store.set('dibs.fiat', 'EUR')
+  for (const v of [null, 'auto', 'JPY']) {
+    if (v) store.set('dibs.currency', v); else store.delete('dibs.currency')
+    assert.equal(defaultRegion(curBrand('steam')).key, 'USA')
+    assert.equal(defaultRegion(curBrand('netflix')).key, 'USA')
+    assert.equal(defaultRegion(curBrand('fortnite')).key, 'UK')
+  }
+})
+
+test('currency: an existing goal keeps its own version', () => {
+  store.set('dibs.currency', 'EUR')
+  const goal = { id: 'g', itemId: 'netflix-usa-30', itemName: 'Netflix', itemDetail: '30 USD', region: 'USA', currency: 'USD', status: 'saving', deposits: [] }
+  assert.equal(goalVersion(goal).region, 'USA')
+})
