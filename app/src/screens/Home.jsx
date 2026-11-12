@@ -1,5 +1,5 @@
 import { CardIssue } from '../components/CardIssue.jsx'
-import { useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { useApp } from '../App.jsx'
 import { detailText, itemLabel } from '../lib/itemName.js'
 import { BrandLogo, CREAM, Header, DibsMark } from '../components/ui.jsx'
@@ -12,7 +12,8 @@ import { useCountUp } from '../lib/useCountUp.js'
 import { useEarned } from '../lib/earned.js'
 import { getName } from '../lib/name.js'
 import { MilestoneLine, useGoalMilestone } from '../components/Milestone.jsx'
-import { GoalDot, GoalStatus, goalPace } from '../components/GoalStatus.jsx'
+import { GoalDot, GoalDotLabel, GoalStatus, goalPace } from '../components/GoalStatus.jsx'
+import { addCaptionKey } from '../lib/addCaption.js'
 import { StatsCard } from '../components/StatsConsent.jsx'
 import HowSteps from '../components/HowSteps.jsx'
 import GoalRing from '../components/GoalRing.jsx'
@@ -110,9 +111,8 @@ function Hub({ goals }) {
         {/* Usage stats: asked once under the goals label to users who finished onboarding before the consent step. */}
         {live.length > 1 ? <GoalWallet goals={live} earned={earned} /> : <><GoalsLabel count={live.length} /><StatsCard />{active && <GoalHero goal={active} earned={earned} />}</>}
         <PromoBanner onOpen={setSheet} />
-        <div className="bottom">
-          <button type="button" className="btn tall" onClick={() => go('catalog')}>{t('home_new2')}<small>{t('home_new2_sub')}</small></button>
-        </div>
+        {/* v1.0.8: a quiet outline button in the page, right under the photos (no longer sticky at the bottom here). */}
+        <button type="button" className="btn tall quiet" onClick={() => go('catalog')}>{'+ '}{t('home_new2')}<small>{t('home_new2_sub')}</small></button>
       </main>
       {sheetBrand && <BrandSheet brand={sheetBrand} onClose={() => setSheet(null)} onPick={(region) => { setSheet(null); go('plan', { brandKey: sheetBrand.key, region }) }} />}
     </>
@@ -177,6 +177,7 @@ function GoalHero({ goal, earned }) {
   const pct = progress(goal)
   const brand = goalBrand(goal)
   const next = Math.max(1, Math.min(p.remaining, p.pace.amount || p.weekly))
+  const cap = addCaptionKey(p, next) // the Add button's caption (display only)
   const savedShown = useCountUp(p.saved)
   const remainingShown = useCountUp(p.remaining)
   const rs = useReady(goal) // ready goals: does the saved NIM still cover the card at today's price (display only)
@@ -185,7 +186,7 @@ function GoalHero({ goal, earned }) {
         <GoalDot goal={goal} />
         <div className="top">
           <BrandLogo brand={brand} />
-          <div><div className="t1">{itemLabel(t, goal)}</div><div className="t2">{fmtDate(goal.deadline, lang)} · {t(p.daysLeft === 1 ? 'days_left_one' : 'days_left_other', { count: p.daysLeft })}</div></div>
+          <div className="tx"><div className="t1">{itemLabel(t, goal)}</div><DateLine goal={goal} date={fmtDate(goal.deadline, lang)} days={t(p.daysLeft === 1 ? 'days_left_one' : 'days_left_other', { count: p.daysLeft })} /></div>
         </div>
         <div className="mid">
           <GoalRing goal={goal} pct={pct} milestone={milestone} ready={rs} />
@@ -193,7 +194,9 @@ function GoalHero({ goal, earned }) {
             <div className="n"><Num value={fmtNim(Math.round(savedShown), lang)} /> NIM</div>
             {rs
               ? <div className="m">{t('ready_home_line', { price: fmtNim(rs.price, lang) })}</div>
-              : <div className="m">{t('goal_of2', { target: fmtNim(goal.targetNim, lang) })} · {t('goal_to_go', { amount: fmtNim(Math.round(remainingShown), lang) })}</div>}
+              : p.saved <= 0
+                ? <div className="m">{t('goal_of_zero', { target: fmtNim(goal.targetNim, lang) })}</div>
+                : <div className="m">{t('goal_of2', { target: fmtNim(goal.targetNim, lang) })} · {t('goal_to_go', { amount: fmtNim(Math.round(remainingShown), lang) })}</div>}
             <GoalStatus goal={goal} earned={earned?.byGoal[goal.id]} ready={rs} />
           </div>
         </div>
@@ -202,12 +205,75 @@ function GoalHero({ goal, earned }) {
         <CardIssue goal={goal} />
         <div className="acts">
           {pct < 1 && goal.status === 'saving'
-            ? <button type="button" className="btn" onClick={() => go('goal', { goalId: goal.id, mode: 'add', amount: next })}>{t('goal_add', { nim: fmtNim(next, lang) })}</button>
+            ? <AddButton label={t('goal_add', { nim: fmtNim(next, lang) })} caption={cap ? t(cap) : null} onClick={() => go('goal', { goalId: goal.id, mode: 'add', amount: next })} />
             : <button type="button" className="btn" onClick={() => go('goal', { goalId: goal.id, mode: 'details' })}>{t('home_details')}</button>}
           {pct < 1 && goal.status === 'saving' && <button type="button" className="btn outline" onClick={() => go('goal', { goalId: goal.id, mode: 'details' })}>{t('home_details')}</button>}
         </div>
       </section>
   )
+}
+
+// The goal card's date line (v1.0.8, display only): the dot's short label takes priority over the days left.
+// The first form that fits on one line wins (styles: .t2.dl):
+//   1 "{date} · {days left} · {label}"   2 "{date} · {label}"   3 "{date} · {days left}" (no label, as before)
+// Checked before paint and again when the card's width changes. Screen readers always get the date and the days
+// left (hidden visually in form 2); the label is aria-hidden, the dot's aria-label says it in full.
+function DateLine({ goal, date, days }) {
+  const ref = useRef(null)
+  const pace = goalPace(goal)
+  const tone = pace ? `${pace.tone}${pace.lagWeeks}` : ''
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el) return undefined
+    const check = () => {
+      // Form 3 first: the line as it was. Where it wraps (narrow cards), forms 1 and 2 keep its height, so the card
+      // never changes height.
+      el.dataset.form = '3'
+      el.style.minHeight = ''
+      if (!tone) return
+      const h3 = el.getBoundingClientRect().height // unrounded, so the card keeps its exact height
+      for (const form of ['1', '2']) {
+        el.dataset.form = form
+        el.style.minHeight = `${h3}px`
+        if (el.scrollWidth <= el.clientWidth) return
+      }
+      el.dataset.form = '3'
+      el.style.minHeight = ''
+    }
+    check()
+    const row = el.closest('.top')
+    if (!row || typeof ResizeObserver !== 'function') return undefined
+    const ro = new ResizeObserver(check)
+    ro.observe(row)
+    return () => ro.disconnect()
+  }, [date, days, tone])
+  return <div ref={ref} className="t2 dl">{date}<span className="dl-days"> · {days}</span><GoalDotLabel goal={goal} /></div>
+}
+
+// The goal card's Add button with its small caption (v1.0.8, display only). The caption shows only when it fits on one
+// line and "Add {nim} NIM" stays on one line; otherwise cap-off hides it and the button is exactly as before (same
+// 46 px). Checked before paint and again when the button's width changes.
+function AddButton({ label, caption, onClick }) {
+  const ref = useRef(null)
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el || !caption) return undefined
+    const check = () => {
+      el.classList.remove('cap-off')
+      const main = el.firstElementChild
+      const small = el.querySelector('small')
+      const lh = parseFloat(getComputedStyle(main).lineHeight) || 16
+      const fits = main.offsetHeight <= lh * 1.5 && small.scrollWidth <= small.clientWidth + 1 && el.scrollHeight <= el.clientHeight + 1
+      el.classList.toggle('cap-off', !fits)
+    }
+    check()
+    if (typeof ResizeObserver !== 'function') return undefined
+    const ro = new ResizeObserver(check)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [label, caption])
+  if (!caption) return <button type="button" className="btn" onClick={onClick}>{label}</button>
+  return <button type="button" ref={ref} className="btn cap" onClick={onClick}><span>{label}</span><small>{caption}</small></button>
 }
 
 // The pace band (Goal Details). dot: the status dot at its start; children: the late band's actions.

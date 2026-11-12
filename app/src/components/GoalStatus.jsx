@@ -57,6 +57,19 @@ export function GoalDot({ goal, inline = false }) {
   return <span className={`goal-dot ${pace.tone}${inline ? ' inline' : ' pin'}`} role="img" aria-label={label} />
 }
 
+// The dot's short visible label at the end of the date line on the Home goal card (v1.0.8), in the dot's colour.
+// Hidden from screen readers: the dot's aria-label already says it. The " · " separator is part of the label, so
+// Home's DateLine shows or hides both together.
+export function GoalDotLabel({ goal }) {
+  const { t } = useApp()
+  const pace = goalPace(goal)
+  if (!pace) return null
+  const label = pace.tone === 'on' ? t('card_dot_on')
+    : pace.tone === 'behind' ? t('card_dot_behind_one')
+    : t('card_dot_behind_other', { n: pace.lagWeeks })
+  return <span className={`t2-label ${pace.tone}`} aria-hidden="true">{' · '}{label}</span>
+}
+
 // The shared release clock, fed with the chain's estimate when it can be read (display only).
 function Releasing({ goal }) {
   const { address } = useApp()

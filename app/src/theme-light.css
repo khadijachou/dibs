@@ -83,6 +83,9 @@
 :where(:root[data-theme="light"]) .btn:disabled, :where(:root[data-theme="light"]) .btn.mint:disabled { background: #ece5db; color: #8f8999; }
 :where(:root[data-theme="light"]) .btn.ink { background: #23212b; color: #ffffff; box-shadow: 0 10px 24px rgba(35, 33, 43, .18); }
 :where(:root[data-theme="light"]) .btn.ghost { color: var(--cream); border-color: #d9d0c3; }
+:where(:root[data-theme="light"]) .btn.quiet { color: var(--cream); border-color: #d9d0c3; box-shadow: none; }
+/* Home goal card date-line label: the yellow text shade (mint and red already come from --teal and --red). */
+:where(:root[data-theme="light"]) .t2-label.behind { color: #906607; }
 :where(:root[data-theme="light"]) .btn.mint { box-shadow: 0 10px 24px rgba(21, 137, 106, .22); }
 :where(:root[data-theme="light"]) .pill { border-color: var(--line); }
 :where(:root[data-theme="light"]) .pill.on { background: #fff1ea; }

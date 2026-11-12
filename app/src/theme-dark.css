@@ -500,6 +500,32 @@ a.sheet-row { text-decoration: none; -webkit-tap-highlight-color: transparent; }
 .band-mint .goal-dot { border-color: var(--teal-soft); }
 .band-warn .goal-dot { border-color: #3a2a1c; }
 .band-acts { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* v1.0.8 Home goal card date line (screens/Home.jsx DateLine), the first form that fits on one line, set as data-form
+   before paint and on resize:
+     1 "{date} · {days left} · {label}"   2 "{date} · {label}" (days left kept for screen readers)
+     3 "{date} · {days left}", no label: exactly the line as it was (it may wrap, as before). No data-form = form 3.
+   The text column takes the row's free width and the line adds nothing to its size (contain), so the title wraps as
+   before. Forms 1 and 2 may use the 18 px kept free for the pinned dot, which sits on the title's line, above. */
+.hero .top > .tx { flex: 1 1 auto; }
+.hero .t2.dl { contain: inline-size; }
+.hero .t2.dl[data-form="1"], .hero .t2.dl[data-form="2"] { white-space: nowrap; overflow: hidden; }
+.hero.has-dot .t2.dl[data-form="1"], .hero.has-dot .t2.dl[data-form="2"] { margin-right: -18px; }
+.hero .t2.dl[data-form="2"] .dl-days { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); }
+.hero .t2.dl:not([data-form="1"]):not([data-form="2"]) .t2-label { display: none; }
+.t2-label { font-weight: 600; }
+.t2-label.on { color: var(--teal); }
+.t2-label.behind { color: var(--butter); }
+.t2-label.late { color: var(--red); }
+/* The Add button's caption (lib/addCaption.js): a second line inside the same 46 px button. Home's AddButton adds
+   cap-off when the caption does not fit on one line or the amount needs two lines: the button is then as before. */
+.hero .acts .btn.cap:not(.cap-off) { display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.15; padding: 0 12px; }
+.hero .acts .btn.cap small { font: 500 11.5px/1.2 var(--font-body); opacity: .85; margin-top: 1px; white-space: nowrap; overflow: hidden;
+  align-self: stretch; text-align: center; contain: inline-size; } /* never widens the button (or a swipe card) */
+.hero .acts .btn.cap.cap-off small { display: none; }
+/* New goal on Home with goals: a quiet outline button in the page, under the photos. */
+.btn.quiet { background: transparent; border: 1px solid #3a3744; color: var(--cream); box-shadow: none; }
+.btn.quiet small { color: var(--muted); opacity: 1; }
 .btn-sm { height: 32px; padding: 0 14px; border-radius: 999px; border: 1.5px solid currentColor; background: transparent; color: inherit;
   font: 600 13px var(--font-body); cursor: pointer; }
 .btn-sm:disabled { opacity: .45; cursor: default; }
