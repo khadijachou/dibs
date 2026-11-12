@@ -98,7 +98,7 @@ export default function More() {
 
   return (
     <>
-      <Header />
+      <Header langChip />
       <main className="screen">
         <h2 className="title">{t('tab_more')}</h2>
         <NumbersCard />

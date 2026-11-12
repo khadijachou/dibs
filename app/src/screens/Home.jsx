@@ -59,7 +59,7 @@ function Welcome() {
   return (
     <>
       <div className="welcome-hero">
-        <Header onInk langChip />
+        <Header onInk />
         <div className="big-ring" aria-hidden="true">
           <svg viewBox="0 0 156 156" width="156" height="156">
             <circle cx="78" cy="78" r="66" fill="none" stroke="#35323f" strokeWidth="12" />
@@ -103,7 +103,7 @@ function Hub({ goals }) {
   const sheetBrand = sheet ? catalogBrands().find((b) => b.key === sheet) : null
   return (
     <>
-      <Header langChip />
+      <Header />
       <main className="screen">
         <h2 className="sr-only">{t('home_title')}</h2>
         {/* Several goals: the goals label shares its row with the carousel dots (GoalWallet). One goal: label, then the card. */}

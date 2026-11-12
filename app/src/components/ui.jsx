@@ -5,6 +5,7 @@ import { fmtNim } from '../lib/format.js'
 import { useCountUp } from '../lib/useCountUp.js'
 import { brandIcon, DARK_TILES } from '../lib/brandIcons.js'
 import { useFullscreen } from '../lib/fullscreen.js'
+import { fmtFiatValue } from '../lib/fiatValue.js'
 import FullscreenSheet from './FullscreenSheet.jsx'
 
 const PATHS = {
@@ -183,7 +184,7 @@ export function BrandLogo({ brand, className = '' }) {
 
 const LANGS = ['en', 'fr', 'es']
 
-// "EN · FR · ES" segmented control (onboarding, and inside the Home language chip).
+// "EN · FR · ES" segmented control (onboarding, Preferences, and inside the More language chip).
 export function LangSwitch({ onPick }) {
   const { t, lang, setLang } = useApp()
   return (
@@ -196,7 +197,7 @@ export function LangSwitch({ onPick }) {
   )
 }
 
-// Home header chip: shows the current language, opens the same three choices.
+// More header chip: shows the current language, opens the same three choices.
 export function LangChip() {
   const { t, lang } = useApp()
   const [open, setOpen] = useState(false)
@@ -220,13 +221,47 @@ export function LangChip() {
   )
 }
 
+// Does " · value" fit in the header? Judged on the final value (a hidden copy in .bal-m), never per
+// count-up frame: the room the header's items need without the shown value, plus the final value,
+// against the header's width. Re-checked on resize, on a new value and once the fonts are in.
+function useValueFits(headerRef, finalValue, deps) {
+  const [fits, setFits] = useState(false)
+  useLayoutEffect(() => {
+    const h = headerRef.current
+    if (!h || !finalValue) { setFits(false); return }
+    const check = () => {
+      const m = h.querySelector('.bal-m'); if (!m) return
+      const cs = getComputedStyle(h)
+      const items = [...h.children].filter((c) => !['absolute', 'fixed'].includes(getComputedStyle(c).position))
+      let need = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight) + (parseFloat(cs.columnGap) || 0) * (items.length - 1)
+      for (const c of items) need += c.classList.contains('grow') ? (c.firstElementChild?.getBoundingClientRect().width || 0) : c.getBoundingClientRect().width
+      need -= h.querySelector('.bal-v')?.getBoundingClientRect().width || 0
+      need += m.getBoundingClientRect().width
+      setFits(need <= h.clientWidth + 0.5)
+    }
+    check()
+    const ro = new ResizeObserver(check)
+    ro.observe(h)
+    const m = h.querySelector('.bal-m'); if (m) ro.observe(m)
+    document.fonts?.ready.then(check).catch(() => {})
+    return () => ro.disconnect()
+  }, [finalValue, ...deps]) // eslint-disable-line react-hooks/exhaustive-deps
+  return fits
+}
+
 export function Header({ onBack, onInk = false, langChip = false }) {
-  const { t, balance, demo, lang, reset } = useApp()
+  const { t, balance, demo, lang, reset, prices } = useApp()
   const balanceShown = useCountUp(balance)
   const fs = useFullscreen()
   const [fsAsk, setFsAsk] = useState(false)
+  const headerRef = useRef(null)
+  // The balance's value in the Nimiq Pay currency (lib/price.js fiat): only with a live rate.
+  const fiat = prices?.live ? prices.fiat : null
+  const finalValue = balance == null ? null : fmtFiatValue(balance, fiat, lang)
+  const fits = useValueFits(headerRef, finalValue, [lang, demo, onBack ? 1 : 0, langChip, fs.supported && !fs.on])
+  const valueShown = finalValue && fits ? fmtFiatValue(Math.round(balanceShown), fiat, lang) : null
   return (
-    <header className={`header${onInk ? ' on-ink' : ''}`}>
+    <header ref={headerRef} className={`header${onInk ? ' on-ink' : ''}`}>
       {onBack ? (
         <button type="button" className="icon-btn" aria-label={t('back')} onClick={onBack}><Icon name="back" stroke={2.2} /></button>
       ) : (
@@ -239,7 +274,13 @@ export function Header({ onBack, onInk = false, langChip = false }) {
       {langChip && <LangChip />}
       {balance == null
         ? <span className="chip sk" aria-label={t('goal_reading')}>000,000 NIM</span>
-        : <span className="chip">{fmtNim(Math.round(balanceShown), lang)} NIM</span>}
+        : (
+          <span className="chip bal">
+            {fmtNim(Math.round(balanceShown), lang)} NIM
+            {valueShown && <span className="bal-v"><span aria-hidden="true">{' · '}</span>{valueShown}</span>}
+            {finalValue && <span className="bal-m" aria-hidden="true">{' · '}{finalValue}</span>}
+          </span>
+        )}
       {/* Only inside Nimiq Pay, and hidden in full screen: Nimiq Pay shows its own exit button there. */}
       {fs.supported && !fs.on && (
         <button type="button" className="icon-btn fs-btn" aria-label={t('fs_btn')} onClick={() => setFsAsk(true)}><Icon name="expand" size={20} /></button>
