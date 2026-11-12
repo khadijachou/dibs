@@ -37,7 +37,7 @@ export default function Stake() {
     body = <Notice tone="wait" title={t('stake_reading')} />
   } else {
     const st = state.staker
-    const { total, earned, other } = stakeSummary(st, address)
+    const { total, earned, other, state: earnState } = stakeSummary(st, address)
     body = (
       <>
         <section className="hero stake-hero">
@@ -46,6 +46,8 @@ export default function Stake() {
           <div className="stake-facts">
             <div><span>{t('stake_validator')}</span><b><i className="dot" aria-hidden="true" />{poolName()}</b></div>
             {earned != null && <div><span>{t('stake_earned')}</span><b className="mint">{fmtEarned(earned, lang)} NIM</b></div>}
+            {/* Why earned shows what it shows (lib/earnState.js): first payout pending, or NIM leaving staking. */}
+            {earned != null && earnState !== 'earning' && <p className="earn-why">{t(earnState === 'first' ? 'stake_earned_first' : 'stake_earned_stopped')}</p>}
             {other >= 1 && <div><span>{t('stake_other')}</span><b>{fmtNim(Math.floor(other), lang)} NIM</b></div>}
           </div>
           {other >= 1 && <p className="small">{t('stake_other_note')}</p>}

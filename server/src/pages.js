@@ -57,13 +57,13 @@ export const statsPage = `${HEAD('Dibs in numbers')}
   <div class="brand">${WORDMARK}</div>
   <h1>Dibs in numbers</h1>
   <section class="card hero">
-    <div class="label">NIM saved through Dibs</div>
+    <div class="label">NIM deposited through Dibs</div>
     <div class="n"><span id="nim">…</span><small>NIM</small></div>
-    <div class="sub">verified deposits, staked with Garuda Pool</div>
+    <div class="sub">every deposit found on chain, all time</div>
   </section>
   <section class="grid" id="tiles"></section>
   <p class="asof" id="asof"></p>
-  <p class="note">These numbers come from people who tapped Share stats. Goals, deposits and purchases are counted anonymously: never a name, an email or a gift card code. Deposits count only once they are found on the Nimiq blockchain. People who said no are not counted.</p>
+  <p class="note">These numbers come from people who tapped Share stats. Goals, deposits and purchases are counted anonymously: never a name, an email or a gift card code. Deposits count only once they are found on the Nimiq blockchain. NIM that is withdrawn and deposited again counts each time. People who said no are not counted.</p>
   <p class="follow"><a href="https://x.com/calldibs_app" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M14.234 10.162 22.977 0h-2.072l-7.591 8.824L7.251 0H.258l9.168 13.343L.258 24H2.33l8.016-9.318L16.749 24h6.993zm-2.837 3.299-.929-1.329L3.076 1.56h3.182l5.965 8.532.929 1.329 7.754 11.09h-3.182z"/></svg>Follow @calldibs_app on X</a></p>
 </main>
 <script>

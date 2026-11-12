@@ -60,3 +60,9 @@ test('v1.0.5 (news_10) sits between 1.0.6 and 1.0.4, with the same items in en, 
   assert.equal(vs[i + 1], '1.0.4')
   for (const l of ['en', 'fr', 'es']) assert.equal(items(T[l]('news_10')).length, 2, `news_10 ${l}`)
 })
+
+test('a two-digit patch is newer: 1.0.10 after 1.0.9, and it heads the timeline', () => {
+  assert.ok(vNum('1.0.10') > vNum('1.0.9'))
+  assert.equal(timeline[0].v, '1.0.10')
+  assert.equal(timeline[1].v, '1.0.9')
+})
