@@ -50,6 +50,10 @@
 :where(:root[data-theme="light"]) .ring-wrap.ready.ready-covered .pct, :where(:root[data-theme="light"]) .goal-status.rs.ready-covered { color: #137b5f; }
 :where(:root[data-theme="light"]) .ring-wrap.ready.ready-wallet .pct, :where(:root[data-theme="light"]) .goal-status.rs.ready-wallet { color: #906607; }
 :where(:root[data-theme="light"]) .ring-wrap.ready.ready-short .pct, :where(:root[data-theme="light"]) .goal-status.rs.ready-short { color: #c43825; }
+/* Those text shades fade with --rs (same 400 ms curve), so the label and the status line move with the ring. */
+:where(:root[data-theme="light"]) .ring-wrap.ready .pct { transition: color 400ms cubic-bezier(.2, .8, .2, 1); }
+:where(:root[data-theme="light"]) .goal-status.rs { transition: color 400ms cubic-bezier(.2, .8, .2, 1), --rs 400ms cubic-bezier(.2, .8, .2, 1), --rs-soft 400ms cubic-bezier(.2, .8, .2, 1), --rs-line 400ms cubic-bezier(.2, .8, .2, 1); }
+@media (prefers-reduced-motion: reduce) { :where(:root[data-theme="light"]) .ring-wrap.ready .pct, :where(:root[data-theme="light"]) .goal-status.rs { transition: none; } }
 
 /* ---- SVG presentation attributes set in JSX (CSS wins over them): ring tracks and the onboarding ring ---- */
 :where(:root[data-theme="light"]) svg circle:first-child[stroke="#e6dccf"],
