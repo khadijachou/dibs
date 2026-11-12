@@ -1,5 +1,5 @@
 import { CardIssue } from '../components/CardIssue.jsx'
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useApp } from '../App.jsx'
 import { detailText, itemLabel } from '../lib/itemName.js'
 import { BrandLogo, CREAM, Header, DibsMark } from '../components/ui.jsx'
@@ -139,13 +139,39 @@ function GoalWallet({ goals, earned }) {
     if (card) el.scrollTo({ left: card.offsetLeft - el.offsetLeft - 20, behavior: 'smooth' })
     setI(k)
   }
+  const indexOf = (el) => Math.max(0, Math.min(goals.length - 1, Math.round(el.scrollLeft / (el.children[0].offsetWidth + 12))))
+  // v1.0.10: each card keeps its natural height (no stretch to the tallest), and the row takes the height of the card
+  // on screen, so the photos below move up under a short card. Set only once a swipe has settled (no finger down,
+  // no scroll for 150 ms); the 200 ms ease is in CSS. Display only.
+  const [h, setH] = useState(null)
+  const touching = useRef(false)
+  const settle = useRef(0)
+  const fit = () => {
+    const el = ref.current
+    if (!el || !el.children.length || touching.current) return
+    const card = el.children[indexOf(el)]
+    const cs = getComputedStyle(el)
+    setH(Math.ceil(card.offsetHeight + parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom)))
+  }
+  const later = () => { clearTimeout(settle.current); settle.current = setTimeout(fit, 150) }
+  useLayoutEffect(fit, [goals.length]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    // A card that changes height while on screen (count-ups, price checks, a goal changing state) refits the row.
+    const el = ref.current
+    if (!el || typeof ResizeObserver !== 'function') return undefined
+    const ro = new ResizeObserver(later)
+    for (const c of el.children) ro.observe(c)
+    return () => { ro.disconnect(); clearTimeout(settle.current) }
+  }, [goals.length]) // eslint-disable-line react-hooks/exhaustive-deps
   const onScroll = () => {
     const el = ref.current
     if (!el || !el.children.length) return
-    const w = el.children[0].offsetWidth + 12
-    const k = Math.max(0, Math.min(goals.length - 1, Math.round(el.scrollLeft / w)))
+    const k = indexOf(el)
     if (k !== i) setI(k)
+    later()
   }
+  const down = () => { touching.current = true; clearTimeout(settle.current) }
+  const up = () => { touching.current = false; later() }
   return (
     <>
       <div className="greet-row"><GoalsLabel count={goals.length} /><CarouselDots count={goals.length} current={cur} /></div>
@@ -159,7 +185,7 @@ function GoalWallet({ goals, earned }) {
           </button>
         ))}
       </div>
-      <div className="gwallet" ref={ref} onScroll={onScroll}>
+      <div className="gwallet" ref={ref} onScroll={onScroll} onTouchStart={down} onTouchEnd={up} onTouchCancel={up} style={h ? { height: h } : undefined}>
         {goals.map((g) => <div className="gw-card" key={g.id}><GoalHero goal={g} earned={earned} /></div>)}
       </div>
     </>

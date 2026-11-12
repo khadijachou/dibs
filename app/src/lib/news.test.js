@@ -66,3 +66,7 @@ test('a two-digit patch is newer: 1.0.10 after 1.0.9, and it heads the timeline'
   assert.equal(timeline[0].v, '1.0.10')
   assert.equal(timeline[1].v, '1.0.9')
 })
+
+test('1.0.10 (news_12) has three items in en, fr and es', () => {
+  for (const l of ['en', 'fr', 'es']) assert.equal(items(T[l]('news_12')).length, 3, `news_12 ${l}`)
+})

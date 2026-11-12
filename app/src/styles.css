@@ -286,6 +286,9 @@ input.email { width: 100%; height: 48px; border-radius: 12px; border: 1.5px soli
 .gw-tab.on { border-color: var(--gold); }
 .gw-tab.on b { color: var(--gold); }
 .gwallet { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; margin: 0 -20px; padding: 2px 20px 6px; }
+/* v1.0.10: cards keep their natural height; the row's height (set in Home.jsx once a swipe settles) follows the card on screen. */
+.gwallet { align-items: flex-start; overflow-y: hidden; transition: height .2s ease; }
+@media (prefers-reduced-motion: reduce) { .gwallet { transition: none; } }
 .gw-card { flex: 0 0 calc(100% - 24px); scroll-snap-align: center; display: flex; }
 .gw-card > .hero { flex: 1; }
 
