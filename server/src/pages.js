@@ -27,74 +27,164 @@ h1 { margin: 0; font-weight: 700; font-size: 28px; letter-spacing: -.01em; }
 // Inline, not loaded from the app, so this page never depends on the app being up.
 const WORDMARK = '<svg xmlns="http://www.w3.org/2000/svg" class="wordmark" viewBox="0 0 360 139" role="img" aria-label="Dibs"><title>Dibs</title><g fill="#E8482A" transform="translate(0 11) scale(0.510417)"><path fill-rule="evenodd" d="M0 153.5a96 96 0 1 0 192 0a96 96 0 1 0-192 0ZM57.5 153a38.5 38.5 0 1 0 77 0a38.5 38.5 0 1 0-77 0Z" /><polygon points="135,0 163.5,28.5 192,0 192,246 135,246" /></g><path fill="#FFF6EC" d="M117 16.43Q117 9.64 121.84 5.14Q126.68 0.64 134.32 0.64Q141.79 0.64 146.63 5.14Q151.47 9.64 151.47 16.43Q151.47 23.05 146.63 27.55Q141.79 32.05 134.32 32.05Q126.68 32.05 121.84 27.55Q117 23.05 117 16.43ZM148.75 41.9V136.64H119.72V41.9ZM226 40.54Q237.72 40.54 247.23 46.49Q256.73 52.43 262.25 63.46Q267.77 74.5 267.77 89.1Q267.77 103.7 262.25 114.82Q256.73 125.95 247.23 131.97Q237.72 138 226 138Q215.99 138 208.51 134.01Q201.04 130.02 196.8 123.4V136.64H167.77V11H196.8V55.31Q200.87 48.69 208.51 44.62Q216.16 40.54 226 40.54ZM217.34 65.84Q208.68 65.84 202.66 72.12Q196.63 78.41 196.63 89.27Q196.63 100.14 202.66 106.42Q208.68 112.7 217.34 112.7Q226 112.7 232.11 106.33Q238.23 99.97 238.23 89.1Q238.23 78.24 232.2 72.04Q226.17 65.84 217.34 65.84ZM275.92 105.57H304.61Q305.12 110.49 309.2 113.55Q313.27 116.61 319.22 116.61Q324.65 116.61 327.62 114.48Q330.59 112.36 330.59 108.97Q330.59 104.89 326.35 102.94Q322.1 100.99 312.59 98.61Q302.41 96.23 295.61 93.6Q288.82 90.97 283.9 85.28Q278.98 79.59 278.98 69.92Q278.98 61.77 283.48 55.06Q287.97 48.35 296.72 44.45Q305.46 40.54 317.52 40.54Q335.34 40.54 345.62 49.37Q355.89 58.2 357.42 72.8H330.59Q329.91 67.88 326.26 64.99Q322.61 62.11 316.67 62.11Q311.57 62.11 308.86 64.06Q306.14 66.01 306.14 69.41Q306.14 73.48 310.47 75.52Q314.8 77.56 323.97 79.59Q334.5 82.31 341.12 84.94Q347.74 87.57 352.75 93.43Q357.76 99.29 357.93 109.14Q357.93 117.46 353.26 123.99Q348.59 130.53 339.84 134.26Q331.1 138 319.55 138Q307.16 138 297.48 133.76Q287.8 129.51 282.2 122.13Q276.6 114.74 275.92 105.57Z"/></svg>'
 
+// Public page: every value from /api/stats is written with textContent (or a numeric style width), never as HTML.
+// Its styles live here only, so the admin page (which shares HEAD) is unchanged.
 export const statsPage = `${HEAD('Dibs in numbers')}
 <style>
-.brand { display: flex; align-items: center; }
-.brand .wordmark { height: 36px; width: auto; display: block; }
-.hero { background: linear-gradient(160deg, #2a1c1f, #1b1a21); border-color: #3a2a2c; padding: 22px 18px; }
-.hero .label { font-size: 13px; color: #d9cfd3; }
-.hero .n { font-weight: 700; font-size: 40px; line-height: 1.1; margin: 6px 0 4px; color: var(--cream); }
-.hero .n small { font-size: 18px; color: var(--coral); margin-left: 6px; }
-.hero .sub { font-size: 13px; color: var(--muted); }
-.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.tile { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 14px; min-width: 0; }
-.tile .k { font-size: 12.5px; color: var(--muted); }
-.tile .n { font-weight: 700; font-size: 26px; margin: 2px 0; }
-.tile .s { font-size: 12px; color: var(--muted); }
-.tile.mint .n { color: var(--mint); } .tile.butter .n { color: var(--butter); }
-.tile.nodata .n { font-size: 17px; line-height: 31px; color: var(--muted); }
-.asof { font-size: 13px; color: var(--muted); }
-.note { font-size: 13px; color: var(--muted); line-height: 1.55; }
-.err { color: var(--red); font-size: 14px; }
-.follow { margin: 4px 0 0; font-size: 14px; }
-.follow a { display: inline-flex; align-items: center; gap: 8px; color: var(--cream); font-weight: 600; text-decoration: none; }
-.follow a:hover { text-decoration: underline; }
-.follow svg { width: 14px; height: 14px; }
-@media (max-width: 340px) { .grid { grid-template-columns: 1fr; } }
+.st { --s-mint: #15896A; --s-coral: #E8482A; --s-butter: #FFC94D; --s-cream: #FFF6EC; --s-dark: #1B1920; gap: 12px; }
+.st [hidden] { display: none !important; }
+.st .brand { display: flex; align-items: center; }
+.st .brand .wordmark { height: 32px; width: auto; display: block; }
+.st h1 { font-weight: 600; font-size: 26px; line-height: 1.2; margin: 6px 0 0; }
+.st .lede { margin: -6px 0 4px; font-size: 14px; color: var(--muted); }
+.st .hero { position: relative; overflow: hidden; border-radius: 20px; border: 1px solid rgba(232, 72, 42, .35); padding: 20px 18px 18px;
+  background: radial-gradient(220px 160px at 100% 0%, rgba(232, 72, 42, .22), rgba(232, 72, 42, 0) 70%), linear-gradient(160deg, #2a1c1f, var(--s-dark)); }
+.st .hero .label { font-size: 12px; font-weight: 500; color: #d9cfd3; }
+.st .hero .big { font-family: Poppins, Inter, sans-serif; font-weight: 600; font-size: 40px; line-height: 1.1; margin: 6px 0 0; color: var(--s-cream); overflow-wrap: anywhere; }
+.st .hero .big small { font-family: Inter, system-ui, sans-serif; font-size: 15px; font-weight: 600; color: var(--s-coral); margin-left: 8px; }
+.st .hero hr { border: 0; border-top: 1px solid rgba(255, 246, 236, .1); margin: 16px 0 14px; }
+.st .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.st .pair .v { font-family: Poppins, Inter, sans-serif; font-weight: 600; font-size: 16px; color: var(--s-cream); overflow-wrap: anywhere; }
+.st .pair .c { font-size: 12px; color: var(--muted); }
+.st .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.st .tile { --t: var(--s-cream); --t-bg: rgba(255, 246, 236, .14); background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 14px; min-width: 0; display: flex; flex-direction: column; }
+.st .tile.coral { --t: var(--s-coral); --t-bg: rgba(232, 72, 42, .16); }
+.st .tile.mint { --t: var(--s-mint); --t-bg: rgba(21, 137, 106, .16); }
+.st .tile.butter { --t: var(--s-butter); --t-bg: rgba(255, 201, 77, .15); }
+.st .ico { width: 28px; height: 28px; border-radius: 9px; display: grid; place-items: center; background: var(--t-bg); color: var(--t); margin-bottom: 10px; }
+.st .ico svg { width: 16px; height: 16px; }
+.st .tile .k { font-size: 12px; color: var(--muted); }
+.st .tile .n { font-family: Poppins, Inter, sans-serif; font-weight: 600; font-size: 26px; line-height: 1.25; margin: 2px 0; color: var(--s-cream); overflow-wrap: anywhere; }
+.st .tile .s { font-size: 12.5px; color: var(--muted); line-height: 1.4; }
+.st .tile.nodata .n { font-size: 17px; line-height: 1.4; margin: 6px 0 4px; color: var(--muted); }
+.st .bar { height: 5px; border-radius: 999px; background: rgba(255, 246, 236, .08); margin-top: auto; overflow: hidden; }
+.st .tile .s + .bar { margin-top: 10px; }
+.st .bar i { display: block; height: 100%; width: 0; border-radius: 999px; background: var(--t); transition: width .6s ease; }
+.st .live { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--muted); margin: 2px 2px 0; }
+.st .live-dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--s-mint); animation: st-live 2.4s ease-out infinite; }
+@keyframes st-live { 0% { box-shadow: 0 0 0 0 rgba(21, 137, 106, .55); } 70% { box-shadow: 0 0 0 8px rgba(21, 137, 106, 0); } 100% { box-shadow: 0 0 0 0 rgba(21, 137, 106, 0); } }
+@media (prefers-reduced-motion: reduce) { .st .live-dot { animation: none; box-shadow: 0 0 0 4px rgba(21, 137, 106, .2); } .st .bar i { transition: none; } }
+.st .err { color: var(--red); font-size: 14px; margin: 2px; }
+.st .note { display: flex; gap: 12px; align-items: flex-start; border-radius: 16px; }
+.st .note .ico { --t: var(--s-mint); --t-bg: rgba(21, 137, 106, .16); flex: none; margin: 0; }
+.st .note p { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.55; }
+.st .follow { margin: 4px 0 0; }
+.st .follow a { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 16px; border-radius: 999px; background: var(--card); border: 1px solid var(--line); color: var(--cream); font-size: 14px; font-weight: 600; text-decoration: none; }
+.st .follow a:hover { border-color: #3d3947; }
+.st .follow a:focus-visible { outline: 2px solid var(--s-coral); outline-offset: 2px; }
+.st .follow svg { width: 14px; height: 14px; }
+@media (max-width: 340px) { .st .grid { grid-template-columns: 1fr; } }
 </style>
 <body>
-<main>
+<main class="st">
   <div class="brand">${WORDMARK}</div>
   <h1>Dibs in numbers</h1>
+  <p class="lede">Live numbers from the people who save with Dibs.</p>
   <section class="card hero">
     <div class="label">NIM deposited through Dibs</div>
-    <div class="n"><span id="nim">…</span><small>NIM</small></div>
-    <div class="sub">every deposit found on chain, all time</div>
+    <div class="big"><span id="nim">-</span><small>NIM</small></div>
+    <hr />
+    <div class="pair">
+      <div><div class="v" id="staked">-</div><div class="c">staked right now</div></div>
+      <div><div class="v" id="since">-</div><div class="c">counting since</div></div>
+    </div>
   </section>
-  <section class="grid" id="tiles"></section>
-  <p class="asof" id="asof"></p>
-  <p class="note">These numbers come from people who tapped Share stats. Goals, deposits and purchases are counted anonymously: never a name, an email or a gift card code. Deposits count only once they are found on the Nimiq blockchain. NIM that is withdrawn and deposited again counts each time. People who said no are not counted.</p>
+  <section class="grid">
+    <div class="tile">
+      <span class="ico" aria-hidden="true"><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2'/><circle cx='9' cy='7' r='4'/><path d='M22 21v-2a4 4 0 0 0-3-3.87'/><path d='M16 3.13a4 4 0 0 1 0 7.75'/></svg></span>
+      <div class="k">People</div><div class="n" id="people">-</div><div class="s">phones that shared stats</div>
+    </div>
+    <div class="tile coral">
+      <span class="ico" aria-hidden="true"><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><ellipse cx='12' cy='6' rx='8' ry='3'/><path d='M4 6v6c0 1.66 3.58 3 8 3s8-1.34 8-3V6'/><path d='M4 12v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6'/></svg></span>
+      <div class="k">Savers</div><div class="n" id="savers">-</div><div class="s" id="saversSub">-</div>
+      <div class="bar" aria-hidden="true"><i id="saversBar"></i></div>
+    </div>
+    <div class="tile">
+      <span class="ico" aria-hidden="true"><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='9'/><circle cx='12' cy='12' r='5'/><circle cx='12' cy='12' r='1'/></svg></span>
+      <div class="k">Goals created</div><div class="n" id="created">-</div><div class="s" id="createdSub">-</div>
+      <div class="bar" aria-hidden="true"><i id="createdBar"></i></div>
+    </div>
+    <div class="tile mint">
+      <span class="ico" aria-hidden="true"><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='9'/><path d='m8 12.5 2.8 2.8L16 9.5'/></svg></span>
+      <div class="k">Goals reached</div><div class="n" id="reached">-</div><div class="s" id="reachedSub">-</div>
+      <div class="bar" aria-hidden="true"><i id="reachedBar"></i></div>
+    </div>
+    <div class="tile butter">
+      <span class="ico" aria-hidden="true"><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='2.5' y='5' width='19' height='14' rx='2.5'/><path d='M2.5 10h19'/><path d='M6.5 15h4'/></svg></span>
+      <div class="k">Cards bought</div><div class="n" id="cards">-</div><div class="s" id="cardsSub">-</div>
+    </div>
+    <div class="tile mint" id="earnedTile">
+      <span class="ico" aria-hidden="true"><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M3 17l6-6 4 4 8-8'/><path d='M14 7h7v7'/></svg></span>
+      <div class="k">Earned from staking</div><div class="n" id="earned">-</div><div class="s" id="earnedSub">-</div>
+    </div>
+  </section>
+  <p class="live" id="live" hidden><span class="live-dot" aria-hidden="true"></span><span id="liveText"></span></p>
+  <p class="err" id="err" role="status" hidden>The numbers could not be loaded. Try again in a moment.</p>
+  <section class="card note">
+    <span class="ico" aria-hidden="true"><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z'/><path d='m9 12 2 2 4-4'/></svg></span>
+    <p>Only phones that tapped Share stats are counted, anonymously: never a name, an email or a gift card code. A deposit counts once it is found on the Nimiq blockchain. NIM withdrawn and deposited again counts each time.</p>
+  </section>
   <p class="follow"><a href="https://x.com/calldibs_app" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M14.234 10.162 22.977 0h-2.072l-7.591 8.824L7.251 0H.258l9.168 13.343L.258 24H2.33l8.016-9.318L16.749 24h6.993zm-2.837 3.299-.929-1.329L3.076 1.56h3.182l5.965 8.532.929 1.329 7.754 11.09h-3.182z"/></svg>Follow @calldibs_app on X</a></p>
 </main>
 <script>
-const fmt = (n) => Number(n || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })
-const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c])
+// Numbers only: a missing or non-numeric field shows "-".
+const isNum = (v) => typeof v === 'number' && isFinite(v)
+const fmt = (v) => isNum(v) ? v.toLocaleString('en-US', { maximumFractionDigits: 0 }) : '-'
+// Share of a base, 0 when the base is 0 or missing.
+const pct = (part, base) => isNum(part) && isNum(base) && base > 0 ? Math.round(part / base * 100) : 0
 // NIM earned, same rules as the app (app/src/lib/format.js fmtEarned): 10 and up whole, under 10 two decimals,
 // under 0.01 "< 0.01". Always rounded down.
-function fmtEarned(n) {
-  const v = Number(n) || 0
+function fmtEarned(v) {
+  if (!isNum(v)) return '-'
   if (v <= 0) return '0'
   if (v < 0.01) return '< 0.01'
   if (v < 10) return '+' + (Math.floor(v * 100 + 1e-9) / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   return '+' + Math.floor(v).toLocaleString('en-US')
 }
-function tile(k, n, s, tone) { return '<div class="tile ' + (tone || '') + '"><div class="k">' + esc(k) + '</div><div class="n">' + esc(n) + '</div><div class="s">' + esc(s) + '</div></div>' }
+function day(s) {
+  const d = new Date(s)
+  return s && !isNaN(d) ? d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '-'
+}
+function when(s) {
+  const d = new Date(s)
+  return s && !isNaN(d) ? d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '-'
+}
+const $ = (id) => document.getElementById(id)
+const put = (id, text) => { $(id).textContent = text }
+const bar = (id, p) => { $(id).style.width = Math.max(0, Math.min(100, p)) + '%' }
 async function load() {
   try {
     const r = await fetch('/api/stats', { cache: 'no-store' })
+    if (!r.ok) throw new Error('status ' + r.status)
     const d = await r.json()
-    document.getElementById('nim').textContent = fmt(d.nimAddedVerified)
-    document.getElementById('tiles').innerHTML = [
-      tile('People who used Dibs', fmt(d.people), 'phones that shared stats'),
-      tile('Savers', fmt(d.savers), 'with a deposit found on chain'),
-      tile('Goals created', fmt(d.goalsCreated), fmt(d.goalsActive) + ' active right now'),
-      tile('Goals reached', fmt(d.goalsReached), 'saved up to 100%', 'mint'),
-      tile('Cards bought', fmt(d.cardsBought), 'about ' + fmt(d.cardsUsd) + ' USD in total', 'butter'),
-      d.nimEarned == null ? tile('NIM earned from staking', 'Not enough data yet', 'shown once phones report it', 'nodata') : tile('NIM earned from staking', fmtEarned(d.nimEarned), 'rewards so far', 'mint'),
-    ].join('')
-    document.getElementById('asof').innerHTML = '<span class="dot" aria-hidden="true"></span>As of ' + esc(new Date(d.updatedAt).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }))
+    if (!d || typeof d !== 'object') throw new Error('bad body')
+    put('nim', fmt(d.nimAddedVerified))
+    put('staked', isNum(d.nimStakedNow) ? fmt(d.nimStakedNow) + ' NIM' : '-')
+    put('since', day(d.since))
+    put('people', fmt(d.people))
+    put('savers', fmt(d.savers))
+    const sp = pct(d.savers, d.people)
+    put('saversSub', sp + '% of people saved')
+    bar('saversBar', sp)
+    put('created', fmt(d.goalsCreated))
+    put('createdSub', fmt(d.goalsActive) + ' active right now')
+    bar('createdBar', pct(d.goalsActive, d.goalsCreated))
+    put('reached', fmt(d.goalsReached))
+    const rp = pct(d.goalsReached, d.goalsCreated)
+    put('reachedSub', rp + '% of goals at 100%')
+    bar('reachedBar', rp)
+    put('cards', fmt(d.cardsBought))
+    put('cardsSub', 'about ' + fmt(d.cardsUsd) + ' USD in total')
+    const noEarned = d.nimEarned == null
+    $('earnedTile').classList.toggle('nodata', noEarned)
+    put('earned', noEarned ? 'Not enough data yet' : (isNum(d.nimEarned) ? fmtEarned(d.nimEarned) + ' NIM' : '-'))
+    put('earnedSub', noEarned ? 'shown once phones report it' : 'staking rewards so far')
+    put('liveText', 'Live · updated ' + when(d.updatedAt) + ' · every minute')
+    $('live').hidden = false
+    $('err').hidden = true
   } catch {
-    document.getElementById('asof').innerHTML = '<span class="err">The numbers could not be loaded. Try again in a moment.</span>'
+    $('live').hidden = true
+    $('err').hidden = false
   }
 }
 load()

@@ -60,14 +60,21 @@ test('markNewsSeen saves the newest version, then nothing is unread', () => {
 })
 
 test('v1.1.9 is big: someone who saw 1.1.8 (or 1.1.7) gets the dot, with its summary', () => {
-  assert.equal(NEWS[1].v, '1.1.9')
+  assert.equal(NEWS[2].v, '1.1.9')
   assert.equal(unreadNews({ storage: onboarded({ [NEWS_SEEN_KEY]: '1.1.8' }) }), v119)
   assert.equal(unreadNews({ storage: onboarded({ [NEWS_SEEN_KEY]: '1.1.7' }) }), v119)
   assert.equal(unreadNews({ storage: onboarded({ [NEWS_SEEN_KEY]: '1.1.8' }) }).sum, 'news_sum_22')
 })
 
 test('v1.1.10 is not big: someone who saw 1.1.9 gets no dot; someone who saw only 1.1.8 still gets the 1.1.9 one', () => {
-  assert.equal(NEWS[0].v, '1.1.10')
+  assert.equal(NEWS[1].v, '1.1.10')
+  assert.equal(unreadNews({ storage: onboarded({ [NEWS_SEEN_KEY]: '1.1.9' }) }), null)
+  assert.equal(unreadNews({ storage: onboarded({ [NEWS_SEEN_KEY]: '1.1.8' }) }), v119)
+})
+
+test('v1.1.11 is not big: someone who saw 1.1.10 or 1.1.9 gets no dot; someone who saw only 1.1.8 still gets the 1.1.9 one', () => {
+  assert.equal(NEWS[0].v, '1.1.11')
+  assert.equal(unreadNews({ storage: onboarded({ [NEWS_SEEN_KEY]: '1.1.10' }) }), null)
   assert.equal(unreadNews({ storage: onboarded({ [NEWS_SEEN_KEY]: '1.1.9' }) }), null)
   assert.equal(unreadNews({ storage: onboarded({ [NEWS_SEEN_KEY]: '1.1.8' }) }), v119)
 })
