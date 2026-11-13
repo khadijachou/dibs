@@ -1,40 +1,50 @@
 import { useState } from 'react'
 import { useApp } from '../App.jsx'
 import { BrandLogo, Sheet } from './ui.jsx'
-import { brandGrad, brandRegion, defaultRegion, worksLine } from '../lib/brands.js'
+import { brandGrad, brandRegion, defaultRegion } from '../lib/brands.js'
 import { getPref } from '../lib/prefs.js'
 import { copyText } from '../lib/clipboard.js'
 import { HELP_EMAIL } from './LegalText.jsx'
 import { detailText } from '../lib/itemName.js'
 import { fmtNim } from '../lib/format.js'
-import { usdToNim } from '../lib/price.js'
+import { valueNim } from '../screens/planView.js'
 
-// Brand sheet (catalogue tiles, Home "Call dibs on something else"): the card as a big gift card, what it is, where it
-// works, how the shop delivers it, and every value in the live catalogue with its rough NIM price.
-// onPick(regionKey): the sticky "Call dibs on {brand}" button (starts the goal on the version shown); without it,
-// Close is the only action.
-// Versions (USA, Europe, UK, Nigeria): with more than one, the Region fact becomes chips; a chip swaps the range, the
-// values, their NIM and the count. It only changes what is shown: the version is saved when the user calls dibs
-// (lib/prefs.js), or in More > Your accounts. With several versions and none saved, "My region isn't here" opens a
-// sheet with the help email.
-// pref: Your accounts' version step (card face, chips, works-with line; no values). onSave(versionKey) saves it;
-// onRemove (a brand already saved) removes it.
+// Outline globe: "My region isn't here" (top right of the Region card, on every brand).
+const GlobeIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <circle cx="12" cy="12" r="9" /><path d="M3 12h18" /><path d="M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18z" />
+  </svg>
+)
+
+// Brand sheet (catalogue tiles, Home "Call dibs on something else"): the card as a big gift card, what it is, the
+// Region card and the Card values card, then how the shop delivers it.
+// v1.1.8: the value is picked here. Each value shows its NIM, exactly the plan target (screens/planView.js valueNim:
+// lib/readyState.js targetUsdOf, then lib/price.js usdToNim). The first value is selected; a region chip resets it.
+// onPick(regionKey, itemId): the sticky "Call dibs on {brand}" button (Plan opens on that value); without it, Close is
+// the only action.
+// Versions (USA, Europe, UK, Nigeria): with more than one, the Region card shows chips; a chip only changes what is
+// shown: the version is saved when the user calls dibs (lib/prefs.js), or in More > Your accounts. The globe (every
+// brand) opens a sheet with the help email.
+// pref: Your accounts' version step (card face, Region card; no values, no delivery line, as before). onSave(versionKey)
+// saves it; onRemove (a brand already saved) removes it.
 export default function BrandSheet({ brand, onClose, onPick, pref = false, onSave, onRemove }) {
   const { t, lang, toast, prices } = useApp()
   const regions = brand.regions || []
   const [regionKey, setRegionKey] = useState(() => defaultRegion(brand)?.key || null)
+  const [valueId, setValueId] = useState(null) // null = the first value of the region
   const [missing, setMissing] = useState(false)
   const saved = getPref(brand.key)
   const version = brandRegion(brand, regionKey)
   const items = version?.items || brand.items || []
-  const pickRegion = (key) => setRegionKey(key)
-  const regionLink = regions.length > 1 && !saved
+  const picked = items.find((it) => it.id === valueId) || items[0] || null
+  const pickRegion = (key) => { setRegionKey(key); setValueId(null) }
   const lo = items[0]
   const hi = items[items.length - 1]
   const range = !lo ? '' : items.length > 1
     ? t('bs_range', { lo: detailText(t, lo, { short: true }), hi: detailText(t, hi, { short: true }) })
     : detailText(t, lo, { short: true })
   const estimated = items.some((it) => it.live === false)
+  const valuesTitle = t(items.length > 1 ? 'bs_values_title' : 'bs_value_title')
   return (
     <Sheet label={brand.name} onClose={onClose}>
       <div className="bs-card" style={{ background: brandGrad(brand.key) }}>
@@ -49,52 +59,52 @@ export default function BrandSheet({ brand, onClose, onPick, pref = false, onSav
         </div>
       </div>
       {brand.about && <p className="bs-lead">{t(brand.about)}</p>}
-      <div className={`bs-facts${regions.length > 1 ? ' versions' : ''}`}>
+      <section className="bs-box">
+        <div className="bs-box-head">
+          <span>{t('about_region')}</span>
+          <button type="button" className="bs-globe" aria-label={t('region_missing_link')} onClick={() => setMissing(true)}><GlobeIcon /></button>
+        </div>
         {regions.length > 1 ? (
-          <div className="bs-region">
-            <span>{t('about_region')}</span>
-            <div className="pills bs-region-pills" role="group" aria-label={t('about_region')}>
-              {regions.map((r) => (
-                <button type="button" key={r.key} className={`pill${r.key === version?.key ? ' on' : ''}`} aria-pressed={r.key === version?.key} onClick={() => pickRegion(r.key)}>
-                  {t(`region_${r.key}`)}
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <div><span>{t('about_region')}</span><b>{version ? t(`region_${version.key}`) : '-'}</b></div>
-        )}
-        {!pref && <div><span>{t('about_delivered')}</span><b>{brand.delivers ? t(`delivers_${brand.delivers}`) : '-'}</b></div>}
-        {!pref && <div><span>{t('bs_values')}</span><b>{items.length}</b></div>}
-      </div>
-      {regionLink && <button type="button" className="region-link" onClick={() => setMissing(true)}>{t('region_missing_link')}</button>}
-      {!pref && items.length > 0 && (
-        <div className="bs-vals">
-          <span className="small sheet-label">{t('plan_card_value')}</span>
-          <div className="bs-val-grid">
-            {items.map((it) => (
-              <div className="bs-val" key={it.id}>
-                <b>{detailText(t, it, { short: true })}</b>
-                {prices && it.usd != null && (
-                  <span className={it.live === false ? 'est' : undefined}>
-                    {t('bs_nim', { nim: fmtNim(usdToNim(it.usd, prices.nimUsd), lang) })}
-                  </span>
-                )}
-              </div>
+          <div className="pills bs-region-pills" role="group" aria-label={t('about_region')}>
+            {regions.map((r) => (
+              <button type="button" key={r.key} className={`pill${r.key === version?.key ? ' on' : ''}`} aria-pressed={r.key === version?.key} onClick={() => pickRegion(r.key)}>
+                {t(`region_${r.key}`)}
+              </button>
             ))}
           </div>
+        ) : (
+          <b className="bs-box-val">{version ? t(`region_${version.key}`) : '-'}</b>
+        )}
+      </section>
+      {!pref && items.length > 0 && (
+        <section className="bs-box">
+          <div className="bs-box-head">
+            <span>{valuesTitle}</span>
+            {brand.delivers && <span className="bs-deliv">{t('about_delivered')} <b>{t(`delivers_${brand.delivers}`)}</b></span>}
+          </div>
+          <div className="bs-val-pills" role="group" aria-label={valuesTitle}>
+            {items.map((it) => {
+              const nim = prices ? valueNim(it, prices.nimUsd) : null
+              const on = it.id === picked?.id
+              return (
+                <button type="button" key={it.id} className={`pill bs-vpill${on ? ' on' : ''}`} aria-pressed={on} onClick={() => setValueId(it.id)}>
+                  <b>{detailText(t, it, { short: true })}</b>
+                  {nim != null && <small>{t('bs_nim', { nim: fmtNim(nim, lang) })}</small>}
+                </button>
+              )
+            })}
+          </div>
           {estimated && (
-            <button type="button" className="price-chip" onClick={() => toast(t('price_checkout_info'))}>
+            <button type="button" className="bs-est" onClick={() => toast(t('price_checkout_info'))}>
               <i aria-hidden="true">i</i>{t('price_chip')}
             </button>
           )}
-        </div>
+        </section>
       )}
-      {version?.worksWith && <p className="small works-line">{worksLine(t, version.worksWith)}</p>}
-      {!pref && (
+      {!pref && brand.delivers && (
         <p className="bs-how">
           <i aria-hidden="true" />
-          <span>{brand.delivers && <>{t(`bs_how_${brand.delivers}`)} </>}{t('bs_prices')}</span>
+          <span>{t(brand.delivers === 'link' ? 'bs_how_link2' : `bs_how_${brand.delivers}`)}</span>
         </p>
       )}
       {pref ? (
@@ -108,8 +118,8 @@ export default function BrandSheet({ brand, onClose, onPick, pref = false, onSav
       ) : (
       <div className="bs-acts">
         {onPick && (
-          <button type="button" className="btn tall" onClick={() => onPick(version?.key || null)}>
-            {t('cat_cta', { brand: brand.name })}<small>{t('cat_cta_sub')}</small>
+          <button type="button" className="btn tall" onClick={() => onPick(version?.key || null, picked?.id || null)}>
+            {t('cat_cta', { brand: brand.name })}{picked && <small>{t('bs_cta_sub', { value: detailText(t, picked, { short: true }) })}</small>}
           </button>
         )}
         <button type="button" className="btn ghost" onClick={onClose}>{t('ob_close')}</button>

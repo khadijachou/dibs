@@ -1236,3 +1236,49 @@ html.is-fullscreen .bstamp-live { top: calc(58px + var(--fs-top)); }
 .acc-change { flex-shrink: 0; background: none; border: 0; color: var(--gold); font: 600 13.5px var(--font-body); padding: 6px 2px; cursor: pointer; }
 .pref-tag { display: inline-block; margin-top: 4px; padding: 2px 8px; border-radius: 999px; background: var(--teal-soft); color: var(--teal); font: 600 11.5px var(--font-body); }
 .btn-text-danger { background: none; border: 0; color: var(--red); font: 600 14px var(--font-body); padding: 10px; cursor: pointer; align-self: center; }
+
+/* v1.1.8 call dibs flow. Brand sheet: the Region card (globe = "My region isn't here") and the Card values card, the
+   value picked here with its NIM (the plan target). Plan page: Region / Delivered as boxes, the target card, one
+   timeline for every option (Today coral, a grey dot per week or month, the deadline mint; never a bar). */
+.bs-box { background: #26242e; border: 1px solid #2f2c38; border-radius: 14px; padding: 8px 12px 12px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.bs-box-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 30px; }
+.bs-box-head > span:first-child { font-size: 11.5px; color: var(--muted); }
+.bs-globe { flex: none; width: 30px; height: 30px; margin-right: -6px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--muted); cursor: pointer; }
+.bs-deliv { min-width: 0; font-size: 11.5px; color: var(--muted); text-align: right; }
+.bs-deliv b { font-weight: 600; color: var(--cream); }
+.bs-box-val { font: 700 14px var(--font-body); color: var(--cream); }
+.bs-val-pills { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.pill.bs-vpill { height: auto; min-height: 50px; padding: 7px 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-width: 0; }
+.pill.bs-vpill b { font: 600 14px var(--font-body); color: var(--cream); white-space: nowrap; }
+.pill.bs-vpill small, .pill.bs-vpill.on small { margin: 0; font-size: 11.5px; font-weight: 500; color: var(--teal); white-space: nowrap; }
+.bs-est { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; padding: 2px 0; border: 0; background: none; color: var(--muted); font: 500 12px var(--font-body); cursor: pointer; }
+.bs-est > i { width: 14px; height: 14px; box-sizing: border-box; border-radius: 50%; border: 1px solid currentColor; display: grid; place-items: center; font: 700 9px/1 var(--font-body); font-style: normal; }
+
+.plan-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.plan-meta > div { min-width: 0; display: flex; flex-direction: column; gap: 2px; padding: 9px 12px; border-radius: 14px; background: var(--card); border: 1px solid #2b2834; }
+.plan-meta span { font-size: 11.5px; color: var(--muted); }
+.plan-meta b { font: 600 14px var(--font-body); color: var(--cream); }
+.plan-target { display: flex; flex-direction: column; gap: 6px; padding: 16px; border-radius: 20px; border: 1px solid rgba(232, 72, 42, .35); background: linear-gradient(160deg, #2b2030 0%, var(--card) 72%); }
+.pt-label { font: 600 12.5px var(--font-body); color: #E8482A; }
+.pt-num { display: flex; align-items: baseline; gap: 6px; font: 700 34px/1.05 var(--font-display); color: var(--cream); font-variant-numeric: tabular-nums; }
+.pt-num small { font: 600 15px var(--font-body); color: var(--muted); }
+.pt-margin { align-self: flex-start; padding: 4px 10px; border-radius: 999px; background: rgba(255, 201, 77, .14); color: var(--butter); font: 600 11.5px/1.3 var(--font-body); }
+.pt-rows { margin: 6px 0 0; padding: 10px 0 0; border-top: 1px solid rgba(255, 246, 236, .08); display: flex; flex-direction: column; gap: 8px; }
+.pt-rows > div { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 13.5px; }
+.pt-rows dt { color: var(--muted); }
+.pt-rows dd { margin: 0; display: flex; align-items: center; gap: 6px; text-align: right; color: var(--cream); font-weight: 600; font-variant-numeric: tabular-nums; }
+.pt-rows dd.off { color: var(--muted); font-weight: 500; }
+.pt-pct { color: var(--teal); }
+.pt-dot { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--teal); }
+.pt-dot.off { background: #6f6c7b; }
+.plan-source { display: flex; align-items: center; gap: 8px; margin: -4px 2px 0; font-size: 12.5px; line-height: 1.4; color: var(--muted); }
+.plan-source svg { flex: none; color: var(--teal); }
+.plan-opts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; overflow: visible; }
+.plan-opts .pill.tall { min-width: 0; padding: 8px 4px; white-space: normal; line-height: 1.25; }
+.plan-opts .pill.tall small { font-size: 11.5px; font-weight: 500; }
+.ptl-dots { display: flex; align-items: center; padding: 6px 4px; }
+.ptl-d { flex: none; width: 7px; height: 7px; border-radius: 50%; background: #4a4756; }
+.ptl-d.today { width: 12px; height: 12px; background: #E8482A; box-shadow: 0 0 0 4px rgba(232, 72, 42, .22); }
+.ptl-d.end { width: 14px; height: 14px; background: var(--teal); box-shadow: 0 0 0 4px rgba(43, 196, 143, .2); }
+.ptl-ln { flex: 1 1 0; min-width: 2px; height: 2px; background: #34313d; }
+.ptl-lab { display: flex; justify-content: space-between; gap: 12px; margin-top: 6px; font-size: 11.5px; color: var(--muted); }

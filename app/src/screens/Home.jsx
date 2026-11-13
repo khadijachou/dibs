@@ -90,7 +90,7 @@ function Welcome() {
           </button>
         </div>
       </main>
-      {sheetBrand && <BrandSheet brand={sheetBrand} onClose={() => setSheet(null)} onPick={(region) => { setSheet(null); go('plan', { brandKey: sheetBrand.key, region }) }} />}
+      {sheetBrand && <BrandSheet brand={sheetBrand} onClose={() => setSheet(null)} onPick={(region, itemId) => { setSheet(null); go('plan', { brandKey: sheetBrand.key, region, itemId }) }} />}
     </>
   )
 }
@@ -123,7 +123,7 @@ function Hub({ goals }) {
             </div>
           )}
       </main>
-      {sheetBrand && <BrandSheet brand={sheetBrand} onClose={() => setSheet(null)} onPick={(region) => { setSheet(null); go('plan', { brandKey: sheetBrand.key, region }) }} />}
+      {sheetBrand && <BrandSheet brand={sheetBrand} onClose={() => setSheet(null)} onPick={(region, itemId) => { setSheet(null); go('plan', { brandKey: sheetBrand.key, region, itemId }) }} />}
     </>
   )
 }

@@ -274,3 +274,16 @@ html.is-fullscreen:where([data-theme="light"]) body::before { background: linear
    their drop shadow, combined with the outline in one declaration. */
 :where(:root[data-theme="light"]) .blogo { box-shadow: inset 0 0 0 1px rgba(35, 33, 43, .12); }
 :where(:root[data-theme="light"]) .gtile .blogo, :where(:root[data-theme="light"]) .bs-card .blogo { box-shadow: inset 0 0 0 1px rgba(35, 33, 43, .12), 0 4px 10px rgba(0, 0, 0, .25); }
+
+/* v1.1.8 call dibs flow (theme-dark.css): light cards and lines; the target card fades from a soft coral (#fff1ea, the
+   selected pill colour) to white; the margin chip uses the light yellow pair (#fff1d6 / text #906607). */
+:where(:root[data-theme="light"]) .bs-box { background: var(--card-2); border-color: var(--line); }
+:where(:root[data-theme="light"]) .plan-meta > div { border-color: var(--line); }
+:where(:root[data-theme="light"]) .plan-target { background: linear-gradient(160deg, #fff1ea 0%, var(--card) 72%); }
+:where(:root[data-theme="light"]) .pt-margin { background: #fff1d6; color: #906607; }
+:where(:root[data-theme="light"]) .pt-rows { border-top-color: var(--line); }
+:where(:root[data-theme="light"]) .pt-dot, :where(:root[data-theme="light"]) .ptl-d.end { background: #15896a; }
+:where(:root[data-theme="light"]) .pt-dot.off { background: #b9b6c2; }
+:where(:root[data-theme="light"]) .ptl-d { background: #d6cdc1; }
+:where(:root[data-theme="light"]) .ptl-ln { background: #e9e1d6; }
+:where(:root[data-theme="light"]) .ptl-d.end { box-shadow: 0 0 0 4px rgba(21, 137, 106, .18); }

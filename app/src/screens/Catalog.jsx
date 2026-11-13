@@ -97,7 +97,7 @@ export function GiftTile({ brand, big = false, style, onOpen }) {
 }
 
 // The one catalogue: Goals > New goal and See all, Move > A new goal, Change card, More > Catalogue.
-// A tile opens the brand sheet; its button starts the goal on Plan (the amount is chosen there).
+// A tile opens the brand sheet; its button starts the goal on Plan, on the value picked on the sheet (v1.1.8).
 // moveFrom: opened from Move > "A new goal"; passed on to Plan and then to the new goal.
 // changeFor: a goal id whose card is no longer available (components/CardIssue.jsx); Plan then swaps that goal's card.
 export default function Catalog({ moveFrom = null, changeFor = null, chip: initialChip = null }) {
@@ -112,10 +112,10 @@ export default function Catalog({ moveFrom = null, changeFor = null, chip: initi
   const popular = POPULAR.map((k) => brands.find((b) => b.key === k)).filter(Boolean)
   const openSheet = (b) => setOpen(b.key)
   const sheetBrand = brands.find((b) => b.key === open)
-  const pick = (region) => {
+  const pick = (region, itemId) => {
     const brandKey = sheetBrand.key
     setOpen(null)
-    go('plan', { brandKey, region, moveFrom, changeFor })
+    go('plan', { brandKey, region, itemId, moveFrom, changeFor })
   }
 
   return (
