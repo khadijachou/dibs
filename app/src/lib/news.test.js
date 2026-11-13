@@ -67,10 +67,10 @@ test('a two-digit patch is newer: 1.0.10 after 1.0.9', () => {
   assert.equal(vs[vs.indexOf('1.0.10') + 1], '1.0.9')
 })
 
-test('1.1.3 (news_16) heads the timeline, then 1.1.2 (news_15), 1.1.1 (news_14), 1.1.0 (shown as 1.1, like 1.0.0 as 1.0), 1.0.10', () => {
+test('1.1.3 (news_16) comes right after 1.1.4, then 1.1.2 (news_15), 1.1.1 (news_14), 1.1.0 (shown as 1.1, like 1.0.0 as 1.0), 1.0.10', () => {
   assert.ok(vNum('1.1.3') > vNum('1.1.2') && vNum('1.1.2') > vNum('1.1.1') && vNum('1.1.1') > vNum('1.1') && vNum('1.1') > vNum('1.0.10'))
-  assert.deepEqual(timeline.slice(0, 5).map((b) => b.v), ['1.1.3', '1.1.2', '1.1.1', '1.1', '1.0.10'])
-  assert.deepEqual(timeline.slice(0, 4).map((b) => b.key), ['news_16', 'news_15', 'news_14', 'news_13'])
+  assert.deepEqual(timeline.slice(1, 6).map((b) => b.v), ['1.1.3', '1.1.2', '1.1.1', '1.1', '1.0.10'])
+  assert.deepEqual(timeline.slice(1, 5).map((b) => b.key), ['news_16', 'news_15', 'news_14', 'news_13'])
   for (const l of ['en', 'fr', 'es']) assert.equal(items(T[l]('news_16')).length, 2, `news_16 ${l}`)
   for (const l of ['en', 'fr', 'es']) assert.equal(items(T[l]('news_14')).length, 1, `news_14 ${l}`)
   for (const l of ['en', 'fr', 'es']) assert.equal(items(T[l]('news_15')).length, 2, `news_15 ${l}`)
@@ -100,9 +100,11 @@ test('1.0.10 (news_12) has three items in en, fr and es', () => {
   for (const l of ['en', 'fr', 'es']) assert.equal(items(T[l]('news_12')).length, 3, `news_12 ${l}`)
 })
 
-test('v1.1.3 (news_16) is the newest block, after 1.1.2, not big', () => {
-  assert.equal(NEWS[0].v, '1.1.3')
-  assert.equal(NEWS[0].key, 'news_16')
-  assert.equal(NEWS[1].v, '1.1.2')
+test('v1.1.4 (news_17) is the newest block, after 1.1.3, not big, two items in en, fr and es', () => {
+  assert.equal(NEWS[0].v, '1.1.4')
+  assert.equal(NEWS[0].key, 'news_17')
+  assert.equal(NEWS[1].v, '1.1.3')
   assert.ok(!NEWS[0].big)
+  assert.equal(timeline[0].v, '1.1.4')
+  for (const l of ['en', 'fr', 'es']) assert.equal(items(T[l]('news_17')).length, 2, `news_17 ${l}`)
 })

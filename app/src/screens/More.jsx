@@ -12,6 +12,7 @@ import { FAQ } from './Faq.jsx'
 import { useUnreadNews } from '../lib/newsSeen.js'
 
 const X_URL = 'https://x.com/calldibs_app'
+const WEB_URL = 'https://calldibs-ashen.vercel.app/'
 
 // Four rounded squares (Browse the catalogue). A stroke icon: text glyphs turn into emoji on iOS.
 const GridIcon = () => (
@@ -75,6 +76,13 @@ const XIcon = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d={siX.path} /></svg>
 )
 
+// A globe (Visit our website): a circle, a horizontal line and a meridian.
+const GlobeIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <circle cx="12" cy="12" r="9" /><path d="M3 12h18" /><path d="M12 3c2.5 2.7 3.8 5.7 3.8 9s-1.3 6.3-3.8 9c-2.5-2.7-3.8-5.7-3.8-9S9.5 5.7 12 3z" />
+  </svg>
+)
+
 // An arrow pointing up and out: the row opens outside the app. A stroke icon: text arrows turn into emoji on iOS.
 const OutIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -87,6 +95,7 @@ export default function More() {
   const unread = useUnreadNews()
   const nPrefs = prefCount()
   const followX = () => { copyText(X_URL).then((ok) => { if (ok) toast(t('follow_copied')) }) }
+  const visitWeb = () => { copyText(WEB_URL).then((ok) => { if (ok) toast(t('web_copied')) }) }
   const copyEmail = async () => { if (await copyText(HELP_EMAIL)) toast(t('help_copied')) }
   // Share Dibs: the system share sheet where there is one, else copy the text and link. Nothing goes to our server.
   const shareDibs = async () => {
@@ -111,6 +120,11 @@ export default function More() {
             <span><b>{t('more_howto')}</b><small>{t('more_howto_sub')}</small></span>
             <span className="chev" aria-hidden="true">›</span>
           </button>
+          <button type="button" className="sheet-row" onClick={() => go('legal', { page: 'rewards' })}>
+            <span className="si" aria-hidden="true"><GiftIcon /></span>
+            <span><b>{t('legal_rewards')}</b><small>{t('legal_rewards_sub')}</small></span>
+            <span className="chev" aria-hidden="true">›</span>
+          </button>
           <button type="button" className="sheet-row" onClick={() => go('browse')}>
             <span className="si" aria-hidden="true"><GridIcon /></span>
             <span><b>{t('browse_more')}</b><small>{t('browse_more_sub', { count: catalogBrands().length })}</small></span>
@@ -128,6 +142,12 @@ export default function More() {
             <span><b>{t('follow_row')}</b><small>{t('follow_row_sub')}</small></span>
             <span className="chev ext" aria-hidden="true"><OutIcon /></span>
           </a>
+          {/* Same as the X row: the tap copies the link (Nimiq Pay may open nothing), no preventDefault so a new tab opens where links work. */}
+          <a className="sheet-row" href={WEB_URL} target="_blank" rel="noopener noreferrer" onClick={visitWeb}>
+            <span className="si" aria-hidden="true"><GlobeIcon /></span>
+            <span><b>{t('web_row')}</b><small>{t('web_row_sub')}</small></span>
+            <span className="chev ext" aria-hidden="true"><OutIcon /></span>
+          </a>
           <button type="button" className="sheet-row faq-row" onClick={() => go('faq')}>
             <span className="si" aria-hidden="true">?</span>
             <span><b>{t('more_faq')}</b><small>{t('faq_row_sub', { n: FAQ.length })}</small></span>
@@ -138,7 +158,6 @@ export default function More() {
         <section className="more-sec">
           <div className="sec-head"><h3>{t('more_settings')}</h3></div>
           <NameRow />
-          <p className="small">{t('name_device')}</p>
           <button type="button" className="sheet-row" onClick={() => go('accounts')}>
             <span className="si" aria-hidden="true"><CardIcon /></span>
             <span><b>{t('accounts_row')}</b><small>{nPrefs ? t('accounts_row_sub', { n: nPrefs }) : t('accounts_row_none')}</small></span>
@@ -167,11 +186,6 @@ export default function More() {
           <button type="button" className="sheet-row" onClick={() => go('legal', { page: 'terms' })}>
             <span className="si" aria-hidden="true"><DocIcon /></span>
             <span><b>{t('legal_terms')}</b><small>{t('legal_terms_sub')}</small></span>
-            <span className="chev" aria-hidden="true">›</span>
-          </button>
-          <button type="button" className="sheet-row" onClick={() => go('legal', { page: 'rewards' })}>
-            <span className="si" aria-hidden="true"><GiftIcon /></span>
-            <span><b>{t('legal_rewards')}</b><small>{t('legal_rewards_sub')}</small></span>
             <span className="chev" aria-hidden="true">›</span>
           </button>
           {/* Unread important news: a bell with a coral dot, the release summary, and the "New" tag. Else the usual row. */}
