@@ -46,13 +46,16 @@ export function createGoal(address, { item, targetNim, deadline, brand = null, n
     payment: null, // { hash, swapId, at, orderId }
     createdAt: new Date().toISOString(),
   }
+  goal.updatedAt = goal.createdAt // stamp: adoptGoals keeps the newer copy of a goal saved under two addresses
   write(address, [goal, ...read(address)])
   savePref(brand, goal.region) // Your accounts: the version just used, for brands with 2+ versions (last one wins)
   return goal
 }
 
+// Every change to a goal goes through here (addDeposit and settleGoal too) and stamps updatedAt.
 export function updateGoal(address, id, patch) {
-  const goals = read(address).map((g) => (g.id === id ? { ...g, ...patch } : g))
+  const updatedAt = new Date().toISOString()
+  const goals = read(address).map((g) => (g.id === id ? { ...g, ...patch, updatedAt } : g))
   write(address, goals)
   return goals.find((g) => g.id === id)
 }
@@ -78,8 +81,8 @@ export function moveNim(address, fromId, toId, nim) {
   const at = new Date().toISOString()
   const label = (g) => `${g.itemName} · ${g.itemDetail}`
   const next = goals.map((g) => {
-    if (g.id === fromId) return { ...g, deposits: [...g.deposits, { id: newId(), nim: -nim, kind: 'move', to: toId, name: label(to), at }] }
-    if (g.id === toId) return { ...g, deposits: [...g.deposits, { id: newId(), nim, kind: 'move', from: fromId, name: label(from), at }] }
+    if (g.id === fromId) return { ...g, deposits: [...g.deposits, { id: newId(), nim: -nim, kind: 'move', to: toId, name: label(to), at }], updatedAt: at }
+    if (g.id === toId) return { ...g, deposits: [...g.deposits, { id: newId(), nim, kind: 'move', from: fromId, name: label(from), at }], updatedAt: at }
     return g
   })
   write(address, next)
@@ -130,6 +133,24 @@ export function removeGoal(address, id) {
   forget([id])
 }
 
+// Which copy of the same goal to keep: true when copy a should replace copy b (on a tie, b stays).
+// Both stamped (updatedAt): the newer one. Only one stamped: that one (written by v1.1.9 or later, so the live copy).
+// Neither stamped: the one furthest along (redeemed or withdrawn > ready > unlocking > saving), then the one with more
+// unlock steps, then the one with more deposits.
+const STATUS_RANK = { saving: 0, unlocking: 1, ready: 2, redeemed: 3, withdrawn: 3 }
+const stampOf = (g) => { const t = Date.parse(g?.updatedAt); return t > 0 ? t : null }
+export function newerCopy(a, b) {
+  const ta = stampOf(a)
+  const tb = stampOf(b)
+  if (ta != null && tb != null) return ta > tb
+  if (ta != null || tb != null) return ta != null
+  const rank = (STATUS_RANK[a.status] ?? 0) - (STATUS_RANK[b.status] ?? 0)
+  if (rank) return rank > 0
+  const steps = (a.unlockSteps?.length || 0) - (b.unlockSteps?.length || 0)
+  if (steps) return steps > 0
+  return (a.deposits?.length || 0) > (b.deposits?.length || 0)
+}
+
 export const savedNim = (goal) => goal.deposits.reduce((s, d) => s + d.nim, 0)
 export const progress = (goal) => Math.min(1, savedNim(goal) / goal.targetNim)
 
@@ -148,8 +169,10 @@ export const stakerFlag = {
 
 // Goals are stored under the funded address, and that address can change: on 7 Nov, after
 // a Remove, Nimiq Pay stopped listing NQ80... and listed a new funded NQ64... instead.
-// So on start we merge goals saved under ANY address on this device into the current one
-// (the current copy wins when both have the same goal), and never lose a goal to a rotation.
+// So on start we merge goals saved under ANY address on this device into the current one, and never lose a goal to
+// a rotation. When the same goal is saved under two addresses, the right copy wins (newerCopy), not simply the one
+// under the current address (13 Nov: an old 'unlocking' copy beat the 'ready' one and offered Stop staking again).
+// Copies are never merged with each other, and the other addresses' copies are left in storage as they are.
 // Recovery (10 Nov, after a reinstall): never a second open goal for the same card. An empty copy is dropped
 // when a goal for that card is already open; an empty open goal here gives way to a funded one found elsewhere.
 export function adoptGoals(address) {
@@ -158,14 +181,26 @@ export function adoptGoals(address) {
   try { keys = Object.keys(localStorage).filter((k) => k.startsWith('dibs.goals.') && k !== key(address)) } catch { return }
   const mine = read(address)
   const ids = new Set(mine.map((g) => g.id))
-  const extra = []
+  const best = new Map() // id -> the best copy saved under another address
   for (const k of keys) {
     let goals = []
     try { goals = JSON.parse(localStorage.getItem(k)) || [] } catch { /* skip */ }
-    for (const g of goals) if (g && g.id && !ids.has(g.id)) { ids.add(g.id); extra.push(g) }
+    for (const g of goals) {
+      if (!g || !g.id) continue
+      const cur = best.get(g.id)
+      if (!cur || newerCopy(g, cur)) best.set(g.id, g)
+    }
   }
+  const extra = [...best.values()].filter((g) => !ids.has(g.id))
+  for (const g of extra) ids.add(g.id)
   const dropped = [...ids].filter((id) => gone.has(id)) // deleted earlier: copies still lying around go too
-  let all = mine.filter((g) => !gone.has(g.id))
+  // A goal saved here too: another address's copy replaces it only when that copy is the right one.
+  let replaced = 0
+  let all = mine.filter((g) => !gone.has(g.id)).map((g) => {
+    const other = best.get(g.id)
+    if (other && newerCopy(other, g)) { replaced++; return other }
+    return g
+  })
   for (const g of extra) {
     if (gone.has(g.id)) continue
     const open = g.status !== 'redeemed' && g.status !== 'withdrawn'
@@ -174,7 +209,7 @@ export function adoptGoals(address) {
     if (twin && savedNim(twin) === 0 && deletable(twin)) { dropped.push(twin.id); all = all.filter((x) => x.id !== twin.id) } // funded one wins
     all.push(g)
   }
-  if (!extra.length && !dropped.length) return
+  if (!extra.length && !dropped.length && !replaced) return
   write(address, all.sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt))))
   forget(dropped)
 }

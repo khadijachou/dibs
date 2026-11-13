@@ -151,3 +151,90 @@ test('change card onto a card whose goal is in unlock: blocked', () => {
   const g = make(STEAM_20_USA)
   assert.equal(cardTakenBy(listGoals(ADDR), STEAM_5_USA.id, g.id)?.id, waiting.id)
 })
+
+// v1.1.9: the same goal saved under two addresses (Nimiq Pay rotates the funded address). 13 Nov: the old 'unlocking'
+// copy under the current address beat the 'ready' one and Stop staking was offered again.
+const { newerCopy } = await import('./goals.js')
+const STEPS3 = [{ step: 'deactivate', tx: 'a', at: '2026-11-12T03:00:00Z' }, { step: 'retire', tx: 'b', at: '2026-11-12T15:00:00Z' }, { step: 'remove', tx: 'c', at: '2026-11-12T15:01:00Z' }]
+const copyOf = (patch) => ({ id: 'g1', itemId: STEAM_20_USA.id, deposits: [{ nim: 11753, at: '2026-11-01T00:00:00Z' }], unlockSteps: [], status: 'saving', createdAt: '2026-11-01T00:00:00Z', ...patch })
+const goalUnder = (addr, id = 'g1') => JSON.parse(localStorage.getItem(`dibs.goals.${addr}`) || '[]').find((g) => g.id === id)
+
+test('v1.1.9 an old unlocking copy here and a ready copy elsewhere (no stamps): the ready one is kept with all its steps', () => {
+  localStorage.setItem(`dibs.goals.${ADDR}`, JSON.stringify([copyOf({ status: 'unlocking', unlockSteps: STEPS3.slice(0, 1) })]))
+  localStorage.setItem(`dibs.goals.${OLD}`, JSON.stringify([copyOf({ status: 'ready', unlockSteps: STEPS3 })]))
+  adoptGoals(ADDR)
+  const g = goalUnder(ADDR)
+  assert.equal(g.status, 'ready')
+  assert.deepEqual(g.unlockSteps, STEPS3)
+  assert.equal(listGoals(ADDR).length, 1)
+  assert.equal(goalUnder(OLD).status, 'ready') // the other copy is left in storage
+})
+
+test('v1.1.9 two stamped copies: the newer wins, whichever address it is under', () => {
+  const older = copyOf({ status: 'ready', unlockSteps: STEPS3, updatedAt: '2026-11-13T10:00:00.000Z' })
+  const newer = copyOf({ status: 'unlocking', unlockSteps: STEPS3.slice(0, 1), updatedAt: '2026-11-13T11:00:00.000Z' })
+  localStorage.setItem(`dibs.goals.${ADDR}`, JSON.stringify([older]))
+  localStorage.setItem(`dibs.goals.${OLD}`, JSON.stringify([newer]))
+  adoptGoals(ADDR)
+  assert.equal(goalUnder(ADDR).updatedAt, newer.updatedAt)
+  store.clear()
+  localStorage.setItem(`dibs.goals.${ADDR}`, JSON.stringify([newer]))
+  localStorage.setItem(`dibs.goals.${OLD}`, JSON.stringify([older]))
+  adoptGoals(ADDR)
+  assert.equal(goalUnder(ADDR).updatedAt, newer.updatedAt)
+})
+
+test('v1.1.9 unstamped copies: furthest status, then more unlock steps, then more deposits; a tie keeps the copy here', () => {
+  assert.ok(newerCopy(copyOf({ status: 'redeemed' }), copyOf({ status: 'ready' })))
+  assert.ok(newerCopy(copyOf({ status: 'withdrawn' }), copyOf({ status: 'unlocking' })))
+  // One stamp only: the stamped copy wins, whatever the status.
+  assert.ok(!newerCopy(copyOf({ status: 'ready' }), copyOf({ status: 'unlocking', updatedAt: '2026-11-13T11:00:00.000Z' })))
+  assert.ok(newerCopy(copyOf({ status: 'unlocking', updatedAt: '2026-11-13T11:00:00.000Z' }), copyOf({ status: 'ready' })))
+  assert.ok(!newerCopy(copyOf({ status: 'redeemed', updatedAt: 'not a date' }), copyOf({ status: 'saving', updatedAt: '2026-11-13T11:00:00.000Z' }))) // invalid stamp = none
+  assert.ok(newerCopy(copyOf({ status: 'unlocking' }), copyOf({ status: 'saving' })))
+  assert.ok(newerCopy(copyOf({ status: 'unlocking', unlockSteps: STEPS3.slice(0, 2) }), copyOf({ status: 'unlocking', unlockSteps: STEPS3.slice(0, 1) })))
+  const two = copyOf({ deposits: [{ nim: 1 }, { nim: 2 }] })
+  assert.ok(newerCopy(two, copyOf({})))
+  assert.ok(!newerCopy(copyOf({}), copyOf({}))) // tie
+  // Deposits are never merged: the kept copy has its own deposits only.
+  localStorage.setItem(`dibs.goals.${ADDR}`, JSON.stringify([copyOf({ deposits: [{ nim: 5 }] })]))
+  localStorage.setItem(`dibs.goals.${OLD}`, JSON.stringify([two]))
+  adoptGoals(ADDR)
+  assert.deepEqual(goalUnder(ADDR).deposits, two.deposits)
+})
+
+test('v1.1.9 a stamped unlocking copy here beats an unstamped ready copy elsewhere, on every start', () => {
+  const live = copyOf({ status: 'unlocking', unlockSteps: STEPS3.slice(0, 1), updatedAt: '2026-11-13T15:07:00.000Z' })
+  localStorage.setItem(`dibs.goals.${ADDR}`, JSON.stringify([live]))
+  localStorage.setItem(`dibs.goals.${OLD}`, JSON.stringify([copyOf({ status: 'ready', unlockSteps: STEPS3 })]))
+  for (let start = 1; start <= 3; start++) {
+    adoptGoals(ADDR)
+    assert.deepEqual(goalUnder(ADDR), live, `start ${start}`)
+    assert.equal(goalUnder(OLD).status, 'ready', `start ${start}: the other copy stays in storage`)
+  }
+})
+
+test('v1.1.9 one goal, one copy: adoptGoals changes nothing', () => {
+  const g = make(STEAM_5_USA, { deposits: [{ nim: 5000, at: '2026-11-01T00:00:00Z' }] })
+  const before = localStorage.getItem(`dibs.goals.${ADDR}`)
+  adoptGoals(ADDR)
+  assert.equal(localStorage.getItem(`dibs.goals.${ADDR}`), before)
+  assert.equal(listGoals(ADDR)[0].id, g.id)
+})
+
+test('v1.1.9 every goal write stamps updatedAt (create, update, move); deposits and payment are not touched', async () => {
+  const { addDeposit, moveNim } = await import('./goals.js')
+  const a = make(STEAM_5_USA)
+  assert.ok(Date.parse(a.updatedAt) > 0)
+  const b = createGoal(ADDR, { item: STEAM_20_USA, targetNim: 100, deadline: '2027-01-01' })
+  assert.equal(b.updatedAt, b.createdAt)
+  const d = addDeposit(ADDR, a.id, { nim: 10, tx: 't' })
+  assert.ok(Date.parse(d.updatedAt) >= Date.parse(a.updatedAt))
+  assert.equal(d.deposits.length, 1)
+  assert.equal(d.deposits[0].nim, 10)
+  assert.equal(d.payment, null)
+  const { from, to } = moveNim(ADDR, a.id, b.id, 4)
+  assert.ok(from.updatedAt && to.updatedAt)
+  assert.equal(from.deposits.at(-1).nim, -4)
+  assert.equal(to.deposits.at(-1).nim, 4)
+})

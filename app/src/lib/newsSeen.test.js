@@ -9,36 +9,39 @@ const store = (init = {}) => {
 }
 const onboarded = (extra = {}) => store({ 'dibs.onboarded': '1', ...extra })
 const v110 = NEWS.find((n) => n.v === '1.1')
+const v119 = NEWS.find((n) => n.v === '1.1.9')
 
-test('the 1.1.0 entry is the only big one, with a summary', () => {
-  assert.deepEqual(NEWS.filter((n) => n.big).map((n) => n.v), ['1.1'])
+test('the 1.1.9 and 1.1.0 entries are the only big ones, each with a summary', () => {
+  assert.deepEqual(NEWS.filter((n) => n.big).map((n) => n.v), ['1.1.9', '1.1'])
   assert.equal(v110.sum, 'news_sum_13')
+  assert.equal(v119.sum, 'news_sum_22')
 })
 
-test('nothing saved and onboarded gives the 1.1.0 entry', () => {
-  assert.equal(unreadNews({ storage: onboarded() }), v110)
+test('nothing saved and onboarded gives the newest big entry (1.1.9)', () => {
+  assert.equal(unreadNews({ storage: onboarded() }), v119)
 })
 
 test('nothing saved and not onboarded gives null', () => {
   assert.equal(unreadNews({ storage: store() }), null)
 })
 
-test('saved 1.1.0 or newer gives null', () => {
-  for (const v of ['1.1', '1.1.0', '1.1.1']) assert.equal(unreadNews({ storage: onboarded({ [NEWS_SEEN_KEY]: v }) }), null, v)
+test('saved 1.1.9 gives null; saved 1.1.0 to 1.1.8 gives the 1.1.9 entry', () => {
+  assert.equal(unreadNews({ storage: onboarded({ [NEWS_SEEN_KEY]: '1.1.9' }) }), null)
+  for (const v of ['1.1', '1.1.0', '1.1.1', '1.1.8']) assert.equal(unreadNews({ storage: onboarded({ [NEWS_SEEN_KEY]: v }) }), v119, v)
 })
 
-test('saved 1.0.10 gives the 1.1.0 entry (by place in the list, not string order)', () => {
-  assert.equal(unreadNews({ storage: onboarded({ [NEWS_SEEN_KEY]: '1.0.10' }) }), v110)
-  assert.equal(unreadNews({ storage: onboarded({ [NEWS_SEEN_KEY]: '1.0.9' }) }), v110)
+test('saved 1.0.10 gives the newest big entry, 1.1.9 (by place in the list, not string order)', () => {
+  assert.equal(unreadNews({ storage: onboarded({ [NEWS_SEEN_KEY]: '1.0.10' }) }), v119)
+  assert.equal(unreadNews({ storage: onboarded({ [NEWS_SEEN_KEY]: '1.0.9' }) }), v119)
 })
 
 test('a newer release that is not big gives null', () => {
   const list = [{ date: '2026-12-01', key: 'news_99', v: '1.2' }, ...NEWS]
-  assert.equal(unreadNews({ list, storage: onboarded({ [NEWS_SEEN_KEY]: '1.1.1' }) }), null)
+  assert.equal(unreadNews({ list, storage: onboarded({ [NEWS_SEEN_KEY]: '1.1.9' }) }), null)
 })
 
 test('a saved value that is not in the list counts as nothing saved', () => {
-  assert.equal(unreadNews({ storage: onboarded({ [NEWS_SEEN_KEY]: '9.9.9' }) }), v110)
+  assert.equal(unreadNews({ storage: onboarded({ [NEWS_SEEN_KEY]: '9.9.9' }) }), v119)
   assert.equal(unreadNews({ storage: store({ [NEWS_SEEN_KEY]: 'junk' }) }), null)
 })
 
@@ -56,7 +59,9 @@ test('markNewsSeen saves the newest version, then nothing is unread', () => {
   assert.equal(unreadNews({ storage: s }), null)
 })
 
-test('v1.1.8 is not big: someone who saw 1.1.7 gets no dot', () => {
-  assert.equal(NEWS[0].v, '1.1.8')
-  assert.equal(unreadNews({ storage: onboarded({ [NEWS_SEEN_KEY]: '1.1.7' }) }), null)
+test('v1.1.9 is big: someone who saw 1.1.8 (or 1.1.7) gets the dot, with its summary', () => {
+  assert.equal(NEWS[0].v, '1.1.9')
+  assert.equal(unreadNews({ storage: onboarded({ [NEWS_SEEN_KEY]: '1.1.8' }) }), v119)
+  assert.equal(unreadNews({ storage: onboarded({ [NEWS_SEEN_KEY]: '1.1.7' }) }), v119)
+  assert.equal(unreadNews({ storage: onboarded({ [NEWS_SEEN_KEY]: '1.1.8' }) }).sum, 'news_sum_22')
 })

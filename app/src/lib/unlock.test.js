@@ -106,3 +106,79 @@ test('sim UNL_WAITING: demo wallet waits 12 h, gate blocks, raw Retire is refuse
   assert.equal(tx.executionResult, false)
   assert.equal(p.mockStaker().inactiveBalance, GOAL * L) // nothing moved
 })
+
+// v1.1.9, mainnet 13 Nov: a goal that had finished its unlock read 'stake' again and Stop staking took 11,753 NIM
+// from the stake behind the other goals. The incident's exact numbers.
+const INC = { goalNim: 11_753, othersNim: 19_503, started: true, walletNim: 0, block: 1, now: 0 }
+
+test('v1.1.9 incident: active 22,168, goal 11,753, others 19,503 -> short, no amount, gate never sends', async () => {
+  const us = unlockStateOf({ ...INC, staker: st(22_168, 0, 0) })
+  assert.equal(us.state, 'stake')
+  assert.equal(us.short, true)
+  assert.equal(amountFor('deactivate', us), null)
+  let calls = 0
+  await assert.rejects(
+    sendGated('deactivate', { readState: async () => us, send: async () => { calls++; return 'hash' } }),
+    (e) => e.gate?.step === 'deactivate' && e.gate.us === us,
+  )
+  assert.equal(calls, 0)
+})
+
+test('v1.1.9 finished goal: outside stake larger than the goal still never deactivates', async () => {
+  // active covers goal + others + 15,000 NIM outside Dibs: not short, but the goal already finished its unlock.
+  const us = unlockStateOf({ ...INC, finished: true, staker: st(11_753 + 19_503 + 15_000, 0, 0) })
+  assert.equal(us.state, 'stake')
+  assert.equal(us.short, false)
+  assert.equal(amountFor('deactivate', us), null)
+  let calls = 0
+  await assert.rejects(sendGated('deactivate', { readState: async () => us, send: async () => { calls++ } }), (e) => Boolean(e.gate))
+  assert.equal(calls, 0)
+})
+
+test('v1.1.9 tolerance: the stake 1 NIM under the ledger (rounding) still allows step 1; more than 1 NIM does not', () => {
+  const at = (active) => unlockStateOf({ ...INC, started: false, staker: { balance: active } })
+  const need = (11_753 + 19_503) * L
+  assert.equal(amountFor('deactivate', at(need - L)), 19_503 * L - L) // same formula as before: active - goal
+  assert.equal(amountFor('deactivate', at(need - L - 1)), null)
+})
+
+// The rule before v1.1.9, for the regression checks: same amounts whenever step 1 is allowed.
+const oldDeactivate = (active, goalNim) => { const rest = active - goalNim * L; return active < goalNim * L ? null : rest < 100 * L ? 0 : rest }
+
+test('v1.1.9 regression: a saving goal at 100% with active = goal + others + rewards, same amount as before', () => {
+  for (const [goalNim, othersNim, rewards] of [[11_753, 19_503, 2_665], [22_801, 0, 1_362], [300, 500, 0.5], [5_000, 1_000, 0]]) {
+    const active = (goalNim + othersNim + rewards) * L
+    const us = unlockStateOf({ goalNim, othersNim, walletNim: 0, started: false, block: 1, now: 0, staker: { balance: active } })
+    assert.equal(us.short, false, `${goalNim}/${othersNim}`)
+    const a = amountFor('deactivate', us)
+    assert.equal(a, oldDeactivate(active, goalNim), `${goalNim}/${othersNim}`)
+    assert.equal(a, (othersNim + rewards) * L >= 100 * L ? (othersNim + rewards) * L : 0)
+  }
+})
+
+test('v1.1.9 regression: a single goal with no others, and a rest under 100 NIM going to 0', () => {
+  const one = (active) => unlockStateOf({ goalNim: GOAL, walletNim: 0, started: false, block: 1, now: 0, staker: st(active, 0, 0) })
+  assert.equal(amountFor('deactivate', one(GOAL + 1_362)), 1_362 * L)
+  assert.equal(amountFor('deactivate', one(GOAL + 99)), 0)
+  assert.equal(amountFor('deactivate', one(GOAL)), 0)
+  assert.equal(amountFor('deactivate', one(GOAL - 0.5)), null) // under the goal: refused, as before (no tolerance here)
+  // With others: a rest under 100 NIM still goes to 0.
+  const us = unlockStateOf({ goalNim: 1_000, othersNim: 50, walletNim: 0, started: false, block: 1, now: 0, staker: st(1_050, 0, 0) })
+  assert.equal(amountFor('deactivate', us), 0)
+})
+
+test('v1.1.9 regression: retire and remove amounts unchanged in waiting, ready and remove, finished or not', () => {
+  for (const extra of [{}, { finished: true }, { othersNim: 19_503 }]) {
+    const b = { ...base, ...extra }
+    const waiting = unlockStateOf({ ...b, staker: st(0, GOAL, 0, { inactiveFrom: 66_441_600 }), block: 66_450_000 })
+    assert.equal(waiting.state, 'waiting')
+    assert.equal(amountFor('retire', waiting), null)
+    assert.equal(amountFor('remove', waiting), null)
+    const ready = (inactive) => unlockStateOf({ ...b, staker: st(0, inactive, 0, { inactiveFrom: 100 }), block: 100_000 })
+    assert.equal(amountFor('retire', ready(GOAL + 500)), GOAL * L)
+    assert.equal(amountFor('retire', ready(20_000)), 20_000 * L)
+    const rem = unlockStateOf({ ...b, staker: st(0, 0, GOAL + 7), block: 1 })
+    assert.equal(amountFor('remove', rem), (GOAL + 7) * L)
+    assert.equal(amountFor('deactivate', rem), null)
+  }
+})

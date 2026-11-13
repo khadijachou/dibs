@@ -86,20 +86,25 @@ export default function Unlock({ goalId, mode: modeParam }) {
   // The release time shown on the timer card, the notice and the step button: one value for all three.
   const readyAt = useStableReadyAt(us?.releaseAt ?? null)
 
+  // A ready goal's unlock is done (its NIM is back): no step here, the goal screen has Get my card.
+  const isReady = goal?.status === 'ready'
+  useEffect(() => { if (isReady) reset('goal', { goalId }) }, [isReady, goalId]) // eslint-disable-line react-hooks/exhaustive-deps
+
   if (!goal) return null
   const amount = savedNim(goal)
   // One unlock at a time (card or withdraw): while another goal's unlock runs, the chain's inactive NIM is that
   // goal's, so this goal shows no step and sends nothing.
   const otherRelease = goal.status === 'saving' ? unlockRunning(address, goal.id) : null
-  const state = otherRelease ? null : us?.state ?? null
+  const state = otherRelease || isReady ? null : us?.state ?? null
   const current = state ? STEP_OF[state] : null
   const done = state ? DONE[state] : []
   const waiting = state === 'waiting'
   // Checks before step 1 of a withdraw: one release at a time, and the rest staked stays 0 or >= 100 NIM.
   const first = current === 'deactivate'
   const rest = us ? toNim(us.active) - amount : null
-  // The chain holds less than this goal says (or no staker): the ledger and the stake disagree, send nothing.
-  const mismatch = first && Boolean(us?.short)
+  // The chain holds less than this goal says on top of the other goals (or no staker), or this goal already finished
+  // an unlock: the ledger and the stake disagree, send nothing.
+  const mismatch = first && Boolean(us?.short || us?.finished)
   const underMin = withdraw && first && !mismatch && rest != null && rest > 0 && rest < MIN_NEW_STAKER_NIM
   const blocked = Boolean(otherRelease) || mismatch || underMin
   const relKnown = us?.releaseBlock != null
@@ -112,7 +117,7 @@ export default function Unlock({ goalId, mode: modeParam }) {
 
   const run = async () => {
     const step = current
-    if (!step || blocked || busy || waiting) return
+    if (!step || blocked || busy || waiting || getGoal(address, goal.id)?.status === 'ready') return
     setNotice(null)
     setBusy('sending')
     let sent

@@ -23,6 +23,8 @@ export const DONE = { stake: [], waiting: ['deactivate'], ready: ['deactivate'],
 
 const n = (v) => Number(v ?? 0)
 const L_MIN = toLuna(MIN_NEW_STAKER_NIM)
+// Rounding allowed when the stake is compared with the ledger: 1 NIM, as profileStats.stakeEarnings (extra < -1).
+export const STAKE_TOLERANCE_NIM = 1
 
 // read: {
 //   staker     merged staker from readStaker (luna), null when there is none
@@ -31,10 +33,11 @@ const L_MIN = toLuna(MIN_NEW_STAKER_NIM)
 //   goalNim    the goal's NIM (what it saved)
 //   othersNim  NIM other goals still keep staked (status saving); the active stake must cover them too
 //   started    the user started this goal's unlock (status unlocking or ready)
+//   finished   this goal already finished an unlock (status ready, or a 'remove' in its unlockSteps): never Stop staking again
 //   demo       demo wallet: its own unlock has no inactiveFrom and releases at once
 // }
 // Balances returned in luna. Throws when the chain read cannot decide (inactive NIM without inactiveFrom, no block).
-export function unlockStateOf({ staker, block, walletNim, goalNim, othersNim = 0, started = false, demo = false, now = Date.now() }) {
+export function unlockStateOf({ staker, block, walletNim, goalNim, othersNim = 0, started = false, finished = false, demo = false, now = Date.now() }) {
   const st = staker || {}
   const active = n(st.balance ?? st.activeBalance)
   const inactive = n(st.inactiveBalance)
@@ -42,7 +45,7 @@ export function unlockStateOf({ staker, block, walletNim, goalNim, othersNim = 0
   const from = Number(st.inactiveFrom)
   const base = {
     block: Number(block), active, inactive, retired, inactiveFrom: from > 0 ? from : null,
-    releaseBlock: null, releaseAt: null, walletNim: n(walletNim), goalNim: n(goalNim), short: false,
+    releaseBlock: null, releaseAt: null, walletNim: n(walletNim), goalNim: n(goalNim), short: false, finished: Boolean(finished),
   }
   if (retired > 0) return { ...base, state: 'remove' }
   if (inactive > 0) {
@@ -58,8 +61,11 @@ export function unlockStateOf({ staker, block, walletNim, goalNim, othersNim = 0
   const goal = toLuna(goalNim)
   const stillActive = active >= goal + toLuna(othersNim)
   if (started && !stillActive && n(walletNim) >= n(goalNim)) return { ...base, state: 'pay' }
-  // short: the active stake does not hold this goal's NIM, so there is nothing to stop (ledger and chain disagree).
-  return { ...base, state: 'stake', short: !(goal > 0) || active < goal }
+  // short: the active stake does not hold this goal's NIM on top of every other saving goal's, so there is nothing
+  // of this goal's to stop (ledger and chain disagree). Mainnet 13 Nov: a finished goal read 'stake' again, and Stop
+  // staking took 11,753 NIM from the stake behind the other goals (active 22,168 < 11,753 + 19,503).
+  const short = !(goal > 0) || active < goal || active < goal + toLuna(othersNim) - toLuna(STAKE_TOLERANCE_NIM)
+  return { ...base, state: 'stake', short }
 }
 
 // Amount (luna) for a step, from the same read. null when the step cannot be sent from this state.
@@ -70,7 +76,7 @@ export function amountFor(step, us) {
   if (!us || us.state !== NEEDS[step]) return null
   const goal = toLuna(us.goalNim)
   if (step === 'deactivate') {
-    if (us.short) return null
+    if (us.short || us.finished) return null // nothing of this goal to stop, or its unlock is already done
     const rest = us.active - goal
     return rest < L_MIN ? 0 : rest
   }
