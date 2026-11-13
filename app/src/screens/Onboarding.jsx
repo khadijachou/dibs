@@ -8,6 +8,10 @@ import { ConsentStep } from '../components/StatsConsent.jsx'
 import { Avatar } from '../components/Avatar.jsx'
 import { consent } from '../lib/stats.js'
 import { audioContext } from '../lib/sound.js'
+import { BRANDS } from '../lib/brands.js'
+
+// The Steam card in the onboarding pictures: its BRANDS entry, so it shows the same logo as the rest of the app.
+const STEAM = BRANDS.find((b) => b.key === 'steam')
 
 // VF screens 02 to 04: three slides on first run. App.jsx shows them without
 // waiting for the wallet; onDone stores dibs.onboarded. On first run a name step follows the
@@ -113,7 +117,7 @@ function CardIll() {
     <div className="ill-card">
       <i className="coin c1">NIM</i>
       <div className="gcard">
-        <BrandLogo brand={{ key: 'steam' }} />
+        <BrandLogo brand={STEAM} />
         <span className="gc-label">{t('ob_gift')}</span>
         <b className="gc-value">5 USD</b>
         <span className="gc-name">Steam</span>
@@ -149,7 +153,7 @@ function CodeIll() {
   const { t } = useApp()
   return (
     <div className="ill-code">
-      <div className="gcard back"><BrandLogo brand={{ key: 'steam' }} /></div>
+      <div className="gcard back"><BrandLogo brand={STEAM} /></div>
       <div className="ccard">
         <span className="cc-label">{t('done_code')}</span>
         <b>7KQ4N-M2P8V-R9T3W</b>

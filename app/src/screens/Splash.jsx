@@ -2,9 +2,10 @@ import { useEffect, useRef } from 'react'
 import { useApp } from '../App.jsx'
 import { BrandLogo, CREAM, DibsMark, Wordmark } from '../components/ui.jsx'
 import { detailText } from '../lib/itemName.js'
+import { BRANDS } from '../lib/brands.js'
 
-// Logos are vector: the Dibs mark and wordmark (DibsMark, Wordmark) and the brand glyphs from simple-icons
-// (BrandLogo; Amazon keeps its PNG, simple-icons has no Amazon).
+// Logos: the Dibs mark and wordmark (DibsMark, Wordmark) are vector; each card draws its BRANDS entry (found by key)
+// with BrandLogo, so the splash always shows the same logo as the rest of the app.
 // VF screen 01: shown while start() connects (and at least 900 ms on launch).
 // The connecting status stays readable for screen readers.
 // The coral ring draws itself in a loop while connecting. When `done` turns true the ring
@@ -14,7 +15,7 @@ const CARDS = [
   { key: 'steam', name: 'Steam', price: '5 USD', x: '-14px', y: '10%', r: '-14deg', dur: '5.5s', bg: 'linear-gradient(145deg, #1b2838, #0f1b2b)' },
   { key: 'netflix', name: 'Netflix', price: '25 EUR', x: 'calc(100% - 118px)', y: '19%', r: '12deg', dur: '6.5s', bg: 'linear-gradient(145deg, #3a0f12, #1d0a0c)' },
   { key: 'apple', name: 'Apple', price: '10 USD', x: '-18px', y: '76%', r: '8deg', dur: '6s', bg: 'linear-gradient(145deg, #2a2733, #1c1a22)' },
-  { key: 'amazon', name: 'Amazon', logo: '/logos/amazon.png', price: '10 USD', x: 'calc(100% - 168px)', y: '74%', r: '-6deg', dur: '7s', bg: 'linear-gradient(145deg, #2a2733, #1c1a22)' },
+  { key: 'amazon', name: 'Amazon', price: '10 USD', x: 'calc(100% - 168px)', y: '74%', r: '-6deg', dur: '7s', bg: 'linear-gradient(145deg, #2a2733, #1c1a22)' },
 ]
 
 // The official Nimiq logo, path copied unchanged from @nimiq/style 0.8.5 (src/icons/hexagon.svg). Never redraw it.
@@ -64,7 +65,7 @@ export default function Splash({ done = false, onGone }) {
       <div className="splash-cards" aria-hidden="true">
         {CARDS.map((c, i) => (
           <div key={c.key} className="fc" style={{ '--x': c.x, '--y': c.y, '--r': c.r, '--d': `${i * -1.3}s`, '--dur': c.dur, background: c.bg }}>
-            <BrandLogo brand={c} />
+            <BrandLogo brand={BRANDS.find((b) => b.key === c.key) || c} />
             <b>{c.name}</b>
             <span>{t('cat_from', { price: detailText(t, { detail: c.price }) })}</span>
           </div>

@@ -42,7 +42,9 @@ const splitFirst = (s) => { const i = s.indexOf('. '); return i < 0 ? [s, ''] : 
 // The goal's brand from what the goal saved (brandKey), so it keeps its logo even when its card has left the catalogue.
 export function goalBrand(goal) {
   const known = goal.brandKey ? BRANDS.find((b) => b.key === goal.brandKey) : null
-  if (known || goal.logo) return { ...(known || {}), key: goal.brandKey, name: goal.brandName || known?.name, logo: goal.logo || known?.logo || null }
+  // A known brand always shows its current logo (goals saved the logo path when created: old Flightgift goals saved
+  // flightgift.jpg); the saved path only serves brands no longer in BRANDS.
+  if (known || goal.logo) return { ...(known || {}), key: goal.brandKey, name: goal.brandName || known?.name, logo: known?.logo || goal.logo || null }
   return brandOf(findItem(goal.itemId)) || { name: goal.itemName }
 }
 

@@ -3,28 +3,24 @@
 // The shop's catalogue data has no product image, so this is the only logo source besides the
 // existing PNG files in public/logos (kept for brands simple-icons does not have).
 import {
-  siAirbnb, siApple, siBurgerking, siDiscord, siDoordash, siFortnite, siGoogleplay, siHandm, siHotelsdotcom, siNetflix,
-  siNike, siPlaystation, siRiotgames, siRoblox, siStarbucks, siSteam, siTwitch, siUber, siUbereats, siValorant,
+  siAirbnb, siBurgerking, siDiscord, siDoordash, siGoogleplay, siHandm, siHotelsdotcom, siNetflix,
+  siNike, siPlaystation, siRiotgames, siRoblox, siStarbucks, siTwitch, siUbereats, siValorant,
 } from 'simple-icons'
 
 // Brand key (lib/brands.js) → simple-icons entry.
 // Not in simple-icons 16.36: Amazon, Nintendo eShop, Xbox, Flightgift, Best Buy, Disney, Bolt. They use files in
-// public/logos (lib/brands.js logo).
+// public/logos (lib/brands.js logo). Steam, Apple, Uber and Fortnite use their official logo files too (v1.1.7).
 export const BRAND_ICONS = {
-  steam: siSteam,
-  apple: siApple,
   netflix: siNetflix,
   airbnb: siAirbnb,
   googleplay: siGoogleplay,
   playstation: siPlaystation,
   ubereats: siUbereats,
   roblox: siRoblox,
-  fortnite: siFortnite,
   valorant: siValorant,
   riot: siRiotgames, // Riot Access is Riot Games' own card
   discord: siDiscord,
   hotels: siHotelsdotcom,
-  uber: siUber,
   starbucks: siStarbucks,
   doordash: siDoordash,
   handm: siHandm,
@@ -37,14 +33,10 @@ export const brandIcon = (key) => BRAND_ICONS[key] || null
 
 // Brands whose simple-icons colour is black or near black: drawn like their real app icons instead of a black glyph
 // on a white plate. Everything else keeps the brand-coloured glyph on white.
-//   Steam: white logo on Steam's dark navy #171A21. Apple, Uber: white logo on black.
+//   Steam, Apple, Uber left in v1.1.7 (official logo files on the white plate).
 //   Roblox stays black on white (its app icon is the dark tilted square on a light ground).
 //   Google Play stays on white (#414141 glyph; the real icon is multicolour, never dark).
-export const DARK_TILES = {
-  steam: { bg: '#171A21', fg: '#FFFFFF' },
-  apple: { bg: '#000000', fg: '#FFFFFF' },
-  uber: { bg: '#000000', fg: '#FFFFFF' },
-}
+export const DARK_TILES = {}
 
 // Tint for the tile and the press glow. Brands whose official colour is black or near-black would vanish on
 // the dark card: Steam uses its official light blue, the others a neutral silver.
