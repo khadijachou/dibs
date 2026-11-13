@@ -191,7 +191,6 @@ html.is-fullscreen:where([data-theme="light"]) body::before { background: linear
 :where(:root[data-theme="light"]) .ms-line { background: rgba(217, 154, 11, .10); border: 1px solid rgba(217, 154, 11, .30); }
 
 /* ---- Goal status, plan, weeks ---- */
-:where(:root[data-theme="light"]) .goal-status::before { box-shadow: 0 0 0 3px rgba(21, 137, 106, .18); }
 :where(:root[data-theme="light"]) .goal-status.withdrawn, :where(:root[data-theme="light"]) .goal-status.bought { color: var(--muted); }
 :where(:root[data-theme="light"]) .goal-status.wait { color: var(--cream); }
 :where(:root[data-theme="light"]) .wbar, :where(:root[data-theme="light"]) .wbar .end, :where(:root[data-theme="light"]) .lvl-bar { background: #e9e1d6; }
@@ -229,7 +228,6 @@ html.is-fullscreen:where([data-theme="light"]) body::before { background: linear
 :where(:root[data-theme="light"]) .consent-card .ch.c-no, :where(:root[data-theme="light"]) .consent-card .cl.c-no svg,
 :where(:root[data-theme="light"]) .stats-delete { color: var(--red); }
 :where(:root[data-theme="light"]) .stats-card .sc-icon { background: var(--teal-soft); }
-:where(:root[data-theme="light"]) .numbers-card .nc-live i { box-shadow: 0 0 0 3px rgba(21, 137, 106, .18); }
 :where(:root[data-theme="light"]) .pstats { border: 1px solid var(--line); background-image: radial-gradient(110% 120% at 100% 0%, rgba(232, 72, 42, .08), transparent 60%); }
 :where(:root[data-theme="light"]) .lvl-card { border: 1px solid var(--line); background-image: radial-gradient(90% 120% at 0% 0%, rgba(232, 72, 42, .07), transparent 60%); }
 :where(:root[data-theme="light"]) .lvl-streak { border-top: 1px solid rgba(35, 33, 43, .08); }

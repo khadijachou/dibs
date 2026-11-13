@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useApp, useBlockBack } from '../App.jsx'
 import { detailText, itemLabel, itemName, localName } from '../lib/itemName.js'
-import { BrandLogo, FieldError, Header, Notice, Stamp, WeekDots } from '../components/ui.jsx'
+import { BrandLogo, FieldError, Header, Notice, Stamp, useFiat, WeekDots } from '../components/ui.jsx'
+import { fmtFiatValue } from '../lib/fiatValue.js'
 import { classify, lastLogText } from '../lib/errors.js'
 import { canManageGoal } from '../lib/manage.js'
 import { getGoal, listGoals, openGoalFor, progress, savedNim, stakerFlag, unlockRunning, updateGoal } from '../lib/goals.js'
@@ -321,6 +322,7 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
               </div>
             </div>
           </section>
+          {p.pace.kind === 'ahead' && !flash && !pend && <PaceLine pace={p.pace} dot={<GoalDot goal={goal} inline />} />}
 
           <section className="card">
             <label htmlFor="amt" className="sub">{t('goal_add_label')}</label>
@@ -328,6 +330,7 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
               <input id="amt" inputMode="numeric" value={amount} onChange={(e) => setAmount(e.target.value)} />
               <span>NIM</span>
             </div>
+            <AmountFiat nim={amountNim} />
             {cantOpen ? (
               <>
                 <FieldError>{t('err_DEP_NOT_ENOUGH_field', { amount: fmtNim(balance, lang) })}</FieldError>
@@ -344,7 +347,7 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
                     <button type="button" key={q.value} className={`pill${amountNim === q.value ? ' on' : ''}`} onClick={() => setAmount(String(q.value))}>{q.label}</button>
                   ))}
                 </div>
-                <p className="small">{balance == null ? t('goal_reading') : t('goal_in_wallet', { amount: fmtNim(balance, lang) })}</p>
+                {balance == null && <p className="small">{t('goal_reading')}</p>}
                 {!hasStaker && !underMin && !tooMuch && <p className="small">{t('goal_first_note', { min: MIN_NEW_STAKER_NIM })}</p>}
               </>
             )}
@@ -466,6 +469,16 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
       {sheets}
     </>
   )
+}
+
+// Add NIM: the amount being typed, in the user's currency, through the header pill's path (useFiat, fmtFiatValue).
+// Display only: it reads the amount and never writes it. Nothing for 0, an empty or non-numeric field, or no live rate.
+function AmountFiat({ nim }) {
+  const { lang } = useApp()
+  const fiat = useFiat()
+  const value = nim > 0 ? fmtFiatValue(nim, fiat, lang) : null
+  if (!value) return null
+  return <p className="amount-fiat">≈ {value}</p>
 }
 
 // About this card (Details): what the card is, the goal's own version and which accounts it works with, how the shop

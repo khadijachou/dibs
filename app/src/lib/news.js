@@ -4,6 +4,7 @@
 // Optional on a release: big: true (important news: a dot on More and a bell on More > What's new until it is opened)
 // and sum: the i18n key of a one-line summary shown on that row ({n} in it comes from the entry's n).
 export const NEWS = [
+  { date: '2026-11-13', key: 'news_23', v: '1.1.10' },
   { date: '2026-11-13', key: 'news_22', v: '1.1.9', big: true, sum: 'news_sum_22' },
   { date: '2026-11-13', key: 'news_21', v: '1.1.8' },
   { date: '2026-11-13', key: 'news_20', v: '1.1.7' },
