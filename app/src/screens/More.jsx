@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { useApp } from '../App.jsx'
-import { Header } from '../components/ui.jsx'
+import { Header, Icon } from '../components/ui.jsx'
 import { NAME_MAX, getName, setName } from '../lib/name.js'
 import { catalogBrands } from '../lib/brands.js'
 import { NumbersCard } from '../components/StatsConsent.jsx'
@@ -9,6 +9,7 @@ import { siX } from 'simple-icons'
 import { APP_VERSION, HELP_EMAIL } from '../components/LegalText.jsx'
 import { copyText } from '../lib/clipboard.js'
 import { FAQ } from './Faq.jsx'
+import { useUnreadNews } from '../lib/newsSeen.js'
 
 const X_URL = 'https://x.com/calldibs_app'
 
@@ -83,6 +84,7 @@ const OutIcon = () => (
 
 export default function More() {
   const { t, go, showHowTo, toast } = useApp()
+  const unread = useUnreadNews()
   const nPrefs = prefCount()
   const followX = () => { copyText(X_URL).then((ok) => { if (ok) toast(t('follow_copied')) }) }
   const copyEmail = async () => { if (await copyText(HELP_EMAIL)) toast(t('help_copied')) }
@@ -172,9 +174,11 @@ export default function More() {
             <span><b>{t('legal_rewards')}</b><small>{t('legal_rewards_sub')}</small></span>
             <span className="chev" aria-hidden="true">›</span>
           </button>
-          <button type="button" className="sheet-row" onClick={() => go('legal', { page: 'news' })}>
-            <span className="si" aria-hidden="true"><SparkIcon /></span>
-            <span><b>{t('legal_news')}</b><small>{t('legal_news_sub', { v: APP_VERSION })}</small></span>
+          {/* Unread important news: a bell with a coral dot, the release summary, and the "New" tag. Else the usual row. */}
+          <button type="button" className={`sheet-row news-row${unread ? ' unread' : ''}`} onClick={() => go('legal', { page: 'news' })}>
+            <span className="si" aria-hidden="true">{unread ? <><Icon name="bell" size={18} stroke={2} /><i className="news-dot" /></> : <SparkIcon />}</span>
+            <span><b>{t('legal_news')}</b><small>{unread?.sum ? t(unread.sum, { n: unread.n }) : t('legal_news_sub', { v: APP_VERSION })}</small></span>
+            {unread && <i className="news-new">{t('news_new')}</i>}
             <span className="chev" aria-hidden="true">›</span>
           </button>
           <p className="legal-version">{t('legal_version', { v: APP_VERSION })}</p>

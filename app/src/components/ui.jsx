@@ -8,6 +8,7 @@ import { useFullscreen } from '../lib/fullscreen.js'
 import { fmtFiatValue, pickFiat } from '../lib/fiatValue.js'
 import { CURRENCY_EVENT, effectiveCurrency, getCurrency } from '../lib/currency.js'
 import { host } from '../lib/nimiq.js'
+import { useUnreadNews } from '../lib/newsSeen.js'
 import FullscreenSheet from './FullscreenSheet.jsx'
 
 const PATHS = {
@@ -30,6 +31,7 @@ const PATHS = {
   tabHistory: <><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></>,
   tabProfile: <><circle cx="12" cy="8.5" r="3.8" /><path d="M4.8 20c.9-3.6 3.7-5.6 7.2-5.6s6.3 2 7.2 5.6" /></>,
   tabMore: <><circle cx="5.5" cy="12" r="1.2" /><circle cx="12" cy="12" r="1.2" /><circle cx="18.5" cy="12" r="1.2" /></>,
+  bell: <><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 1.5h-15z" /><path d="M10 20.5a2 2 0 0 0 4 0" /></>, // More > What's new, unread
 }
 
 // Bottom tab bar on the four top-level screens (App.jsx decides where it shows).
@@ -77,14 +79,17 @@ function useTabPill(current) {
 export function TabBar({ current }) {
   const { t, reset } = useApp()
   const { bar, pill } = useTabPill(current)
+  const unread = useUnreadNews() // important news not opened yet: a coral dot on the More icon
   return (
     <nav className="tabbar" aria-label={t('tabs_label')} ref={bar}>
       <i className="tab-pill" ref={pill} aria-hidden="true" />
       {TABS.map((x) => (
         <button type="button" key={x.route} className={`tab${x.route === current ? ' on' : ''}`} aria-current={x.route === current ? 'page' : undefined}
           onClick={() => { if (x.route !== current) { reset(x.route); window.scrollTo(0, 0) } }}>
-          <Icon name={x.icon} size={22} stroke={x.icon === 'tabMore' ? 2.6 : 1.9} />
+          <span className="tab-ico"><Icon name={x.icon} size={22} stroke={x.icon === 'tabMore' ? 2.6 : 1.9} />
+            {x.route === 'more' && unread && <i className="news-dot" aria-hidden="true" />}</span>
           <span>{t(x.label)}</span>
+          {x.route === 'more' && unread && <span className="sr-only">{t('news_new')}</span>}
         </button>
       ))}
     </nav>

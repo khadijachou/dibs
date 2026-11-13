@@ -1,6 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useApp } from '../App.jsx'
 import { version } from '../../package.json'
+import { NEWS } from '../lib/news.js'
+import { markNewsSeen } from '../lib/newsSeen.js'
 
 // Privacy, Terms, Rewards and What's new, in en/fr/es (lib/i18n.js privacy_*, terms_*, news_*). Used by the Legal screen
 // (More > Legal) and by the sheets opened from the onboarding agreement line.
@@ -10,23 +12,8 @@ export const LEGAL_UPDATED = '2026-11-10'
 export const HELP_EMAIL = 'calldibs.contact@gmail.com'
 // Sections per page (privacy_1h..7b, terms_1h..7b, rewards_1h..6b).
 const SECTIONS = { privacy: 7, terms: 7, rewards: 6 }
-// What's new, newest first: one block per release (v = the version pill; news_2 has none, its date is the header).
-// Add one line here and its news_N string per release; a news_N holds one item per line ("\n"), same count in en/fr/es.
-export const NEWS = [
-  { date: '2026-11-13', key: 'news_13', v: '1.1' },
-  { date: '2026-11-12', key: 'news_12', v: '1.0.10' },
-  { date: '2026-11-12', key: 'news_11', v: '1.0.9' },
-  { date: '2026-11-12', key: 'news_9', v: '1.0.8' },
-  { date: '2026-11-12', key: 'news_8', v: '1.0.7' },
-  { date: '2026-11-12', key: 'news_7', v: '1.0.6' },
-  { date: '2026-11-12', key: 'news_10', v: '1.0.5' },
-  { date: '2026-11-12', key: 'news_6', v: '1.0.4' },
-  { date: '2026-11-12', key: 'news_5', v: '1.0.3' },
-  { date: '2026-11-11', key: 'news_4', v: '1.0.2' },
-  { date: '2026-11-11', key: 'news_3', v: '1.0.1' },
-  { date: '2026-11-10', key: 'news_1', v: '1.0' },
-  { date: '2026-11-09', key: 'news_2' },
-]
+// What's new: the release list is in lib/news.js (plain JS, read by the tests and lib/newsSeen.js).
+export { NEWS }
 const NEWS_SHOWN = 3 // the others wait behind "Show earlier updates"
 export const newsItems = (text) => String(text).split('\n').map((x) => x.trim()).filter(Boolean)
 const longDate = (d, lang) => new Date(`${d}T12:00:00Z`).toLocaleDateString(lang, { day: 'numeric', month: 'long', year: 'numeric' })
@@ -52,6 +39,7 @@ export function LegalText({ page }) {
 function News({ foot }) {
   const { t, lang } = useApp()
   const [all, setAll] = useState(false)
+  useEffect(() => { markNewsSeen() }, []) // opened: the dot on More and the bell on the row go away
   const shown = all ? NEWS : NEWS.slice(0, NEWS_SHOWN)
   const hidden = NEWS.length - shown.length
   return (

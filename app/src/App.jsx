@@ -9,6 +9,7 @@ import { getPrices } from './lib/price.js'
 import { makeT } from './lib/i18n.js'
 import { adoptGoals, getGoal, listGoals, progress } from './lib/goals.js'
 import { initBurst, levelBandToAnnounce } from './lib/seen.js'
+import { markNewsSeen } from './lib/newsSeen.js'
 import { catalogFromServer, loadCatalog } from './lib/catalog.js'
 import { migratePrefs, prunePrefs } from './lib/prefs.js'
 import { catalogBrands } from './lib/brands.js'
@@ -128,6 +129,7 @@ export default function App() {
   const endIntro = useCallback(() => { setIntro(null); window.scrollTo(0, 0) }, [])
   const finishOnboarding = useCallback(() => {
     try { localStorage.setItem('dibs.onboarded', '1') } catch { /* private mode */ }
+    markNewsSeen() // someone who just arrived has nothing unread: no dot on More
     let seen = false
     try { seen = localStorage.getItem('dibs.introSeen') === '1' } catch { /* private mode */ }
     if (!seen) setIntro('welcome')

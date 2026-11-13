@@ -1079,6 +1079,17 @@ html.is-fullscreen .bstamp-live { top: calc(58px + var(--fs-top)); }
 .tab-pill.slide { transition: transform .25s cubic-bezier(.3, .7, .2, 1); }
 .tab { position: relative; z-index: 1; }
 
+/* Important news not opened yet (lib/newsSeen.js): a 9 px coral dot at the top right of the More icon and of the
+   More > What's new row icon, ringed in the background so it reads on the tab pill. Absolute: the icon and label do not move. */
+.tab-ico { position: relative; display: flex; }
+.news-dot { position: absolute; top: -2px; right: -3px; width: 9px; height: 9px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 2px var(--ground); pointer-events: none; }
+.sheet-row .si { position: relative; }
+.sheet-row .si .news-dot { top: 3px; right: 3px; box-shadow: 0 0 0 2px var(--navy-2); }
+/* The row keeps one line of title and one of summary at 320 px: an ellipsis, never a third line. */
+.news-row b, .news-row small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Tighter around the tag (6 px instead of the row's 12 px gap, 7 px side padding) so "5 nouvelles marques" fits at 320 px. */
+.news-row .news-new { margin: 0 -6px; padding: 4px 7px; flex-shrink: 0; font-style: normal; }
+
 /* 4) Press feel on cards and rows without a press state of their own. A press on a button or link inside a card
    (Add, Details, Open unlock, Browse) does not sink the card; buttons keep their own scale(.98). */
 .goal-card, .sheet-row, .bcell, .lvl-card, .quest-card, .rw-row, .card.unstake { transition: transform .12s ease, filter .12s ease; }

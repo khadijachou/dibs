@@ -4,6 +4,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { makeT } from './i18n.js'
+import { NEWS } from './news.js'
 
 const src = readFileSync(new URL('./i18n.js', import.meta.url), 'utf8')
 const keys = [...new Set([...src.matchAll(/^ {2}(news_\d+):/gm)].map((m) => m[1]))]
@@ -37,10 +38,9 @@ test('no item is empty, cut inside an abbreviation, or uses an em dash', () => {
   }
 })
 
-// The timeline (components/LegalText.jsx NEWS): every block's news_N is one of the keys checked above, newest first,
-// and the newest version is the app's version. Read as text: LegalText.jsx is JSX and does not load under node --test.
-const legal = readFileSync(new URL('../components/LegalText.jsx', import.meta.url), 'utf8')
-const timeline = [...legal.matchAll(/\{ date: '([\d-]+)', key: '(news_\d+)'(?:, v: '([\d.]+)')? \}/g)].map((m) => ({ date: m[1], key: m[2], v: m[3] || null }))
+// The timeline (lib/news.js NEWS, shown by components/LegalText.jsx): every block's news_N is one of the keys checked
+// above, newest first, and the newest version is the app's version. Optional fields (big, sum, n) do not change it.
+const timeline = NEWS.map((b) => ({ date: b.date, key: b.key, v: b.v || null }))
 const pkg = JSON.parse(readFileSync(new URL('../../package.json', import.meta.url), 'utf8'))
 const vNum = (v) => v.split('.').map(Number).reduce((a, n, i) => a + n * 1000 ** (2 - i), 0)
 
@@ -67,11 +67,19 @@ test('a two-digit patch is newer: 1.0.10 after 1.0.9', () => {
   assert.equal(vs[vs.indexOf('1.0.10') + 1], '1.0.9')
 })
 
-test('1.1.0 (shown as 1.1, like 1.0.0 as 1.0) heads the timeline, after 1.0.10', () => {
-  assert.ok(vNum('1.1') > vNum('1.0.10'))
-  assert.equal(timeline[0].v, '1.1')
-  assert.equal(timeline[0].key, 'news_13')
-  assert.equal(timeline[1].v, '1.0.10')
+test('1.1.1 (news_14) heads the timeline, then 1.1.0 (shown as 1.1, like 1.0.0 as 1.0), then 1.0.10', () => {
+  assert.ok(vNum('1.1.1') > vNum('1.1') && vNum('1.1') > vNum('1.0.10'))
+  assert.deepEqual(timeline.slice(0, 3).map((b) => b.v), ['1.1.1', '1.1', '1.0.10'])
+  assert.deepEqual(timeline.slice(0, 2).map((b) => b.key), ['news_14', 'news_13'])
+  for (const l of ['en', 'fr', 'es']) assert.equal(items(T[l]('news_14')).length, 1, `news_14 ${l}`)
+})
+
+test('only 1.1.0 is marked big, and its summary says 5 new brands in en, fr and es', () => {
+  assert.deepEqual(NEWS.filter((b) => b.big).map((b) => b.v), ['1.1'])
+  const b = NEWS.find((x) => x.big)
+  // Short enough for one line on the More row at 320 px next to the "New" tag, with no ellipsis.
+  const want = { en: '5 new brands', fr: '5 nouvelles marques', es: '5 marcas nuevas' }
+  for (const l of ['en', 'fr', 'es']) assert.equal(T[l](b.sum, { n: b.n }), want[l], l)
 })
 
 test('1.1.0 (news_13) has one item in en, fr and es, naming the five new brands', () => {
