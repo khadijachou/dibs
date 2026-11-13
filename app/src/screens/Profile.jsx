@@ -12,7 +12,7 @@ import { BADGES, GROUPS, getBadges } from '../lib/badges.js'
 import { CLAIM_EMAIL, PROGRAM_END, REWARDS, REWARD_IDS, active as rewardsActive, claimDetails, state as rewardState } from '../lib/rewards.js'
 import { itemLabel } from '../lib/itemName.js'
 import { copyText } from '../lib/clipboard.js'
-import { claimable } from './profileView.js'
+import { STREAK_BARS, claimable, streakView } from './profileView.js'
 import { RANKS, XP } from '../lib/xp.js'
 import { useXp } from '../lib/useXp.js'
 import { levelToPlay, markBadges, newBadges, setLevelSeen } from '../lib/seen.js'
@@ -350,17 +350,30 @@ function LevelCard({ x, onRanks, onHow }) {
             <span>{x.next ? t('xp_next_rank', { rank: t(`rank_${x.next.id}`), level: x.next.level }) : t('xp_top_rank')}</span>
           </span>
         </button>
+        <StreakRow rhythm={x.rhythm} />
         <button type="button" className="lvl-how" onClick={onHow}>
           <span>{t('xp_how')}</span>
           <span className="chev" aria-hidden="true">›</span>
         </button>
       </div>
-      {x.rhythm.level > 0 && (
-        <div className="lvl-row">
-          <span className="lvl-pill">{t('rhythm_pill', { pct: x.rhythm.level * 10 })}</span>
-        </div>
-      )}
     </section>
+  )
+}
+
+// Weekly streak, between the XP line and How to earn XP: five bars lit to the rhythm level (aria-hidden, the text
+// carries the meaning), then the weeks in a row and the XP bonus. Display only.
+function StreakRow({ rhythm }) {
+  const { t } = useApp()
+  const s = streakView(rhythm, t)
+  return (
+    <div className="lvl-streak">
+      <span className="lvl-bars" aria-hidden="true">
+        {Array.from({ length: STREAK_BARS }, (_, i) => <i key={i} className={i < s.lit ? 'on' : undefined} />)}
+      </span>
+      <span className={`lvl-streak-txt${s.none ? ' none' : ''}`}>
+        {s.none ? s.text : <><b>{s.text}</b>{s.bonus && <span> · {s.bonus}</span>}</>}
+      </span>
+    </div>
   )
 }
 

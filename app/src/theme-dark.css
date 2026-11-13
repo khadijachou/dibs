@@ -1025,9 +1025,6 @@ button.tl-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: -2
 .lvl-bar i { display: block; height: 100%; border-radius: 4px; background: var(--gold); transition: width .5s ease; }
 .lvl-foot { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 12.5px; color: var(--muted); }
 .lvl-foot span:last-child { text-align: right; }
-.lvl-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
-.lvl-row .txt-link { margin-left: auto; }
-.lvl-pill { display: inline-flex; align-items: center; padding: 5px 10px; border-radius: 999px; background: rgba(255, 201, 77, .14); color: #FFC94D; font: 600 12.5px var(--font-body); }
 
 .ranks-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 .ranks-list li { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; border: 1px solid #2b2834; border-radius: 14px; padding: 11px 14px; background: var(--card); font-size: 14px; }
@@ -1167,6 +1164,15 @@ html.is-fullscreen .bstamp-live { top: calc(58px + var(--fs-top)); }
   border-top: 1px solid rgba(255, 255, 255, .08); background: none; padding: 11px 0 0; text-align: left; cursor: pointer;
   font: 600 13.5px/1.3 var(--font-body); color: var(--cream); }
 .lvl-how .chev { color: var(--muted); font-size: 20px; line-height: 1; }
+/* Weekly streak (v1.1.6), between the XP line and How to earn XP, same divider: five bars lit to the rhythm level,
+   then the weeks in a row and the bonus. When the text does not fit beside the bars it wraps under them. */
+.lvl-streak { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; border-top: 1px solid rgba(255, 255, 255, .08);
+  padding-top: 11px; font: 400 13.5px/1.3 var(--font-body); color: var(--muted); }
+.lvl-bars { display: flex; gap: 4px; flex-shrink: 0; }
+.lvl-bars i { display: block; width: 14px; height: 6px; border-radius: 3px; background: #34313d; }
+.lvl-bars i.on { background: #FFC94D; }
+.lvl-streak-txt { flex: 0 1 auto; min-width: 0; } /* too long beside the bars: the whole text moves under them */
+.lvl-streak-txt b { font-weight: 600; color: var(--cream); }
 
 @media (prefers-reduced-motion: reduce) {
   .tab-pill.slide { transition: none; }
