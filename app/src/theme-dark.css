@@ -642,9 +642,6 @@ button.tl-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: -2
 .prof-total { margin-top: 12px; font: 700 36px/1.1 var(--font-display); color: var(--cream); overflow-wrap: anywhere; }
 .prof-total small { font: 600 15px var(--font-body); color: #c9c3d1; }
 .prof-usd { margin-top: 4px; font-size: 13px; color: #c9c3d1; }
-.prof-pill { margin-top: 10px; display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 999px;
-  background: rgba(43, 196, 143, .14); color: var(--teal); font: 600 13px var(--font-body); max-width: 100%; }
-.prof-pill > i { width: 8px; height: 8px; flex-shrink: 0; border-radius: 50%; background: var(--teal); box-shadow: 0 0 0 4px rgba(43, 196, 143, .18); }
 
 .prof-ic { width: 34px; height: 34px; flex-shrink: 0; border-radius: 11px; display: grid; place-items: center; }
 .prof-ic.coral { background: rgba(232, 72, 42, .18); color: #ff7a5c; }
@@ -928,6 +925,16 @@ button.tl-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: -2
 .ob-agree button { background: none; border: 0; padding: 0; color: var(--cream); text-decoration: underline; font: inherit; cursor: pointer; }
 
 /* Badges, NIM rewards and Share on X. */
+/* Claim banner (v1.1.5): one button per reward ready to claim, right under the Profile header; opens its badge sheet. */
+.claim-banner { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; align-items: center; gap: 12px; width: 100%; text-align: left;
+  padding: 12px 14px; border-radius: 18px; border: 1px solid rgba(255, 201, 77, .45); color: var(--cream); font: inherit; cursor: pointer;
+  background: linear-gradient(135deg, rgba(255, 201, 77, .16), rgba(255, 201, 77, .05)); transition: transform .12s ease, filter .12s ease; }
+.claim-banner:active { transform: scale(.98); filter: brightness(.96); }
+.cb-text { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.cb-text b { font-size: 15px; font-weight: 600; }
+.cb-text small { font-size: 12.5px; color: var(--muted); }
+.cb-pill { padding: 7px 14px; border-radius: 999px; background: #FFC94D; color: #23212B; font: 600 14px/1.2 var(--font-display); white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) { .claim-banner { transition: none; } .claim-banner:active { transform: none; } }
 .pstats { background: var(--card); border: 1px solid #2b2834; border-radius: 22px; padding: 16px; display: flex; flex-direction: column; gap: 14px;
   background-image: radial-gradient(110% 120% at 100% 0%, rgba(232, 72, 42, .16), transparent 60%); }
 .pstats-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
@@ -936,7 +943,6 @@ button.tl-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: -2
 .pstats-total b { margin-top: 2px; font: 700 30px/1.1 var(--font-display); color: var(--cream); overflow-wrap: anywhere; }
 .pstats-total b small { font: 600 14px var(--font-body); color: #c9c3d1; }
 .pstats-usd { margin-top: 2px; font-size: 12.5px; color: #c9c3d1; }
-.pstats-top .prof-pill { margin-top: 2px; max-width: 52%; font-size: 12px; padding: 6px 10px; line-height: 1.3; }
 .pstats-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; border-top: 1px solid #2f2c38; padding-top: 12px; }
 .pstat { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .pstat b { font: 700 18px/1.2 var(--font-display); overflow-wrap: anywhere; }
@@ -982,7 +988,7 @@ button.tl-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: -2
 .rw-amt { white-space: nowrap; } /* "· 1,000 NIM" never breaks; a non-breaking space ties it to the badge name */
 .rw-mid small { font-size: 12px; color: var(--muted); }
 .rw-state { flex-shrink: 0; max-width: 34%; text-align: right; font-size: 12px; font-weight: 600; color: #7d7987; }
-.rw-state.claim { color: var(--teal); }
+.rw-claim { flex-shrink: 0; padding: 6px 14px; border-radius: 999px; background: var(--teal); color: #fff; font: 600 13px/1.2 var(--font-body); }
 .rw-state.wait { color: #e9e2d8; }
 .rw-note { margin: 2px 0 0; font-size: 12.5px; color: #c9c3d1; }
 .rw-steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; font-size: 14px; color: #e9e2d8; }
@@ -1003,7 +1009,6 @@ button.tl-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: -2
 .toast { z-index: 30; }
 
 /* Levels, XP, ranks, weekly rhythm and the Quest of the week. */
-.lvl-intro { margin: 2px 0 -4px; }
 .lvl { display: flex; flex-direction: column; gap: 8px; }
 .lvl-card { display: flex; flex-direction: column; gap: 10px; width: 100%; text-align: left; font: inherit; color: var(--cream); cursor: pointer;
   background: var(--card); border: 1px solid #2b2834; border-radius: 20px; padding: 14px 16px;

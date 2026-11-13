@@ -1,19 +1,18 @@
 import { useEffect, useRef, useState } from 'react'
 import { useApp } from '../App.jsx'
-import { Header, Sheet } from '../components/ui.jsx'
+import { Header, Sheet, useFiat } from '../components/ui.jsx'
 import { Avatar } from '../components/Avatar.jsx'
 import { HEX, Medal } from '../components/Badge.jsx'
 import { listGoals } from '../lib/goals.js'
 import { profileStats } from '../lib/profileStats.js'
-import { stakeSummary } from '../lib/earned.js'
-import { readStaker } from '../lib/nimiq.js'
 import { getName } from '../lib/name.js'
-import { fmtDate, fmtEarned, fmtNim, fmtUsd } from '../lib/format.js'
-import { poolName } from '../lib/pace.js'
+import { fmtDate, fmtNim } from '../lib/format.js'
+import { fmtFiatValue } from '../lib/fiatValue.js'
 import { BADGES, GROUPS, getBadges } from '../lib/badges.js'
 import { CLAIM_EMAIL, PROGRAM_END, REWARDS, REWARD_IDS, active as rewardsActive, claimDetails, state as rewardState } from '../lib/rewards.js'
 import { itemLabel } from '../lib/itemName.js'
 import { copyText } from '../lib/clipboard.js'
+import { claimable } from './profileView.js'
 import { RANKS, XP } from '../lib/xp.js'
 import { useXp } from '../lib/useXp.js'
 import { levelToPlay, markBadges, newBadges, setLevelSeen } from '../lib/seen.js'
@@ -39,18 +38,12 @@ function useBadges() {
   return badges
 }
 
-// Profile: the name, one compact stats card, the badges and the Rewards card, all from data the app already has
-// (goal ledger, staker, dibs.name, dibs.badges). badge/badgeAt: open that badge's sheet (from the stamp).
+// Profile: the name, a banner per reward ready to claim, one compact stats card, the level, the badges and the Rewards
+// card, all from data the app already has (goal ledger, dibs.name, dibs.badges). badge/badgeAt: open that badge's sheet.
 export default function Profile({ badge: askedBadge, badgeAt }) {
-  const { t, lang, address, walletAddress, prices, reset } = useApp()
+  const { t, lang, address, walletAddress, reset } = useApp()
   const name = getName() // changed only in More > Settings
-  // Earned from staking: the Stake tab's own figure. undefined while reading, null when the chain is unreadable.
-  const [earned, setEarned] = useState(undefined)
-  useEffect(() => {
-    let live = true
-    readStaker(address).then((st) => { if (live) setEarned(stakeSummary(st, address).earned) }).catch(() => { if (live) setEarned(null) })
-    return () => { live = false }
-  }, [address])
+  const fiat = useFiat()
   const badges = useBadges()
   const [expanded, setExpanded] = useState(false)
   const [sheet, setSheet] = useState(null) // badge id
@@ -59,13 +52,9 @@ export default function Profile({ badge: askedBadge, badgeAt }) {
   const goals = listGoals(address)
   const s = profileStats(goals)
   const empty = s.totalSaved === 0 && s.activeGoals === 0 && s.cardsBought === 0
-  // Same USD format as everywhere (format.js). Hidden while prices load and when nothing is saved.
-  const usd = prices && s.totalSaved > 0 ? fmtUsd(s.totalSaved * prices.nimUsd, lang) : null
-  // The pill next to the total: what staking earned, or where the NIM is staked while nothing is earned yet.
-  // None while the chain is being read or cannot be read, and none when nothing is saved.
-  const pill = s.totalSaved > 0 && earned != null
-    ? (earned > 0 ? t('prof_earned_pill', { amount: fmtEarned(earned, lang) }) : t('prof_earning', { pool: poolName() }))
-    : null
+  // The total in the Currency choice, same path and format as the header pill (useFiat): hidden without a live rate
+  // and when nothing is saved.
+  const value = s.totalSaved > 0 ? fmtFiatValue(s.totalSaved, fiat, lang) : null
 
   const stats = [
     { tone: 'coral', label: t('prof_active_s'), value: s.activeGoals },
@@ -86,6 +75,7 @@ export default function Profile({ badge: askedBadge, badgeAt }) {
   }, [earnedKey]) // eslint-disable-line react-hooks/exhaustive-deps
   const popOf = (id) => { const i = fresh.indexOf(id); return i < 0 ? null : i }
   const showRewards = rewardsActive()
+  const toClaim = claimable({ badges, goals })
   const xp = useXp(address)
   const [xpSheet, setXpSheet] = useState(null) // 'ranks' | 'xp'
 
@@ -100,17 +90,26 @@ export default function Profile({ badge: askedBadge, badgeAt }) {
               fallback={name ? <span className="prof-avatar" aria-hidden="true">{name.charAt(0).toUpperCase()}</span> : null} />
             {name && <span className="prof-name">{name}</span>}
           </div>
-          <p className="small">{t('prof_intro')}</p>
         </section>
+
+        {toClaim.map((id) => (
+          <button type="button" className="claim-banner" key={id} onClick={() => setSheet(id)}>
+            <Medal id={id} earned size={40} />
+            <span className="cb-text">
+              <b>{t('rw_banner', { amount: fmtNim(REWARDS[id].nim, lang) })}</b>
+              <small>{t('rw_banner_sub', { badge: t(`badge_${id}`) })}</small>
+            </span>
+            <span className="cb-pill">{t('rw_claim_pill')}</span>
+          </button>
+        ))}
 
         <section className="pstats">
           <div className="pstats-top">
             <div className="pstats-total">
-              <span className="pstats-label">{t('prof_saved')}</span>
+              <span className="pstats-label">{t('prof_saved_all')}</span>
               <b>{fmtNim(s.totalSaved, lang)}<small> NIM</small></b>
-              {usd && <span className="pstats-usd">{t('prof_usd', { usd })}</span>}
+              {value && <span className="pstats-usd">{value}</span>}
             </div>
-            {pill && <span className="prof-pill"><i aria-hidden="true" />{pill}</span>}
           </div>
           <div className="pstats-row">
             {stats.map((x) => (
@@ -126,7 +125,6 @@ export default function Profile({ badge: askedBadge, badgeAt }) {
           </section>
         )}
 
-        <p className="small lvl-intro">{t('xp_intro_1')}<br />{t('xp_intro_2')}</p>
         <LevelCard x={xp} onRanks={() => setXpSheet('ranks')} onHow={() => setXpSheet('xp')} />
 
         <section className="badges">
@@ -176,7 +174,7 @@ function RewardsCard({ badges, goals, onOpen }) {
       <div className="rw-head"><h3>{t('rw_title')}</h3><span>{t('rw_until', { date: endDate(lang) })}</span></div>
       {REWARD_IDS.map((id) => {
         const st = rewardState(id, { badges, goals })
-        const label = st.state === 'claim' ? t('rw_state_claim') : st.state === 'wait' ? t('rw_state_wait', { date: fmtDate(st.date, lang) }) : t('rw_state_not')
+        const label = st.state === 'claim' ? null : st.state === 'wait' ? t('rw_state_wait', { date: fmtDate(st.date, lang) }) : t('rw_state_not')
         return (
           <button type="button" className="rw-row" key={id} onClick={() => onOpen(id)}>
             <Medal id={id} earned={Boolean(badges[id])} size={40} />
@@ -184,7 +182,9 @@ function RewardsCard({ badges, goals, onOpen }) {
               <b>{t(`badge_${id}`)}{'\u00a0'}<span className="rw-amt">· <em>{t('rw_amount', { amount: fmtNim(REWARDS[id].nim, lang) })}</em></span></b>
               <small>{t(`rw_${id}_how`)}</small>
             </span>
-            <span className={`rw-state ${st.state}`}>{label}</span>
+            {st.state === 'claim'
+              ? <span className="rw-claim">{t('rw_claim_pill')}</span>
+              : <span className={`rw-state ${st.state}`}>{label}</span>}
           </button>
         )
       })}

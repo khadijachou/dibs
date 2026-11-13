@@ -34,7 +34,7 @@
 :where(:root[data-theme="light"]) .weeks .d.done, :where(:root[data-theme="light"]) .weeks .ln.done,
 :where(:root[data-theme="light"]) .hero .weeks .d.done, :where(:root[data-theme="light"]) .hero .weeks .ln.done,
 :where(:root[data-theme="light"]) .wbar .fill, :where(:root[data-theme="light"]) .wbar .end.done,
-:where(:root[data-theme="light"]) .goal-dot, :where(:root[data-theme="light"]) .prof-pill > i,
+:where(:root[data-theme="light"]) .goal-dot,
 :where(:root[data-theme="light"]) .numbers-card .nc-live i, :where(:root[data-theme="light"]) .bs-how > i { background: #15896a; }
 :where(:root[data-theme="light"]) .pill.fix, :where(:root[data-theme="light"]) .wbar .end.done { border-color: #15896a; }
 :where(:root[data-theme="light"]) .ferr::before, :where(:root[data-theme="light"]) .fact b.dot.red::before,
@@ -208,8 +208,9 @@ html.is-fullscreen:where([data-theme="light"]) body::before { background: linear
 :where(:root[data-theme="light"]) .bcell.locked span, :where(:root[data-theme="light"]) .rw-state,
 :where(:root[data-theme="light"]) .rw-note { color: var(--muted); }
 :where(:root[data-theme="light"]) .rw-state.wait, :where(:root[data-theme="light"]) .rw-steps, :where(:root[data-theme="light"]) .quest-text { color: var(--cream); }
-:where(:root[data-theme="light"]) .prof-pill { background: var(--teal-soft); }
-:where(:root[data-theme="light"]) .prof-pill > i { box-shadow: 0 0 0 4px rgba(21, 137, 106, .18); }
+:where(:root[data-theme="light"]) .rw-claim { background: #15896A; }
+/* Claim banner: butter at 45 % fades on the light page, so the border takes the yellow shade; the pill stays butter with ink text. */
+:where(:root[data-theme="light"]) .claim-banner { border-color: rgba(217, 154, 11, .55); background: linear-gradient(135deg, rgba(255, 201, 77, .22), rgba(255, 201, 77, .08)); }
 :where(:root[data-theme="light"]) .prof-ic.coral { background: rgba(232, 72, 42, .12); color: #cc3316; }
 :where(:root[data-theme="light"]) .prof-ic.mint { background: var(--teal-soft); }
 :where(:root[data-theme="light"]) .prof-ic.butter { background: rgba(217, 154, 11, .14); color: #906607; }
