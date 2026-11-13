@@ -260,8 +260,16 @@ function useValueFits(headerRef, finalValue, deps) {
 const onCurrency = (cb) => { window.addEventListener(CURRENCY_EVENT, cb); return () => window.removeEventListener(CURRENCY_EVENT, cb) }
 export const useCurrencyChoice = () => useSyncExternalStore(onCurrency, getCurrency)
 
+// The rate for NIM values in the Currency choice (in Auto the Nimiq Pay currency): only with a live rate; a missing
+// rate falls back to USD, then to null (lib/fiatValue.js pickFiat). One path for the header pill and Savings.
+export function useFiat() {
+  const { prices } = useApp()
+  useCurrencyChoice()
+  return prices?.live ? pickFiat(prices.rates, effectiveCurrency(host.fiat())) : null
+}
+
 export function Header({ onBack, onInk = false, langChip = false }) {
-  const { t, balance, demo, lang, reset, prices } = useApp()
+  const { t, balance, demo, lang, reset } = useApp()
   const balanceShown = useCountUp(balance)
   const fs = useFullscreen()
   const [fsAsk, setFsAsk] = useState(false)
@@ -269,7 +277,7 @@ export function Header({ onBack, onInk = false, langChip = false }) {
   // The balance's value in the Currency choice, in Auto the Nimiq Pay currency (lib/price.js rates): only with a live
   // rate; a missing rate falls back to USD, then to nothing (lib/fiatValue.js pickFiat).
   const choice = useCurrencyChoice()
-  const fiat = prices?.live ? pickFiat(prices.rates, effectiveCurrency(host.fiat())) : null
+  const fiat = useFiat()
   const finalValue = balance == null ? null : fmtFiatValue(balance, fiat, lang)
   const fits = useValueFits(headerRef, finalValue, [lang, choice, demo, onBack ? 1 : 0, langChip, fs.supported && !fs.on])
   const valueShown = finalValue && fits ? fmtFiatValue(Math.round(balanceShown), fiat, lang) : null

@@ -260,3 +260,7 @@ html.is-fullscreen:where([data-theme="light"]) body::before { background: linear
 :where(:root[data-theme="light"]) .wbar .end { border-color: #d99a0b; }
 :where(:root[data-theme="light"]) .hero .weeks .d.last { border-color: #d99a0b; }
 :where(:root[data-theme="light"]) .welcome-hero .tl .last { animation: none; color: #906607; }
+
+/* ---- Savings top card (v1.1.2) ---- */
+/* Butter on white is too faint: the light theme's yellow fill (as the quest bar). Mint fills stay #15896a. */
+:where(:root[data-theme="light"]) .stake-bar .sp-unlocking, :where(:root[data-theme="light"]) .stake-rows .sp-unlocking .sq { background: #d99a0b; }

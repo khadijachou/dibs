@@ -35,11 +35,12 @@ export default function WeekCard({ goals }) {
   const nextText = !next ? null
     : next.kind === 'ready' ? t('next_ready', { item })
     : next.kind === 'reached' ? t('next_reached', { item })
-    : t('next_close', { item, pct: Math.round(progress(next.goal) * 100), amount: fmtNim(planOf(next.goal).remaining, lang) })
+    : t('next_close', { item, pct: Math.round(progress(next.goal) * 100) })
+  const nextLeft = next?.kind === 'close' ? t('next_close_left', { amount: fmtNim(planOf(next.goal).remaining, lang) }) : null
   return (
     <section className="wk">
-      <div className="sec-head"><h3>{t('week_title')}</h3></div>
       <div className="wk-card">
+        <span className="stake-label">{t('week_title')}</span>
         {saving.length > 0 && (
           <div className="wk-top">
             <div className="wk-sum">
@@ -63,6 +64,7 @@ export default function WeekCard({ goals }) {
           <button type="button" className="wk-next" onClick={() => go('goal', { goalId: next.goal.id, mode: 'details' })}>
             <small>{t('week_next')}</small>
             <span>{nextText}</span>
+            {nextLeft && <span className="wk-left">{nextLeft}</span>}
             <span className="chev" aria-hidden="true">›</span>
           </button>
         )}

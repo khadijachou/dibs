@@ -67,11 +67,16 @@ test('a two-digit patch is newer: 1.0.10 after 1.0.9', () => {
   assert.equal(vs[vs.indexOf('1.0.10') + 1], '1.0.9')
 })
 
-test('1.1.1 (news_14) heads the timeline, then 1.1.0 (shown as 1.1, like 1.0.0 as 1.0), then 1.0.10', () => {
-  assert.ok(vNum('1.1.1') > vNum('1.1') && vNum('1.1') > vNum('1.0.10'))
-  assert.deepEqual(timeline.slice(0, 3).map((b) => b.v), ['1.1.1', '1.1', '1.0.10'])
-  assert.deepEqual(timeline.slice(0, 2).map((b) => b.key), ['news_14', 'news_13'])
+test('1.1.2 (news_15) heads the timeline, then 1.1.1 (news_14), 1.1.0 (shown as 1.1, like 1.0.0 as 1.0), 1.0.10', () => {
+  assert.ok(vNum('1.1.2') > vNum('1.1.1') && vNum('1.1.1') > vNum('1.1') && vNum('1.1') > vNum('1.0.10'))
+  assert.deepEqual(timeline.slice(0, 4).map((b) => b.v), ['1.1.2', '1.1.1', '1.1', '1.0.10'])
+  assert.deepEqual(timeline.slice(0, 3).map((b) => b.key), ['news_15', 'news_14', 'news_13'])
   for (const l of ['en', 'fr', 'es']) assert.equal(items(T[l]('news_14')).length, 1, `news_14 ${l}`)
+  for (const l of ['en', 'fr', 'es']) assert.equal(items(T[l]('news_15')).length, 2, `news_15 ${l}`)
+})
+
+test('1.1.2 is not big: no dot on More for it', () => {
+  assert.ok(!NEWS[0].big)
 })
 
 test('only 1.1.0 is marked big, and its summary says 5 new brands in en, fr and es', () => {

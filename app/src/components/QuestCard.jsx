@@ -39,7 +39,6 @@ export default function QuestCard() {
 
   return (
     <section className="quest">
-      <div className="sec-head"><h3>{t('quest_title')}</h3></div>
       <div className={`quest-card${state.done ? ' done' : ''}`}>
         <div className="quest-top">
           <span className="quest-meta">{state.done ? t('quest_done') : t('quest_meta')}</span>
