@@ -98,7 +98,6 @@ export default function More() {
   const unread = useUnreadNews()
   const nPrefs = prefCount()
   const followX = () => { copyText(X_URL).then((ok) => { if (ok) toast(t('follow_copied')) }) }
-  const visitWeb = () => { copyText(WEB_URL).then((ok) => { if (ok) toast(t('web_copied')) }) }
   const copyEmail = async () => { if (await copyText(HELP_EMAIL)) toast(t('help_copied')) }
   // Share Dibs: the system share sheet where there is one, else copy the text and link. Nothing goes to our server.
   const shareDibs = async () => {
@@ -160,10 +159,10 @@ export default function More() {
             <span><b>{t('follow_row')}</b><small>{t('follow_row_sub')}</small></span>
             <span className="chev ext" aria-hidden="true"><OutIcon /></span>
           </a>
-          {/* Same as the X row: the tap copies the link (Nimiq Pay may open nothing), no preventDefault so a new tab opens where links work. */}
-          <a className="sheet-row" href={WEB_URL} target="_blank" rel="noopener noreferrer" onClick={visitWeb}>
+          {/* Inside Nimiq Pay the tap opens our website directly, so this is a plain link: no onClick, it just opens in a new tab. */}
+          <a className="sheet-row" href={WEB_URL} target="_blank" rel="noopener noreferrer">
             <span className="si" aria-hidden="true"><GlobeIcon /></span>
-            <span><b>{t('web_row')}</b><small>{t('follow_row_sub')}</small></span>
+            <span><b>{t('web_row')}</b><small>{t('web_sub')}</small></span>
             <span className="chev ext" aria-hidden="true"><OutIcon /></span>
           </a>
         </section>

@@ -4,6 +4,8 @@ import { goalBrand } from '../screens/Home.jsx'
 import { progress } from '../lib/goals.js'
 import { detailText } from '../lib/itemName.js'
 import { fmtNim } from '../lib/format.js'
+import { fmtFiatValue } from '../lib/fiatValue.js'
+import { useFiat } from './ui.jsx'
 import { planOf } from '../lib/pace.js'
 
 // Savings tab: This week, over every active goal. What to add this week across saving goals to stay on track, how
@@ -23,6 +25,7 @@ function nextUp(goals) {
 
 export default function WeekCard({ goals }) {
   const { t, lang, go } = useApp()
+  const fiat = useFiat() // the Currency choice value, same path as the header pill; null without a live rate
   const saving = goals.map((g) => ({ g, pace: goalPace(g) })).filter((x) => x.pace)
   const next = nextUp(goals)
   if (!saving.length && !next) return null
@@ -36,7 +39,13 @@ export default function WeekCard({ goals }) {
     : next.kind === 'ready' ? t('next_ready', { item })
     : next.kind === 'reached' ? t('next_reached', { item })
     : t('next_close', { item, pct: Math.round(progress(next.goal) * 100) })
-  const nextLeft = next?.kind === 'close' ? t('next_close_left', { amount: fmtNim(planOf(next.goal).remaining, lang) }) : null
+  // Next up second line: "{amount} NIM to go", plus the value in the Currency choice when there is a live rate
+  // (same amount, same path as the header pill, so they match). Display only.
+  const nextRemaining = next?.kind === 'close' ? planOf(next.goal).remaining : null
+  const nextLeftFiat = nextRemaining != null ? fmtFiatValue(nextRemaining, fiat, lang) : null
+  const nextLeft = nextRemaining == null ? null
+    : nextLeftFiat ? t('next_close_left_fiat', { amount: fmtNim(nextRemaining, lang), fiat: nextLeftFiat })
+    : t('next_close_left', { amount: fmtNim(nextRemaining, lang) })
   return (
     <section className="wk">
       <div className="wk-card">

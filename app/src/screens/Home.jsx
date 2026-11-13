@@ -2,7 +2,8 @@ import { CardIssue } from '../components/CardIssue.jsx'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useApp } from '../App.jsx'
 import { detailText, itemLabel } from '../lib/itemName.js'
-import { BrandLogo, CREAM, Header, DibsMark } from '../components/ui.jsx'
+import { BrandLogo, CREAM, Header, DibsMark, useFiat } from '../components/ui.jsx'
+import { fmtFiatValue } from '../lib/fiatValue.js'
 import { listGoals, progress, savedNim } from '../lib/goals.js'
 import { BRANDS, catalogBrands, brandOf } from '../lib/brands.js'
 import { findItem } from '../lib/catalog.js'
@@ -221,6 +222,7 @@ function GoalHero({ goal, earned }) {
   const cap = addCaptionKey(p, next) // the Add button's caption (display only)
   const savedShown = useCountUp(p.saved)
   const remainingShown = useCountUp(p.remaining)
+  const fiat = useFiat() // the Currency choice value, same path as the header pill; null without a live rate
   const rs = useReady(goal) // ready goals: does the saved NIM still cover the card at today's price (display only)
   const due = useReleaseDue(goal)
   const details = () => go('goal', { goalId: goal.id, mode: 'details' })
@@ -260,6 +262,33 @@ function GoalHero({ goal, earned }) {
           : goal.status === 'ready'
             ? <button type="button" className="btn" onClick={details}>{t('card_get')}</button>
             : <button type="button" className="btn" onClick={details}>{t('home_details')}</button>
+  // Line under the big number for a saving goal with something saved: "{amount} to go", plus the value in the Currency
+  // choice when there is a live rate (same amount as the count-up, so they move together). Like the header pill, the
+  // value is dropped when it would push the line to a second line (a very large amount in a long-valued currency): the
+  // amount stays, the value hides. Judged on the final value (a hidden copy), never per count-up frame. Display only.
+  const toGoAmount = fmtNim(Math.round(remainingShown), lang)
+  const toGoFiat = fmtFiatValue(Math.round(remainingShown), fiat, lang)
+  const toGoFiatFinal = toGoFiat ? fmtFiatValue(p.remaining, fiat, lang) : null
+  const fit = useRef(null)
+  const [fiatFits, setFiatFits] = useState(true)
+  useLayoutEffect(() => {
+    const el = fit.current
+    if (!el) { setFiatFits(true); return undefined }
+    const check = () => {
+      const r = document.createRange()
+      r.selectNodeContents(el)
+      const tops = new Set([...r.getClientRects()].filter((q) => q.width > 0).map((q) => Math.round(q.top)))
+      setFiatFits(tops.size <= 1)
+    }
+    check()
+    if (typeof ResizeObserver !== 'function') return undefined
+    const ro = new ResizeObserver(check)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [toGoFiatFinal, lang])
+  const toGoLine = toGoFiat && fiatFits
+    ? t('goal_to_go_fiat', { amount: toGoAmount, fiat: toGoFiat })
+    : t('goal_to_go', { amount: toGoAmount })
   return (
       <section className={`hero goal-card${goalPace(goal) ? ' has-dot' : ''}`}>
         <GoalDot goal={goal} />
@@ -275,7 +304,10 @@ function GoalHero({ goal, earned }) {
               ? <div className="m">{t('ready_home_line', { price: fmtNim(rs.price, lang) })}</div>
               : p.saved <= 0
                 ? <div className="m">{t('goal_of_zero', { target: fmtNim(goal.targetNim, lang) })}</div>
-                : <div className="m">{t('goal_of2', { target: fmtNim(goal.targetNim, lang) })} · {t('goal_to_go', { amount: fmtNim(Math.round(remainingShown), lang) })}</div>}
+                : <>
+                    <div className="m">{toGoLine}</div>
+                    {toGoFiatFinal && <div ref={fit} className="m m-measure" aria-hidden="true">{t('goal_to_go_fiat', { amount: fmtNim(p.remaining, lang), fiat: toGoFiatFinal })}</div>}
+                  </>}
             <GoalStatus goal={goal} earned={earned?.byGoal[goal.id]} ready={rs} />
           </div>
         </div>

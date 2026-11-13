@@ -9,15 +9,18 @@ const i18n = readFileSync(new URL('./i18n.js', import.meta.url), 'utf8')
 const T = { en: makeT('en'), fr: makeT('fr'), es: makeT('es') }
 const pos = (s) => { const i = more.indexOf(s); assert.ok(i >= 0, `${s} is in More.jsx`); return i }
 
-test('the website row opens and copies the same constant, WEB_URL', () => {
+test('the website row is a plain link to WEB_URL, no onClick, its own second line (web_sub)', () => {
   const m = more.match(/const WEB_URL = '([^']+)'/)
   assert.ok(m, 'WEB_URL is defined once')
   assert.equal(m[1], 'https://calldibs-ashen.vercel.app/')
   assert.equal(more.split("'https://calldibs-ashen.vercel.app/'").length, 2, 'the address is written only in WEB_URL')
-  assert.match(more, /href=\{WEB_URL\} target="_blank" rel="noopener noreferrer" onClick=\{visitWeb\}/)
-  assert.match(more, /const visitWeb = \(\) => \{ copyText\(WEB_URL\)\.then\(\(ok\) => \{ if \(ok\) toast\(t\('web_copied'\)\) \}\) \}/)
-  assert.ok(!/visitWeb[^\n]*preventDefault/.test(more), 'no preventDefault: a new tab still opens')
-  for (const l of ['en', 'fr', 'es']) assert.ok(T[l]('web_copied').includes('calldibs-ashen.vercel.app'), `web_copied ${l} names the address`)
+  assert.match(more, /href=\{WEB_URL\} target="_blank" rel="noopener noreferrer">/)
+  assert.ok(!/href=\{WEB_URL\}[^>]*onClick/.test(more), 'the website row has no onClick: Nimiq Pay opens the site directly')
+  assert.ok(!more.includes('visitWeb'), 'visitWeb and its copy are gone')
+  assert.ok(!more.includes('web_copied') && !i18n.includes('web_copied'), 'web_copied is gone')
+  assert.match(more, /\{t\('web_row'\)\}<\/b><small>\{t\('web_sub'\)\}/)
+  const sub = { en: 'Opens in your browser', fr: 'S’ouvre dans votre navigateur', es: 'Se abre en tu navegador' }
+  for (const l of ['en', 'fr', 'es']) assert.equal(T[l]('web_sub'), sub[l], l)
 })
 
 test('v1.1.12 order: numbers, Rewards, Discover, Community, Settings, About, Need help?, then the version line', () => {
@@ -46,7 +49,7 @@ test('no line under Your name, and name_device is gone from i18n', () => {
   assert.ok(!i18n.includes('name_device'))
 })
 
-test('second lines: short Catalog line, the X and website rows both say tap to copy (one key, follow_row_sub)', () => {
+test('second lines: short Catalog line, the X row says tap to copy (follow_row_sub, used once)', () => {
   const want = {
     en: ['12 brands to choose from', 'Tap to copy the link'],
     fr: ['12 marques au choix', 'Touchez pour copier le lien'],
@@ -57,7 +60,7 @@ test('second lines: short Catalog line, the X and website rows both say tap to c
     assert.equal(T[l]('follow_row_sub'), want[l][1], l)
   }
   assert.match(more, /t\('browse_more_sub', \{ count: catalogBrands\(\)\.length \}\)/)
-  assert.equal(more.split("t('follow_row_sub')").length, 3, 'the X row and the website row')
+  assert.equal(more.split("t('follow_row_sub')").length, 2, 'the X row only (the website row now uses web_sub)')
   assert.ok(!more.includes('web_row_sub') && !i18n.includes('web_row_sub'), 'web_row_sub is gone')
 })
 
