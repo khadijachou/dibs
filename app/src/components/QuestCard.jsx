@@ -1,17 +1,18 @@
 import { useEffect, useState } from 'react'
 import { useApp } from '../App.jsx'
 import { listGoals } from '../lib/goals.js'
-import { checkQuest } from '../lib/quests.js'
-import { XP_EVENT } from '../lib/xp.js'
+import { checkQuest, questState } from '../lib/quests.js'
+import { getQuestsDone, weekKey, XP_EVENT } from '../lib/xp.js'
 import { detailText } from '../lib/itemName.js'
 import { fmtNim } from '../lib/format.js'
 import { goalBrand } from '../screens/Home.jsx'
 
-// Savings tab: Quest of the week, right after This week. Optional; +40 XP when done (lib/quests.js, lib/xp.js).
-// No quest this week, or its goal is gone: no section.
+// Profile, Quests section (v1.1.12, was on Savings): Quest of the week. Optional; +40 XP when done (lib/quests.js,
+// lib/xp.js). No quest this week, or its goal is gone: no section.
 const short = (t, g) => `${goalBrand(g).name} ${detailText(t, g, { short: true })}` // same name as WeekCard
 
-export default function QuestCard() {
+// title: the section title shown above the card (Profile's "Quests"); id: lets Home's strip scroll to it.
+export default function QuestCard({ title = null, id = undefined }) {
   const { t, lang, address, go } = useApp()
   const read = () => checkQuest(listGoals(address))
   const [q, setQ] = useState(read)
@@ -38,7 +39,8 @@ export default function QuestCard() {
     : <button type="button" className="btn quest-btn" onClick={() => go('goal', { goalId: quest.goalId, mode: 'add', amount: quest.amount })}>{t('quest_add', { amount })}</button>
 
   return (
-    <section className="quest">
+    <section className="quest" id={id}>
+      {title && <div className="sec-head"><h3>{title}</h3></div>}
       <div className={`quest-card${state.done ? ' done' : ''}`}>
         <div className="quest-top">
           <span className="quest-meta">{state.done ? t('quest_done') : t('quest_meta')}</span>
@@ -52,5 +54,45 @@ export default function QuestCard() {
         {action}
       </div>
     </section>
+  )
+}
+
+// Home's Quests strip: this week's quest as lib/quests.js stored it (dibs.quest), read only. Nothing is picked or
+// recorded here: App.jsx and the Profile card do that through checkQuest. null: no quest to show.
+export function questProgress(goals, now = Date.now()) {
+  let quest = null
+  try { quest = JSON.parse(localStorage.getItem('dibs.quest')) } catch { quest = null }
+  if (!quest || quest.week !== weekKey(now)) return null
+  if (getQuestsDone().some((d) => d.week === quest.week)) return { done: true, pct: 100 }
+  const st = questState(quest, goals, now)
+  if (st.hidden) return null
+  return { done: st.done, pct: Math.round(st.progress * 100) }
+}
+
+const StarIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M12 2.8l2.8 5.7 6.3.9-4.55 4.43 1.07 6.27L12 17.1l-5.62 2.96 1.07-6.27L2.9 9.4l6.3-.9z" />
+  </svg>
+)
+
+export function QuestStrip({ onOpen }) {
+  const { t, address } = useApp()
+  // Read on every render (one storage read): App.jsx may pick this week's quest just after Home first draws.
+  const [, redraw] = useState(0)
+  useEffect(() => {
+    const on = () => redraw((n) => n + 1)
+    const id = setTimeout(on, 0)
+    const events = ['dibs:goals', XP_EVENT]
+    events.forEach((e) => window.addEventListener(e, on))
+    return () => { clearTimeout(id); events.forEach((e) => window.removeEventListener(e, on)) }
+  }, [address])
+  const q = questProgress(listGoals(address))
+  if (!q) return null
+  return (
+    <button type="button" className="sheet-row quest-strip" onClick={onOpen}>
+      <span className="si qs-ic" aria-hidden="true"><StarIcon /></span>
+      <span><b>{t('quests_title')}</b><small>{q.done ? t('quest_strip_done') : t('quest_strip_pct', { pct: q.pct })}</small></span>
+      <span className="chev" aria-hidden="true">›</span>
+    </button>
   )
 }

@@ -288,7 +288,6 @@ svg circle:first-child[stroke="#e6dccf"], svg circle:first-child[stroke="#35323f
 a.sheet-row { text-decoration: none; -webkit-tap-highlight-color: transparent; }
 .sheet-row .si.x { background: #2a2733; color: var(--cream); } /* same circle as the other rows; the official X glyph, 14 px */
 /* More > Settings: Play a test sound, a small text button under the Sound switch */
-.txt-link.sound-test { align-self: flex-start; margin: -2px 0 4px; }
 .sheet-row .chev.ext { display: grid; place-items: center; color: var(--muted); }
 .sheet .pill:disabled { opacity: .45; }
 .sheet .amount input { font-size: var(--fs-display); }
@@ -344,7 +343,8 @@ a.sheet-row { text-decoration: none; -webkit-tap-highlight-color: transparent; }
 .stake-facts .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--teal); flex-shrink: 0; }
 /* The hero is positioned (its glow and shadow): what follows it on Savings paints above it, never dimmed by it. */
 .stake-hero ~ * { position: relative; z-index: 1; }
-.stake-line { margin-top: auto; text-align: center; }
+.stake-line { margin-top: auto; display: flex; align-items: flex-start; gap: 8px; text-align: left; }
+.stake-line-ic { flex-shrink: 0; display: grid; color: var(--teal); padding-top: 1px; }
 .unstake-top { display: flex; align-items: center; gap: 12px; }
 .unstake-top .blogo { width: 36px; height: 36px; }
 .unstake-top .grow { flex: 1; min-width: 0; }
@@ -378,6 +378,7 @@ button.tl-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: -2
 .tl-badge.deposit { background: #E8482A; color: #fff; }
 .tl-badge.purchase, .tl-badge.withdraw { background: #15896A; color: #fff; }
 .tl-badge.unlock { background: #FFC94D; color: #23212B; }
+.tl-badge.change, .tl-row.change .tl-ic { background: #FFF6EC; color: #23212B; } /* v1.1.12: cream circle, ink swap icon */
 .tl-main { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .tl-main b { font-size: var(--fs-strong); line-height: var(--lh-strong); font-weight: 600; overflow-wrap: anywhere; }
 .tl-goal { font-size: var(--fs-label); line-height: var(--lh-label); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -693,7 +694,6 @@ button.tl-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: -2
 .set-row.stats-row > span { flex: 1; min-width: 0; }
 .set-row.stats-row b { display: block; font-weight: 500; }
 .set-row.stats-row small { display: block; color: var(--muted); font-size: var(--fs-meta); line-height: var(--lh-meta); margin-top: 2px; }
-.stats-delete { align-self: flex-start; background: none; border: 0; padding: 2px 2px 4px; color: #ff8a7a; text-decoration: underline; text-underline-offset: 3px; font: 500 var(--fs-meta)/var(--lh-meta) var(--font-body); cursor: pointer; }
 
 .numbers-card { background: var(--card); border: 1px solid #2b2834; border-radius: 18px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
 .numbers-card .nc-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
@@ -1299,3 +1299,49 @@ html.is-fullscreen .bstamp-live { top: calc(58px + var(--fs-top)); }
 @media (prefers-reduced-motion: reduce) {
   .goal-dot, .goal-status::before, .stake-facts .dot, .pt-dot, .numbers-card .nc-live i { animation: none; }
 }
+
+/* ---- v1.1.12 polish batch ---- */
+/* Home: the Quests strip under the photos (a light row: star in a butter square, title, this week's progress). */
+.sheet-row.quest-strip { padding: 10px 12px; }
+.sheet-row .si.qs-ic { border-radius: 10px; background: #FFC94D; color: #23212B; }
+/* Savings: the release time of day under the countdown. */
+.unstake-at { margin-top: 4px; }
+/* Unlock: the intro sentence with its info icon, between the timer and the steps. */
+.unl-intro { display: flex; align-items: flex-start; gap: 8px; }
+.unl-intro-ic { flex-shrink: 0; display: grid; color: var(--muted); padding-top: 2px; }
+/* Profile: the Quests section (Home's strip scrolls to it), How to claim at the bottom of the Rewards card, XP pills. */
+#quests { scroll-margin-top: 12px; }
+.lvl-how.rw-how { justify-content: flex-start; border-top-color: rgba(255, 201, 77, .18); padding-top: 12px; }
+.rw-how .rw-how-ic { flex-shrink: 0; display: grid; color: #FFC94D; }
+.rw-how .rw-how-txt { flex: 1; min-width: 0; }
+.xp-pill { display: inline-block; padding: 2px 10px; border-radius: 999px; background: rgba(255, 201, 77, .12); color: #FFC94D; white-space: nowrap; }
+/* More: Rewards as its own row, butter border and soft gradient, the end date as a tag before the chevron. */
+.sheet-row.rw-special { border-color: rgba(255, 201, 77, .45); background: linear-gradient(150deg, rgba(255, 201, 77, .14), rgba(255, 201, 77, .03) 70%), var(--card); }
+.sheet-row.rw-special .si { background: #FFC94D; color: #23212B; }
+.rw-tag { flex-shrink: 0; font: 600 var(--fs-label)/1 var(--font-body); font-style: normal; padding: 5px 9px; border-radius: 999px; background: rgba(255, 201, 77, .16); color: #FFC94D; white-space: nowrap; }
+/* Preferences: the test sound button left of the Sound switch. */
+.sound-ctl { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.sound-test { width: 34px; height: 34px; border-radius: 50%; border: 1px solid #3a3744; background: #2a2733; color: var(--cream); display: grid; place-items: center; padding: 0; cursor: pointer; }
+.sound-test:active { transform: scale(.94); }
+/* More > Rewards page: hero, two reward tiles, the four steps, More information. */
+.rwp { display: flex; flex-direction: column; gap: 16px; }
+.rwp-hero { position: relative; overflow: hidden; border: 1px solid rgba(255, 201, 77, .45); border-radius: 22px; padding: 18px 16px;
+  background: radial-gradient(260px 160px at 100% 0%, rgba(255, 201, 77, .22), rgba(255, 201, 77, 0) 70%), linear-gradient(160deg, #2c2417, #1f1d26);
+  display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.rwp-tag { font: 600 var(--fs-label)/var(--lh-label) var(--font-body); letter-spacing: .04em; color: #FFC94D; padding: 4px 10px; border-radius: 999px; background: rgba(255, 201, 77, .14); }
+.rwp-hero h3 { margin: 0; font: 600 var(--fs-heading)/var(--lh-heading) var(--font-display); color: var(--cream); }
+.rwp-hero p { margin: 0; font-size: var(--fs-body); line-height: var(--lh-body); color: #d9d4df; }
+.rwp-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.rwp-tile { background: var(--card); border: 1px solid #3d3322; border-radius: 18px; padding: 14px 12px; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0; }
+.rwp-tile .rwp-amt { margin-top: 6px; font: 600 var(--fs-heading)/var(--lh-heading) var(--font-display); color: #FFC94D; }
+.rwp-tile .rwp-badge { font-size: var(--fs-meta); line-height: var(--lh-meta); font-weight: 600; color: var(--cream); }
+.rwp-tile p { margin: 0; font-size: var(--fs-meta); line-height: var(--lh-meta); color: var(--muted); overflow-wrap: anywhere; }
+.rwp-sec { display: flex; flex-direction: column; gap: 10px; }
+.rwp-sec h3 { margin: 0; font: 600 var(--fs-heading)/var(--lh-heading) var(--font-display); color: var(--cream); }
+.rwp-sec p { margin: 0; font-size: var(--fs-body); line-height: var(--lh-body); color: var(--muted); }
+.rwp-steps { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.rwp-steps li { display: flex; align-items: flex-start; gap: 12px; background: var(--card); border: 1px solid #2b2834; border-radius: 14px; padding: 12px 14px;
+  font-size: var(--fs-body); line-height: var(--lh-body); color: var(--cream); }
+.rwp-n { flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; background: #FFC94D; color: #23212B; font: 700 var(--fs-label)/1 var(--font-body); }
+/* Home: Start unlock alone when its label would wrap next to Details (Home.jsx checks it). */
+.hero .acts.solo .btn.outline { display: none; }

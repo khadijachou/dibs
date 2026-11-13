@@ -10,9 +10,12 @@ import { APP_VERSION, HELP_EMAIL } from '../components/LegalText.jsx'
 import { copyText } from '../lib/clipboard.js'
 import { FAQ } from './Faq.jsx'
 import { useUnreadNews } from '../lib/newsSeen.js'
+import { PROGRAM_END, active as rewardsActive } from '../lib/rewards.js'
 
 const X_URL = 'https://x.com/calldibs_app'
 const WEB_URL = 'https://calldibs-ashen.vercel.app/'
+// The Rewards row's tag: the program's last day, short ("Nov 30", "30 nov.", "30 nov").
+const endShort = (lang) => new Intl.DateTimeFormat(lang, { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(PROGRAM_END))
 
 // Four rounded squares (Browse the catalogue). A stroke icon: text glyphs turn into emoji on iOS.
 const GridIcon = () => (
@@ -91,7 +94,7 @@ const OutIcon = () => (
 )
 
 export default function More() {
-  const { t, go, showHowTo, toast } = useApp()
+  const { t, lang, go, showHowTo, toast } = useApp()
   const unread = useUnreadNews()
   const nPrefs = prefCount()
   const followX = () => { copyText(X_URL).then((ok) => { if (ok) toast(t('follow_copied')) }) }
@@ -114,15 +117,21 @@ export default function More() {
         <h2 className="title">{t('tab_more')}</h2>
         <NumbersCard />
 
+        {/* Rewards (v1.1.12): its own highlighted row, with the program's end date. Gone once the program is over. */}
+        {rewardsActive() && (
+          <button type="button" className="sheet-row rw-special" onClick={() => go('legal', { page: 'rewards' })}>
+            <span className="si" aria-hidden="true"><GiftIcon /></span>
+            <span><b>{t('legal_rewards')}</b><small>{t('legal_rewards_sub')}</small></span>
+            <i className="rw-tag">{t('rw_until', { date: endShort(lang) })}</i>
+            <span className="chev" aria-hidden="true">›</span>
+          </button>
+        )}
+
         <section className="more-sec">
+          <div className="sec-head"><h3>{t('more_discover')}</h3></div>
           <button type="button" className="sheet-row" onClick={showHowTo}>
             <span className="si" aria-hidden="true">?</span>
             <span><b>{t('more_howto')}</b><small>{t('more_howto_sub')}</small></span>
-            <span className="chev" aria-hidden="true">›</span>
-          </button>
-          <button type="button" className="sheet-row" onClick={() => go('legal', { page: 'rewards' })}>
-            <span className="si" aria-hidden="true"><GiftIcon /></span>
-            <span><b>{t('legal_rewards')}</b><small>{t('legal_rewards_sub')}</small></span>
             <span className="chev" aria-hidden="true">›</span>
           </button>
           <button type="button" className="sheet-row" onClick={() => go('browse')}>
@@ -130,6 +139,15 @@ export default function More() {
             <span><b>{t('browse_more')}</b><small>{t('browse_more_sub', { count: catalogBrands().length })}</small></span>
             <span className="chev" aria-hidden="true">›</span>
           </button>
+          <button type="button" className="sheet-row faq-row" onClick={() => go('faq')}>
+            <span className="si" aria-hidden="true">?</span>
+            <span><b>{t('more_faq')}</b><small>{t('faq_row_sub', { n: FAQ.length })}</small></span>
+            <span className="chev" aria-hidden="true">›</span>
+          </button>
+        </section>
+
+        <section className="more-sec">
+          <div className="sec-head"><h3>{t('more_community')}</h3></div>
           <button type="button" className="sheet-row" onClick={shareDibs}>
             <span className="si" aria-hidden="true"><ShareIcon /></span>
             <span><b>{t('share_row')}</b><small>{t('share_row_sub')}</small></span>
@@ -145,14 +163,9 @@ export default function More() {
           {/* Same as the X row: the tap copies the link (Nimiq Pay may open nothing), no preventDefault so a new tab opens where links work. */}
           <a className="sheet-row" href={WEB_URL} target="_blank" rel="noopener noreferrer" onClick={visitWeb}>
             <span className="si" aria-hidden="true"><GlobeIcon /></span>
-            <span><b>{t('web_row')}</b><small>{t('web_row_sub')}</small></span>
+            <span><b>{t('web_row')}</b><small>{t('follow_row_sub')}</small></span>
             <span className="chev ext" aria-hidden="true"><OutIcon /></span>
           </a>
-          <button type="button" className="sheet-row faq-row" onClick={() => go('faq')}>
-            <span className="si" aria-hidden="true">?</span>
-            <span><b>{t('more_faq')}</b><small>{t('faq_row_sub', { n: FAQ.length })}</small></span>
-            <span className="chev" aria-hidden="true">›</span>
-          </button>
         </section>
 
         <section className="more-sec">
@@ -170,14 +183,15 @@ export default function More() {
           </button>
         </section>
 
-        <section className="help-card">
-          <h3>{t('help_title')}</h3>
-          <p>{t('help_body')}</p>
-          <button type="button" className="help-email" aria-label={t('help_email')} onClick={copyEmail}>{HELP_EMAIL}</button>
-        </section>
-
         <section className="more-sec">
-          <div className="sec-head"><h3>{t('more_legal')}</h3></div>
+          <div className="sec-head"><h3>{t('more_about')}</h3></div>
+          {/* Unread important news: a bell with a coral dot, the release summary, and the "New" tag. Else the usual row. */}
+          <button type="button" className={`sheet-row news-row${unread ? ' unread' : ''}`} onClick={() => go('legal', { page: 'news' })}>
+            <span className="si" aria-hidden="true">{unread ? <><Icon name="bell" size={18} stroke={2} /><i className="news-dot" /></> : <SparkIcon />}</span>
+            <span><b>{t('legal_news')}</b><small>{unread?.sum ? t(unread.sum, { n: unread.n }) : t('legal_news_sub', { v: APP_VERSION })}</small></span>
+            {unread && <i className="news-new">{t('news_new')}</i>}
+            <span className="chev" aria-hidden="true">›</span>
+          </button>
           <button type="button" className="sheet-row" onClick={() => go('legal', { page: 'privacy' })}>
             <span className="si" aria-hidden="true"><ShieldIcon /></span>
             <span><b>{t('legal_privacy')}</b><small>{t('legal_privacy_sub')}</small></span>
@@ -188,15 +202,14 @@ export default function More() {
             <span><b>{t('legal_terms')}</b><small>{t('legal_terms_sub')}</small></span>
             <span className="chev" aria-hidden="true">›</span>
           </button>
-          {/* Unread important news: a bell with a coral dot, the release summary, and the "New" tag. Else the usual row. */}
-          <button type="button" className={`sheet-row news-row${unread ? ' unread' : ''}`} onClick={() => go('legal', { page: 'news' })}>
-            <span className="si" aria-hidden="true">{unread ? <><Icon name="bell" size={18} stroke={2} /><i className="news-dot" /></> : <SparkIcon />}</span>
-            <span><b>{t('legal_news')}</b><small>{unread?.sum ? t(unread.sum, { n: unread.n }) : t('legal_news_sub', { v: APP_VERSION })}</small></span>
-            {unread && <i className="news-new">{t('news_new')}</i>}
-            <span className="chev" aria-hidden="true">›</span>
-          </button>
-          <p className="legal-version">{t('legal_version', { v: APP_VERSION })}</p>
         </section>
+
+        <section className="help-card">
+          <h3>{t('help_title')}</h3>
+          <p>{t('help_body')}</p>
+          <button type="button" className="help-email" aria-label={t('help_email')} onClick={copyEmail}>{HELP_EMAIL}</button>
+        </section>
+        <p className="legal-version">{t('legal_version', { v: APP_VERSION })}</p>
       </main>
     </>
   )

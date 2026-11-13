@@ -23,14 +23,12 @@ import { CardFlip, GiftFace, useCardFlip } from '../components/CardFlip.jsx'
 import { CardIssue } from '../components/CardIssue.jsx'
 import { goalCardIssue, payLockedFor, readyReturnPatch } from '../lib/availability.js'
 import { goalVersion } from '../lib/version.js'
-import { worksLine } from '../lib/brands.js'
 import { stakeSummary } from '../lib/earned.js'
 import { track } from '../lib/stats.js'
 import { txHash } from '../lib/history.js'
 import { MilestoneLine, useGoalMilestone } from '../components/Milestone.jsx'
 import { GoalDot, GoalStatus } from '../components/GoalStatus.jsx'
 import { getUnlockState, settleGoal } from '../lib/unlockFlow.js'
-import { readyTimeText } from '../components/ReleaseClock.jsx'
 import { ReadyBox, useReady } from '../components/ReadyState.jsx'
 
 const parseNim = (v) => Math.floor(Number(String(v).replace(/[^\d.]/g, ''))) || 0
@@ -392,7 +390,7 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
               <GoalStatus goal={goal} earned={earned} ready={rs} />
             </div>
           </div>
-          {rs && <ReadyBox rs={rs} compact={goal.status !== 'ready'} /> /* unlocking: the short lines (the NIM is not back yet) */}
+          {rs && rs.kind !== 'covered' && <ReadyBox rs={rs} compact={goal.status !== 'ready'} /> /* unlocking: the short lines (the NIM is not back yet). Covered: no box (v1.1.12) */}
           {!rs && (
             <WeekDots total={p.totalWeeks} done={done100 && reached ? p.totalWeeks : p.weeksDone} now={p.weekIdx}
               left={done100 ? null : t('week_of', { n: Math.min(p.totalWeeks, p.weekIdx + 1), total: p.totalWeeks })}
@@ -458,7 +456,7 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
             otherUnlock
               ? <button type="button" className="btn gold" disabled>{t('goal_unlock')}</button>
               : unlockSt?.state === 'waiting' && unlockSt.releaseAt != null
-              ? <button type="button" className="btn waiting" disabled>{t('goal_card_ready_at', { time: readyTimeText(unlockSt.releaseAt, lang) })}</button>
+              ? <button type="button" className="btn waiting" disabled>{t('card_get')}</button>
               : <button type="button" className="btn gold" onClick={() => go('unlock', { goalId: goal.id })}>{t('goal_unlock')}</button>
           )}
           {goal.status === 'ready' && !goalCardIssue(goal) && (
@@ -481,7 +479,7 @@ function AmountFiat({ nim }) {
   return <p className="amount-fiat">≈ {value}</p>
 }
 
-// About this card (Details): what the card is, the goal's own version and which accounts it works with, how the shop
+// About this card (Details): what the card is, the goal's own version (no works-with line since v1.1.12), how the shop
 // delivers it, and its price under the same rule as the catalogue tiles (the live price, or "Price confirmed at
 // checkout" when the shop gave none). Never the brand's list of versions: a USA card says USA.
 function AboutCard({ goal, brand }) {
@@ -500,7 +498,6 @@ function AboutCard({ goal, brand }) {
           {brand.delivers && <div><dt>{t('about_delivered')}</dt><dd>{t(`delivers_${brand.delivers}`)}</dd></div>}
         </dl>
       )}
-      {version.worksWith && <p className="small works-line">{worksLine(t, version.worksWith)}</p>}
       {brand.about && <p className="small">{t(brand.about)}</p>}
       {estimated ? (
         <button type="button" className="price-chip" onClick={() => toast(t('price_checkout_info'))}>

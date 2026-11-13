@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useApp } from '../App.jsx'
-import { Header, LangSwitch, useCurrencyChoice } from '../components/ui.jsx'
+import { Header, Icon, LangSwitch, useCurrencyChoice } from '../components/ui.jsx'
 import { StatsSetting } from '../components/StatsConsent.jsx'
 import { audioContext, playTing } from '../lib/sound.js'
 import { getTheme, setTheme, THEMES } from '../lib/theme.js'
@@ -10,8 +10,8 @@ import { CURRENCIES, setCurrency } from '../lib/currency.js'
 const soundOn = () => { try { return localStorage.getItem('dibs.sound') !== 'off' } catch { return true } }
 
 // More > Preferences: language, appearance (dark or light, lib/theme.js), currency (lib/currency.js: the header value and
-// the card version a brand opens on; applies at once, the header above follows), sound (with a test sound), and the anonymous usage
-// stats (with Delete what was shared). Full screen is the header button only (components/ui.jsx Header).
+// the card version a brand opens on; applies at once, the header above follows), sound (with a test sound button in its row),
+// and Share usage stats. Full screen is the header button only (components/ui.jsx Header).
 export default function Preferences() {
   const { t, back, canGoBack } = useApp()
   const [sound, setSound] = useState(soundOn)
@@ -49,13 +49,14 @@ export default function Preferences() {
           </div>
           <div className="set-row">
             <span>{t('more_sound')}</span>
-            <button type="button" role="switch" aria-checked={sound} aria-label={t('more_sound')} className={`switch${sound ? ' on' : ''}`} onClick={toggleSound}><i /></button>
+            <span className="sound-ctl">
+              {/* From the tap: audioContext() creates or resumes the shared context, then the ting plays on it. */}
+              {sound && <button type="button" className="sound-test" aria-label={t('sound_test')} onClick={() => { audioContext(); playTing() }}><Icon name="speaker" size={18} /></button>}
+              <button type="button" role="switch" aria-checked={sound} aria-label={t('more_sound')} className={`switch${sound ? ' on' : ''}`} onClick={toggleSound}><i /></button>
+            </span>
           </div>
-          {/* From the tap: audioContext() creates or resumes the shared context, then the ting plays on it. */}
-          {sound && <button type="button" className="txt-link sound-test" onClick={() => { audioContext(); playTing() }}>{t('sound_test')}</button>}
           <StatsSetting />
         </section>
-        <p className="small">{t('prefs_foot')}</p>
       </main>
     </>
   )

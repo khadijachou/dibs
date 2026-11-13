@@ -49,7 +49,7 @@ test('the new Profile keys exist in en, fr and es with the same placeholders, no
   assert.deepEqual(holes(T.en('rw_banner')), ['amount'])
   assert.deepEqual(holes(T.en('rw_banner_sub')), ['badge'])
   assert.equal(T.en('rw_banner', { amount: '1,000' }), '1,000 NIM to claim')
-  assert.equal(T.fr('rw_banner_sub', { badge: 'Planté' }), 'Récompense Planté')
+  assert.equal(T.fr('rw_banner_sub', { badge: 'Planté' }), 'Pour le badge Planté')
   assert.equal(T.es('rw_claim_pill'), 'Reclamar')
 })
 

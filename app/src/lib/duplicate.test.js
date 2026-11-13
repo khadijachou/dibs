@@ -22,9 +22,9 @@ test('unlock waiting: "is unlocking" with the release time from getUnlockState, 
     const msg = duplicateMessage(place, goal('unlocking'), waiting)
     assert.deepEqual(msg, { key: 'dup_unlocking', releaseAt: RELEASE })
   }
-  assert.equal(say('en', 'new', goal('unlocking'), waiting), 'Your Steam gift card is unlocking. Ready around 18:30.')
-  assert.equal(say('fr', 'new', goal('unlocking'), waiting), 'Votre carte-cadeau Steam est en cours de déblocage. Disponible vers 18:30.')
-  assert.equal(say('es', 'new', goal('unlocking'), waiting), 'Tu tarjeta de regalo Steam se está desbloqueando. Disponible alrededor de las 18:30.')
+  assert.equal(say('en', 'new', goal('unlocking'), waiting), 'Your Steam gift card is unlocking. Ready at 18:30.')
+  assert.equal(say('fr', 'new', goal('unlocking'), waiting), 'Votre carte-cadeau Steam est en cours de déblocage. Disponible à 18:30.')
+  assert.equal(say('es', 'new', goal('unlocking'), waiting), 'Tu tarjeta de regalo Steam se está desbloqueando. Disponible a las 18:30.')
 })
 
 test('unlock ready or remove (and NIM back, paying): "is ready, finish getting it here"', () => {

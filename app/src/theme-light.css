@@ -126,7 +126,7 @@
 :where(:root[data-theme="light"]) .acc-pill, :where(:root[data-theme="light"]) .tl-ic, :where(:root[data-theme="light"]) .hist-empty-ic,
 :where(:root[data-theme="light"]) .sheet-row .si:not(.blogo), :where(:root[data-theme="light"]) .sheet-row .si.x { background: #f1ebe3; }
 :where(:root[data-theme="light"]) .tl-tx, :where(:root[data-theme="light"]) .past .code.returned { background: #f1ebe3; color: var(--muted); }
-:where(:root[data-theme="light"]) .tl-row.change .tl-ic { background: rgba(217, 154, 11, .14); color: #906607; }
+:where(:root[data-theme="light"]) .tl-row.change .tl-ic, :where(:root[data-theme="light"]) .tl-badge.change { background: #FFF6EC; color: #23212B; border: 1px solid #e3d6c4; }
 :where(:root[data-theme="light"]) .list .row.move > span:first-child, :where(:root[data-theme="light"]) .list .row.withdraw > span:first-child { color: var(--muted); }
 :where(:root[data-theme="light"]) .help-email { background: var(--card-2); border: 1px solid var(--line); }
 :where(:root[data-theme="light"]) .help-email:active { background: #efe8de; }
@@ -226,7 +226,6 @@ html.is-fullscreen:where([data-theme="light"]) body::before { background: linear
 :where(:root[data-theme="light"]) .rw-mid em, :where(:root[data-theme="light"]) .quest-meta { color: #906607; }
 :where(:root[data-theme="light"]) .consent-ring { background: var(--teal-soft); box-shadow: 0 0 0 10px rgba(21, 137, 106, .06); }
 :where(:root[data-theme="light"]) .consent-card .ch.c-no, :where(:root[data-theme="light"]) .consent-card .cl.c-no svg,
-:where(:root[data-theme="light"]) .stats-delete { color: var(--red); }
 :where(:root[data-theme="light"]) .stats-card .sc-icon { background: var(--teal-soft); }
 :where(:root[data-theme="light"]) .pstats { border: 1px solid var(--line); background-image: radial-gradient(110% 120% at 100% 0%, rgba(232, 72, 42, .08), transparent 60%); }
 :where(:root[data-theme="light"]) .lvl-card { border: 1px solid var(--line); background-image: radial-gradient(90% 120% at 0% 0%, rgba(232, 72, 42, .07), transparent 60%); }
@@ -285,3 +284,15 @@ html.is-fullscreen:where([data-theme="light"]) body::before { background: linear
 :where(:root[data-theme="light"]) .ptl-d { background: #d6cdc1; }
 :where(:root[data-theme="light"]) .ptl-ln { background: #e9e1d6; }
 :where(:root[data-theme="light"]) .ptl-d.end { box-shadow: 0 0 0 4px rgba(21, 137, 106, .18); }
+
+/* ---- v1.1.12 polish batch: butter as text becomes the light yellow text shade; surfaces stay soft butter ---- */
+:where(:root[data-theme="light"]) .lvl-how.rw-how { border-top-color: rgba(217, 154, 11, .22); }
+:where(:root[data-theme="light"]) .rw-how .rw-how-ic, :where(:root[data-theme="light"]) .xp-pill, :where(:root[data-theme="light"]) .rw-tag, :where(:root[data-theme="light"]) .rwp-tag, :where(:root[data-theme="light"]) .rwp-tile .rwp-amt { color: #906607; }
+:where(:root[data-theme="light"]) .xp-pill, :where(:root[data-theme="light"]) .rw-tag, :where(:root[data-theme="light"]) .rwp-tag { background: rgba(217, 154, 11, .14); }
+:where(:root[data-theme="light"]) .sheet-row.rw-special { border-color: rgba(217, 154, 11, .45); background: linear-gradient(150deg, rgba(255, 201, 77, .26), rgba(255, 201, 77, .06) 70%), var(--card); }
+:where(:root[data-theme="light"]) .sound-test { background: #f1ebe3; border-color: var(--line); }
+:where(:root[data-theme="light"]) .rwp-hero { border-color: rgba(217, 154, 11, .45); background: radial-gradient(260px 160px at 100% 0%, rgba(255, 201, 77, .35), rgba(255, 201, 77, 0) 70%), linear-gradient(160deg, #fff4dc, #ffffff); }
+:where(:root[data-theme="light"]) .rwp-hero p { color: var(--muted); }
+:where(:root[data-theme="light"]) .rwp-tile { border-color: #eadfc8; }
+:where(:root[data-theme="light"]) .rwp-steps li { border-color: var(--line); }
+:where(:root[data-theme="light"]) .sheet-row .si.qs-ic, :where(:root[data-theme="light"]) .sheet-row.rw-special .si { background: #FFC94D; color: #23212B; }

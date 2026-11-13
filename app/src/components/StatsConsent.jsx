@@ -2,8 +2,8 @@
 // Nothing is sent until the user taps Share stats (lib/stats.js). No pre-ticked choice anywhere.
 import { useEffect, useState } from 'react'
 import { useApp } from '../App.jsx'
-import { LangSwitch, Sheet, Wordmark } from './ui.jsx'
-import { consent, deleteShared, numbersPageUrl, publicNumbers, setConsent } from '../lib/stats.js'
+import { LangSwitch, Wordmark } from './ui.jsx'
+import { consent, numbersPageUrl, publicNumbers, setConsent } from '../lib/stats.js'
 import { fmtNim } from '../lib/format.js'
 
 export const ShieldCheck = ({ size = 34 }) => (
@@ -69,35 +69,17 @@ export function StatsCard() {
   )
 }
 
-// More > Settings: the switch (on = yes, off = no from now on) and Delete what was shared.
+// More > Preferences: the switch (on = yes, off = no from now on). v1.1.12: no Delete what was shared button here
+// (lib/stats.js deleteShared and the server endpoint stay as they are).
 export function StatsSetting() {
-  const { t, toast } = useApp()
+  const { t } = useApp()
   const [on, setOn] = useState(() => consent() === 'yes')
-  const [confirm, setConfirm] = useState(false)
-  const [busy, setBusy] = useState(false)
   const toggle = () => { const next = !on; setConsent(next ? 'yes' : 'no'); setOn(next) }
-  const del = async () => {
-    setBusy(true)
-    const ok = await deleteShared()
-    setBusy(false)
-    setConfirm(false)
-    if (ok) { setOn(false); toast(t('stats_deleted')) } else toast(t('stats_delete_fail'))
-  }
   return (
-    <>
-      <div className="set-row stats-row">
-        <span><b>{t('stats_setting')}</b><small>{t('stats_setting_sub')}</small></span>
-        <button type="button" role="switch" aria-checked={on} aria-label={t('stats_setting')} className={`switch${on ? ' on' : ''}`} onClick={toggle}><i /></button>
-      </div>
-      <button type="button" className="stats-delete" onClick={() => setConfirm(true)}>{t('stats_delete')}</button>
-      {confirm && (
-        <Sheet title={t('stats_delete')} onClose={() => !busy && setConfirm(false)}>
-          <p className="small">{t('stats_delete_confirm')}</p>
-          <button type="button" className="btn danger" disabled={busy} onClick={del}>{t('stats_delete_cta')}</button>
-          <button type="button" className="btn ghost" disabled={busy} onClick={() => setConfirm(false)}>{t('manage_cancel')}</button>
-        </Sheet>
-      )}
-    </>
+    <div className="set-row stats-row">
+      <span><b>{t('stats_setting')}</b><small>{t('stats_setting_sub')}</small></span>
+      <button type="button" role="switch" aria-checked={on} aria-label={t('stats_setting')} className={`switch${on ? ' on' : ''}`} onClick={toggle}><i /></button>
+    </div>
   )
 }
 

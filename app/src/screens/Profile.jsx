@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useApp } from '../App.jsx'
-import { Header, Sheet, useFiat } from '../components/ui.jsx'
+import { Header, Icon, Sheet, useFiat } from '../components/ui.jsx'
+import QuestCard from '../components/QuestCard.jsx'
 import { Avatar } from '../components/Avatar.jsx'
 import { HEX, Medal } from '../components/Badge.jsx'
 import { listGoals } from '../lib/goals.js'
@@ -40,7 +41,8 @@ function useBadges() {
 
 // Profile: the name, a banner per reward ready to claim, one compact stats card, the level, the badges and the Rewards
 // card, all from data the app already has (goal ledger, dibs.name, dibs.badges). badge/badgeAt: open that badge's sheet.
-export default function Profile({ badge: askedBadge, badgeAt }) {
+// section 'quests' (Home's Quests strip, with sectionAt): scroll to the Quests section.
+export default function Profile({ badge: askedBadge, badgeAt, section, sectionAt }) {
   const { t, lang, address, walletAddress, reset } = useApp()
   const name = getName() // changed only in More > Settings
   const fiat = useFiat()
@@ -48,6 +50,11 @@ export default function Profile({ badge: askedBadge, badgeAt }) {
   const [expanded, setExpanded] = useState(false)
   const [sheet, setSheet] = useState(null) // badge id
   useEffect(() => { if (askedBadge && BADGES.some((b) => b.id === askedBadge)) setSheet(askedBadge) }, [askedBadge, badgeAt])
+  useEffect(() => {
+    if (section !== 'quests') return undefined
+    const id = requestAnimationFrame(() => document.getElementById('quests')?.scrollIntoView({ block: 'start' }))
+    return () => cancelAnimationFrame(id)
+  }, [section, sectionAt])
 
   const goals = listGoals(address)
   const s = profileStats(goals)
@@ -127,6 +134,8 @@ export default function Profile({ badge: askedBadge, badgeAt }) {
 
         <LevelCard x={xp} onRanks={() => setXpSheet('ranks')} onHow={() => setXpSheet('xp')} />
 
+        <QuestCard title={t('quests_title')} id="quests" />
+
         <section className="badges">
           <div className="sec-head">
             <h3>{t('badges_title')}</h3>
@@ -188,7 +197,12 @@ function RewardsCard({ badges, goals, onOpen }) {
           </button>
         )
       })}
-      <p className="rw-note">{t('rw_note')} <button type="button" className="txt-link" onClick={() => go('legal', { page: 'rewards' })}>{t('rw_rules')}</button></p>
+      <p className="rw-note">{t('rw_note')}</p>
+      <button type="button" className="lvl-how rw-how" onClick={() => go('legal', { page: 'rewards' })}>
+        <span className="rw-how-ic" aria-hidden="true"><Icon name="info" size={18} /></span>
+        <span className="rw-how-txt">{t('rw_claim_btn')}</span>
+        <span className="chev" aria-hidden="true">›</span>
+      </button>
     </section>
   )
 }
@@ -415,7 +429,7 @@ function XpSheet({ x, onClose }) {
         {XP_ROWS.map(([key, n, note]) => (
           <div key={key}>
             <dt className="xp-dt">{t(key)}{note && <small> {t(note)}</small>}</dt>
-            <dd>{t('xp_plus', { n })}</dd>
+            <dd><span className="xp-pill">{t('xp_plus', { n })}</span></dd>
           </div>
         ))}
       </dl>

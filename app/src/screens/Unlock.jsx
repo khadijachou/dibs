@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useApp, useBlockBack } from '../App.jsx'
 import { itemName } from '../lib/itemName.js'
-import { Header, Notice } from '../components/ui.jsx'
+import { Header, Icon, Notice } from '../components/ui.jsx'
 import { classify } from '../lib/errors.js'
 import { getGoal, savedNim, unlockRunning, updateGoal } from '../lib/goals.js'
 import { txOutcome } from '../lib/nimiq.js'
@@ -168,8 +168,8 @@ export default function Unlock({ goalId, mode: modeParam }) {
       <Header onBack={back} />
       <main className="screen">
         <h2 className="title">{t(withdraw ? 'withdraw_title' : 'unlock_title')}</h2>
-        <p className="sub">{t(withdraw ? 'withdraw_intro' : 'unlock_intro')}</p>
         {!otherRelease && relKnown && startMs != null && <UnlockTimer brand={goalBrand(goal)} startMs={startMs} releaseMs={readyAt} released={state === 'ready'} />}
+        <p className="sub unl-intro"><span className="unl-intro-ic"><Icon name="info" size={16} /></span><span>{t(withdraw ? 'withdraw_intro' : 'unlock_intro')}</span></p>
         <section className="card">
           <div className="row"><span className="sub">{itemName(t, goal, { title: true })}</span><b>{fmtNim(amount, lang)} NIM</b></div>
           <div className={`steps${withdraw ? ' mint' : ''}`}>
@@ -237,7 +237,7 @@ export default function Unlock({ goalId, mode: modeParam }) {
         <div className="bottom">
           {current && (
             <button type="button" className={`btn ${waiting ? 'waiting' : withdraw ? 'mint' : 'gold'}`} disabled={Boolean(busy) || !us || blocked || waiting} onClick={run}>
-              {waiting && readyAt != null ? t('unl_retire_wait', { time: readyTimeText(readyAt, lang) }) : t('unlock_go', { n: stepN(current) })}
+              {waiting && readyAt != null ? t('unl_retire_btn') : t('unlock_go', { n: stepN(current) })}
             </button>
           )}
         </div>

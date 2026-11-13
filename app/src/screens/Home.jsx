@@ -3,7 +3,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useApp } from '../App.jsx'
 import { detailText, itemLabel } from '../lib/itemName.js'
 import { BrandLogo, CREAM, Header, DibsMark } from '../components/ui.jsx'
-import { listGoals, progress } from '../lib/goals.js'
+import { listGoals, progress, savedNim } from '../lib/goals.js'
 import { BRANDS, catalogBrands, brandOf } from '../lib/brands.js'
 import { findItem } from '../lib/catalog.js'
 import { planOf } from '../lib/pace.js'
@@ -20,7 +20,11 @@ import GoalRing from '../components/GoalRing.jsx'
 import Num from '../components/Num.jsx'
 import PromoBanner from '../components/PromoBanner.jsx'
 import BrandSheet from '../components/BrandSheet.jsx'
-import { ReadyBox, useReady } from '../components/ReadyState.jsx'
+import { useReady } from '../components/ReadyState.jsx'
+import { QuestStrip } from '../components/QuestCard.jsx'
+import { chainReleaseAt } from '../components/ReleaseClock.jsx'
+import { getStaker } from '../lib/nimiq.js'
+import { stageOf } from '../lib/unlockStage.js'
 
 // Welcome screen (no goal yet): "Welcome, Sam" when the user gave a name during onboarding or in More; nothing otherwise.
 function Hello() {
@@ -113,6 +117,8 @@ function Hub({ goals }) {
         {/* Usage stats: asked once under the goals label to users who finished onboarding before the consent step. */}
         {live.length > 1 ? <GoalWallet goals={live} earned={earned} /> : <><GoalsLabel count={live.length} /><StatsCard />{active && <GoalHero goal={active} earned={earned} />}</>}
         <PromoBanner onOpen={setSheet} />
+        {/* v1.1.12: this week's quest as one light row; it opens Profile on its Quests section. Hidden with no quest. */}
+        <QuestStrip onOpen={() => go('profile', { section: 'quests', sectionAt: Date.now() })} />
         {/* At least one live goal: a quiet outline button right under the photos (v1.0.8). No live goal (all bought or
             withdrawn): the coral button sticky at the bottom, as before v1.0.8 (v1.0.9). */}
         {live.length > 0
@@ -216,6 +222,44 @@ function GoalHero({ goal, earned }) {
   const savedShown = useCountUp(p.saved)
   const remainingShown = useCountUp(p.remaining)
   const rs = useReady(goal) // ready goals: does the saved NIM still cover the card at today's price (display only)
+  const due = useReleaseDue(goal)
+  const details = () => go('goal', { goalId: goal.id, mode: 'details' })
+  const withdraw = goal.unlockMode === 'withdraw'
+  // v1.1.12: the main button says the next step. Each one opens a screen the old path opened (Details or Savings'
+  // unlock button); nothing here sends anything.
+  const saving = goal.status === 'saving'
+  // 100 % reached: Start unlock keeps Details beside it only while its label stays on one line (fr at 360 px wraps:
+  // Details then hides, as the spec allows). Checked before paint and when the card's width changes. Display only.
+  const acts = useRef(null)
+  const startLabel = saving && pct >= 1 ? t('home_start_unlock') : null
+  useLayoutEffect(() => {
+    const el = acts.current
+    if (!el) return undefined
+    const check = () => {
+      el.classList.remove('solo')
+      if (!startLabel) return
+      const r = document.createRange()
+      r.selectNodeContents(el.firstElementChild)
+      const tops = new Set([...r.getClientRects()].filter((q) => q.width > 0).map((q) => Math.round(q.top)))
+      el.classList.toggle('solo', tops.size > 1)
+    }
+    check()
+    if (typeof ResizeObserver !== 'function') return undefined
+    const ro = new ResizeObserver(check)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [startLabel])
+  const main = saving && pct < 1
+    ? <AddButton label={t('goal_add', { nim: fmtNim(next, lang) })} caption={cap ? t(cap) : null} onClick={() => go('goal', { goalId: goal.id, mode: 'add', amount: next })} />
+    : saving
+      ? <button type="button" className="btn" onClick={() => go('unlock', { goalId: goal.id })}>{t('home_start_unlock')}</button>
+      : goal.status === 'unlocking' && due
+        ? <button type="button" className={`btn${withdraw ? ' mint' : ''}`} onClick={() => go('unlock', { goalId: goal.id, mode: withdraw ? 'withdraw' : undefined })}>{t('home_finish_unlock')}</button>
+        : goal.status === 'unlocking'
+          ? <button type="button" className="btn ghost" onClick={details}>{t('home_details')}</button>
+          : goal.status === 'ready'
+            ? <button type="button" className="btn" onClick={details}>{t('card_get')}</button>
+            : <button type="button" className="btn" onClick={details}>{t('home_details')}</button>
   return (
       <section className={`hero goal-card${goalPace(goal) ? ' has-dot' : ''}`}>
         <GoalDot goal={goal} />
@@ -235,17 +279,40 @@ function GoalHero({ goal, earned }) {
             <GoalStatus goal={goal} earned={earned?.byGoal[goal.id]} ready={rs} />
           </div>
         </div>
-        {rs && <ReadyBox rs={rs} compact />}
         <MilestoneLine milestone={milestone} />
         <CardIssue goal={goal} />
-        <div className="acts">
-          {pct < 1 && goal.status === 'saving'
-            ? <AddButton label={t('goal_add', { nim: fmtNim(next, lang) })} caption={cap ? t(cap) : null} onClick={() => go('goal', { goalId: goal.id, mode: 'add', amount: next })} />
-            : <button type="button" className="btn" onClick={() => go('goal', { goalId: goal.id, mode: 'details' })}>{t('home_details')}</button>}
-          {pct < 1 && goal.status === 'saving' && <button type="button" className="btn outline" onClick={() => go('goal', { goalId: goal.id, mode: 'details' })}>{t('home_details')}</button>}
+        <div className="acts" ref={acts}>
+          {main}
+          {saving && <button type="button" className="btn outline" onClick={details}>{t('home_details')}</button>}
         </div>
       </section>
   )
+}
+
+// An unlocking goal's release, for its Home button (display only, read through getStaker like the release clock under
+// the amount). Due once the chain's release time (chainReleaseAt) has passed, or once the chain shows the goal's NIM
+// already retired (only step 3 left). No chain release time (unknown, or the 12 h 4 min fallback only): not due.
+function useReleaseDue(goal) {
+  const { address } = useApp()
+  const unlocking = goal.status === 'unlocking'
+  const amount = savedNim(goal)
+  const [read, setRead] = useState(null) // { at, retired }
+  const [now, setNow] = useState(Date.now())
+  useEffect(() => {
+    if (!unlocking) return undefined
+    let live = true
+    getStaker(address)
+      .then(async (st) => ({ at: await chainReleaseAt(st), retired: stageOf(st, amount).current === 'remove' }))
+      .then((r) => { if (live) setRead(r) }, () => { /* chain unreadable: the wait keeps running */ })
+    return () => { live = false }
+  }, [unlocking, address, goal.id, amount])
+  useEffect(() => {
+    if (!unlocking) return undefined
+    const id = setInterval(() => setNow(Date.now()), 30_000)
+    return () => clearInterval(id)
+  }, [unlocking])
+  if (!unlocking || !read) return false
+  return read.retired || (read.at != null && read.at <= Math.max(now, Date.now()))
 }
 
 // The goal card's date line (v1.0.8, display only): the dot's short label takes priority over the days left.

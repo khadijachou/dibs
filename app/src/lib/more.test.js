@@ -20,13 +20,25 @@ test('the website row opens and copies the same constant, WEB_URL', () => {
   for (const l of ['en', 'fr', 'es']) assert.ok(T[l]('web_copied').includes('calldibs-ashen.vercel.app'), `web_copied ${l} names the address`)
 })
 
-test('first group: How it works, Rewards, Catalog, Share, X, website, FAQ; Legal: Privacy, Terms, What\'s new', () => {
-  const first = ["t('more_howto')", "t('legal_rewards')", "t('browse_more')", "t('share_row')", "t('follow_row')", "t('web_row')", "t('more_faq')"].map(pos)
-  for (let i = 1; i < first.length; i++) assert.ok(first[i] > first[i - 1], `row ${i} is in order`)
-  const legal = ["t('more_legal')", "t('legal_privacy')", "t('legal_terms')", "t('legal_news')"].map(pos)
-  for (let i = 1; i < legal.length; i++) assert.ok(legal[i] > legal[i - 1], `legal row ${i} is in order`)
-  assert.ok(first.at(-1) < legal[0], 'Rewards is no longer under Legal')
+test('v1.1.12 order: numbers, Rewards, Discover, Community, Settings, About, Need help?, then the version line', () => {
+  const order = ['<NumbersCard />', "t('legal_rewards')",
+    "t('more_discover')", "t('more_howto')", "t('browse_more')", "t('more_faq')",
+    "t('more_community')", "t('share_row')", "t('follow_row')", "t('web_row')",
+    "t('more_settings')", '<NameRow />', "t('accounts_row')", "t('prefs_row')",
+    "t('more_about')", "t('legal_news')", "t('legal_privacy')", "t('legal_terms')",
+    "t('help_title')", "t('help_body')", 'HELP_EMAIL}</button>', "t('legal_version'"].map(pos)
+  for (let i = 1; i < order.length; i++) assert.ok(order[i] > order[i - 1], `row ${i} is in order`)
   assert.equal(more.split("t('legal_rewards')").length, 2, 'one Rewards row')
+  assert.ok(!more.includes('more_legal') && !i18n.includes('more_legal'), 'the Legal group is gone')
+})
+
+test('the Rewards row is special, hidden once the program is over, with the end date from lib/rewards.js', () => {
+  assert.match(more, /\{rewardsActive\(\) && \(\s*<button type="button" className="sheet-row rw-special" onClick=\{\(\) => go\('legal', \{ page: 'rewards' \}\)\}>/)
+  assert.match(more, /t\('rw_until', \{ date: endShort\(lang\) \}\)/)
+  assert.match(more, /new Date\(PROGRAM_END\)/)
+  const tag = { en: 'Until Nov 30', fr: 'Jusqu’au 30 nov.', es: 'Hasta el 30 nov' }
+  const fmt = (l) => new Intl.DateTimeFormat(l, { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date('2026-11-30T23:59:59Z'))
+  for (const l of ['en', 'fr', 'es']) assert.equal(T[l]('rw_until', { date: fmt(l) }), tag[l], l)
 })
 
 test('no line under Your name, and name_device is gone from i18n', () => {
@@ -34,7 +46,7 @@ test('no line under Your name, and name_device is gone from i18n', () => {
   assert.ok(!i18n.includes('name_device'))
 })
 
-test('second lines: short Catalog line, X and website rows say tap to copy', () => {
+test('second lines: short Catalog line, the X and website rows both say tap to copy (one key, follow_row_sub)', () => {
   const want = {
     en: ['12 brands to choose from', 'Tap to copy the link'],
     fr: ['12 marques au choix', 'Touchez pour copier le lien'],
@@ -43,9 +55,10 @@ test('second lines: short Catalog line, X and website rows say tap to copy', () 
   for (const l of ['en', 'fr', 'es']) {
     assert.equal(T[l]('browse_more_sub', { count: 12 }), want[l][0], l)
     assert.equal(T[l]('follow_row_sub'), want[l][1], l)
-    assert.equal(T[l]('web_row_sub'), want[l][1], l)
   }
   assert.match(more, /t\('browse_more_sub', \{ count: catalogBrands\(\)\.length \}\)/)
+  assert.equal(more.split("t('follow_row_sub')").length, 3, 'the X row and the website row')
+  assert.ok(!more.includes('web_row_sub') && !i18n.includes('web_row_sub'), 'web_row_sub is gone')
 })
 
 test('Privacy "On your phone" ends with the name sentence in en, fr and es', () => {

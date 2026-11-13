@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useApp } from '../App.jsx'
 import { itemLabel } from '../lib/itemName.js'
-import { BrandLogo, Header, Notice, useFiat } from '../components/ui.jsx'
+import { BrandLogo, Header, Icon, Notice, useFiat } from '../components/ui.jsx'
 import { listGoals, savedNim } from '../lib/goals.js'
 import { readStaker } from '../lib/nimiq.js'
 import { stakeSummary } from '../lib/earned.js'
@@ -10,9 +10,8 @@ import { poolName } from '../lib/pace.js'
 import { fmtDateYear, fmtEarned, fmtNim } from '../lib/format.js'
 import { fmtFiatValue } from '../lib/fiatValue.js'
 import { goalBrand } from './Home.jsx'
-import { chainReleaseAt, ReleaseClock } from '../components/ReleaseClock.jsx'
+import { chainReleaseAt, readyTimeText, ReleaseClock } from '../components/ReleaseClock.jsx'
 import WeekCard from '../components/WeekCard.jsx'
-import QuestCard from '../components/QuestCard.jsx'
 import { MIN_SHOWN, splitSegments, stakeSplit } from '../components/stakeSplit.js'
 
 export default function Stake() {
@@ -46,7 +45,6 @@ export default function Stake() {
         {unlocking.map((g) => <UnstakingCard key={g.id} goal={g} chainAt={state.releaseAt} retired={stageOf(st, savedNim(g)).current === 'remove'} />)}
         {!st && <p className="small">{t('stake_none')}</p>}
         {active.length > 0 && <WeekCard goals={active} />}
-        <QuestCard />
       </>
     )
   }
@@ -57,7 +55,7 @@ export default function Stake() {
       <main className="screen">
         <h2 className="title">{t('tab_stake')}</h2>
         {body}
-        <p className="small stake-line">{t('stake_line')}</p>
+        <p className="small stake-line"><span className="stake-line-ic"><Icon name="info" size={16} /></span><span>{t('stake_line')}</span></p>
       </main>
     </>
   )
@@ -75,7 +73,11 @@ function UnstakingCard({ goal, chainAt, retired }) {
       </div>
       {/* Timer and button on one row when they fit, stacked when they do not (container query in theme-dark.css). */}
       <div className="unstake-act">
-        <div className="unstake-clock"><ReleaseClock goal={goal} chainAt={chainAt} retired={retired} /></div>
+        <div className="unstake-clock">
+          <ReleaseClock goal={goal} chainAt={chainAt} retired={retired} />
+          {/* Only with the chain's release time, while it is still ahead (never the fallback estimate). */}
+          {!retired && chainAt != null && chainAt > Date.now() && <p className="small unstake-at">{t('unl_timer_ready', { time: readyTimeText(chainAt, lang) })}</p>}
+        </div>
         <button type="button" className={`btn small ${withdraw ? 'mint' : 'gold'}`} onClick={() => go('unlock', { goalId: goal.id, mode: withdraw ? 'withdraw' : undefined })}>{t('stake_open_unlock')}</button>
       </div>
     </section>

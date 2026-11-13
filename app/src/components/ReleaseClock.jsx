@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useApp } from '../App.jsx'
 import { getBlockNumber, isDemo } from '../lib/nimiq.js'
 import { blocksLeft, BLOCK_MS, clockOf, FALLBACK_MS, readyMinute, releaseAtMs, releaseBlockOf } from '../lib/release.js'
+import { clockTime } from './releaseTime.js'
 
 // Shared by Stake and Unlock: display only, no money calls.
 
@@ -29,10 +30,10 @@ export async function chainRelease(st) {
 export const leftText = (t, clock) =>
   clock.due ? t('stake_release_due') : clock.h > 0 ? t('unl_left_hm', { h: clock.h, m: clock.m }) : t('unl_left_m', { m: clock.m })
 
-// Wall-clock time of day in the user's language: "01:30".
-export const timeText = (ms, lang) => new Intl.DateTimeFormat(lang, { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(ms))
+// Wall-clock time of day in the user's language (components/releaseTime.js): "01:30 AM", "01 h 30", "01:30".
+export const timeText = (ms, lang) => clockTime(ms, lang)
 
-// "Ready around {time}": the one function for the release time of day (timer card, toast, step button).
+// "Ready at {time}": the one function for the release time of day (timer card, toast, duplicate message, Savings).
 export const readyTimeText = (ms, lang) => timeText(readyMinute(ms), lang)
 
 // Display only: each chain read re-estimates the release from the block height and moves it by a second or two.

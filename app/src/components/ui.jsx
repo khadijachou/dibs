@@ -32,6 +32,9 @@ const PATHS = {
   tabProfile: <><circle cx="12" cy="8.5" r="3.8" /><path d="M4.8 20c.9-3.6 3.7-5.6 7.2-5.6s6.3 2 7.2 5.6" /></>,
   tabMore: <><circle cx="5.5" cy="12" r="1.2" /><circle cx="12" cy="12" r="1.2" /><circle cx="18.5" cy="12" r="1.2" /></>,
   bell: <><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 1.5h-15z" /><path d="M10 20.5a2 2 0 0 0 4 0" /></>, // More > What's new, unread
+  info: <><circle cx="12" cy="12" r="9" /><path d="M12 11v5.5M12 7.6v.01" /></>, // an "i" in a circle (info lines)
+  speaker: <><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" /><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" /></>, // Preferences > Sound, test sound
+  swap: <><path d="M7 4 4 7l3 3M4 7h13" /><path d="M17 14l3 3-3 3M20 17H7" /></>, // two arrows (History, card changed)
 }
 
 // Bottom tab bar on the four top-level screens (App.jsx decides where it shows).

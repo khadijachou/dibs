@@ -60,9 +60,9 @@ export default function History({ focus }) {
           {g ? (
             <>
               <BrandLogo brand={goalBrand(g)} />
-              <span className={`tl-badge ${e.type}`}>{BADGE[e.type]}</span>
+              <span className={`tl-badge ${e.type}`}>{e.type === 'change' ? <Icon name="swap" size={11} stroke={3} /> : BADGE[e.type]}</span>
             </>
-          ) : <span className="tl-ic">{BADGE[e.type]}</span>}
+          ) : <span className="tl-ic">{e.type === 'change' ? <Icon name="swap" size={20} stroke={3} /> : BADGE[e.type]}</span>}
         </span>
         <span className="tl-main">
           <b>{title(e)}</b>

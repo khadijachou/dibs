@@ -31,9 +31,7 @@ export default function Accounts() {
           <h2 className="title">{t('accounts_title')}</h2>
           <p className="sub" style={{ marginTop: 6 }}>{t('accounts_lead')}</p>
         </div>
-        {rows.length === 0 ? (
-          <p className="small">{t('accounts_empty')}</p>
-        ) : (
+        {rows.length > 0 && (
           <div className="acc-list">
             {rows.map((r) => (
               <div className="acc-row" key={r.key}>
@@ -46,7 +44,6 @@ export default function Accounts() {
           </div>
         )}
         <button type="button" className="btn outline" onClick={() => go('prefAdd')}>{t('accounts_add')}</button>
-        <p className="small">{t('accounts_foot')}</p>
         <RegionMissing card />
       </main>
       {editBrand && (

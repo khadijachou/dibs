@@ -40,3 +40,9 @@ test('the stats page never writes API data as HTML', () => {
 test('the admin page is byte for byte what it was', () => {
   assert.equal(createHash('sha256').update(adminPage, 'utf8').digest('hex'), ADMIN_SHA256)
 })
+
+test('v1.1.12: the live line is the dot and "Live" only, and the Follow on X button is gone', () => {
+  assert.ok(statsPage.includes('<span class="live-dot" aria-hidden="true"></span><span>Live</span>'))
+  for (const s of ['every minute', 'updated', 'liveText', 'x.com/calldibs_app', 'Follow @calldibs_app', '.follow']) assert.ok(!statsPage.includes(s), s)
+  assert.ok(statsPage.includes('setInterval(load, 60000)'), 'still refreshed every 60 s')
+})

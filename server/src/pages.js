@@ -68,11 +68,6 @@ export const statsPage = `${HEAD('Dibs in numbers')}
 .st .note { display: flex; gap: 12px; align-items: flex-start; border-radius: 16px; }
 .st .note .ico { --t: var(--s-mint); --t-bg: rgba(21, 137, 106, .16); flex: none; margin: 0; }
 .st .note p { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.55; }
-.st .follow { margin: 4px 0 0; }
-.st .follow a { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 16px; border-radius: 999px; background: var(--card); border: 1px solid var(--line); color: var(--cream); font-size: 14px; font-weight: 600; text-decoration: none; }
-.st .follow a:hover { border-color: #3d3947; }
-.st .follow a:focus-visible { outline: 2px solid var(--s-coral); outline-offset: 2px; }
-.st .follow svg { width: 14px; height: 14px; }
 @media (max-width: 340px) { .st .grid { grid-template-columns: 1fr; } }
 </style>
 <body>
@@ -118,13 +113,12 @@ export const statsPage = `${HEAD('Dibs in numbers')}
       <div class="k">Earned from staking</div><div class="n" id="earned">-</div><div class="s" id="earnedSub">-</div>
     </div>
   </section>
-  <p class="live" id="live" hidden><span class="live-dot" aria-hidden="true"></span><span id="liveText"></span></p>
+  <p class="live" id="live" hidden><span class="live-dot" aria-hidden="true"></span><span>Live</span></p>
   <p class="err" id="err" role="status" hidden>The numbers could not be loaded. Try again in a moment.</p>
   <section class="card note">
     <span class="ico" aria-hidden="true"><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z'/><path d='m9 12 2 2 4-4'/></svg></span>
     <p>Only phones that tapped Share stats are counted, anonymously: never a name, an email or a gift card code. A deposit counts once it is found on the Nimiq blockchain. NIM withdrawn and deposited again counts each time.</p>
   </section>
-  <p class="follow"><a href="https://x.com/calldibs_app" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M14.234 10.162 22.977 0h-2.072l-7.591 8.824L7.251 0H.258l9.168 13.343L.258 24H2.33l8.016-9.318L16.749 24h6.993zm-2.837 3.299-.929-1.329L3.076 1.56h3.182l5.965 8.532.929 1.329 7.754 11.09h-3.182z"/></svg>Follow @calldibs_app on X</a></p>
 </main>
 <script>
 // Numbers only: a missing or non-numeric field shows "-".
@@ -144,10 +138,6 @@ function fmtEarned(v) {
 function day(s) {
   const d = new Date(s)
   return s && !isNaN(d) ? d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '-'
-}
-function when(s) {
-  const d = new Date(s)
-  return s && !isNaN(d) ? d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '-'
 }
 const $ = (id) => document.getElementById(id)
 const put = (id, text) => { $(id).textContent = text }
@@ -179,7 +169,6 @@ async function load() {
     $('earnedTile').classList.toggle('nodata', noEarned)
     put('earned', noEarned ? 'Not enough data yet' : (isNum(d.nimEarned) ? fmtEarned(d.nimEarned) + ' NIM' : '-'))
     put('earnedSub', noEarned ? 'shown once phones report it' : 'staking rewards so far')
-    put('liveText', 'Live · updated ' + when(d.updatedAt) + ' · every minute')
     $('live').hidden = false
     $('err').hidden = true
   } catch {

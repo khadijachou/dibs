@@ -15,5 +15,6 @@ export function fmtTime(at, lang = 'en') {
 // retire after the release, remove back to the wallet.
 export const UNLOCK_TITLE = { deactivate: 'hist_unlock_started', retire: 'hist_unlock_released', remove: 'hist_unlock_finished' }
 
-// The action badge on the logo.
+// The action badge on the logo. A card change draws an SVG swap icon instead (History.jsx, v1.1.12); its glyph stays
+// here as the text fallback.
 export const BADGE = { deposit: '+', move: '⇄', unlock: '↧', withdraw: '↩', purchase: '✓', change: '⇄' }
