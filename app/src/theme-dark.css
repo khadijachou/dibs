@@ -360,20 +360,36 @@ a.sheet-row { text-decoration: none; -webkit-tap-highlight-color: transparent; }
 .countdown-row { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; }
 .countdown-row .spin { width: 16px; height: 16px; border-radius: 50%; border: 2.5px solid var(--gold); border-top-color: transparent; animation: spin 1s linear infinite; flex-shrink: 0; }
 
-.timeline { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
-.tl-row { display: flex; align-items: flex-start; gap: 12px; background: var(--card); border: 1px solid #2b2834; border-radius: 14px; padding: 12px; }
-.tl-ic { width: 32px; height: 32px; flex-shrink: 0; border-radius: 50%; display: grid; place-items: center; font: 700 15px var(--font-body); background: #2a2733; color: var(--cream); }
+/* History: one card per day, rows split by 1 px lines; a row opens to show its transaction. */
+.timeline { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; background: var(--card); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; }
+.tl-row + .tl-row { border-top: 1px solid var(--line); }
+.tl-btn { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; align-items: center; column-gap: 12px; width: 100%; padding: 12px 14px;
+  background: none; border: 0; margin: 0; color: inherit; font: inherit; text-align: left; }
+button.tl-btn { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+button.tl-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; border-radius: 17px; }
+.tl-logo { position: relative; width: 40px; height: 40px; }
+.tl-logo .blogo { width: 40px; height: 40px; }
+.tl-ic { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font: 700 16px var(--font-body); background: #2a2733; color: var(--cream); }
 .tl-row.deposit .tl-ic { background: var(--gold-soft); color: var(--gold); }
 .tl-row.purchase .tl-ic, .tl-row.withdraw .tl-ic { background: var(--teal-soft); color: var(--teal); }
-.tl-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.tl-main b { font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
-.tl-goal, .tl-meta { font-size: 12.5px; color: var(--muted); }
-.tl-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.tl-tx { border: 0; background: #2a2733; color: #cfcad8; border-radius: 6px; padding: 2px 6px; font: 500 11.5px ui-monospace, SFMono-Regular, Menlo, monospace; cursor: pointer; }
-.tl-link { color: var(--gold); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
-.btn.link-btn { display: flex; align-items: center; justify-content: center; text-decoration: none; }
-.tl-amt { font-size: 14px; font-weight: 600; white-space: nowrap; }
+.tl-row.change .tl-ic { background: rgba(255, 201, 77, .14); color: #FFC94D; }
+.tl-badge { position: absolute; right: -4px; bottom: -4px; width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center;
+  font: 700 11px/1 var(--font-body); box-shadow: 0 0 0 2px var(--card); background: #3a3644; color: #FFF6EC; }
+.tl-badge.deposit { background: #E8482A; color: #fff; }
+.tl-badge.purchase, .tl-badge.withdraw { background: #15896A; color: #fff; }
+.tl-badge.unlock { background: #FFC94D; color: #23212B; }
+.tl-main { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.tl-main b { font-size: 15px; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere; }
+.tl-goal { font-size: 12.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tl-end { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; white-space: nowrap; }
+.tl-amt { font-size: 15px; font-weight: 600; color: var(--cream); font-variant-numeric: tabular-nums; }
 .tl-row.deposit .tl-amt { color: var(--teal); }
+.tl-time { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.tl-details { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 0 14px 12px 66px; }
+.tl-meta { font-size: 12.5px; color: var(--muted); }
+.tl-tx { border: 0; background: #2a2733; color: #cfcad8; border-radius: 8px; padding: 5px 9px; font: 500 12px ui-monospace, SFMono-Regular, Menlo, monospace; cursor: pointer; }
+.tl-link { color: var(--gold); font-size: 13px; font-weight: 600; text-decoration: none; }
+.btn.link-btn { display: flex; align-items: center; justify-content: center; text-decoration: none; }
 
 .more-sec { display: flex; flex-direction: column; gap: 8px; }
 .sheet-row > span.chev:not(.si) { flex: 0 0 auto; color: var(--muted); font-size: 20px; }
@@ -1128,8 +1144,10 @@ html.is-fullscreen .bstamp-live { top: calc(58px + var(--fs-top)); }
 
 /* 5) History by day */
 .tl-days { display: flex; flex-direction: column; }
-.tl-day { margin: 14px 2px 6px; font: 600 12px/1.3 var(--font-body); letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
-.tl-days > .tl-day:first-child { margin-top: 0; } /* the screen's 16 px gap is already above it */
+.tl-day-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 14px 2px 6px; }
+.tl-day-sec:first-child .tl-day-head { margin-top: 0; } /* the screen's 16 px gap is already above it */
+.tl-day { margin: 0; font: 600 12px/1.3 var(--font-body); letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
+.tl-day-sum { font: 600 12.5px/1.3 var(--font-body); color: var(--teal); white-space: nowrap; }
 
 /* 6) Numbers that stay still: Poppins digits in fixed slots (components/Num.jsx); Inter numbers use tabular figures. */
 .num-d { display: inline-block; width: .64em; text-align: center; }
@@ -1189,8 +1207,6 @@ html.is-fullscreen .bstamp-live { top: calc(58px + var(--fs-top)); }
 .goal-status.rs::before { background: var(--rs); box-shadow: 0 0 0 3px var(--rs-soft); }
 .ready-box { margin-top: 12px; padding: 10px 12px; border-radius: 12px; background: var(--rs-soft); border: 1px solid var(--rs-line); color: var(--cream); font-size: 13px; line-height: 1.45; }
 .ready-box.compact { font-size: 12.5px; padding: 8px 11px; }
-/* History: a card change (no NIM moved). */
-.tl-row.change .tl-ic { background: rgba(255, 201, 77, .14); color: #FFC94D; }
 /* Brand sheet: My region isn't here. */
 .region-link { align-self: flex-start; background: none; border: 0; padding: 2px 0; margin: -2px 0 2px; color: var(--muted); font: 500 12.5px var(--font-body); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
 .region-card { display: flex; flex-direction: column; gap: 8px; }

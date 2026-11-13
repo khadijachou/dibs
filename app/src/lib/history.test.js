@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { buildTimeline } from './history.js'
+import { buildTimeline, lastTxHash } from './history.js'
 
 const name = (c) => `${c.itemName} · ${c.itemDetail}`
 const dep = (at, nim = 100) => ({ id: at, nim, tx: `tx${at}`, at })
@@ -48,4 +48,10 @@ test('no card change: every row uses the current card, no change row', () => {
   const g = { id: 'g3', itemName: 'Steam', itemDetail: '20 USD', status: 'saving', deposits: [dep('2026-11-01T00:00:00Z')] }
   const ev = buildTimeline([g], name)
   assert.deepEqual(ev.map((e) => [e.type, e.goal]), [['deposit', 'Steam · 20 USD']])
+})
+
+test('lastTxHash returns the newest transaction hash', () => {
+  const g = { id: 'g4', itemName: 'Steam', itemDetail: '20 USD', status: 'saving', deposits: [dep('2026-11-01T00:00:00Z'), dep('2026-11-02T00:00:00Z')] }
+  assert.equal(lastTxHash([g]), 'tx2026-11-02T00:00:00Z')
+  assert.equal(lastTxHash([]), '')
 })

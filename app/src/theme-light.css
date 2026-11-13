@@ -114,7 +114,7 @@
 :where(:root[data-theme="light"]) input.email, :where(:root[data-theme="light"]) textarea.invoice { border-color: var(--line); }
 :where(:root[data-theme="light"]) .screen > .bottom { background: linear-gradient(rgba(251, 246, 239, 0), var(--ground) 14px); }
 :where(:root[data-theme="light"]) .acc-row, :where(:root[data-theme="light"]) .sheet-row, :where(:root[data-theme="light"]) .name-input { border: 1.5px solid var(--line); }
-:where(:root[data-theme="light"]) .empty-row, :where(:root[data-theme="light"]) .tl-row, :where(:root[data-theme="light"]) .faq,
+:where(:root[data-theme="light"]) .empty-row, :where(:root[data-theme="light"]) .timeline, :where(:root[data-theme="light"]) .faq,
 :where(:root[data-theme="light"]) .set-row, :where(:root[data-theme="light"]) .help-card, :where(:root[data-theme="light"]) .prof-tile,
 :where(:root[data-theme="light"]) .consent-card, :where(:root[data-theme="light"]) .numbers-card, :where(:root[data-theme="light"]) .cat-search,
 :where(:root[data-theme="light"]) .hiw-panel, :where(:root[data-theme="light"]) .wk-card, :where(:root[data-theme="light"]) .facts > div,
