@@ -7,20 +7,21 @@ import { fmtNim } from '../lib/format.js'
 import { fmtFiatValue } from '../lib/fiatValue.js'
 import { useFiat } from './ui.jsx'
 import { planOf } from '../lib/pace.js'
+import { nextUpGoal } from '../lib/goalOrder.js'
 
 // Savings tab: This week, over every active goal. What to add this week across saving goals to stay on track, how
 // many are on track / behind / late, and Next up: a goal ready to buy, then one at 100% waiting to unlock, then the
 // saving goal closest to done (unlocking goals have their own card on this page). Display only.
 export const goalShortName = (t, g) => `${goalBrand(g).name} ${detailText(t, g, { short: true })}`
 
+// v1.2.3: the same order as Home (rankGoals), so the two never disagree. The first ranked goal that is not unlocking
+// (unlocking goals keep their own card on this page); its kind is read from goalState, so the texts are unchanged.
+// Consequence: a goal behind plan now comes before an on-track goal that is closer to 100%.
 function nextUp(goals) {
-  const by = (s) => goals.filter((g) => goalState(g) === s)
-  const ready = by('ready')[0]
-  if (ready) return { goal: ready, kind: 'ready' }
-  const reached = by('reached')[0]
-  if (reached) return { goal: reached, kind: 'reached' }
-  const closest = by('saving').sort((a, b) => progress(b) - progress(a))[0]
-  return closest ? { goal: closest, kind: 'close' } : null
+  const g = nextUpGoal(goals, Date.now())
+  if (!g) return null
+  const state = goalState(g)
+  return { goal: g, kind: state === 'ready' ? 'ready' : state === 'reached' ? 'reached' : 'close' }
 }
 
 export default function WeekCard({ goals }) {

@@ -26,6 +26,7 @@ import { QuestStrip } from '../components/QuestCard.jsx'
 import { chainReleaseAt } from '../components/ReleaseClock.jsx'
 import { getStaker } from '../lib/nimiq.js'
 import { stageOf } from '../lib/unlockStage.js'
+import { rankGoals, noteLeftFor, peekLeftFor, clearLeftFor } from '../lib/goalOrder.js'
 
 // Welcome screen (no goal yet): "Welcome, Sam" when the user gave a name during onboarding or in More; nothing otherwise.
 function Hello() {
@@ -137,18 +138,38 @@ function Hub({ goals }) {
 
 // Several goals at once: a wallet of cards. Tabs to pick one, swipe between them,
 // each card keeps its own Add and Details. One staker underneath; goals are envelopes.
+// v1.2.3: the cards come in the order that needs the user (rankGoals), computed once when Home opens and final at first
+// paint. It never re-ranks while the user stays here: no card moves when a timer ends, a price moves or a deposit lands.
+// An unlocking goal's release is read from its own unlock steps (rankGoals -> dueLocally), so there is no chain read to
+// land late and reorder under the user's finger. Display only: the stored list is never reordered. We freeze the order
+// as a list of ids and render fresh goal objects by id, so the cards stay live.
 function GoalWallet({ goals, earned }) {
   const { t } = useApp()
-  const [i, setI] = useState(0)
+  const nowRef = useRef(Date.now()) // the clock the order is read with, captured once when Home opens
+  // The frozen order, as ids, computed once and never set again.
+  const orderIds = useRef(null)
+  if (!orderIds.current) orderIds.current = rankGoals(goals, { now: nowRef.current }).map((g) => g.id)
+  // The goal the user left Home for (rule 2): open on it wherever it ranks. Peeked here (no clear, so StrictMode's
+  // double render is safe), used for the starting card, then cleared once in an effect below.
+  const openIdRef = useRef(null)
+  const [i, setI] = useState(() => {
+    const id = peekLeftFor()
+    openIdRef.current = id
+    const idx = id ? orderIds.current.indexOf(id) : -1
+    return idx >= 0 ? idx : 0
+  })
+  useEffect(() => { clearLeftFor() }, []) // the note is used once, then cleared
+  const cards = orderIds.current.map((id) => goals.find((g) => g.id === id)).filter(Boolean)
   const ref = useRef(null)
-  const cur = Math.min(i, goals.length - 1)
+  const tabsRef = useRef(null)
+  const cur = Math.min(i, cards.length - 1)
   const pick = (k) => {
     const el = ref.current
     const card = el?.children[k]
     if (card) el.scrollTo({ left: card.offsetLeft - el.offsetLeft - 20, behavior: 'smooth' })
     setI(k)
   }
-  const indexOf = (el) => Math.max(0, Math.min(goals.length - 1, Math.round(el.scrollLeft / (el.children[0].offsetWidth + 12))))
+  const indexOf = (el) => Math.max(0, Math.min(cards.length - 1, Math.round(el.scrollLeft / (el.children[0].offsetWidth + 12))))
   // v1.0.10: each card keeps its natural height (no stretch to the tallest), and the row takes the height of the card
   // on screen, so the photos below move up under a short card. Set only once a swipe has settled (no finger down,
   // no scroll for 150 ms); the 200 ms ease is in CSS. Display only.
@@ -163,7 +184,19 @@ function GoalWallet({ goals, earned }) {
     setH(Math.ceil(card.offsetHeight + parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom)))
   }
   const later = () => { clearTimeout(settle.current); settle.current = setTimeout(fit, 150) }
-  useLayoutEffect(fit, [goals.length]) // eslint-disable-line react-hooks/exhaustive-deps
+  useLayoutEffect(fit, [cards.length]) // eslint-disable-line react-hooks/exhaustive-deps
+  // Open on the front card without the smooth-scroll animation and without a visible jump after first paint (rule 3):
+  // position the row and the chips straight to the current card before paint, once when Home opens.
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el || !el.children.length) return
+    const k = Math.min(i, el.children.length - 1)
+    const card = el.children[k]
+    if (card) el.scrollLeft = Math.max(0, card.offsetLeft - el.offsetLeft - 20)
+    const tabs = tabsRef.current
+    const tab = tabs?.children[k]
+    if (tabs && tab) tabs.scrollLeft = Math.max(0, tab.offsetLeft - tabs.offsetLeft - 20)
+  }, [orderIds.current]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     // A card that changes height while on screen (count-ups, price checks, a goal changing state) refits the row.
     const el = ref.current
@@ -171,7 +204,7 @@ function GoalWallet({ goals, earned }) {
     const ro = new ResizeObserver(later)
     for (const c of el.children) ro.observe(c)
     return () => { ro.disconnect(); clearTimeout(settle.current) }
-  }, [goals.length]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [cards.length]) // eslint-disable-line react-hooks/exhaustive-deps
   const onScroll = () => {
     const el = ref.current
     if (!el || !el.children.length) return
@@ -183,10 +216,10 @@ function GoalWallet({ goals, earned }) {
   const up = () => { touching.current = false; later() }
   return (
     <>
-      <div className="greet-row"><GoalsLabel count={goals.length} /><CarouselDots count={goals.length} current={cur} /></div>
+      <div className="greet-row"><GoalsLabel count={cards.length} /><CarouselDots count={cards.length} current={cur} /></div>
       <StatsCard />
-      <div className="gw-tabs" role="tablist">
-        {goals.map((g, k) => (
+      <div className="gw-tabs" role="tablist" ref={tabsRef}>
+        {cards.map((g, k) => (
           <button type="button" role="tab" aria-selected={k === i} key={g.id} className={`gw-tab${k === i ? ' on' : ''}`} onClick={() => pick(k)}>
             <BrandLogo brand={goalBrand(g)} />
             <span>{detailText(t, g, { short: true })}</span>
@@ -195,7 +228,8 @@ function GoalWallet({ goals, earned }) {
         ))}
       </div>
       <div className="gwallet" ref={ref} onScroll={onScroll} onTouchStart={down} onTouchEnd={up} onTouchCancel={up} style={h ? { height: h } : undefined}>
-        {goals.map((g) => <div className="gw-card" key={g.id}><GoalHero goal={g} earned={earned} /></div>)}
+        {/* onClickCapture: a card button leaves Home for that goal, so Home opens on it on the way back (rule 2). */}
+        {cards.map((g) => <div className="gw-card" key={g.id} onClickCapture={() => noteLeftFor(g.id)}><GoalHero goal={g} earned={earned} /></div>)}
       </div>
     </>
   )
