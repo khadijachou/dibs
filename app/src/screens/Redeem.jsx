@@ -19,6 +19,7 @@ import { fmtInt, fmtNim, fmtUsd } from '../lib/format.js'
 import { fmtFiatValue, pickFiat } from '../lib/fiatValue.js'
 import { effectiveCurrency } from '../lib/currency.js'
 import { goalBrand } from './Home.jsx'
+import { readWallet } from '../components/ReadyState.jsx'
 
 const EMAIL_KEY = 'dibs.email'
 
@@ -97,6 +98,15 @@ export default function Redeem({ goalId }) {
     const id = setInterval(() => checkOrder(lockedOrderId, lockedToken, alive), POLL_MS)
     return () => { stop = true; clearInterval(id) }
   }, [lockedOrderId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Step 2, display only: the wallet's spendable NIM (this goal's saved NIM is in it), read once when the invoice shows.
+  const [wallet, setWallet] = useState(null)
+  useEffect(() => {
+    if (!order?.invoice) { setWallet(null); return undefined }
+    let live = true
+    readWallet().then((n) => { if (live) setWallet(n) })
+    return () => { live = false }
+  }, [order?.invoice])
 
   useBlockBack(busy) // Android back waits while Nimiq Pay has the payment open
 
@@ -332,6 +342,12 @@ export default function Redeem({ goalId }) {
         {/* API: the two trust notes, above the button. Manual mode keeps its own refund line and summary. */}
         {apiMode && !unavailable ? (
           <>
+            {order?.invoice && !expired && !locked && wallet != null && payNim != null && wallet < payNim && (
+              <div className="ct-band" role="status">
+                <p>{t('ct_pay_short', { w: fmtNim(wallet, lang), need: fmtNim(payNim, lang) })}</p>
+                <p className="ct-band-sub">{t('ct_pay_short_sub')}</p>
+              </div>
+            )}
             {order?.invoice && !expired && <p className="pay-note"><Icon name="info" size={18} /><span>{t('redeem_pay_nim')}</span></p>}
             <p className="pay-note"><Icon name="shield" size={18} /><span>{t('redeem_source')}</span></p>
           </>

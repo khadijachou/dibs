@@ -1459,3 +1459,23 @@ html.is-fullscreen .bstamp-live { top: calc(58px + var(--fs-top)); }
 .rwp-n { flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; background: #FFC94D; color: #23212B; font: 700 var(--fs-label)/1 var(--font-body); }
 /* Home: Start unlock alone when its label would wrap next to Details (Home.jsx checks it). */
 .hero .acts.solo .btn.outline { display: none; }
+
+/* v1.2.4 Card today (components/CardToday.jsx): figures in cream, percent in grey, Missing in butter, Covered in mint.
+   Up and down look the same: no colour for the movement. Unlock and pay bands: butter outline. */
+.ct { display: flex; flex-direction: column; gap: 8px; }
+.ct-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.ct-label { color: var(--cream); font-weight: 600; font-size: var(--fs-body); line-height: var(--lh-body); }
+.ct-sub { color: var(--muted); font-size: var(--fs-body); line-height: var(--lh-body); }
+.ct-val { color: var(--cream); font-weight: 600; font-size: var(--fs-strong); line-height: var(--lh-strong); white-space: nowrap; text-align: right; }
+.ct-pct { color: var(--muted); font-weight: 500; font-size: var(--fs-meta); margin-left: 4px; }
+.ct-missing { color: #FFC94D; }
+.ct-covered { display: inline-flex; align-items: center; gap: 6px; color: var(--teal); font-weight: 600; font-size: var(--fs-body); line-height: var(--lh-body); }
+.ct-line { height: 1px; background: var(--line); margin: 2px 0; }
+.ct-text { margin: 0; color: var(--cream); font-size: var(--fs-body); line-height: var(--lh-body); }
+.ct-foot { margin: 0; color: var(--muted); font-size: var(--fs-meta); line-height: var(--lh-meta); }
+.ct-add { align-self: stretch; height: 44px; border-radius: 12px; background: transparent; border: 1.5px solid #FFC94D; color: var(--cream);
+  font-family: var(--font-display); font-weight: 600; font-size: var(--fs-strong); cursor: pointer; padding: 0 14px; }
+.ct-band { border: 1.5px solid rgba(255, 201, 77, .6); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
+.ct-band p { margin: 0; color: var(--cream); font-size: var(--fs-body); line-height: var(--lh-body); }
+.ct-band .ct-band-sub { color: var(--muted); font-size: var(--fs-meta); line-height: var(--lh-meta); }
+.ct-link { align-self: flex-start; background: none; border: 0; padding: 0; color: #FFC94D; font-weight: 600; font-size: var(--fs-body); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }

@@ -31,6 +31,7 @@ import { MilestoneLine, useGoalMilestone } from '../components/Milestone.jsx'
 import { GoalDot, GoalStatus } from '../components/GoalStatus.jsx'
 import { getUnlockState, settleGoal } from '../lib/unlockFlow.js'
 import { ReadyBox, useReady } from '../components/ReadyState.jsx'
+import { CardTodayBlock } from '../components/CardToday.jsx'
 
 const parseNim = (v) => Math.floor(Number(String(v).replace(/[^\d.]/g, ''))) || 0
 
@@ -43,7 +44,7 @@ const movesOpened = new Set()
 
 // mode: 'details' (hero, pace band, About this card, history) or 'add' (amount and the Add button).
 // Without a mode: a new goal (created) opens on Add, anything else on Details.
-export default function Goal({ goalId, created, amount: preset, moveFrom = null, mode: modeParam }) {
+export default function Goal({ goalId, created, amount: preset, moveFrom = null, mode: modeParam, topUp = false }) {
   const { t, lang, address, balance, refreshBalance, back, canGoBack, go, reset, toast } = useApp()
   const [goal, setGoal] = useState(() => getGoal(address, goalId))
   const [hasStaker, setHasStaker] = useState(() => stakerFlag.get(address))
@@ -200,8 +201,9 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
   // Only this goal's own pending deposit or pay lock closes it.
   const canManage = canManageGoal(goal, { pending: Boolean(pend && pend.goalId === goal.id), payLocked: payLockedFor(goal.id) })
   const empty = goal.status === 'saving' && saved === 0 && (goal.deposits.length > 0 || Boolean(twin)) && canManage
-  // Add only while there is something to add; a goal at 100 % or past saving shows Details.
-  const adding = mode === 'add' && goal.status === 'saving' && !reached
+  // Add only while there is something to add; a goal at 100 % or past saving shows Details, except a top-up opened
+  // from "Add {gap} NIM first" (the card costs more today than the goal saved).
+  const adding = mode === 'add' && goal.status === 'saving' && (!reached || topUp)
   const withdraw = () => { setSheet(null); go('unlock', { goalId: goal.id, mode: 'withdraw' }) }
   // A ready goal's NIM is already unlocked and back in the wallet: Get my NIM back only records it as returned
   // (the same readyReturnPatch path as CardIssue). No transaction.
@@ -421,6 +423,7 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
             )}
           </PaceLine>
         )}
+        {goal.status === 'saving' && <CardTodayBlock goal={goal} onAdd={(gap) => go('goal', { goalId: goal.id, mode: 'add', amount: gap, topUp: true })} />}
         <AboutCard goal={goal} brand={brand} />
         <CardIssue goal={goal} />
 

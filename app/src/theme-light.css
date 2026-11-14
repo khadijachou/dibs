@@ -312,3 +312,6 @@ html.is-fullscreen:where([data-theme="light"]) body::before { background: linear
 :where(:root[data-theme="light"]) .rwp-tile { border-color: #eadfc8; }
 :where(:root[data-theme="light"]) .rwp-steps li { border-color: var(--line); }
 :where(:root[data-theme="light"]) .sheet-row .si.qs-ic, :where(:root[data-theme="light"]) .sheet-row.rw-special .si { background: #FFC94D; color: #23212B; }
+:where(:root[data-theme="light"]) .ct-missing, :where(:root[data-theme="light"]) .ct-link { color: #906607; }
+:where(:root[data-theme="light"]) .ct-add { border-color: #d99a0b; }
+:where(:root[data-theme="light"]) .ct-band { border-color: rgba(217, 154, 11, .55); background: rgba(217, 154, 11, .06); }

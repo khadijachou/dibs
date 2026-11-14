@@ -15,6 +15,7 @@ import { UnlockTimer, usePageVisible } from '../components/UnlockTimer.jsx'
 import { goalBrand } from './Home.jsx'
 import { track } from '../lib/stats.js'
 import { BLOCK_MS, clockOf, earliestStepBlockOf } from '../lib/release.js'
+import { UnlockGapBand } from '../components/CardToday.jsx'
 
 const LABELS = { deactivate: 'unlock_s1', retire: 'unlock_s2', remove: 'unlock_s3' }
 // While the page is open the chain is read again this often (release switch, no reload).
@@ -199,6 +200,9 @@ export default function Unlock({ goalId, mode: modeParam }) {
             })}
           </div>
         </section>
+        {!withdraw && current === 'deactivate' && !done.includes('deactivate') && (
+          <UnlockGapBand goal={goal} onAdd={(gap) => reset('goal', { goalId: goal.id, mode: 'add', amount: gap, topUp: true })} />
+        )}
         {otherRelease && (
           <Notice tone="info" title={t('unlock_busy_title', { name: itemName(t, otherRelease, { title: true }) })} sub={t('unlock_busy_sub')} safe={t('safe_nimSafe')}
             actions={[{ label: t('unlock_busy_action'), onClick: () => reset('goal', { goalId: otherRelease.id }) }]} />
