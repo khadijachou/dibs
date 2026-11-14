@@ -240,6 +240,16 @@ html.is-fullscreen:where([data-theme="light"]) body::before { background: linear
 :where(:root[data-theme="light"]) .quest-card { border: 1.5px solid rgba(217, 154, 11, .35); background: linear-gradient(160deg, #fff7e6, #ffffff); }
 :where(:root[data-theme="light"]) .quest-bar { background: #f3e6c6; }
 :where(:root[data-theme="light"]) .quest-bar i { background: #d99a0b; }
+/* Daily quests on the light ground. */
+:where(:root[data-theme="light"]) .dq-card { border: 1px solid var(--line); background: var(--card); }
+:where(:root[data-theme="light"]) .dq-over, :where(:root[data-theme="light"]) .dq-done-xp { color: #906607; }
+:where(:root[data-theme="light"]) .dq-bars i { background: var(--line); }
+:where(:root[data-theme="light"]) .dq-bars i.on, :where(:root[data-theme="light"]) .quest-strip .qs-bars i.on, :where(:root[data-theme="light"]) .dq-tick.on { background: var(--teal); border-color: var(--teal); }
+:where(:root[data-theme="light"]) .quest-strip .qs-bars i { background: var(--line); }
+:where(:root[data-theme="light"]) .dq-tick { border-color: #c9c1b4; color: var(--cream); }
+:where(:root[data-theme="light"]) .xp-pill.dq-xp.done { color: var(--teal); background: rgba(21, 137, 106, .12); }
+:where(:root[data-theme="light"]) .dq-card.full { border: 1px solid rgba(217, 154, 11, .5); background: radial-gradient(120% 120% at 0% 0%, #fff3d6, #ffffff 55%); }
+:where(:root[data-theme="light"]) .dq-names { border-top-color: rgba(217, 154, 11, .3); }
 
 /* ---- Brand surfaces keep their colours; only their shadows get lighter on a light ground ---- */
 :where(:root[data-theme="light"]) .codecard .face.b { box-shadow: 0 30px 60px rgba(35, 33, 43, .20); }

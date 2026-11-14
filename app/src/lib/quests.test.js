@@ -8,8 +8,9 @@ globalThis.localStorage = {
   removeItem: (k) => store.delete(k),
   clear: () => store.clear(),
 }
-const { checkQuest, currentQuest, pickQuest, questState } = await import('./quests.js')
-const { isoWeek } = await import('./xp.js')
+const { checkQuest, currentQuest, pickQuest, questState,
+  dailyPool, pickDaily, currentDaily, dailyState, dayRecord, markDailyOpen, markDailyShown, checkDaily, slotKey, isGraduated } = await import('./quests.js')
+const { isoWeek, dayKey, getDailyDays, recordDailyDay } = await import('./xp.js')
 
 beforeEach(() => store.clear())
 
@@ -27,14 +28,16 @@ const weekWith = (count, index) => { for (let d = 1; d < 400; d++) { const ms = 
 test('round: the goal closest to its next 10 % step', () => {
   const a = goal({ deposits: [dep(150, at(2))] }) // 15 % -> 20 %: 50 NIM
   const b = goal({ deposits: [dep(280, at(2))] }) // 28 % -> 30 %: 20 NIM
-  const q = pickQuest([a, b, ...ALL_CHIPS.map((g) => goal(g))], weekWith(1, 0))
+  // round, two and days5 apply (new does not: every category has a goal); three kinds, index 0 is round.
+  const q = pickQuest([a, b, ...ALL_CHIPS.map((g) => goal(g))], weekWith(3, 0))
   assert.equal(q.id, 'round')
   assert.equal(q.goalId, b.id)
   assert.deepEqual([q.from, q.to, q.amount], [28, 30, 20])
 })
 
 test('round: at least 100 NIM when the user never deposited', () => {
-  const q = pickQuest([goal(), ...ALL_CHIPS.map((g) => goal(g))], weekWith(2, 0))
+  // round, week and days5 apply (new does not; two needs two saving goals); three kinds, index 0 is round.
+  const q = pickQuest([goal(), ...ALL_CHIPS.map((g) => goal(g))], weekWith(3, 0))
   assert.equal(q.id, 'round')
   assert.deepEqual([q.from, q.to, q.amount], [0, 10, 100])
 })
@@ -56,10 +59,12 @@ test('new: the first category in catalogue order with no goal, any status', () =
 })
 
 test('rotation: ISO week number mod the number of kinds that apply', () => {
-  // 90 % and ahead of its plan: round applies, week does not; new applies (travel has no goal). Two kinds.
+  // 90 % and ahead of its plan: round and new apply (week does not; two needs two goals); days5 always applies to an
+  // active goal. Three kinds, in order round, new, days5.
   const goals = [goal({ deposits: [dep(900, at(2))] })]
-  assert.equal(pickQuest(goals, weekWith(2, 0)).id, 'round')
-  assert.equal(pickQuest(goals, weekWith(2, 1)).id, 'new')
+  assert.equal(pickQuest(goals, weekWith(3, 0)).id, 'round')
+  assert.equal(pickQuest(goals, weekWith(3, 1)).id, 'new')
+  assert.equal(pickQuest(goals, weekWith(3, 2)).id, 'days5')
 })
 
 test('no quest when nothing applies', () => {
@@ -132,4 +137,172 @@ test('New territory: done only by a goal created after the pick', () => {
   assert.equal(questState(q, [before], at(4)).done, false)
   const after = goal({ brandKey: 'airbnb', createdAt: iso(at(3, 13)) })
   assert.equal(questState(q, [before, after], at(4)).done, true)
+})
+
+// ---- Weekly: the two new kinds ----
+
+const kindsOver = (goals) => { const s = new Set(); for (let d = 1; d < 70; d++) { const q = pickQuest(goals, new Date(2026, 0, d, 12).getTime()); if (q) s.add(q.id) } return s }
+
+test('weekly two: offered only with two saving goals under 100 %, progress 0, 1/2, 1', () => {
+  assert.ok(kindsOver([goal({ id: 'a' }), goal({ id: 'b' })]).has('two'))
+  assert.ok(!kindsOver([goal({ id: 'a' })]).has('two'))
+  const a = goal({ id: 'a' }); const b = goal({ id: 'b' }); const q = { id: 'two' }
+  assert.deepEqual([questState(q, [a, b], at(4)).done, questState(q, [a, b], at(4)).count], [false, 0])
+  a.deposits.push(dep(30, at(3)))
+  assert.equal(questState(q, [a, b], at(4)).count, 1)
+  b.deposits.push(dep(30, at(4)), dep(100, at(4), { kind: 'move' }))
+  assert.deepEqual([questState(q, [a, b], at(4)).done, questState(q, [a, b], at(4)).count], [true, 2])
+})
+
+test('weekly days5: offered with an active goal (not only-redeemed), progress from visit days this week', () => {
+  assert.ok(kindsOver([goal({ id: 'a' })]).has('days5'))
+  assert.ok(!kindsOver(ALL_CHIPS.map((g) => goal(g))).has('days5'))
+  const g = goal(); const q = { id: 'days5' }
+  store.set('dibs.visits', JSON.stringify(['2026-11-02', '2026-11-03', '2026-11-04']))
+  assert.deepEqual([questState(q, [g], at(4)).done, questState(q, [g], at(4)).count], [false, 3])
+  store.set('dibs.visits', JSON.stringify(['2026-11-02', '2026-11-03', '2026-11-04', '2026-11-05', '2026-11-06']))
+  assert.deepEqual([questState(q, [g], at(4)).done, questState(q, [g], at(4)).count], [true, 5])
+})
+
+// ---- Daily quests ----
+
+const todayKey = dayKey(at(4))
+const setDaily = (slots, done = ['open']) => store.set('dibs.daily', JSON.stringify({ day: todayKey, slots, done, bonus: false }))
+const readState = (goals) => dailyState(JSON.parse(store.get('dibs.daily')), goals, at(4))
+const slotDone = (goals, id) => readState(goals).slots.find((s) => s.id === id)?.done
+
+test('daily pool: a new user gets catalog and badges only', () => {
+  assert.deepEqual(dailyPool([], at(4)).map((s) => s.id).sort(), ['badges', 'catalog'])
+})
+
+test('daily pool: savings, category, goal, history and add appear with an active goal behind plan', () => {
+  const g = goal({ deposits: [dep(50, at(2))] })
+  const ids = dailyPool([g], at(4)).map((s) => s.id)
+  for (const id of ['savings', 'catalog', 'badges', 'category', 'goal', 'history', 'add']) assert.ok(ids.includes(id), id)
+})
+
+test('daily pool: add drops out when the goal is ahead of plan or at 100 %, or twice already this week', () => {
+  assert.ok(!dailyPool([goal({ deposits: [dep(900, at(3))] })], at(4)).some((s) => s.id === 'add'), 'ahead')
+  assert.ok(!dailyPool([goal({ deposits: [dep(1000, at(3))] })], at(4)).some((s) => s.id === 'add'), '100 %')
+  const g = goal({ deposits: [dep(50, at(2))] })
+  recordDailyDay('2026-11-02', { xp: 0, quests: 0, full: false, add: true })
+  recordDailyDay('2026-11-03', { xp: 0, quests: 0, full: false, add: true })
+  assert.ok(!dailyPool([g], at(4)).some((s) => s.id === 'add'), 'twice already')
+})
+
+test('daily pick: check-in first, two different real quests, deterministic for the day and data', () => {
+  const g = goal({ deposits: [dep(50, at(2))] })
+  const a = pickDaily([g], at(4))
+  assert.equal(a.slots[0].id, 'open')
+  assert.deepEqual(a.done, ['open'])
+  assert.equal(a.slots.length, 3)
+  assert.notEqual(a.slots[1].id, a.slots[2].id)
+  const always = a.slots.slice(1).filter((s) => ['savings', 'catalog', 'badges'].includes(s.id)).length
+  assert.ok(always <= 1, 'at most one anytime quest when a goal quest is available')
+  assert.deepEqual(pickDaily([g], at(4)), a) // same day and data: same pick
+})
+
+test('completion: each open hook marks only its own slot', () => {
+  const g = goal({ id: 'g1', brandKey: 'airbnb' }) // travel
+  setDaily([{ id: 'open' }, { id: 'savings' }, { id: 'badges' }])
+  markDailyOpen({ k: 'savings' }, [g], at(4)); assert.ok(slotDone([g], 'savings'))
+
+  setDaily([{ id: 'open' }, { id: 'catalog' }, { id: 'category', chip: 'travel' }])
+  markDailyOpen({ k: 'brand', chip: 'games' }, [g], at(4))
+  assert.ok(slotDone([g], 'catalog') && !slotDone([g], 'category'))
+  markDailyOpen({ k: 'brand', chip: 'travel' }, [g], at(4)); assert.ok(slotDone([g], 'category'))
+
+  setDaily([{ id: 'open' }, { id: 'goal', goalId: 'g1' }, { id: 'history' }])
+  markDailyOpen({ k: 'goal', goalId: 'other' }, [g], at(4)); assert.ok(!slotDone([g], 'goal'))
+  markDailyOpen({ k: 'goal', goalId: 'g1' }, [g], at(4)); assert.ok(slotDone([g], 'goal'))
+  markDailyOpen({ k: 'history' }, [g], at(4)); assert.ok(slotDone([g], 'history'))
+
+  setDaily([{ id: 'open' }, { id: 'badges' }, { id: 'savings' }])
+  markDailyOpen({ k: 'badges' }, [g], at(4)); assert.ok(slotDone([g], 'badges'))
+})
+
+test('completion: Add NIM reads a real deposit dated today, not a move, a withdrawal or an older deposit', () => {
+  const g = goal({ id: 'g1', deposits: [dep(20, at(4))] })
+  setDaily([{ id: 'open' }, { id: 'add', goalId: 'g1' }, { id: 'badges' }])
+  checkDaily([g], at(4)); assert.ok(slotDone([g], 'add'))
+
+  store.clear()
+  const g2 = goal({ id: 'g2', deposits: [dep(100, at(4), { kind: 'move' }), dep(-30, at(4), { kind: 'withdraw' }), dep(50, at(3))] })
+  setDaily([{ id: 'open' }, { id: 'add', goalId: 'g2' }, { id: 'badges' }])
+  checkDaily([g2], at(4)); assert.ok(!slotDone([g2], 'add'))
+})
+
+test('a slot whose goal is gone is hidden and drops out of the count', () => {
+  const g = goal({ id: 'g1', status: 'redeemed' })
+  setDaily([{ id: 'open' }, { id: 'goal', goalId: 'g1' }, { id: 'badges' }])
+  const st = readState([g])
+  assert.equal(st.total, 2)
+  assert.ok(!st.slots.some((s) => s.id === 'goal'))
+})
+
+test('the all-done bonus is counted once, only when every slot is done', () => {
+  const g = goal({ id: 'g1' })
+  setDaily([{ id: 'open' }, { id: 'savings' }, { id: 'badges' }])
+  markDailyOpen({ k: 'savings' }, [g], at(4))
+  let rec = getDailyDays()[todayKey]
+  assert.deepEqual([rec.full, rec.xp], [false, 5])
+  markDailyOpen({ k: 'badges' }, [g], at(4))
+  rec = getDailyDays()[todayKey]
+  assert.deepEqual([rec.full, rec.quests, rec.xp], [true, 2, 15]) // two quests (5+5) plus the +5 bonus, once
+})
+
+test('midnight rollover: a new set the next day, yesterday\'s XP kept, no trace of unfinished quests', () => {
+  const g = goal({ id: 'g1', deposits: [dep(50, at(2))] })
+  store.set('dibs.daily', JSON.stringify({ day: dayKey(at(3)), slots: [{ id: 'open' }, { id: 'savings' }, { id: 'badges' }], done: ['open', 'savings'], bonus: false }))
+  recordDailyDay(dayKey(at(3)), { xp: 5, quests: 1, full: false, add: false })
+  const today = currentDaily([g], at(4))
+  assert.equal(today.day, todayKey)
+  assert.deepEqual(today.done, ['open'])
+  assert.equal(getDailyDays()[dayKey(at(3))].xp, 5)
+})
+
+test('graduation: 7 full days in a row drops the check-in from the next day, for good', () => {
+  const g = goal({ id: 'g1', deposits: [dep(50, at(2))] })
+  for (let d = 1; d <= 7; d++) recordDailyDay(dayKey(at(d)), { xp: 15, quests: 2, full: true, add: false })
+  store.set('dibs.daily', JSON.stringify({ day: dayKey(at(7)), slots: [{ id: 'open' }, { id: 'savings' }, { id: 'badges' }], done: ['open', 'savings', 'badges'], bonus: true }))
+  checkDaily([g], at(7))
+  assert.ok(isGraduated())
+  const next = pickDaily([g], at(8))
+  assert.ok(!next.slots.some((s) => s.id === 'open'))
+  assert.equal(next.slots.length, 3)
+  assert.deepEqual(next.done, [])
+})
+
+test('graduation: 6 days then a missed day does not graduate', () => {
+  const g = goal({ id: 'g1', deposits: [dep(50, at(2))] })
+  for (const d of [1, 2, 3, 4, 5, 6]) recordDailyDay(dayKey(at(d)), { xp: 15, quests: 2, full: true, add: false })
+  // Day 7 missed; day 8 full.
+  recordDailyDay(dayKey(at(8)), { xp: 15, quests: 2, full: true, add: false })
+  store.set('dibs.daily', JSON.stringify({ day: dayKey(at(8)), slots: [{ id: 'open' }, { id: 'savings' }, { id: 'badges' }], done: ['open', 'savings', 'badges'], bonus: true }))
+  checkDaily([g], at(8))
+  assert.ok(!isGraduated())
+})
+
+test('a day is full only when a real quest is done, not the check-in alone', () => {
+  const g1 = goal({ id: 'g1', status: 'redeemed' }); const g2 = goal({ id: 'g2', status: 'withdrawn' })
+  const bothGone = { day: todayKey, slots: [{ id: 'open' }, { id: 'goal', goalId: 'g1' }, { id: 'add', goalId: 'g2' }], done: ['open'], bonus: false, shown: [] }
+  assert.equal(dailyState(bothGone, [g1, g2]).total, 1) // only the check-in is visible
+  assert.equal(dailyState(bothGone, [g1, g2]).full, false)
+  assert.deepEqual(dayRecord(bothGone, [g1, g2]), { xp: 0, quests: 0, full: false, add: false }) // no bonus
+  const g = goal({ id: 'g1' })
+  const oneReal = { day: todayKey, slots: [{ id: 'open' }, { id: 'savings' }], done: ['open', 'savings'], bonus: false, shown: [] }
+  assert.equal(dailyState(oneReal, [g]).full, true)
+  assert.equal(dayRecord(oneReal, [g]).full, true)
+})
+
+test('a completion moment is shown once: markDailyShown records it and it never returns as unshown', () => {
+  const g = goal({ id: 'g1' })
+  const unshown = () => { const set = JSON.parse(store.get('dibs.daily')); const st = dailyState(set, [g]); return st.slots.filter((s) => s.done && s.id !== 'open' && !st.shown.includes(s.key)).map((s) => s.key) }
+  setDaily([{ id: 'open' }, { id: 'savings' }, { id: 'badges' }], ['open', 'savings'])
+  assert.deepEqual(unshown(), ['savings']) // done elsewhere, not shown yet
+  markDailyShown(['savings'], [g], at(4))
+  assert.deepEqual(dailyState(JSON.parse(store.get('dibs.daily')), [g]).shown, ['savings'])
+  assert.deepEqual(unshown(), []) // never unshown again, including after a reload (persisted)
+  markDailyShown(['savings'], [g], at(4)) // idempotent
+  assert.deepEqual(dailyState(JSON.parse(store.get('dibs.daily')), [g]).shown, ['savings'])
 })

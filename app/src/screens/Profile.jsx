@@ -5,6 +5,7 @@ import QuestCard from '../components/QuestCard.jsx'
 import { Avatar } from '../components/Avatar.jsx'
 import { HEX, Medal } from '../components/Badge.jsx'
 import { listGoals } from '../lib/goals.js'
+import { markDailyOpen } from '../lib/quests.js'
 import { profileStats } from '../lib/profileStats.js'
 import { getName } from '../lib/name.js'
 import { fmtDate, fmtNim } from '../lib/format.js'
@@ -51,10 +52,13 @@ export default function Profile({ badge: askedBadge, badgeAt, section, sectionAt
   const [sheet, setSheet] = useState(null) // badge id
   useEffect(() => { if (askedBadge && BADGES.some((b) => b.id === askedBadge)) setSheet(askedBadge) }, [askedBadge, badgeAt])
   useEffect(() => {
-    if (section !== 'quests') return undefined
-    const id = requestAnimationFrame(() => document.getElementById('quests')?.scrollIntoView({ block: 'start' }))
+    if (section !== 'quests' && section !== 'badges') return undefined
+    if (section === 'badges') setExpanded(true)
+    const id = requestAnimationFrame(() => document.getElementById(section)?.scrollIntoView({ block: 'start' }))
     return () => cancelAnimationFrame(id)
   }, [section, sectionAt])
+  // Daily quest: Check your badges, completed when the badge section is opened (expanded, or reached from the quest).
+  useEffect(() => { if (expanded) markDailyOpen({ k: 'badges' }, listGoals(address)) }, [expanded, address]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const goals = listGoals(address)
   const s = profileStats(goals)
@@ -136,7 +140,7 @@ export default function Profile({ badge: askedBadge, badgeAt, section, sectionAt
 
         <QuestCard title={t('quests_title')} id="quests" />
 
-        <section className="badges">
+        <section className="badges" id="badges">
           <div className="sec-head">
             <h3>{t('badges_title')}</h3>
             {expanded
@@ -416,8 +420,8 @@ function RanksSheet({ x, onHow, onClose }) {
   )
 }
 
-const XP_ROWS = [['xp_r_open', XP.open], ['xp_r_add', XP.deposit, 'xp_r_add_note'], ['xp_r_1000', XP.thousand], ['xp_r_milestone', XP.milestone],
-  ['xp_r_quest', XP.quest], ['xp_r_badge', XP.badge], ['xp_r_share', XP.share], ['xp_r_card', XP.card]]
+const XP_ROWS = [['xp_r_open', XP.open], ['xp_r_daily', XP.daily], ['xp_r_dayfull', XP.daily], ['xp_r_add', XP.deposit, 'xp_r_add_note'],
+  ['xp_r_1000', XP.thousand], ['xp_r_milestone', XP.milestone], ['xp_r_quest', XP.quest], ['xp_r_badge', XP.badge], ['xp_r_share', XP.share], ['xp_r_card', XP.card]]
 
 function XpSheet({ x, onClose }) {
   const { t } = useApp()

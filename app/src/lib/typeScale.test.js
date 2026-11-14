@@ -67,6 +67,7 @@ const EXCEPTIONS = {
   '.blogo.letter': LOGO, '.ut-logo .blogo.letter': LOGO, '.plan-head .blogo.letter, .codecard .blogo.letter': LOGO, '.gift-face .gift-logo.letter': LOGO,
   '.gtile .blogo.letter': LOGO, '.gtile.big .blogo.letter': LOGO, '.bs-card .blogo.letter': LOGO,
   '.hero .n': 'the Home card saved amount: 24 px (v1.1.10 fix, heading too weak)',
+  '.dq-done-h': 'the Day done stamp title: 22 px (v1.2.0, listed exception, no token sits between heading 18 and title 26)',
   '.ring-wrap .pct': RING,'.hero .ring-wrap .pct': RING, '.ring-wrap.ready .pct .gap': RING, '.ring-wrap.ready .pct small': RING,
   '.code-box': CODE, '.lab .log': CODE, '.acct b': CODE, '.codecard .face.b .code-box': CODE, '.tl-tx': CODE, '.rw-box': CODE,
   '.fc b': SPLASH, '.fc span': SPLASH, '.splash-tag': SPLASH,

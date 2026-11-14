@@ -10,6 +10,7 @@ export const GROUP_COLORS = {
   way: { bg: '#E8482A', fg: '#FFF6EC' },
   set: { bg: '#FFC94D', fg: '#23212B' },
   grow: { bg: '#15896A', fg: '#FFF6EC' },
+  quest: { bg: '#FFC94D', fg: '#23212B' },
   special: { bg: '#E9B213', fg: '#23212B' },
 }
 const LOCKED = { bg: '#2a2733', fg: '#5d5966' }
@@ -35,6 +36,9 @@ const GLYPHS = {
   leaf2: '<path d="M8 21v-6M16 21v-6"/><path d="M8 15c-3 0-4.5-2.5-4.5-5.5C6.5 9.5 8 12 8 15zM16 15c3 0 4.5-2.5 4.5-5.5-3 0-4.5 2.5-4.5 5.5z"/>',
   leaf3: '<path d="M12 21V9M6 21v-5M18 21v-5"/><path d="M12 9l-4 5h8zM12 4l-3.5 5h7zM6 16l-2.5 3h5zM18 16l-2.5 3h5z"/>',
   iii: '<text x="12" y="16.5" text-anchor="middle" font-family="Poppins" font-weight="700" font-size="11" fill="currentColor" stroke="none">III</text>',
+  calcheck: '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 9h16M8 3v3M16 3v3"/><path d="M9 14l2 2 4-4"/>',
+  seven: '<text x="12" y="17" text-anchor="middle" font-family="Poppins" font-weight="700" font-size="13" fill="currentColor" stroke="none">7</text>',
+  fifty: '<text x="12" y="16.5" text-anchor="middle" font-family="Poppins" font-weight="700" font-size="11" fill="currentColor" stroke="none">50</text>',
   share: '<circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.3 10.8 15.7 6.2M8.3 13.2l7.4 4.6"/>',
 }
 

@@ -9,7 +9,7 @@ globalThis.localStorage = {
   clear: () => store.clear(),
 }
 
-const { BADGES, check, evaluate, getBadges, setShared, CYCLE3_END } = await import('./badges.js')
+const { BADGES, GROUPS, check, evaluate, getBadges, setShared, CYCLE3_END } = await import('./badges.js')
 
 const DAY = 864e5
 const NOW = Date.parse('2026-11-10T12:00:00Z')
@@ -26,9 +26,14 @@ const has = (args, id) => evaluate({ now: AFTER, ...args }).some((x) => x.id ===
 
 beforeEach(() => store.clear())
 
-test('21 badges in four groups', () => {
-  assert.equal(BADGES.length, 21)
-  assert.equal(new Set(BADGES.map((b) => b.id)).size, 21)
+test('24 badges in five groups', () => {
+  assert.equal(BADGES.length, 24)
+  assert.equal(new Set(BADGES.map((b) => b.id)).size, 24)
+})
+
+test('the Quests group sits before Special, with its three badges', () => {
+  assert.deepEqual(GROUPS, ['way', 'set', 'grow', 'quest', 'special'])
+  assert.deepEqual(BADGES.filter((b) => b.group === 'quest').map((b) => b.id), ['dayone', 'days7', 'quests50'])
 })
 
 test('nothing at all: only Cycle III, and only before 1 Dec', () => {
@@ -154,4 +159,16 @@ test('Spread the word counts a real share only', async () => {
   assert.equal(shareEarns('cancelled'), false)
   assert.equal(shareEarns('failed'), false)
   assert.equal(shareEarns(undefined), false)
+})
+
+test('Quests badges: dayone and days7 from full days, quests50 from daily plus weekly quests, count 24', () => {
+  const day = (full, quests) => ({ full, quests, xp: 0, add: false })
+  assert.ok(!has({ dailyDays: {} }, 'dayone'))
+  assert.ok(has({ dailyDays: { d1: day(true, 3) } }, 'dayone'))
+  assert.ok(!has({ dailyDays: { d1: day(true, 3) } }, 'days7'))
+  const seven = {}; for (let i = 0; i < 7; i++) seven['d' + i] = day(true, 2)
+  assert.ok(has({ dailyDays: seven }, 'days7'))
+  assert.ok(!has({ dailyDays: seven, weeklyDone: 35 }, 'quests50')) // 14 daily + 35 weekly = 49
+  assert.ok(has({ dailyDays: seven, weeklyDone: 36 }, 'quests50'))  // 14 + 36 = 50
+  assert.equal(BADGES.length, 24)
 })

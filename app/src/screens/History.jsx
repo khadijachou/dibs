@@ -3,6 +3,7 @@ import { useApp } from '../App.jsx'
 import { itemLabel, localName } from '../lib/itemName.js'
 import { BrandLogo, Header, Icon } from '../components/ui.jsx'
 import { listGoals } from '../lib/goals.js'
+import { markDailyOpen } from '../lib/quests.js'
 import { boughtGoals } from '../lib/profileStats.js'
 import { buildTimeline, shortHash } from '../lib/history.js'
 import { fmtDate, fmtNim } from '../lib/format.js'
@@ -17,6 +18,7 @@ export default function History({ focus }) {
   // Home's "See all" opens History on Your cards.
   const cardsRef = useRef(null)
   useEffect(() => { if (focus === 'cards') cardsRef.current?.scrollIntoView({ block: 'start' }) }, [focus])
+  useEffect(() => { markDailyOpen({ k: 'history' }, listGoals(address)) }, [address]) // daily quest: Look at your History
   const goals = listGoals(address)
   const goalById = new Map(goals.map((g) => [g.id, g]))
   // One row open at a time; a second tap on it closes it.
