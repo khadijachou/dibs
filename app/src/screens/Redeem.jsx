@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useApp, useBlockBack } from '../App.jsx'
-import { itemLabel, itemName } from '../lib/itemName.js'
-import { ErrorBox, FieldError, Header, Notice } from '../components/ui.jsx'
+import { detailText, itemLabel, itemName } from '../lib/itemName.js'
+import { BrandLogo, ErrorBox, FieldError, Header, Icon, Notice } from '../components/ui.jsx'
 import { classify, lastLogText } from '../lib/errors.js'
 import { getGoal, savedNim, updateGoal } from '../lib/goals.js'
 import { goalVersion } from '../lib/version.js'
@@ -9,13 +9,16 @@ import { worksLine } from '../lib/brands.js'
 import { findItem, refreshCatalog } from '../lib/catalog.js'
 import { goalCardIssue } from '../lib/availability.js'
 import { CardIssue } from '../components/CardIssue.jsx'
-import { isDemo, payInvoice } from '../lib/nimiq.js'
+import { host, isDemo, payInvoice } from '../lib/nimiq.js'
 import { getUnlockState, settleGoal } from '../lib/unlockFlow.js'
 import { invoiceMatchesPrice, parseInvoice } from '../lib/invoice.js'
 import { usdToNim } from '../lib/price.js'
 import { config } from '../lib/config.js'
 import { api } from '../lib/api.js'
 import { fmtInt, fmtNim, fmtUsd } from '../lib/format.js'
+import { fmtFiatValue, pickFiat } from '../lib/fiatValue.js'
+import { effectiveCurrency } from '../lib/currency.js'
+import { goalBrand } from './Home.jsx'
 
 const EMAIL_KEY = 'dibs.email'
 
@@ -194,38 +197,97 @@ export default function Redeem({ goalId }) {
     <>
       <Header onBack={back} />
       <main className="screen">
-        <h2 className="title">{t('redeem_title', { name: itemName(t, goal) })}</h2>
+        {apiMode && !unavailable ? (
+          <h2 className="title pay-title"><span className="pay-title-1">{t('redeem_title1')}</span><span className="pay-title-2">{itemName(t, goal)}</span></h2>
+        ) : (
+          <h2 className="title">{t('redeem_title', { name: itemName(t, goal) })}</h2>
+        )}
 
         {unavailable ? (
           <CardIssue goal={goal} force />
         ) : apiMode ? (
-          <section className="card">
-            <div className="row"><span className="sub">{itemLabel(t, goal)}</span><b>{fmtUsd(orderUsd ?? goal.usd, lang)} USD</b></div>
-            {(works || !locked) && (
-              <div className="pay-works">
-                {works && <p className="small works-line">{worksLine(t, works)}</p>}
-                {!locked && <button type="button" className="link-sm" onClick={() => go('catalog', { changeFor: goal.id })}>{t('avail_change')}</button>}
+          <>
+            {/* Steps: 1 Receipt until an order exists, 2 Pay once it does (and while locked or expired). */}
+            <ol className="pay-steps" aria-hidden="true">
+              {[t('redeem_step_receipt'), t('redeem_step_pay'), t('redeem_step_code')].map((label, i) => {
+                const n = i + 1
+                const current = order ? 2 : 1
+                const state = n < current ? 'done' : n === current ? 'now' : 'next'
+                return (
+                  <li key={n} className={`pay-step ${state}`}>
+                    <span className="pay-step-n">{state === 'done' ? <Icon name="check" size={14} /> : n}</span>
+                    <span className="pay-step-l">{label}</span>
+                  </li>
+                )
+              })}
+            </ol>
+
+            {/* The card, its price, and Change card (hidden while a payment is locked). */}
+            <section className="card pay-card">
+              <div className="pay-card-row">
+                {(() => {
+                  const brand = goalBrand(goal)
+                  const name = (goal.brandName || brand.name || '').replace(/ gift card$/i, '')
+                  return (
+                    <div className="pay-brand">
+                      <BrandLogo brand={brand} className="pay-logo" />
+                      <div className="pay-brand-txt">
+                        <b className="pay-brand-name">{name}</b>
+                        <span className="pay-brand-sub">{detailText(t, goal)} · {t(`region_${goalVersion(goal).region}`)}</span>
+                      </div>
+                    </div>
+                  )
+                })()}
+                <div className="pay-card-right">
+                  <b className="pay-price">{fmtUsd(orderUsd ?? goal.usd, lang)} USD</b>
+                  {!locked && <button type="button" className="pay-change" onClick={() => go('catalog', { changeFor: goal.id })}>{t('avail_change')}</button>}
+                </div>
               </div>
-            )}
-            <p className="small plan-note">{t('plan_price_note')}</p>
+            </section>
+
+            {/* Step 1: the email for the receipt. */}
             {!order && (
-              <>
-                <label htmlFor="email" className="sub">{t('redeem_email')}</label>
-                <input id="email" className={`email${emailTouched && emailBad ? ' bad' : ''}`} type="email" inputMode="email" autoComplete="email" value={email}
-                  aria-invalid={emailTouched && emailBad} aria-describedby={emailTouched && emailBad ? 'email-err' : undefined}
-                  onChange={(e) => setEmail(e.target.value)} onBlur={() => setEmailTouched(true)} placeholder="you@example.com" />
+              <section className="card pay-email-card">
+                <label htmlFor="email" className="pay-field-label">{t('redeem_email')}</label>
+                <div className="pay-email">
+                  <svg className="pay-email-ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M3.5 7l8.5 6 8.5-6" /></svg>
+                  <input id="email" className={`email${emailTouched && emailBad ? ' bad' : ''}`} type="email" inputMode="email" autoComplete="email" value={email}
+                    aria-invalid={emailTouched && emailBad} aria-describedby={emailTouched && emailBad ? 'email-err' : undefined}
+                    onChange={(e) => setEmail(e.target.value)} onBlur={() => setEmailTouched(true)} placeholder="you@example.com" />
+                </div>
                 {emailTouched && emailBad && <div id="email-err"><FieldError>{t('redeem_email_bad')}</FieldError></div>}
-                <p className="small">{t('redeem_email_why')}</p>
-                <button type="button" className="btn ink small" disabled={busy || emailBad} onClick={getInvoice}>{busy ? t('loading_short') : t('redeem_get_invoice')}</button>
-              </>
+                <p className="small pay-email-why">{t('redeem_email_why')}</p>
+              </section>
             )}
-            {order?.invoice && (
-              <>
-                <div className="ok">{t('redeem_ready', { sats: order.sats != null ? fmtInt(order.sats, lang) : '?' })}</div>
-                {expired && <Notice tone="info" title={t('err_PAY_EXPIRED_title')} sub={t('err_PAY_EXPIRED_sub')} safe={t('safe_nothingCharged')} />}
-              </>
+
+            {/* Step 2: You pay. One total, where it comes from, and the price lock. */}
+            {order?.invoice && !expired && (
+              <section className="card pay-you">
+                <div className="pay-total">
+                  <span className="pay-total-main"><b>{payNim != null ? fmtNim(payNim, lang) : '—'}</b><span className="pay-total-unit">NIM</span></span>
+                  {payNim != null && (() => {
+                    const fiat = prices?.live ? pickFiat(prices.rates, effectiveCurrency(host.fiat())) : null
+                    const approx = fmtFiatValue(payNim, fiat, lang)
+                    return approx ? <span className="pay-approx">≈ {approx}</span> : null
+                  })()}
+                </div>
+                <div className="pay-rows">
+                  <div className="pay-row"><span>{t('redeem_row_price')}</span><b>{fmtUsd(invoiceUsd ?? orderUsd ?? goal.usd, lang)} USD</b></div>
+                  {payNim != null && <div className="pay-row"><span>{t('redeem_row_saved')}</span><b>{fmtNim(Math.min(saved, payNim), lang)} NIM</b></div>}
+                  {priceUp && <div className="pay-row extra"><span>{t('redeem_row_wallet')}</span><b>+{fmtNim(payNim - saved, lang)} NIM</b></div>}
+                  <div className="pay-row receipt"><span>{t('redeem_row_receipt')}</span><b>{email}</b></div>
+                </div>
+                {priceUp && <p className="pay-moved">{t('redeem_price_moved')}</p>}
+                {left != null && (
+                  <p className="pay-lock">
+                    <svg className="pay-lock-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7.5V12l3 2" /></svg>
+                    <span className="countdown">{t('redeem_expires', { time: mmss(left) })}</span>
+                  </p>
+                )}
+              </section>
             )}
-          </section>
+            {expired && <Notice tone="info" title={t('err_PAY_EXPIRED_title')} sub={t('err_PAY_EXPIRED_sub')} safe={t('safe_nothingCharged')} />}
+          </>
         ) : (
           <section className="card">
             <p className="sub">{t('redeem_manual')}</p>
@@ -266,31 +328,43 @@ export default function Redeem({ goalId }) {
             actions={[{ label: t('err_GENERIC_action2'), onClick: () => { navigator.clipboard?.writeText(lastLogText()); toast(t('err_copied')) } }]} />
         ) : null}
         {!unknown && !problem && <ErrorBox error={error} />}
-        {!unavailable && <p className="small">{t('redeem_refund')}</p>}
 
-        {priceUp && (
-          <Notice tone="info" title={t('err_PAY_PRICE_CHANGED_title')}
-            sub={t('err_PAY_PRICE_CHANGED_sub', { usd: fmtUsd(invoiceUsd, lang), nim: fmtNim(payNim, lang), saved: fmtNim(saved, lang), extra: fmtNim(payNim - saved, lang) })}>
-            <div className="pc-rows">
-              <div><span>{t('err_PAY_PRICE_CHANGED_rowSaved')}</span><b>{fmtNim(saved, lang)} NIM</b></div>
-              <div><span>{t('err_PAY_PRICE_CHANGED_rowWallet')}</span><b>{fmtNim(payNim - saved, lang)} NIM</b></div>
-              <div><span>{t('err_PAY_PRICE_CHANGED_rowPay')}</span><b>{fmtNim(payNim, lang)} NIM</b></div>
-            </div>
-          </Notice>
-        )}
-        {payNim != null && !expired && !locked && (!check || check.ok) && (
-          <div className="pay-sum" role="status">
-            <b>{t('redeem_pay_about', { nim: fmtNim(payNim, lang), usd: fmtUsd(invoiceUsd, lang) })}</b>
-            <span className="small pay-nim">{t('redeem_pay_nim')}</span>{/* Nimiq Pay may ask NIM or USDT: Dibs cannot preselect NIM */}
-            {apiMode && left != null && <span className="small countdown">{t('redeem_expires', { time: mmss(left) })}</span>}
-          </div>
-        )}
+        {/* API: the two trust notes, above the button. Manual mode keeps its own refund line and summary. */}
+        {apiMode && !unavailable ? (
+          <>
+            {order?.invoice && !expired && <p className="pay-note"><Icon name="info" size={18} /><span>{t('redeem_pay_nim')}</span></p>}
+            <p className="pay-note"><Icon name="shield" size={18} /><span>{t('redeem_source')}</span></p>
+          </>
+        ) : !unavailable ? (
+          <>
+            <p className="small">{t('redeem_refund')}</p>
+            {priceUp && (
+              <Notice tone="info" title={t('err_PAY_PRICE_CHANGED_title')}
+                sub={t('err_PAY_PRICE_CHANGED_sub', { usd: fmtUsd(invoiceUsd, lang), nim: fmtNim(payNim, lang), saved: fmtNim(saved, lang), extra: fmtNim(payNim - saved, lang) })}>
+                <div className="pc-rows">
+                  <div><span>{t('err_PAY_PRICE_CHANGED_rowSaved')}</span><b>{fmtNim(saved, lang)} NIM</b></div>
+                  <div><span>{t('err_PAY_PRICE_CHANGED_rowWallet')}</span><b>{fmtNim(payNim - saved, lang)} NIM</b></div>
+                  <div><span>{t('err_PAY_PRICE_CHANGED_rowPay')}</span><b>{fmtNim(payNim, lang)} NIM</b></div>
+                </div>
+              </Notice>
+            )}
+            {payNim != null && !expired && !locked && (!check || check.ok) && (
+              <div className="pay-sum" role="status">
+                <b>{t('redeem_pay_about', { nim: fmtNim(payNim, lang), usd: fmtUsd(invoiceUsd, lang) })}</b>
+                <span className="small pay-nim">{t('redeem_pay_nim')}</span>{/* Nimiq Pay may ask NIM or USDT: Dibs cannot preselect NIM */}
+              </div>
+            )}
+          </>
+        ) : null}
+
         {!unavailable && <div className="bottom">
           {expired ? (
             <button type="button" className="btn" disabled={busy} onClick={() => { setOrder(null); setLeft(null) }}>{t('err_PAY_EXPIRED_cta')}</button>
+          ) : apiMode && !order ? (
+            <button type="button" className="btn" disabled={busy || emailBad} onClick={getInvoice}>{busy ? t('loading_short') : t('redeem_continue')}</button>
           ) : (
             <button type="button" className="btn" disabled={busy || !parsed || locked || (check && !check.ok)} onClick={pay}>
-              {busy ? t('redeem_paying') : locked ? t('err_PAY_UNKNOWN_cta') : t('redeem_pay')}
+              {busy ? t('redeem_paying') : locked ? t('err_PAY_UNKNOWN_cta') : apiMode ? t('redeem_pay_btn', { nim: fmtNim(payNim, lang) }) : t('redeem_pay')}
             </button>
           )}
         </div>}

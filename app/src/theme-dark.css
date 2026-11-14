@@ -465,10 +465,66 @@ button.tl-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: -2
 .pills .pill.tall { white-space: nowrap; padding: 9px 12px; }
 .pill small { font-size: 12px; }
 
-/* Pay screen: the amount just above the pay button, and the email field error. */
+/* Pay screen: the amount just above the pay button (manual mode), and the email field error. */
 .pay-sum { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border-radius: 12px; background: var(--card-2); }
 .pay-sum b { font-size: var(--fs-strong); line-height: var(--lh-strong); font-weight: 600; color: var(--cream); }
 .email.bad { border-color: var(--red); }
+
+/* ===== Pay screen v1.2.2 (screens/Redeem.jsx, API mode): two steps, one total, one button. ===== */
+/* Title: "Pay for your" on one line, the card name in coral on the next, both at title size. */
+.pay-title span { display: block; }
+.pay-title-2 { color: #E8482A; }
+
+/* Steps: 1 Receipt, 2 Pay, 3 Your code. Current coral, done mint with a tick, later grey. */
+.pay-steps { list-style: none; margin: 0; padding: 0; display: flex; gap: 6px; }
+.pay-step { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 5px; text-align: center; }
+.pay-step-n { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font: 600 var(--fs-label)/1 var(--font-display); }
+.pay-step-l { font-size: var(--fs-label); line-height: var(--lh-label); }
+.pay-step.now .pay-step-n { color: #E8482A; box-shadow: inset 0 0 0 1.5px #E8482A; }
+.pay-step.now .pay-step-l { color: var(--cream); }
+.pay-step.done .pay-step-n { background: var(--teal); color: #fff; }
+.pay-step.done .pay-step-l { color: var(--teal); }
+.pay-step.next .pay-step-n { color: var(--muted); box-shadow: inset 0 0 0 1.5px var(--line); }
+.pay-step.next .pay-step-l { color: var(--muted); }
+
+/* The card row: logo, name and value, with the price and Change card on the right. */
+.pay-card-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.pay-brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.blogo.pay-logo { width: 44px; height: 44px; }
+.pay-brand-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.pay-brand-name { font-size: var(--fs-strong); line-height: var(--lh-strong); font-weight: 600; color: var(--cream); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pay-brand-sub { font-size: var(--fs-meta); line-height: var(--lh-meta); color: var(--muted); }
+.pay-card-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; text-align: right; }
+.pay-price { font-size: var(--fs-strong); line-height: var(--lh-strong); font-weight: 600; color: var(--cream); white-space: nowrap; }
+.pay-change { background: none; border: 0; padding: 0; font: 500 var(--fs-meta)/var(--lh-meta) var(--font-body); color: var(--muted); text-decoration: underline; cursor: pointer; }
+
+/* Step 1: email for the receipt, with an envelope inside the field (the field stays 16px, no iOS zoom). */
+.pay-field-label { font-size: var(--fs-meta); line-height: var(--lh-meta); color: var(--muted); font-weight: 600; }
+.pay-email { position: relative; display: flex; align-items: center; }
+.pay-email-ico { position: absolute; left: 12px; color: var(--muted); pointer-events: none; }
+.pay-email input.email { padding-left: 38px; }
+.pay-email-why { margin: 0; }
+
+/* Step 2: You pay. The total, where it comes from, and the price lock. */
+.pay-you { gap: 14px; }
+.pay-total { display: flex; flex-direction: column; gap: 2px; }
+.pay-total-main { display: flex; align-items: baseline; gap: 6px; }
+.pay-total-main b { font-size: var(--fs-display); line-height: var(--lh-display); font-weight: 700; color: var(--cream); font-family: var(--font-display); }
+.pay-total-unit { font-size: var(--fs-strong); line-height: var(--lh-strong); font-weight: 600; color: var(--muted); }
+.pay-approx { font-size: var(--fs-meta); line-height: var(--lh-meta); color: var(--muted); }
+.pay-rows { display: flex; flex-direction: column; gap: 8px; }
+.pay-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; font-size: var(--fs-body); line-height: var(--lh-body); }
+.pay-row > span { color: var(--muted); flex-shrink: 0; }
+.pay-row > b { font-weight: 600; color: var(--cream); text-align: right; }
+.pay-row.receipt > b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pay-row.extra > b { color: var(--butter); }
+.pay-moved { margin: 0; font-size: var(--fs-meta); line-height: var(--lh-meta); color: var(--butter); }
+.pay-lock { margin: 0; display: flex; align-items: center; gap: 6px; font-size: var(--fs-meta); line-height: var(--lh-meta); color: var(--teal); }
+.pay-lock-ico { flex-shrink: 0; }
+
+/* The two trust notes above the button, each with a mint glyph. */
+.pay-note { margin: 0; display: flex; align-items: flex-start; gap: 8px; font-size: var(--fs-meta); line-height: var(--lh-meta); color: var(--muted); }
+.pay-note svg { flex-shrink: 0; color: var(--teal); margin-top: 1px; }
 
 /* Week dots always fit the card: dot size shrinks with the number of weeks (--n), a bar above 20 weeks. */
 .weeks .dots { width: 100%; min-width: 0; }

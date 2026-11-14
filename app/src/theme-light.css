@@ -42,6 +42,10 @@
 :where(:root[data-theme="light"]) .amount.bad { border-bottom-color: #d8432f; }
 :where(:root[data-theme="light"]) .email.bad { border-color: #d8432f; }
 :where(:root[data-theme="light"]) .goal-dot.behind { background: #d99a0b; }
+/* Pay screen (v1.2.2): the butter "from your wallet" text and the small coral step number need the
+   readable light shades (butter -> #906607, coral -> #cc3316); the large coral title keeps #E8482A. */
+:where(:root[data-theme="light"]) .pay-row.extra > b, :where(:root[data-theme="light"]) .pay-moved { color: #906607; }
+:where(:root[data-theme="light"]) .pay-step.now .pay-step-n { color: #cc3316; box-shadow: inset 0 0 0 1.5px #cc3316; }
 
 /* ---- Ready states: rings and boxes in the ring colours, their text in the text shades ---- */
 :where(:root[data-theme="light"]) .ready-covered { --rs: #15896a; --rs-soft: rgba(21, 137, 106, .08); --rs-line: rgba(21, 137, 106, .35); }
