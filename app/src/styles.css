@@ -259,6 +259,123 @@ input.email { width: 100%; height: 48px; border-radius: 12px; border: 1.5px soli
 .fact { flex: 1; background: var(--card); border-radius: 12px; padding: 10px; font-size: var(--fs-label); color: var(--muted); line-height: var(--lh-label); }
 .fact b { display: block; color: var(--navy); font-size: var(--fs-meta); line-height: var(--lh-meta); white-space: nowrap; font-weight: 600; margin-bottom: 2px; }
 .fact b.dot::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--teal); margin-right: 6px; }
+
+/* Done.jsx (v1.2.1): the code screen. A Dibs! stamp, the card as a ticket, three stats, the payment ref. Layout and
+   token colours here; dark/light surfaces in the theme files. Entrance motion is transform and opacity only. */
+.done-screen { gap: 10px; padding-bottom: 12px; }
+
+/* Hero: stamp, confetti, title, story line. */
+.done-hero { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px; padding-top: 0; }
+.done-stamp-wrap { position: relative; display: grid; place-items: center; margin-bottom: 2px; }
+.done-stamp-wrap::before { content: ""; position: absolute; width: 184px; height: 184px; border-radius: 50%; z-index: 0; background: radial-gradient(circle, rgba(232,72,42,.30), transparent 68%); }
+.done-stamp { position: relative; z-index: 1; font: 700 56px/1 var(--font-display); color: var(--gold); border: 3px solid var(--gold); border-radius: 16px; padding: 4px 22px 8px; transform: rotate(-6deg); text-shadow: 0 2px 12px rgba(232,72,42,.35); }
+.done-title { margin: 0; font: 600 var(--fs-title)/var(--lh-title) var(--font-display); color: var(--navy); }
+.done-story { margin: 0; font-size: var(--fs-meta); line-height: var(--lh-meta); color: var(--muted); }
+.done-confetti { position: absolute; inset: -14px; z-index: 1; pointer-events: none; }
+.done-confetti .cf { position: absolute; width: 7px; height: 7px; border-radius: 50%; }
+.done-confetti .cf.c1, .done-confetti .cf.c4, .done-confetti .cf.c6 { border-radius: 1px; width: 6px; height: 6px; }
+.cf.c0 { top: 2px; left: 6%; background: var(--gold); }
+.cf.c1 { top: 28%; left: -2%; background: #2bc48f; }
+.cf.c2 { bottom: 4px; left: 12%; background: var(--butter); }
+.cf.c3 { top: -6px; left: 40%; background: #2bc48f; }
+.cf.c4 { bottom: -4px; left: 52%; background: var(--gold); }
+.cf.c5 { top: 0; right: 10%; background: var(--butter); }
+.cf.c6 { top: 34%; right: -2%; background: var(--gold); }
+.cf.c7 { bottom: 2px; right: 16%; background: #2bc48f; }
+
+/* Ticket: brand gift card (reuses .bs-card), a tear line, then the code body. */
+.ticket { background: var(--card); border: 1px solid var(--line); border-radius: 24px; box-shadow: 0 18px 40px rgba(35,33,43,.14); overflow: hidden; }
+.ticket .bs-card.tk-card { border-radius: 24px 24px 0 0; box-shadow: none; margin: 0; aspect-ratio: 2.05; }
+.tk-tear { position: relative; height: 0; border-top: 2px dashed var(--line); }
+.tk-tear::before, .tk-tear::after { content: ""; position: absolute; top: -9px; width: 16px; height: 16px; border-radius: 50%; background: var(--ground); }
+.tk-tear::before { left: -9px; }
+.tk-tear::after { right: -9px; }
+.tk-body { display: flex; flex-direction: column; gap: 8px; padding: 14px; }
+.tk-head { display: flex; align-items: center; justify-content: space-between; }
+.tk-label { font: 600 var(--fs-label)/var(--lh-label) var(--font-body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.tk-label-pin { margin-top: 6px; }
+.tk-eye { background: none; border: 0; padding: 4px; color: var(--muted); cursor: pointer; display: grid; place-items: center; -webkit-tap-highlight-color: transparent; }
+.tk-code { display: block; width: 100%; font: 600 20px/1.3 ui-monospace, Menlo, monospace; letter-spacing: .06em; text-align: center; color: var(--navy); background: rgba(255,201,77,.06); border: 1.5px dashed rgba(255,201,77,.5); border-radius: 14px; padding: 12px; cursor: pointer; word-break: break-all; -webkit-tap-highlight-color: transparent; }
+.tk-code .tk-ch { display: inline-block; animation: tk-rise .32s both; }
+.tk-code.on { animation: tk-ring .7s ease-out; }
+.tk-rawlink { margin: 0; font-size: var(--fs-meta); line-height: var(--lh-meta); color: var(--muted); word-break: break-all; }
+.tk-acts { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
+.tk-btn { width: 100%; text-decoration: none; display: flex; align-items: center; justify-content: center; }
+.tk-wait { display: flex; align-items: center; gap: 12px; }
+.tk-wait b { font: 600 var(--fs-strong)/var(--lh-strong) var(--font-body); color: var(--navy); }
+.tk-step { margin: 2px 0 0; font-size: var(--fs-meta); line-height: var(--lh-meta); color: var(--muted); }
+.tk-spin { width: 18px; height: 18px; border-radius: 50%; border: 2.5px solid var(--gold); border-top-color: transparent; animation: spin 1s linear infinite; flex-shrink: 0; }
+.tk-manual { margin: 0; font-size: var(--fs-body); line-height: var(--lh-body); color: var(--navy); }
+
+/* Three equal stat tiles. */
+.done-stats { display: flex; gap: 8px; }
+.done-stat { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; align-items: center; text-align: center; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 10px 8px; }
+.done-stat b { font: 600 var(--fs-heading)/var(--lh-heading) var(--font-display); color: var(--navy); white-space: nowrap; }
+.done-stat span { font-size: var(--fs-label); line-height: var(--lh-label); color: var(--muted); }
+.done-stat small { font-size: var(--fs-label); line-height: var(--lh-label); color: var(--muted); }
+
+/* Note with a mint info icon; "History" is a mint link to Your cards. */
+.done-note { display: flex; gap: 10px; align-items: flex-start; margin: 0; font-size: var(--fs-meta); line-height: var(--lh-meta); color: var(--muted); }
+.done-note > svg { flex-shrink: 0; margin-top: 1px; color: var(--teal); }
+.done-note-link { background: none; border: 0; padding: 0; font: inherit; color: var(--teal); cursor: pointer; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 2px; text-decoration-color: color-mix(in srgb, currentColor 45%, transparent); }
+
+/* Payment ref: a short-hash chip and Copy; the row opens the swap id. */
+.done-ref { display: flex; flex-direction: column; gap: 4px; }
+.done-ref-row { display: flex; align-items: center; gap: 10px; }
+.done-ref-open, .done-swap { display: flex; align-items: center; gap: 10px; min-width: 0; background: none; border: 0; padding: 6px 0; cursor: pointer; text-align: left; -webkit-tap-highlight-color: transparent; }
+.done-ref-open { flex: 1; }
+.done-ref-lab { flex-shrink: 0; font-size: var(--fs-meta); line-height: var(--lh-meta); color: var(--muted); }
+.done-ref-chip { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-family: ui-monospace, Menlo, monospace; }
+.done-ref-copy { flex-shrink: 0; background: none; border: 0; padding: 6px 4px; color: var(--gold); font: 600 var(--fs-meta)/1 var(--font-body); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+
+/* Bottom row: Home (outline, icon over label) and the new-goal card (coral-bordered).
+   More specific than `.screen > .bottom` (which is a column) so the two sit side by side. */
+.screen > .bottom.done-bottom { flex-direction: row; gap: 10px; align-items: stretch; }
+.done-home { flex: 0 0 auto; width: 96px; height: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 10px; }
+.done-home span { font: 600 var(--fs-label)/1 var(--font-body); }
+.done-new { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; background: var(--card); border: 1px solid color-mix(in srgb, var(--gold) 55%, transparent); border-radius: 14px; padding: 12px 14px; cursor: pointer; text-align: left; -webkit-tap-highlight-color: transparent; }
+.done-new-plus { flex: 0 0 36px; width: 36px; height: 36px; border-radius: 10px; background: var(--gold); color: #fff; display: grid; place-items: center; font: 700 var(--fs-title)/1 var(--font-display); }
+.done-new-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.done-new-txt b { font: 600 var(--fs-strong)/var(--lh-strong) var(--font-body); color: var(--navy); }
+.done-new-txt small { font-size: var(--fs-label); line-height: var(--lh-label); color: var(--muted); }
+.done-new .chev { flex-shrink: 0; color: var(--muted); transform: scale(1.4); }
+
+/* Press feedback (transform only). */
+.done-new:active, .done-home:active, .tk-btn:active, .tk-code:active, .tk-eye:active, .done-ref-copy:active, .done-ref-open:active, .done-swap:active { transform: scale(.97); }
+
+/* Entrance: plays once per goal per session (Done.jsx gates it; never under reduced motion). */
+@keyframes done-stamp-in { from { opacity: 0; transform: rotate(-18deg) scale(2.6); } to { opacity: 1; transform: rotate(-6deg) scale(1); } }
+@keyframes done-glow-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes done-cf { from { opacity: 0; transform: scale(0); } to { opacity: 1; transform: scale(1); } }
+@keyframes done-rise { from { opacity: 0; transform: translateY(8px); } }
+@keyframes done-rise-up { from { opacity: 0; transform: translateY(16px); } }
+@keyframes tk-rise { from { opacity: 0; transform: translateY(6px) scale(.8); filter: blur(4px); } to { opacity: 1; transform: none; filter: blur(0); } }
+@keyframes tk-ring { 0% { box-shadow: 0 0 0 0 rgba(255,201,77,.6); } 100% { box-shadow: 0 0 0 7px rgba(255,201,77,0); } }
+.done-enter .done-stamp { animation: done-stamp-in .55s cubic-bezier(.34,1.56,.64,1) .25s backwards; }
+.done-enter .done-stamp-wrap::before { animation: done-glow-in .5s ease-out .25s backwards; }
+.done-enter .done-confetti .cf { animation: done-cf .5s ease-out backwards; }
+.done-enter .done-confetti .cf:nth-child(1) { animation-delay: .60s; }
+.done-enter .done-confetti .cf:nth-child(2) { animation-delay: .635s; }
+.done-enter .done-confetti .cf:nth-child(3) { animation-delay: .67s; }
+.done-enter .done-confetti .cf:nth-child(4) { animation-delay: .705s; }
+.done-enter .done-confetti .cf:nth-child(5) { animation-delay: .74s; }
+.done-enter .done-confetti .cf:nth-child(6) { animation-delay: .775s; }
+.done-enter .done-confetti .cf:nth-child(7) { animation-delay: .81s; }
+.done-enter .done-confetti .cf:nth-child(8) { animation-delay: .845s; }
+.done-enter .done-title { animation: done-rise .4s ease-out .75s backwards; }
+.done-enter .done-story { animation: done-rise .4s ease-out .87s backwards; }
+.done-enter .ticket { animation: done-rise-up .5s ease-out 1.0s backwards; }
+.done-enter .done-stats { animation: done-rise-up .5s ease-out 1.2s backwards; }
+.done-enter .done-note { animation: done-rise-up .5s ease-out 1.3s backwards; }
+.done-enter .done-ref { animation: done-rise-up .5s ease-out 1.38s backwards; }
+.done-enter .done-bottom { animation: done-rise-up .5s ease-out 1.45s backwards; }
+@media (prefers-reduced-motion: reduce) {
+  .done-enter .done-stamp, .done-enter .done-stamp-wrap::before, .done-enter .done-confetti .cf,
+  .done-enter .done-title, .done-enter .done-story, .done-enter .ticket, .done-enter .done-stats,
+  .done-enter .done-note, .done-enter .done-ref, .done-enter .done-bottom,
+  .tk-code .tk-ch, .tk-code.on, .tk-spin { animation: none; }
+}
+
 /* Main action stays reachable on long screens (Plan, Goal). */
 .screen > .bottom { position: sticky; bottom: 0; padding-top: 14px; padding-bottom: 4px; background: linear-gradient(rgba(255,246,236,0), var(--ground) 14px); z-index: 2; }
 

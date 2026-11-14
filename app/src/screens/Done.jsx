@@ -1,13 +1,20 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useApp } from '../App.jsx'
-import { itemLabel } from '../lib/itemName.js'
-import { Header } from '../components/ui.jsx'
-import { getGoal, updateGoal } from '../lib/goals.js'
+import { detailText, itemLabel } from '../lib/itemName.js'
+import { Header, BrandLogo, Icon, useFiat } from '../components/ui.jsx'
+import { goalBrand } from './Home.jsx'
+import { goalVersion } from '../lib/version.js'
+import { getGoal, updateGoal, savedNim } from '../lib/goals.js'
 import { api } from '../lib/api.js'
 import { config } from '../lib/config.js'
 import { isDemo } from '../lib/nimiq.js'
 import { track } from '../lib/stats.js'
-import { txHash } from '../lib/history.js'
+import { txHash, shortHash } from '../lib/history.js'
+import { copyText } from '../lib/clipboard.js'
+import { fmtNim } from '../lib/format.js'
+import { fmtFiatValue } from '../lib/fiatValue.js'
+import { brandGrad } from '../lib/brands.js'
+import { playPop, playGoalDone, playTing, playClink } from '../lib/sound.js'
 
 // Bitrefill invoice statuses, in order. Anything else shows as "waiting".
 const STEPS = ['created', 'payment_detected', 'payment_confirmed', 'complete']
@@ -26,8 +33,32 @@ function redemptionOf(o) {
   return code || pin || link ? { code, pin, link, at: new Date().toISOString() } : null
 }
 
+// Display-only: the entrance plays once per goal per session (session flag, not the chain, never a saved pointer).
+const prefersReduced = () => { try { return Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) } catch { return false } }
+const SHOWN_KEY = (id) => `dibs.done.shown.${id}`
+const wasShown = (id) => { try { return sessionStorage.getItem(SHOWN_KEY(id)) === '1' } catch { return false } }
+const markShown = (id) => { try { sessionStorage.setItem(SHOWN_KEY(id), '1') } catch { /* display only */ } }
+
+// Decorative confetti around the stamp: coral, mint, butter dots and squares. aria-hidden.
+const CONFETTI = ['c0', 'c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7']
+
+// A revealed value, one span per character so each can rise in left to right (display only).
+function RevealChars({ text }) {
+  return [...String(text)].map((ch, i) => (
+    <span key={i} className="tk-ch" style={{ animationDelay: `${i * 30}ms` }}>{ch === ' ' ? ' ' : ch}</span>
+  ))
+}
+
+// Eye / eye-off glyph for the show-or-hide button (decorative; the button carries the label).
+const EyeIcon = ({ off }) => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" /><circle cx="12" cy="12" r="3" />
+    {off && <path d="M4 4l16 16" />}
+  </svg>
+)
+
 export default function Done({ goalId }) {
-  const { t, lang, address, reset } = useApp()
+  const { t, lang, address, go, reset, toast } = useApp()
   const goal = getGoal(address, goalId)
   const orderId = goal?.payment?.orderId
   const orderToken = goal?.payment?.orderToken || null // orders made before the per-order token have none: stay in the waiting state
@@ -62,6 +93,36 @@ export default function Done({ goalId }) {
     return () => { stop = true }
   }, [orderId]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Display-only entrance: first time the code (or the manual screen) is shown for this goal, this session.
+  const reduced = prefersReduced()
+  const final = config.redeemMode !== 'api' || Boolean(red)
+  const [enter, setEnter] = useState(false)
+  const [revealN, setRevealN] = useState(0)
+  const [refOpen, setRefOpen] = useState(false)
+  const playedRef = useRef(false)
+  const fiat = useFiat()
+  useEffect(() => {
+    if (!goal || !final || playedRef.current) return
+    playedRef.current = true
+    if (wasShown(goalId)) return // reopened this session: everything at once, no entrance, no sound
+    markShown(goalId)
+    if (reduced) return
+    setEnter(true)
+    playPop({ ifUnlocked: true }) // needs an earlier tap; the goal-reached chime lands after it (and after any card-flip reveal)
+    const chime = setTimeout(() => playGoalDone(), 100)
+    return () => clearTimeout(chime)
+  }, [final]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Drop the entrance marker once the staggered steps have finished (last ~1.95 s). Keyed on `enter` (not the once-only
+  // effect above) so StrictMode's double-invoke can't leave it stuck on: .done-enter then means "entrance in progress",
+  // which the Badge earned banner waits on (components/BadgeStamp.jsx). Animations are backwards-filled and end on the
+  // natural state, so dropping the class never snaps anything.
+  useEffect(() => {
+    if (!enter) return undefined
+    const settle = setTimeout(() => setEnter(false), 2400)
+    return () => clearTimeout(settle)
+  }, [enter])
+
   if (!goal) return null
   const stepIdx = Math.max(0, STEPS.indexOf(status))
   const code = red?.code || null
@@ -69,57 +130,138 @@ export default function Done({ goalId }) {
   const link = red?.link || null
   const safeLink = typeof link === 'string' && link.startsWith('https://') ? link : null // only https links are clickable
   const pinLabel = t('done_pin')
-  const copyText = code ? (pin ? `${code} · ${pinLabel}${lang === 'fr' ? ' : ' : ': '}${pin}` : code) : pin || link
+  const copyValue = code ? (pin ? `${code} · ${pinLabel}${lang === 'fr' ? ' : ' : ': '}${pin}` : code) : pin || link
+  const hasCode = Boolean(code || pin)
+
+  const brand = goalBrand(goal)
+  const brandName = (goal.brandName || brand.name || '').replace(/ gift card$/i, '')
+  const version = goalVersion(goal)
   const days = daysToYours(goal)
+  const deposits = goal.deposits.filter((d) => !d.kind).length
+  const saved = savedNim(goal) // the goal's saved NIM (withdrawals never add to it)
+  const savedFiat = fmtFiatValue(saved, fiat, lang)
+  const titleText = config.redeemMode === 'api' && !red ? t('done_paid') : t('done_title')
+
+  // Copy helpers: the app clipboard helper, the app toast, a soft clink. The code never reaches the toast or a log.
+  const copy = async (text, toastKey) => { if (text && (await copyText(text))) { toast(t(toastKey)); playClink() } }
+  const toggleShow = () => { const next = !show; setShow(next); if (next) { setRevealN((n) => n + 1); playTing() } }
+
+  const hash = goal.payment?.hash || null
+  const swapId = goal.payment?.swapId || null
+
+  const noteParts = t('done_note').split('{link}')
+
   return (
     <>
       <Header />
-      <main className="screen">
-        <div className="dibs-band">
-          <b>Dibs!</b>
-          <span>{red ? t('done_title') : t('done_paid')}</span>
-          <span style={{ opacity: 0.9 }}>{itemLabel(t, goal)}</span>
+      <main className={`screen done-screen${enter ? ' done-enter' : ''}`}>
+        <div className="done-hero">
+          <div className="done-stamp-wrap">
+            <div className="done-confetti" aria-hidden="true">{CONFETTI.map((c) => <i key={c} className={`cf ${c}`} />)}</div>
+            <b className="done-stamp">Dibs!</b>
+          </div>
+          <h1 className="done-title">{titleText}</h1>
+          {red && <p className="done-story">{t(days === 1 ? 'done_story_one' : 'done_story_other', { item: itemLabel(t, goal), count: days })}</p>}
         </div>
 
-        {config.redeemMode === 'api' && orderId ? (
-          // The card flip plays on the "Get my card" tap (Goal.jsx), where its sound can start; here the code card shows at once.
-          <section className="codecard">
-            <div className="face b">
-              <div className="cc-label">{t('done_code')}</div>
-              {!red && <div className="code-box">{t('done_waiting')}</div>}
-              {!red && <p className="small">{t(`done_s${stepIdx}`)}</p>}
-              {code && <div className="code-box">{show ? code : '•••• •••• ••••'}</div>}
-              {pin && (
-                <>
-                  <div className="cc-sub">{pinLabel}</div>
-                  <div className="code-box">{show ? pin : '••••'}</div>
-                </>
-              )}
-              {link && !safeLink && <p className="small" style={{ wordBreak: 'break-all' }}>{link}</p>}
-              {red && (
-                <div className="pills">
-                  {(code || pin) && <button type="button" className="btn ghost small" style={{ flex: 1 }} onClick={() => setShow(!show)}>{show ? t('done_hide') : t('done_show')}</button>}
-                  {safeLink && <a className="btn ghost small" style={{ flex: 1 }} href={safeLink} target="_blank" rel="noopener noreferrer">{t('done_open_link')}</a>}
-                  <button type="button" className="btn ghost small" style={{ flex: 1 }} onClick={() => navigator.clipboard?.writeText(copyText)}>{t('done_copy')}</button>
-                </div>
-              )}
+        <section className="ticket">
+          <div className="bs-card tk-card" style={{ background: brandGrad(brand.key) }}>
+            <i className="gift-sheen" aria-hidden="true" />
+            <div className="bs-card-top">
+              <BrandLogo brand={brand} />
+              <span className="bs-card-kind">{t('bs_gift')}</span>
             </div>
-          </section>
-        ) : (
-          <div className="ok">{t('done_manual')}</div>
+            <div className="bs-card-bot">
+              <b>{brandName}</b>
+              <span>{detailText(t, goal)} · {t(`region_${version.region}`)}</span>
+            </div>
+          </div>
+          <div className="tk-tear" aria-hidden="true" />
+          <div className="tk-body">
+            {config.redeemMode !== 'api' ? (
+              <p className="tk-manual">{t('done_manual')}</p>
+            ) : !red ? (
+              <div className="tk-wait">
+                <span className="tk-spin" aria-hidden="true" />
+                <div><b>{t('done_waiting')}</b><p className="tk-step">{t(`done_s${stepIdx}`)}</p></div>
+              </div>
+            ) : (
+              <>
+                {hasCode && (
+                  <>
+                    <div className="tk-head">
+                      <span className="tk-label">{t('done_code')}</span>
+                      {code && <button type="button" className="tk-eye" aria-label={show ? t('done_hide') : t('done_show')} onClick={toggleShow}><EyeIcon off={show} /></button>}
+                    </div>
+                    {code && (
+                      <button type="button" className={`tk-code${show ? ' on' : ''}`} key={`c${revealN}`} aria-label={t('done_copy')} onClick={() => copy(code, 'done_copied')}>
+                        {show ? (reduced ? code : <RevealChars text={code} />) : '•••• •••• ••••'}
+                      </button>
+                    )}
+                    {pin && (
+                      <>
+                        <span className="tk-label tk-label-pin">{pinLabel}</span>
+                        <button type="button" className={`tk-code${show ? ' on' : ''}`} key={`p${revealN}`} aria-label={t('done_pin')} onClick={() => copy(pin, 'done_pin_copied')}>
+                          {show ? (reduced ? pin : <RevealChars text={pin} />) : '••••'}
+                        </button>
+                      </>
+                    )}
+                  </>
+                )}
+                {link && !safeLink && <p className="tk-rawlink">{link}</p>}
+                <div className="tk-acts">
+                  {hasCode && <button type="button" className="btn gold tk-btn" onClick={() => copy(copyValue, 'done_copied')}>{t('done_copy')}</button>}
+                  {safeLink && <a className={`btn tk-btn ${hasCode ? 'ghost' : 'gold'}`} href={safeLink} target="_blank" rel="noopener noreferrer">{t('done_open_link')}</a>}
+                  {!hasCode && safeLink && <button type="button" className="btn ghost tk-btn" onClick={() => copy(copyValue, 'done_copied')}>{t('done_copy')}</button>}
+                  {!hasCode && link && !safeLink && <button type="button" className="btn gold tk-btn" onClick={() => copy(copyValue, 'done_copied')}>{t('done_copy')}</button>}
+                </div>
+              </>
+            )}
+          </div>
+        </section>
+
+        {red && (
+          <div className="done-stats">
+            <div className="done-stat"><b>{days}</b><span>{t(days === 1 ? 'done_stat_days_sub_one' : 'done_stat_days_sub')}</span></div>
+            <div className="done-stat"><b>{deposits}</b><span>{t(deposits === 1 ? 'done_stat_deposits_one' : 'done_stat_deposits')}</span></div>
+            <div className="done-stat"><b>{fmtNim(saved, lang)}</b><span>{t('done_stat_saved')}</span>{savedFiat && <small>{savedFiat}</small>}</div>
+          </div>
         )}
 
         {red && (
-          <div className="facts">
-            <div className="fact"><b>{t(days === 1 ? 'done_stat_days_one' : 'done_stat_days_other', { count: days })}</b>{t('done_stat_days_sub')}</div>
-            <div className="fact"><b>{goal.deposits.filter((d) => !d.kind).length}</b>{t('done_stat_deposits')}</div>
+          <p className="done-note">
+            <Icon name="info" size={18} />
+            <span>{noteParts[0]}<button type="button" className="done-note-link" onClick={() => go('history', { focus: 'cards' })}>{t('tab_history')}</button>{noteParts[1]}</span>
+          </p>
+        )}
+
+        {hash && (
+          <div className="done-ref">
+            <div className="done-ref-row">
+              <button type="button" className="done-ref-open" onClick={() => swapId && setRefOpen((o) => !o)} aria-expanded={swapId ? refOpen : undefined}>
+                <span className="done-ref-lab">{t('done_ref')}</span>
+                <span className="chip done-ref-chip">{shortHash(hash)}</span>
+              </button>
+              <button type="button" className="done-ref-copy" onClick={() => copy(hash, 'done_ref_copied')}>{t('done_ref_copy')}</button>
+            </div>
+            {refOpen && swapId && (
+              <button type="button" className="done-swap" onClick={() => copy(swapId, 'done_ref_copied')}>
+                <span className="done-ref-lab">{t('done_swap')}</span>
+                <span className="chip done-ref-chip">{swapId}</span>
+              </button>
+            )}
           </div>
         )}
-        {red && <p className="small">{t('done_kept')}</p>}
-        {goal.payment?.hash && <p className="small" style={{ wordBreak: 'break-all' }}>Tx {goal.payment.hash.slice(0, 16)}… · swap {goal.payment.swapId}</p>}
 
-        <div className="bottom">
-          <button type="button" className="btn ink" onClick={() => reset('catalog')}>{t('done_new')}</button>
+        <div className="bottom done-bottom">
+          <button type="button" className="btn ghost done-home" onClick={() => reset('home')}>
+            <Icon name="tabGoals" size={22} /><span>{t('done_home')}</span>
+          </button>
+          <button type="button" className="done-new" onClick={() => reset('catalog')}>
+            <span className="done-new-plus" aria-hidden="true">+</span>
+            <span className="done-new-txt"><b>{t('done_new')}</b><small>{t('home_new2_sub')}</small></span>
+            <span className="chev" aria-hidden="true">›</span>
+          </button>
         </div>
       </main>
     </>

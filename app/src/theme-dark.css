@@ -138,6 +138,12 @@ svg circle:first-child[stroke="#e6dccf"], svg circle:first-child[stroke="#35323f
 .codecard .cc-sub { font: 600 var(--fs-label)/var(--lh-label) var(--font-body); letter-spacing: .08em; text-transform: uppercase; opacity: .8; margin-top: 4px; }
 .codecard .face.b a.btn { display: flex; align-items: center; justify-content: center; text-decoration: none; }
 .codecard .face.b .btn.ghost { color: #fff; border-color: rgba(255, 255, 255, .55); }
+/* The .codecard rules above are no longer rendered (v1.2.1 replaced the code card with the ticket below); kept so the
+   one type-scale exception on .codecard still matches a real rule. */
+
+/* Done.jsx code screen (v1.2.1, layout in styles.css): deeper ticket shadow and ink-on-dark text. */
+.ticket { box-shadow: 0 24px 50px rgba(0, 0, 0, .5); }
+.done-title, .done-stat b, .tk-code, .tk-wait b, .tk-manual, .done-new-txt b { color: var(--cream); }
 
 @media (prefers-reduced-motion: reduce) {
   .stamp { animation: none; opacity: 1; transform: translate(-50%, -50%) rotate(-8deg); }
@@ -998,6 +1004,8 @@ button.tl-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: -2
   font: 400 12.5px/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: var(--cream); }
 
 .bstamp-live { position: fixed; top: 70px; left: 16px; right: 16px; z-index: 15; pointer-events: none; display: flex; justify-content: center; }
+/* Code screen, no entrance (BadgeStamp.jsx): drop the band below the hero so the Dibs! stamp and title stay visible. */
+.bstamp-live.bstamp-low { top: auto; bottom: 108px; }
 .bstamp { pointer-events: auto; width: min(448px, 100%); display: flex; align-items: center; gap: 4px; background: #FFC94D; color: #23212B; border-radius: 18px;
   box-shadow: 0 14px 36px rgba(0, 0, 0, .45); padding: 8px 10px 8px 12px; animation: bstamp-in .28s ease-out; }
 .bstamp-main { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; border: 0; background: none; padding: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; }

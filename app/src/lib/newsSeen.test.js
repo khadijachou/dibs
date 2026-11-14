@@ -62,7 +62,7 @@ test('markNewsSeen saves the newest version, then nothing is unread', () => {
 })
 
 test('v1.2 is big: someone who saw 1.1.13 (or 1.1.9, or 1.1.8) gets the dot, with its summary', () => {
-  assert.equal(NEWS[0].v, '1.2')
+  assert.equal(v12.v, '1.2') // 1.2.1 now sits on top but is not big: the dot still points at 1.2
   assert.equal(unreadNews({ storage: onboarded({ [NEWS_SEEN_KEY]: '1.1.13' }) }), v12)
   assert.equal(unreadNews({ storage: onboarded({ [NEWS_SEEN_KEY]: '1.1.9' }) }), v12)
   assert.equal(unreadNews({ storage: onboarded({ [NEWS_SEEN_KEY]: '1.1.8' }) }), v12)
