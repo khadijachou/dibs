@@ -2,6 +2,8 @@ import { useLayoutEffect, useRef, useState } from 'react'
 import { useApp } from '../App.jsx'
 import { BrandLogo, Header, Icon } from '../components/ui.jsx'
 import { CHIPS, brandGrad, catalogBrands, filterBrands } from '../lib/brands.js'
+import { listGoals } from '../lib/goals.js'
+import { markDailyOpen } from '../lib/quests.js'
 import { fromText } from '../lib/itemName.js'
 import { useReducedMotion } from '../components/UnlockTimer.jsx'
 import BrandSheet from '../components/BrandSheet.jsx'
@@ -101,7 +103,7 @@ export function GiftTile({ brand, big = false, style, onOpen }) {
 // moveFrom: opened from Move > "A new goal"; passed on to Plan and then to the new goal.
 // changeFor: a goal id whose card is no longer available (components/CardIssue.jsx); Plan then swaps that goal's card.
 export default function Catalog({ moveFrom = null, changeFor = null, chip: initialChip = null }) {
-  const { t, go, back, canGoBack } = useApp()
+  const { t, go, back, canGoBack, address } = useApp()
   const reduced = useReducedMotion()
   const brands = catalogBrands()
   const [chip, setChip] = useState(() => (CHIPS.includes(initialChip) ? initialChip : 'all')) // initial category (Quest of the week)
@@ -110,7 +112,8 @@ export default function Catalog({ moveFrom = null, changeFor = null, chip: initi
   const query = q.trim()
   const shown = filterBrands(brands, { q, chip })
   const popular = POPULAR.map((k) => brands.find((b) => b.key === k)).filter(Boolean)
-  const openSheet = (b) => setOpen(b.key)
+  // daily quests: Browse the catalog, and Look at a brand in {category}, complete when a brand sheet opens from here.
+  const openSheet = (b) => { markDailyOpen({ k: 'brand', chip: b.chip }, listGoals(address)); setOpen(b.key) }
   const sheetBrand = brands.find((b) => b.key === open)
   const pick = (region, itemId) => {
     const brandKey = sheetBrand.key

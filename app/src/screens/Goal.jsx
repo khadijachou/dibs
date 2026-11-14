@@ -6,6 +6,7 @@ import { fmtFiatValue } from '../lib/fiatValue.js'
 import { classify, lastLogText } from '../lib/errors.js'
 import { canManageGoal } from '../lib/manage.js'
 import { getGoal, listGoals, openGoalFor, progress, savedNim, stakerFlag, unlockRunning, updateGoal } from '../lib/goals.js'
+import { markDailyOpen } from '../lib/quests.js'
 import { planOf, poolName, shortAddress } from '../lib/pace.js'
 import { goalBrand, PaceLine } from './Home.jsx'
 import { MIN_NEW_STAKER_NIM } from '../lib/config.js'
@@ -132,6 +133,14 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
     })
     return () => { stop = true }
   }, [pend, address, goalId])
+
+  // Daily quest: See how {brand} is doing, completed when this goal's details are shown (not the Add page).
+  useEffect(() => {
+    if (!goal) return
+    const m = modeParam || (created ? 'add' : 'details')
+    const detailsShown = !(m === 'add' && goal.status === 'saving' && savedNim(goal) < goal.targetNim)
+    if (detailsShown) markDailyOpen({ k: 'goal', goalId }, listGoals(address))
+  }, [goalId, address, modeParam, created, goal?.status]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (balance != null) { setSlowWallet(false); return }

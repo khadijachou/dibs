@@ -118,3 +118,17 @@ test('recordVisit keeps one entry per day, sorted', () => {
   recordVisit(at(3))
   assert.deepEqual(getVisits(), ['2026-11-03', '2026-11-04'])
 })
+
+test('daily records add XP as kind daily; existing sources are unchanged without them', () => {
+  const g = goal([dep(10, at(3, 8))])
+  const base = xpEvents({ goals: [g], visits: ['2026-11-03'] })
+  const withDaily = xpEvents({ goals: [g], visits: ['2026-11-03'], dailyDays: { '2026-11-03': { xp: 15, quests: 2, full: true }, '2026-11-04': { xp: 0 } } })
+  assert.equal(sum(base, 'daily'), 0)
+  assert.equal(sum(withDaily, 'daily'), 15) // a zero-XP day adds nothing
+  for (const k of ['open', 'deposit', 'thousand']) assert.equal(sum(withDaily, k), sum(base, k))
+})
+
+test('a done weekly quest gives 30 for days5 and 40 for the others', () => {
+  const ev = xpEvents({ questsDone: [{ week: '2026-11-02', id: 'days5', at: iso(at(5)) }, { week: '2026-11-09', id: 'round', at: iso(at(10)) }] })
+  assert.deepEqual(ev.filter((e) => e.kind === 'quest').map((e) => e.xp).sort((a, b) => a - b), [30, 40])
+})

@@ -41,6 +41,17 @@ export function recordVisit(now = Date.now()) {
 }
 export const getQuestsDone = () => { const v = read('dibs.quests.done', []); return Array.isArray(v) ? v : [] }
 export function addQuestDone(entry) { write('dibs.quests.done', [...getQuestsDone(), entry]); fireXp() }
+// Daily quests (lib/quests.js): one compact record per local day, { xp, quests, full, add }. xp = the day's daily XP
+// (real quests + the all-done bonus; never the daily-visit 5, which stays in dibs.visits). quests = real quests done
+// that day (not the check-in); full = every slot done; add = an Add NIM slot was offered. Bounded like dibs.visits.
+export const getDailyDays = () => { const v = read('dibs.daily.days', {}); return v && typeof v === 'object' && !Array.isArray(v) ? v : {} }
+export function recordDailyDay(day, rec) {
+  const days = getDailyDays()
+  days[day] = rec
+  const keys = Object.keys(days).sort()
+  write('dibs.daily.days', keys.length > 400 ? Object.fromEntries(keys.slice(-400).map((k) => [k, days[k]])) : days)
+  fireXp()
+}
 // Badges shared at least once: [{ id, at }], the first share of each id only.
 export const getSharedIds = () => { const v = read('dibs.badges.sharedIds', []); return Array.isArray(v) ? v : [] }
 export function addSharedId(id, now = Date.now()) {
@@ -50,14 +61,14 @@ export function addSharedId(id, now = Date.now()) {
   fireXp()
 }
 
-export const XP = { open: 5, deposit: 10, thousand: 5, milestone: 25, badge: 50, share: 30, quest: 40, card: 200 }
+export const XP = { open: 5, deposit: 10, thousand: 5, milestone: 25, badge: 50, share: 30, quest: 40, card: 200, daily: 5 }
 const DEPOSITS_PER_DAY = 3
 const realDeposit = (d) => d.nim > 0 && d.kind !== 'move' && d.kind !== 'withdraw'
 const ms = (v) => { const n = typeof v === 'number' ? v : Date.parse(v); return Number.isFinite(n) ? n : null }
 const byAt = (a, b) => (ms(a.at) ?? 0) - (ms(b.at) ?? 0)
 
 // Every XP event: [{ at (ms), xp, kind }].
-export function xpEvents({ goals = [], badges = {}, sharedIds = [], visits = [], questsDone = [] }) {
+export function xpEvents({ goals = [], badges = {}, sharedIds = [], visits = [], questsDone = [], dailyDays = {} }) {
   const out = []
   const add = (at, xp, kind) => { if (at != null && xp > 0) out.push({ at, xp, kind }) }
   for (const day of visits) add(dayStart(day), XP.open, 'open')
@@ -90,7 +101,8 @@ export function xpEvents({ goals = [], badges = {}, sharedIds = [], visits = [],
 
   for (const rec of Object.values(badges || {})) add(ms(rec?.at), XP.badge, 'badge')
   for (const s of sharedIds) add(ms(s.at), XP.share, 'share')
-  for (const q of questsDone) add(ms(q.at), XP.quest, 'quest')
+  for (const q of questsDone) add(ms(q.at), q.id === 'days5' ? 30 : XP.quest, 'quest')
+  for (const [day, rec] of Object.entries(dailyDays || {})) if (rec && rec.xp > 0) add(dayStart(day), rec.xp, 'daily')
   for (const g of goals) if (g.status === 'redeemed') add(ms(g.payment?.at) ?? ms(g.createdAt), XP.card, 'card')
   return out.sort((a, b) => a.at - b.at)
 }
@@ -157,7 +169,7 @@ export const nextRank = (level) => RANKS.find((r) => r.level > level) || null
 // Everything a screen needs, from storage and the given goals and badges.
 export function xpSummary({ goals = [], badges = {}, now = Date.now() }) {
   const visits = getVisits()
-  const events = xpEvents({ goals, badges, sharedIds: getSharedIds(), visits, questsDone: getQuestsDone() })
+  const events = xpEvents({ goals, badges, sharedIds: getSharedIds(), visits, questsDone: getQuestsDone(), dailyDays: getDailyDays() })
   const xp = shownXp(totalXp(events, visits, now))
   const lv = levelOf(xp)
   return { xp, ...lv, rank: rankOf(lv.level), next: nextRank(lv.level), rhythm: rhythm(visits, now) }

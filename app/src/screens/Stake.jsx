@@ -3,6 +3,7 @@ import { useApp } from '../App.jsx'
 import { itemLabel } from '../lib/itemName.js'
 import { BrandLogo, Header, Icon, Notice, useFiat } from '../components/ui.jsx'
 import { listGoals, savedNim } from '../lib/goals.js'
+import { markDailyOpen } from '../lib/quests.js'
 import { readStaker } from '../lib/nimiq.js'
 import { stakeSummary } from '../lib/earned.js'
 import { stageOf } from '../lib/unlockStage.js'
@@ -26,6 +27,7 @@ export default function Stake() {
   }, [address])
 
   useEffect(() => { load() }, [load])
+  useEffect(() => { markDailyOpen({ k: 'savings' }, listGoals(address)) }, [address]) // daily quest: Check your Savings
 
   const goals = listGoals(address)
   const unlocking = goals.filter((g) => g.status === 'unlocking')

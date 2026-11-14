@@ -25,10 +25,13 @@ export const BADGES = [
   { id: 'sprout', group: 'grow', glyph: 'leaf1', nim: 10 },
   { id: 'orchard', group: 'grow', glyph: 'leaf2', nim: 100 },
   { id: 'forest', group: 'grow', glyph: 'leaf3', nim: 1000 },
+  { id: 'dayone', group: 'quest', glyph: 'calcheck' },
+  { id: 'days7', group: 'quest', glyph: 'seven' },
+  { id: 'quests50', group: 'quest', glyph: 'fifty' },
   { id: 'cycle3', group: 'special', glyph: 'iii' },
   { id: 'spread', group: 'special', glyph: 'share' },
 ]
-export const GROUPS = ['way', 'set', 'grow', 'special']
+export const GROUPS = ['way', 'set', 'grow', 'quest', 'special']
 export const badgeById = (id) => BADGES.find((b) => b.id === id) || null
 
 // Cycle III: the Nimiq Mini Apps Competition runs until the end of November 2026.
@@ -66,7 +69,7 @@ function hasGap(g) {
 }
 
 // The badges whose condition holds now: [{ id, goalId? }], goalId = the goal that met it when there is one.
-export function evaluate({ goals = [], earnedNim = 0, shared = false, now = Date.now() }) {
+export function evaluate({ goals = [], earnedNim = 0, shared = false, dailyDays = {}, weeklyDone = 0, now = Date.now() }) {
   const earned = Number(earnedNim) || 0
   const out = []
   const add = (id, goal) => out.push(goal ? { id, goalId: goal.id } : { id })
@@ -89,6 +92,14 @@ export function evaluate({ goals = [], earnedNim = 0, shared = false, now = Date
   }
   if (CHIPS.every((c) => redeemed.some((x) => chipOf(x) === c))) add('fullset')
   for (const b of BADGES.filter((x) => x.nim)) if (earned >= b.nim) add(b.id)
+  // Quests group (daily records in dibs.daily.days, plus the weekly quests done). quests50 counts real daily quests
+  // (never the check-in) and weekly quests; dayone/days7 count whole days finished (not in a row).
+  const recs = Object.values(dailyDays || {})
+  const fullDays = recs.filter((r) => r && r.full).length
+  const dailyQuests = recs.reduce((s, r) => s + (r && r.quests ? r.quests : 0), 0)
+  if (fullDays >= 1) add('dayone')
+  if (fullDays >= 7) add('days7')
+  if (dailyQuests + (Number(weeklyDone) || 0) >= 50) add('quests50')
   if (now < CYCLE3_END) add('cycle3')
   if (shared) add('spread')
   return out
@@ -111,12 +122,12 @@ export const setShared = () => { try { localStorage.setItem(SHARED, '1') } catch
 // a phone (no dibs.badges yet) records everything already met without announcing it: no stamp flood for existing users.
 // Checks run one at a time, so two of them never announce the same badge.
 let chain = Promise.resolve([])
-export function check({ goals = [], earnedNim = 0, now = Date.now() } = {}) {
+export function check({ goals = [], earnedNim = 0, dailyDays = {}, weeklyDone = 0, now = Date.now() } = {}) {
   const run = () => {
     const raw = readRaw()
     const first = raw === null
     const have = raw || {}
-    const met = evaluate({ goals, earnedNim, shared: isShared(), now })
+    const met = evaluate({ goals, earnedNim, shared: isShared(), dailyDays, weeklyDone, now })
     const fresh = met.filter((m) => !have[m.id])
     if (!fresh.length && !first) return []
     const at = new Date(now).toISOString()

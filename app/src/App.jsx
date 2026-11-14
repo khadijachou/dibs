@@ -39,8 +39,8 @@ import HowItWorks from './components/HowItWorks.jsx'
 import BadgeStamp from './components/BadgeStamp.jsx'
 import ShareConfirmSheet from './components/ShareConfirmSheet.jsx'
 import { check as checkBadges, getBadges, setShared, shareEarns } from './lib/badges.js'
-import { addSharedId, levelOf, rankOf, recordVisit, xpSummary } from './lib/xp.js'
-import { checkQuest } from './lib/quests.js'
+import { addSharedId, getDailyDays, getQuestsDone, levelOf, rankOf, recordVisit, xpSummary } from './lib/xp.js'
+import { checkDaily, checkQuest, weeklyXp } from './lib/quests.js'
 import { shareBadge as sharePoster } from './lib/poster.js'
 import { getName } from './lib/name.js'
 
@@ -160,7 +160,10 @@ export default function App() {
         recordEarned(c.value) // Welcome back: earned since the last visit (lib/lastVisit.js)
       } catch { /* chain unreadable: keep the last figure */ }
     }
-    const ids = await checkBadges({ goals: listGoals(addr), earnedNim: c.value ?? 0 })
+    // Daily quests (lib/quests.js): keep today's set live and complete the Add NIM quest from the ledger, before the
+    // badge check reads the daily records.
+    try { checkDaily(listGoals(addr)) } catch { /* display only */ }
+    const ids = await checkBadges({ goals: listGoals(addr), earnedNim: c.value ?? 0, dailyDays: getDailyDays(), weeklyDone: getQuestsDone().length })
     // Level up (lib/seen.js): a "lvl:N" item in the same queue, after any badge. The first run of this version stores
     // the current level silently.
     let lvl = null
@@ -175,7 +178,7 @@ export default function App() {
       })
     }
     // Quest of the week (lib/quests.js): picked at the first check of the week; a toast the first time it is done.
-    try { if (checkQuest(listGoals(addr)).justDone) { toastRef.current?.(tRef.current('quest_done_toast')); playTing() } } catch { /* display only */ }
+    try { const w = checkQuest(listGoals(addr)); if (w.justDone) { toastRef.current?.(tRef.current('quest_done_toast', { xp: weeklyXp(w.quest.id) })); playTing() } } catch { /* display only */ }
   }, [])
   const toastRef = useRef(null)
   const tRef = useRef(null)
