@@ -15,6 +15,7 @@ import { fmtNim } from '../lib/format.js'
 import { fmtFiatValue } from '../lib/fiatValue.js'
 import { brandGrad } from '../lib/brands.js'
 import { playPop, playGoalDone, playTing, playClink } from '../lib/sound.js'
+import DidYouKnow from '../components/DidYouKnow.jsx'
 
 // Bitrefill invoice statuses, in order. Anything else shows as "waiting".
 const STEPS = ['created', 'payment_detected', 'payment_confirmed', 'complete']
@@ -181,10 +182,13 @@ export default function Done({ goalId }) {
             {config.redeemMode !== 'api' ? (
               <p className="tk-manual">{t('done_manual')}</p>
             ) : !red ? (
-              <div className="tk-wait">
-                <span className="tk-spin" aria-hidden="true" />
-                <div><b>{t('done_waiting')}</b><p className="tk-step">{t(`done_s${stepIdx}`)}</p></div>
-              </div>
+              <>
+                <div className="tk-wait">
+                  <span className="tk-spin" aria-hidden="true" />
+                  <div><b>{t('done_waiting')}</b><p className="tk-step">{t(`done_s${stepIdx}`)}</p></div>
+                </div>
+                <DidYouKnow list="C" />
+              </>
             ) : (
               <>
                 {hasCode && (

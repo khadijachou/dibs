@@ -315,3 +315,8 @@ html.is-fullscreen:where([data-theme="light"]) body::before { background: linear
 :where(:root[data-theme="light"]) .ct-missing, :where(:root[data-theme="light"]) .ct-link { color: #906607; }
 :where(:root[data-theme="light"]) .ct-add { border-color: #d99a0b; }
 :where(:root[data-theme="light"]) .ct-band { border-color: rgba(217, 154, 11, .55); background: rgba(217, 154, 11, .06); }
+
+/* "Did you know?" line: softer butter in light mode (tile #fff3d6, bulb and label #a86a00); the fact keeps var(--cream),
+   which is ink in light mode. */
+:where(:root[data-theme="light"]) .dyk-tile { background: #fff3d6; color: #a86a00; }
+:where(:root[data-theme="light"]) .dyk-label { color: #a86a00; }

@@ -32,6 +32,7 @@ import { GoalDot, GoalStatus } from '../components/GoalStatus.jsx'
 import { getUnlockState, settleGoal } from '../lib/unlockFlow.js'
 import { ReadyBox, useReady } from '../components/ReadyState.jsx'
 import { CardTodayBlock } from '../components/CardToday.jsx'
+import DidYouKnow from '../components/DidYouKnow.jsx'
 
 const parseNim = (v) => Math.floor(Number(String(v).replace(/[^\d.]/g, ''))) || 0
 
@@ -408,6 +409,7 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
               right={done100 ? null : t('goal_this_week', { amount: fmtNim(Math.min(remaining, p.pace.amount || p.weekly), lang) })} />
           )}
           <MilestoneLine milestone={milestone} />
+          {goal.status === 'unlocking' && unlockSt?.state === 'waiting' && unlockSt.releaseAt != null && <DidYouKnow list="U" />}
           {saved > 0 && stakerAddress && <div className="acct">{t('goal_account', { address: '' }).trim()} <b>{shortAddress(stakerAddress)}</b><span className="pool">● {pool}</span></div>}
         </section>
         </CardFlip>

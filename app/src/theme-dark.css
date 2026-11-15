@@ -1479,3 +1479,13 @@ html.is-fullscreen .bstamp-live { top: calc(58px + var(--fs-top)); }
 .ct-band p { margin: 0; color: var(--cream); font-size: var(--fs-body); line-height: var(--lh-body); }
 .ct-band .ct-band-sub { color: var(--muted); font-size: var(--fs-meta); line-height: var(--lh-meta); }
 .ct-link { align-self: flex-start; background: none; border: 0; padding: 0; color: #FFC94D; font-weight: 600; font-size: var(--fs-body); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+
+/* "Did you know?" line (components/DidYouKnow.jsx): a thin rule, a butter bulb tile, the label in butter and the fact
+   in cream. Shown while the user waits (an unlocking goal's clock, the code screen). Display only. */
+.dyk { display: flex; align-items: flex-start; gap: 10px; border-top: 1px solid var(--line); margin-top: 12px; padding-top: 12px; animation: dyk-in .2s ease-out both; }
+.dyk-tile { flex: 0 0 28px; width: 28px; height: 28px; border-radius: 8px; background: rgba(255, 201, 77, .14); color: var(--butter); display: grid; place-items: center; }
+.dyk-txt { min-width: 0; }
+.dyk-label { color: var(--butter); font-size: var(--fs-meta); line-height: var(--lh-meta); font-weight: 600; }
+.dyk-fact { color: var(--cream); font-size: var(--fs-body); line-height: var(--lh-body); font-weight: 400; margin-top: 1px; }
+@keyframes dyk-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .dyk { animation: none; } }
