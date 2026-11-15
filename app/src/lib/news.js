@@ -3,7 +3,15 @@
 // Plain JS (no JSX) so node --test can load it; components/LegalText.jsx shows it, lib/newsSeen.js reads it.
 // Optional on a release: big: true (important news: a dot on More and a bell on More > What's new until it is opened)
 // and sum: the i18n key of a one-line summary shown on that row ({n} in it comes from the entry's n).
+// Optional too: sheet, which drives the one-time big-update sheet (components/WhatsNewSheet.jsx, lib/bigUpdate.js), shown
+// once when the app reaches a newer release that carries it. It is separate from `big` (which only lights the More dot).
+//   sheet: up to three rows, each { icon, title, line, go? }:
+//     icon  a name from the Icon set in components/ui.jsx (gift, bulb, play, shield, bag, ...)
+//     title i18n key, about 24 characters; line i18n key, about 50 characters (en, fr and es, no em dash, no "!" but "Dibs!")
+//     go    optional route name ('catalog', 'stake', ...) that adds a "Show me" link opening that screen
+//   Write only things that are in the same release's What's new block. No `sheet` on a release = no sheet for it.
 export const NEWS = [
+  { date: '2026-11-15', key: 'news_34', v: '1.2.7' },
   { date: '2026-11-15', key: 'news_33', v: '1.2.6' },
   { date: '2026-11-15', key: 'news_32', v: '1.2.5' },
   { date: '2026-11-14', key: 'news_31', v: '1.2.4' },

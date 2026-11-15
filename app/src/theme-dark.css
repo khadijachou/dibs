@@ -310,6 +310,33 @@ a.sheet-row { text-decoration: none; -webkit-tap-highlight-color: transparent; }
 @keyframes sheet-fade { from { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .sheet, .sheet-bg { animation: none; } }
 
+/* Big-update sheet (components/WhatsNewSheet.jsx): the app's bottom sheet, its own slide (40 px) and fade (0.32 s). */
+.sheet.bigup { gap: 14px; padding-top: 12px; animation: bigup-up .32s ease-out; }
+.sheet-bg.bigup-bg { animation: bigup-fade .32s ease-out; }
+.bigup .sheet-grab { cursor: pointer; }
+.bigup-head { display: flex; align-items: center; gap: 10px; }
+.bigup-pill { background: var(--gold); color: #fff; font-family: var(--font-display); font-weight: 700; font-size: var(--fs-label); line-height: var(--lh-label); border-radius: 999px; padding: 4px 11px; }
+.bigup-when { color: var(--muted); font-size: var(--fs-meta); line-height: var(--lh-meta); }
+.bigup-title { margin: 0; font: 700 var(--fs-title)/var(--lh-title) var(--font-display); color: var(--cream); letter-spacing: -0.01em; }
+.bigup-rows { display: flex; flex-direction: column; gap: 10px; }
+.bigup-row { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 12px; color: var(--cream); font: inherit; }
+.bigup-row.go { cursor: pointer; }
+.bigup-tile { width: 40px; height: 40px; flex-shrink: 0; border-radius: 12px; display: grid; place-items: center; }
+.bigup-tile.coral { background: rgba(232, 72, 42, .15); color: var(--gold); }
+.bigup-tile.mint { background: rgba(21, 137, 106, .15); color: var(--teal); }
+.bigup-tile.butter { background: rgba(255, 201, 77, .15); color: var(--butter); }
+.bigup-tx { flex: 1; min-width: 0; }
+.bigup-tx b { display: block; font-size: var(--fs-strong); line-height: var(--lh-strong); font-weight: 600; }
+.bigup-tx small { display: block; color: var(--muted); font-size: var(--fs-meta); line-height: var(--lh-meta); margin-top: 2px; }
+.bigup-show { flex-shrink: 0; display: flex; align-items: center; gap: 3px; color: var(--teal); font-size: var(--fs-meta); line-height: var(--lh-meta); font-weight: 600; }
+.bigup-show i { font-style: normal; }
+.bigup-since { margin: 0; color: var(--muted); font-size: var(--fs-meta); line-height: var(--lh-meta); }
+.btn.bigup-ok { width: 100%; }
+.bigup-all { align-self: center; background: none; border: 0; padding: 4px 0 0; color: var(--muted); font-size: var(--fs-meta); line-height: var(--lh-meta); text-decoration: underline; cursor: pointer; }
+@keyframes bigup-up { from { transform: translateY(40px); opacity: 0; } }
+@keyframes bigup-fade { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .sheet.bigup, .sheet-bg.bigup-bg { animation: none; } }
+
 /* Wave 2A: bottom tab bar (Goals, Stake, History, More), Stake, History, More. */
 .tabbar { position: fixed; left: 50%; bottom: 0; transform: translateX(-50%); width: min(480px, 100%); z-index: 8; display: flex;
   background: rgba(21, 20, 26, .94); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-top: 1px solid #2b2834;

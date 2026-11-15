@@ -43,9 +43,20 @@ import { addSharedId, getDailyDays, getQuestsDone, levelOf, rankOf, recordVisit,
 import { checkDaily, checkQuest, weeklyXp } from './lib/quests.js'
 import { shareBadge as sharePoster } from './lib/poster.js'
 import { getName } from './lib/name.js'
+import { bigSheetFor, releaseOf } from './lib/bigUpdate.js'
+import { NEWS } from './lib/news.js'
+import { version as appVersion } from '../package.json'
+import WhatsNewSheet from './components/WhatsNewSheet.jsx'
 
 // The Lab (#lab) is a developer screen: only in demo mode or in a build made with VITE_LAB=1.
 const labAllowed = () => import.meta.env.VITE_LAB === '1' || isDemo()
+
+// The big-update sheet (components/WhatsNewSheet.jsx, lib/bigUpdate.js) stands back for a payment being checked
+// (dibs.pending kind 'pay', the unknown-outcome lock) and for any other overlay already on screen; it is then tried
+// again at the next launch. A bottom sheet (.sheet-bg), the badge banner (.bstamp), a milestone line (.ms-line) or the
+// Day done stamp (.dq-done) all count as an overlay.
+const payPending = () => { try { return JSON.parse(localStorage.getItem('dibs.pending'))?.kind === 'pay' } catch { return false } }
+const overlayOpen = () => { try { return Boolean(document.querySelector('.sheet-bg, .bstamp, .ms-line, .dq-done')) } catch { return false } }
 
 const LANGS = ['en', 'fr', 'es']
 const readLang = () => { try { const l = localStorage.getItem('dibs.lang'); return LANGS.includes(l) ? l : null } catch { return null } }
@@ -129,6 +140,7 @@ export default function App() {
   const endIntro = useCallback(() => { setIntro(null); window.scrollTo(0, 0) }, [])
   const finishOnboarding = useCallback(() => {
     try { localStorage.setItem('dibs.onboarded', '1') } catch { /* private mode */ }
+    try { localStorage.setItem('dibs.bigSeen', releaseOf(appVersion)) } catch { /* private mode */ } // a fresh arrival has seen this release
     markNewsSeen() // someone who just arrived has nothing unread: no dot on More
     let seen = false
     try { seen = localStorage.getItem('dibs.introSeen') === '1' } catch { /* private mode */ }
@@ -332,6 +344,26 @@ export default function App() {
     return result
   }, [t, toast, runBadgeCheck, address])
 
+  // Big-update sheet (components/WhatsNewSheet.jsx, lib/bigUpdate.js): once per launch, the moment Welcome back has
+  // closed and Home is showing. Closing it (any way) saves dibs.bigSeen so it never comes back for that release.
+  const [bigSheet, setBigSheet] = useState(null)
+  const bigTried = useRef(false)
+  const endBig = useCallback((after) => {
+    setBigSheet((s) => { if (s) { try { localStorage.setItem('dibs.bigSeen', s.release) } catch { /* private mode */ } } return null })
+    if (after) after()
+  }, [])
+  useEffect(() => {
+    if (bigTried.current || !ready || !splashGone) return
+    // Order on launch: splash, then Welcome back, then this. Never over the Lab, the intro or How it works, and only on Home.
+    if (isLab || intro || howTo || welcome || route.name !== 'home') return
+    bigTried.current = true // decided once this launch; a blocker now means it waits for the next launch
+    if (shareAsk || stamps.length || payPending() || overlayOpen()) return
+    let stored = null
+    try { stored = localStorage.getItem('dibs.bigSeen') } catch { /* private mode */ }
+    const info = bigSheetFor({ version: appVersion, stored, onboarded, news: NEWS })
+    if (info) setBigSheet(info)
+  }, [ready, splashGone, isLab, intro, howTo, welcome, route.name, shareAsk, stamps, onboarded])
+
   // Android back button. The page keeps at most two browser entries: a base entry, plus a guard entry on top of it
   // whenever the app has somewhere to go back to. Back pops the guard; the app moves back one screen and puts the
   // guard back if needed. On Goals with nothing behind, there is no guard, so back leaves the app as usual.
@@ -405,6 +437,7 @@ export default function App() {
         <div className={`app${tabs ? ' with-tabs' : ''}`}><Screen {...route.params} />{tabs && <TabBar current={route.name} />}<BadgeStamp id={stamps[0] || null} isBlocked={isBlocked} onDone={endStamp} />{toastText && <div className="toast" role="status"><i>i</i>{toastText}</div>}</div>
       )}
       {shareAsk && !isLab && <ShareConfirmSheet onYes={confirmShare} onClose={() => setShareAsk(null)} />}
+      {bigSheet && !isLab && route.name === 'home' && <WhatsNewSheet release={bigSheet.release} entry={bigSheet.entry} since={bigSheet.since} onClose={() => endBig()} onGo={(r) => endBig(() => go(r))} onSeeAll={() => endBig(() => go('legal', { page: 'news' }))} />}
     </AppCtx.Provider>
   )
 }

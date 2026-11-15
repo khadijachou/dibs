@@ -320,3 +320,6 @@ html.is-fullscreen:where([data-theme="light"]) body::before { background: linear
    which is ink in light mode. */
 :where(:root[data-theme="light"]) .dyk-tile { background: #fff3d6; color: #a86a00; }
 :where(:root[data-theme="light"]) .dyk-label { color: #a86a00; }
+
+/* Big-update sheet: the butter icon needs the readable light shade (the mint tile uses var(--teal), the coral stays). */
+:where(:root[data-theme="light"]) .bigup-tile.butter { color: #906607; }
