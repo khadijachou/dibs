@@ -306,3 +306,14 @@ test('a completion moment is shown once: markDailyShown records it and it never 
   markDailyShown(['savings'], [g], at(4)) // idempotent
   assert.deepEqual(dailyState(JSON.parse(store.get('dibs.daily')), [g]).shown, ['savings'])
 })
+
+// v1.2.11: a 'kept' entry is not a deposit for the quests that count deposits (two, week, add).
+test('a kept entry is not a deposit for the weekly quests', () => {
+  const now = at(4) // Wednesday, the week of Monday at(2)
+  const withKept = goal({ deposits: [dep(150, at(3)), dep(-500, at(3), { kind: 'kept' })] })
+  const plain = goal({ deposits: [dep(150, at(3))] })
+  const q = { id: 'week', amount: 100 }
+  assert.deepEqual(questState({ ...q, goalId: withKept.id }, [withKept], now), questState({ ...q, goalId: plain.id }, [plain], now))
+  const keptOnly = goal({ deposits: [dep(-300, at(3), { kind: 'kept' })] })
+  assert.equal(questState({ id: 'two' }, [withKept, keptOnly], now).count, 1) // only the goal with a real deposit counts
+})

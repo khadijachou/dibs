@@ -85,3 +85,15 @@ test('split follows each goal\'s stake', () => {
   const b = goal('saving', 1000, [dep(250, '2026-10-01T00:00:00Z')])
   assert.deepEqual(splitEarned(40, [a, b]), { [a.id]: 30, [b.id]: 10 })
 })
+
+// v1.2.11: totalSaved and savingSince count real deposits (no kind), so a 'kept' entry is ignored.
+test('a kept entry does not change profileStats', () => {
+  const plain = [goal('saving', 1000, [dep(800, '2026-10-05T10:00:00Z')])]
+  const withKept = [goal('saving', 1000, [dep(800, '2026-10-05T10:00:00Z'), dep(-300, '2026-10-06T10:00:00Z', 'kept')])]
+  const a = profileStats(plain)
+  const b = profileStats(withKept)
+  assert.equal(b.totalSaved, a.totalSaved)
+  assert.equal(b.totalSaved, 800)
+  assert.equal(b.goalsDone, a.goalsDone)
+  assert.equal(b.savingSince, a.savingSince)
+})

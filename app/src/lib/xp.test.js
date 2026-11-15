@@ -132,3 +132,15 @@ test('a done weekly quest gives 30 for days5 and 40 for the others', () => {
   const ev = xpEvents({ questsDone: [{ week: '2026-11-02', id: 'days5', at: iso(at(5)) }, { week: '2026-11-09', id: 'round', at: iso(at(10)) }] })
   assert.deepEqual(ev.filter((e) => e.kind === 'quest').map((e) => e.xp).sort((a, b) => a - b), [30, 40])
 })
+
+// v1.2.11: a negative 'kept' entry (keep NIM in the wallet) is a ledger adjustment, never a deposit.
+test('a kept entry does not change deposit, thousand or milestone XP, and undoes nothing', () => {
+  const plain = goal([dep(1500, at(3)), dep(600, at(4))], { targetNim: 2000 }) // crosses 25/50/75 %
+  const withKept = goal([dep(1500, at(3)), dep(600, at(4)), dep(-500, at(6), { id: 'k', kind: 'kept' })], { targetNim: 2000 })
+  const before = xpEvents({ goals: [plain] })
+  const after = xpEvents({ goals: [withKept] })
+  assert.equal(sum(after, 'deposit'), sum(before, 'deposit')) // two real deposits either way
+  assert.equal(sum(after, 'thousand'), sum(before, 'thousand')) // the 1,000 steps count real deposits only
+  assert.equal(sum(after, 'milestone'), sum(before, 'milestone')) // milestones already crossed are not undone
+  assert.ok(sum(before, 'milestone') > 0) // the plain goal really did cross 25/50/75 %
+})

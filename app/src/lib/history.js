@@ -38,6 +38,7 @@ export function buildTimeline(goals, nameOf = label, rawName = (s) => s, cardNam
       else if (d.kind === 'move' && d.to) out.push({ ...base, id: `m-${d.id || d.at}`, type: 'move', nim: Math.abs(d.nim), from: name, to: rawName(d.name || '') })
       else if (d.kind === 'move' && d.from && !sourceRows.has(moveKey(d))) out.push({ ...base, id: `m-${d.id || d.at}`, type: 'move', nim: d.nim, from: rawName(d.name || ''), to: name })
       else if (d.kind === 'withdraw') out.push({ ...base, id: `w-${d.id || d.at}`, type: 'withdraw', nim: Math.abs(d.nim) })
+      else if (d.kind === 'kept') out.push({ ...base, id: `k-${d.id || d.at}`, type: 'kept', nim: Math.abs(d.nim) })
     }
     const held = heldNim(g)
     for (const s of g.unlockSteps || []) {

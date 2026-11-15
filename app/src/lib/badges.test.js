@@ -172,3 +172,23 @@ test('Quests badges: dayone and days7 from full days, quests50 from daily plus w
   assert.ok(has({ dailyDays: seven, weeklyDone: 36 }, 'quests50'))  // 14 + 36 = 50
   assert.equal(BADGES.length, 24)
 })
+
+// v1.2.11: a 'kept' entry is not a deposit and not a move; evaluate ignores it, and a recorded badge is never removed.
+test('evaluate ignores a kept entry (not a deposit, not a move)', () => {
+  const before = evaluate({ now: NOW, goals: [goal({ deposits: [dep(900, NOW - 5 * DAY)] })] })
+  const after = evaluate({ now: NOW, goals: [goal({ deposits: [dep(900, NOW - 5 * DAY), dep(-100, NOW - DAY, { kind: 'kept' })] })] })
+  assert.deepEqual(ids(after), ids(before))
+  assert.ok(ids(after).includes('planted')) // the real deposit still earns it
+  assert.ok(!ids(after).includes('rebalancer')) // a kept entry is not a move
+})
+
+test('check never removes a badge a kept entry would drop below its threshold', async () => {
+  const g = goal({ targetNim: 1000, deposits: [dep(600, NOW - 5 * DAY)] }) // 60 % -> halfway met
+  await check({ goals: [g], now: NOW }) // first run records everything met, silently
+  assert.ok(getBadges().halfway)
+  const dropped = { ...g, deposits: [...g.deposits, dep(-200, NOW - DAY, { kind: 'kept' })] } // 400 -> 40 %
+  assert.ok(!evaluate({ now: NOW, goals: [dropped] }).some((x) => x.id === 'halfway')) // evaluate no longer lists it
+  const announced = await check({ goals: [dropped], now: NOW })
+  assert.ok(!announced.includes('halfway')) // nothing re-announced
+  assert.ok(getBadges().halfway) // the recorded badge stays
+})

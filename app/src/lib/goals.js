@@ -93,6 +93,33 @@ export function moveNim(address, fromId, toId, nim) {
   return { from: next.find((g) => g.id === fromId), to: next.find((g) => g.id === toId) }
 }
 
+// Keep NIM in the wallet (v1.2.11). picks = [{ goalId, nim }]: each picked goal stops counting that much NIM, so the
+// goals no longer count more than the staker holds (the Savings gap, lib/stakeGap.js). Ledger only, no chain write:
+// a negative 'kept' entry on each picked goal lowers savedNim. Validates everything first, then writes once (or throws
+// and writes nothing). Modelled on moveNim. Never touches a goal the user did not pick.
+export function keepInWallet(address, picks = []) {
+  const goals = read(address)
+  if (!Array.isArray(picks) || !picks.length) throw new Error('Nothing to keep')
+  const seen = new Set()
+  for (const p of picks) {
+    const g = goals.find((x) => x.id === p?.goalId)
+    if (!g) throw new Error('Goal not found')
+    if (g.status !== 'saving') throw new Error('Goal is not saving')
+    if (!Number.isInteger(p.nim) || p.nim <= 0 || p.nim > savedNim(g)) throw new Error('Amount out of range')
+    if (seen.has(p.goalId)) throw new Error('Goal listed twice')
+    seen.add(p.goalId)
+  }
+  const at = new Date().toISOString()
+  const byId = new Map(picks.map((p) => [p.goalId, p.nim]))
+  const next = goals.map((g) => (
+    byId.has(g.id)
+      ? { ...g, deposits: [...g.deposits, { id: newId(), nim: -byId.get(g.id), kind: 'kept', at }], updatedAt: at }
+      : g
+  ))
+  write(address, next)
+  return next
+}
+
 // A goal can be deleted when it holds 0 NIM and no unlock of it is in progress (mainnet 10 Nov: a 0 % duplicate
 // of a goal in its unlock could not be removed).
 export const deletable = (g) => Boolean(g) && savedNim(g) === 0 && ['saving', 'redeemed', 'withdrawn'].includes(g.status)

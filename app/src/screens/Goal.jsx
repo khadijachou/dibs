@@ -222,7 +222,7 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
   }
   const withdrawing = goal.status === 'unlocking' && goal.unlockMode === 'withdraw'
   const returned = goal.status === 'withdrawn' ? goal.deposits.filter((d) => d.kind === 'withdraw').reduce((s, d) => s - d.nim, 0) : 0
-  const rowLabel = (d) => d.kind === 'move' ? t(d.to ? 'row_moved_to' : 'row_moved_from', { name: localName(t, d.name || '', { title: true }) }) : d.kind === 'withdraw' ? t('row_returned') : null
+  const rowLabel = (d) => d.kind === 'move' ? t(d.to ? 'row_moved_to' : 'row_moved_from', { name: localName(t, d.name || '', { title: true }) }) : d.kind === 'withdraw' ? t('row_returned') : d.kind === 'kept' ? t('row_kept') : null
   const quick = [...new Set([suggested, Math.ceil(goal.targetNim / 4), remaining])]
     .filter((q) => q > 0 && q <= remaining)
     .map((q, i) => ({ value: q, label: q === remaining ? t('goal_rest') : i === 0 ? t('pill_week') : t('pill_quarter') }))

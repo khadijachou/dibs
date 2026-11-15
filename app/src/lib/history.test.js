@@ -55,3 +55,17 @@ test('lastTxHash returns the newest transaction hash', () => {
   assert.equal(lastTxHash([g]), 'tx2026-11-02T00:00:00Z')
   assert.equal(lastTxHash([]), '')
 })
+
+test('a kept entry becomes a kept row: minus amount, no transaction', () => {
+  const g = {
+    id: 'g1', itemName: 'Valorant', itemDetail: '5 EUR', status: 'saving',
+    deposits: [dep('2026-11-01T10:00:00Z'), { id: 'k1', nim: -9079, kind: 'kept', at: '2026-11-05T10:00:00Z' }],
+  }
+  const ev = buildTimeline([g], name)
+  const kept = ev.find((e) => e.type === 'kept')
+  assert.ok(kept)
+  assert.equal(kept.nim, 9079) // the row shows the magnitude; History prints the minus sign
+  assert.equal(kept.tx, undefined) // no transaction: the row is not openable
+  assert.equal(kept.goal, 'Valorant · 5 EUR')
+  assert.equal(ev.filter((e) => e.type === 'deposit').length, 1) // the real deposit row is unchanged
+})

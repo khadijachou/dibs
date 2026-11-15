@@ -44,6 +44,7 @@ export default function History({ focus }) {
     if (e.type === 'move') return t('hist_move', { from: e.from, to: e.to })
     if (e.type === 'unlock') return t(UNLOCK_TITLE[e.step] || 'hist_unlock_started')
     if (e.type === 'withdraw') return t('hist_withdraw')
+    if (e.type === 'kept') return t('row_kept')
     if (e.type === 'change') return t('hist_card_changed')
     return t('hist_purchase')
   }
@@ -62,9 +63,9 @@ export default function History({ focus }) {
           {g ? (
             <>
               <BrandLogo brand={goalBrand(g)} />
-              <span className={`tl-badge ${e.type}`}>{e.type === 'change' ? <Icon name="swap" size={11} stroke={3} /> : BADGE[e.type]}</span>
+              <span className={`tl-badge ${e.type}`}>{e.type === 'change' ? <Icon name="swap" size={11} stroke={3} /> : (BADGE[e.type] ?? BADGE.withdraw)}</span>
             </>
-          ) : <span className="tl-ic">{e.type === 'change' ? <Icon name="swap" size={20} stroke={3} /> : BADGE[e.type]}</span>}
+          ) : <span className="tl-ic">{e.type === 'change' ? <Icon name="swap" size={20} stroke={3} /> : (BADGE[e.type] ?? BADGE.withdraw)}</span>}
         </span>
         <span className="tl-main">
           <b>{title(e)}</b>
@@ -72,7 +73,7 @@ export default function History({ focus }) {
             : e.type !== 'move' && <span className="tl-goal">{e.goal}</span>}
         </span>
         <span className="tl-end">
-          {e.type !== 'change' && <span className="tl-amt">{e.type === 'deposit' ? '+' : ''}{fmtNim(e.nim, lang)} NIM</span>}
+          {e.type !== 'change' && <span className="tl-amt">{e.type === 'deposit' ? '+' : e.type === 'kept' ? '−' : ''}{fmtNim(e.nim, lang)} NIM</span>}
           <span className="tl-time">{fmtTime(e.at, lang)}</span>
         </span>
       </>

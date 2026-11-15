@@ -15,6 +15,7 @@ import { chainReleaseAt, readyTimeText, ReleaseClock } from '../components/Relea
 import WeekCard from '../components/WeekCard.jsx'
 import { MIN_SHOWN, splitSegments, stakeSplit } from '../components/stakeSplit.js'
 import { RestakeButton } from '../components/Restake.jsx'
+import { KeepLink } from '../components/KeepInWallet.jsx'
 import { pending } from '../lib/deposit.js'
 import { isRestake, wholeGap } from '../lib/restake.js'
 
@@ -154,6 +155,7 @@ function StakeHero({ st, sum }) {
                 <b>{t('gap_title', { gap: fmtNim(wholeGap(gapExact), lang) })}</b>
                 <p>{t('gap_line')}{' '}<button type="button" className="stake-gap-why" onClick={() => go('faq', { open: 'gap' })}>{t('gap_why')}</button></p>
                 <RestakeButton gapExact={gapExact} />
+                <KeepLink gap={wholeGap(gapExact)} />
               </div>
             </div>
           )}

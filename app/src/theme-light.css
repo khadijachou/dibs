@@ -341,3 +341,9 @@ html.is-fullscreen:where([data-theme="light"]) body::before { background: linear
 :where(:root[data-theme="light"]) .stake-facts b.on-hold { color: #a86a00; }
 :where(:root[data-theme="light"]) .goal-status.partly { color: #a86a00; }
 :where(:root[data-theme="light"]) .goal-status.partly::before { background: #d99a0b; }
+
+/* Keep it in my wallet (v1.2.11): butter softens to the readable light shades, same as the gap band. */
+:where(:root[data-theme="light"]) .keep-row.on { background: #fff6e0; border-color: #e9c877; }
+:where(:root[data-theme="light"]) .keep-row.on .radio { border-color: #e9c877; background: #e9c877; box-shadow: inset 0 0 0 4px #fff6e0; }
+:where(:root[data-theme="light"]) .keep-new, :where(:root[data-theme="light"]) .keep-rest { color: #a86a00; }
+:where(:root[data-theme="light"]) .list .row.kept > span:first-child { color: var(--muted); }

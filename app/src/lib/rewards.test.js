@@ -60,3 +60,12 @@ test('places and amounts: Dibs! first 20 at 5,000 NIM, Planted first 30 at 1,000
   assert.equal(REWARDS.planted.nim, 1000)
   assert.equal(REWARDS.dibs.places * REWARDS.dibs.nim + REWARDS.planted.places * REWARDS.planted.nim, 130000)
 })
+
+// v1.2.11: a 'kept' entry is a ledger adjustment, not a deposit: rewards ignore it.
+test('a kept entry is not counted as the first deposit', () => {
+  const goals = [goal({ deposits: [{ nim: 100, tx: 'aa', at: iso(NOW - 2 * DAY) }, { nim: -40, kind: 'kept', at: iso(NOW - DAY) }] })]
+  const badges = { planted: { at: iso(NOW) } }
+  assert.deepEqual(state('planted', { badges, goals, now: NOW }), { state: 'wait', date: iso(NOW + 5 * DAY) })
+  const lines = claimDetails('planted', { goals, walletAddress: 'NQ', t })
+  assert.ok(lines.some((l) => l.includes('aa'))) // the real deposit's tx, never the kept entry
+})

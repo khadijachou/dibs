@@ -63,3 +63,10 @@ test('stakeGapExact: null in exactly the same cases as stakeGap', () => {
   assert.equal(stakeGapExact({ st: st(13622), goals: AZIZ_GOALS, pendingDeposit: true }), null)
   assert.equal(stakeGapExact({ st: st(100), goals: [g('saving', 100.6)] }), null) // under 1 NIM
 })
+
+test('v1.2.11 keepInWallet closes Aziz gap: Valorant gives 9,079, no gap left', () => {
+  const repaired = [g('saving', 3200), g('saving', 19501 - 9079)] // 3,200 + 10,422 = 13,622, exactly the active stake
+  assert.equal(stakeGap({ st: st(13622), goals: repaired }), null)
+  const exact = stakeGapExact({ st: st(13622), goals: repaired })
+  assert.ok(exact == null || exact < 1) // under 1 NIM: nothing to show
+})

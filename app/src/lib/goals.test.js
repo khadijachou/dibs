@@ -243,3 +243,67 @@ test('v1.1.9 every goal write stamps updatedAt (create, update, move); deposits 
   assert.equal(from.deposits.at(-1).nim, -4)
   assert.equal(to.deposits.at(-1).nim, 4)
 })
+
+// v1.2.11 keepInWallet: one negative 'kept' entry per picked goal, validated first, written once (or nothing).
+const kw = await import('./goals.js')
+
+test('keepInWallet writes one kept entry per picked goal and touches nothing else', () => {
+  const a = make(STEAM_5_USA, { deposits: [{ id: 'a1', nim: 19501, at: '2026-11-01T00:00:00Z' }] })
+  const b = make(STEAM_20_USA, { deposits: [{ id: 'b1', nim: 3200, at: '2026-11-01T00:00:00Z' }] })
+  const c = make(STEAM_5_EU, { status: 'redeemed', deposits: [{ id: 'c1', nim: 5000, at: '2026-11-01T00:00:00Z' }] })
+  const bBefore = JSON.stringify(kw.getGoal(ADDR, b.id))
+  const cBefore = JSON.stringify(kw.getGoal(ADDR, c.id))
+  kw.keepInWallet(ADDR, [{ goalId: a.id, nim: 9079 }])
+  const aAfter = kw.getGoal(ADDR, a.id)
+  assert.equal(aAfter.deposits.length, 2)
+  const last = aAfter.deposits.at(-1)
+  assert.equal(last.nim, -9079)
+  assert.equal(last.kind, 'kept')
+  assert.ok(last.id && last.at)
+  assert.ok(Date.parse(aAfter.updatedAt) > 0)
+  assert.equal(aAfter.targetNim, a.targetNim)
+  assert.equal(aAfter.status, 'saving')
+  assert.equal(kw.savedNim(aAfter), 19501 - 9079)
+  // The goals the user did not pick are byte for byte unchanged.
+  assert.equal(JSON.stringify(kw.getGoal(ADDR, b.id)), bBefore)
+  assert.equal(JSON.stringify(kw.getGoal(ADDR, c.id)), cBefore)
+})
+
+test('keepInWallet writes several goals with one shared timestamp', () => {
+  const a = make(STEAM_5_USA, { deposits: [{ id: 'a1', nim: 19501, at: '2026-11-01T00:00:00Z' }] })
+  const b = make(STEAM_20_USA, { deposits: [{ id: 'b1', nim: 3200, at: '2026-11-01T00:00:00Z' }] })
+  kw.keepInWallet(ADDR, [{ goalId: b.id, nim: 3200 }, { goalId: a.id, nim: 5879 }])
+  const aAfter = kw.getGoal(ADDR, a.id)
+  const bAfter = kw.getGoal(ADDR, b.id)
+  assert.equal(aAfter.deposits.at(-1).nim, -5879)
+  assert.equal(bAfter.deposits.at(-1).nim, -3200)
+  assert.equal(aAfter.deposits.at(-1).at, bAfter.deposits.at(-1).at) // same `at` for all
+  assert.equal(aAfter.updatedAt, bAfter.updatedAt)
+})
+
+test('keepInWallet lets a goal reach exactly 0 and stay saving', () => {
+  const a = make(STEAM_5_USA, { deposits: [{ id: 'a1', nim: 3200, at: '2026-11-01T00:00:00Z' }] })
+  kw.keepInWallet(ADDR, [{ goalId: a.id, nim: 3200 }])
+  const aAfter = kw.getGoal(ADDR, a.id)
+  assert.equal(kw.savedNim(aAfter), 0)
+  assert.equal(aAfter.status, 'saving')
+})
+
+test('keepInWallet refuses bad input and leaves storage byte for byte unchanged', () => {
+  const a = make(STEAM_5_USA, { deposits: [{ id: 'a1', nim: 19501, at: '2026-11-01T00:00:00Z' }] })
+  const notSaving = make(STEAM_20_USA, { status: 'unlocking', deposits: [{ id: 'u1', nim: 5000, at: '2026-11-01T00:00:00Z' }] })
+  const before = localStorage.getItem('dibs.goals')
+  const bad = [
+    [{ goalId: 'nope', nim: 10 }],                        // unknown goal
+    [{ goalId: notSaving.id, nim: 10 }],                  // not saving
+    [{ goalId: a.id, nim: 19502 }],                       // above what it holds
+    [{ goalId: a.id, nim: 0 }],                           // zero
+    [{ goalId: a.id, nim: 10.5 }],                        // a fraction
+    [{ goalId: a.id, nim: 10 }, { goalId: a.id, nim: 5 }], // the same goal twice
+    [],                                                   // nothing to keep
+  ]
+  for (const picks of bad) {
+    assert.throws(() => kw.keepInWallet(ADDR, picks))
+    assert.equal(localStorage.getItem('dibs.goals'), before) // nothing written
+  }
+})
