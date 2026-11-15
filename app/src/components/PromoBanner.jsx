@@ -11,7 +11,7 @@ import { CHIPS, catalogBrands } from '../lib/brands.js'
 const PHOTOS = Object.fromEntries(Object.entries(import.meta.glob('../assets/promo/*.{jpg,jpeg,webp}', { eager: true, import: 'default' }))
   .map(([path, url]) => [path.split('/').pop().replace(/\.(jpe?g|webp)$/i, ''), url]))
 // Brands that have a promo_<key> line in every language.
-const LINES = ['steam', 'playstation', 'xbox', 'airbnb', 'hotels', 'flightgift', 'uber', 'netflix', 'disney', 'ubereats', 'doordash', 'starbucks', 'amazon', 'apple', 'bestbuy']
+const LINES = ['steam', 'playstation', 'xbox', 'airbnb', 'hotels', 'flightgift', 'uber', 'netflix', 'disney', 'ubereats', 'doordash', 'starbucks', 'amazon', 'apple', 'bestbuy', 'nintendo', 'googleplay', 'roblox', 'fortnite', 'valorant', 'riot', 'discord', 'handm', 'nike', 'twitch', 'burgerking']
 
 const NimiqHex = () => (
   <svg viewBox="0 0 27 24" width="11" height="11" aria-hidden="true">
