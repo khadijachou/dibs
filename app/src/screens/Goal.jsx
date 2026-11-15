@@ -12,6 +12,7 @@ import { goalBrand, PaceLine } from './Home.jsx'
 import { MIN_NEW_STAKER_NIM } from '../lib/config.js'
 import { readStaker, stakeNim } from '../lib/nimiq.js'
 import { confirmPending, expired, pending, stakedLuna, startPending, waitForDeposit } from '../lib/deposit.js'
+import { isRestake } from '../lib/restake.js'
 import { audioContext, playDeposit } from '../lib/sound.js'
 import GoalRing from '../components/GoalRing.jsx'
 import Num from '../components/Num.jsx'
@@ -58,7 +59,7 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
   const [partly, setPartly] = useState(false) // some goal NIM is not staked (a gap, lib/stakeGap.js): the status links to Savings
   const [stakerAddress, setStakerAddress] = useState(null) // BUG-15: the account line shows the staker, not the funded address
   // BUG-01: a deposit waiting for the chain (survives reloads), and the outcomes it can end in.
-  const [pend, setPend] = useState(() => pending.get(address))
+  const [pend, setPend] = useState(() => { const p = pending.get(address); return isRestake(p) ? null : p }) // a restake record is settled by components/Restake.jsx, never by this deposit watcher
   const [recovered, setRecovered] = useState(null) // { nim }: Nimiq Pay errored but the stake grew
   const [unseen, setUnseen] = useState(false)
   const [rpcDown, setRpcDown] = useState(false)

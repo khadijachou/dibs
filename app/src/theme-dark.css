@@ -385,6 +385,16 @@ a.sheet-row { text-decoration: none; -webkit-tap-highlight-color: transparent; }
 .stake-gap-tx b { display: block; font-weight: 600; color: var(--cream); font-size: var(--fs-body); line-height: var(--lh-body); }
 .stake-gap-tx p { margin: 2px 0 0; font-size: var(--fs-label); line-height: var(--lh-label); color: var(--muted); }
 .stake-gap-why { background: none; border: 0; padding: 0; font: inherit; color: var(--butter); text-decoration: underline; cursor: pointer; }
+/* Put missing NIM back in staking (v1.2.10): a full-width butter outline pill under the band's line. */
+.stake-gap .restake-btn { display: block; width: 100%; height: auto; min-height: 44px; margin-top: 10px; padding: 9px 14px; line-height: 1.2; background: transparent; border: 1px solid var(--butter); color: var(--butter); box-shadow: none; }
+.stake-gap .restake-btn:disabled { background: transparent; color: var(--butter); opacity: .55; }
+/* Waiting on Nimiq Pay / the chain: the same pill, disabled at 70 %, with a small butter spinner before the label. */
+.stake-gap .restake-btn.is-waiting { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.stake-gap .restake-btn.is-waiting:disabled { opacity: .7; }
+.btn-spin { flex: none; width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--butter); border-top-color: transparent; animation: btn-spin .7s linear infinite; }
+@keyframes btn-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .btn-spin { animation: none; } }
+.stake-gap .restake-none { margin: 10px 0 0; color: var(--muted); }
 .stake-facts b.on-hold { color: var(--butter); }
 /* The goal status when some goal NIM is not staked (components/GoalStatus.jsx): a butter line, a static dot, opens Savings. */
 .goal-status.partly { background: none; border: 0; padding: 0; cursor: pointer; text-align: left; font-family: inherit; color: var(--butter); }

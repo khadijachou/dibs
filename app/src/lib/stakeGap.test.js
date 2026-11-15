@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { stakeGap } from './stakeGap.js'
+import { stakeGap, stakeGapExact } from './stakeGap.js'
 
 const L = 100_000
 const g = (status, nim) => ({ status, deposits: [{ nim }] })
@@ -49,4 +49,17 @@ test('reads st.activeBalance too (not only st.balance)', () => {
 
 test('redeemed and withdrawn goals do not count in inGoals', () => {
   assert.equal(stakeGap({ st: st(10000), goals: [g('saving', 10000), g('redeemed', 5000), g('withdrawn', 5000)] }), null)
+})
+
+test('stakeGapExact: the same gap, not rounded (13,622.4 staked, 22,701 in goals -> 9,078.6)', () => {
+  const exact = stakeGapExact({ st: st(13622.4), goals: AZIZ_GOALS })
+  assert.ok(Math.abs(exact - 9078.6) < 1e-6, `expected ~9078.6, got ${exact}`)
+  assert.equal(stakeGap({ st: st(13622.4), goals: AZIZ_GOALS }), 9078) // stakeGap still floors
+})
+
+test('stakeGapExact: null in exactly the same cases as stakeGap', () => {
+  assert.equal(stakeGapExact({ st: null, goals: AZIZ_GOALS }), null)
+  assert.equal(stakeGapExact({ st: st(13622), goals: AZIZ_GOALS, settling: true }), null)
+  assert.equal(stakeGapExact({ st: st(13622), goals: AZIZ_GOALS, pendingDeposit: true }), null)
+  assert.equal(stakeGapExact({ st: st(100), goals: [g('saving', 100.6)] }), null) // under 1 NIM
 })

@@ -59,6 +59,7 @@ test('the brief sample renders exactly, line by line', () => {
     '  Payment being checked: no',
     '  Unlock in progress: no',
     '  Deleted goals on this phone: 0',
+    '  NIM put back in staking: never',
   ].join('\n')
   assert.equal(buildDiagnostics(sample), expected)
 })
@@ -151,6 +152,12 @@ test('Payment being checked and Unlock in progress read yes when set', () => {
   const t = buildDiagnostics({ ...sample, pendingPay: true, goalsShown: [unlocking], copies: [{ address: A1, goal: unlocking }] })
   assert.ok(t.includes('  Payment being checked: yes'))
   assert.ok(t.includes('  Unlock in progress: yes'))
+})
+
+test('NIM put back in staking: the count and the last one, never a hash', () => {
+  const t = buildDiagnostics({ ...sample, restakes: { count: 2, last: { at: at(2026, 10, 15, 9, 5), nim: 9078 } } })
+  assert.ok(t.includes('  NIM put back in staking: 2 time(s), last 15 Nov 09:05 (9,078 NIM)'))
+  assert.ok(!t.includes('tx') && !t.includes('HASH'))
 })
 
 // PRIVACY: a state stuffed with private values in every field the builder could reach must never leak them.

@@ -337,6 +337,7 @@ html.is-fullscreen:where([data-theme="light"]) body::before { background: linear
 :where(:root[data-theme="light"]) .stake-gap { background: #fff6e0; border-color: #e9c877; }
 :where(:root[data-theme="light"]) .stake-gap-ic { background: #ffeec4; color: #a86a00; }
 :where(:root[data-theme="light"]) .stake-gap-why { color: #a86a00; }
+:where(:root[data-theme="light"]) .stake-gap .restake-btn { border-color: #e9c877; color: #a86a00; }
 :where(:root[data-theme="light"]) .stake-facts b.on-hold { color: #a86a00; }
 :where(:root[data-theme="light"]) .goal-status.partly { color: #a86a00; }
 :where(:root[data-theme="light"]) .goal-status.partly::before { background: #d99a0b; }

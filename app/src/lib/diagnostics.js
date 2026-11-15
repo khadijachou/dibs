@@ -160,6 +160,11 @@ export function buildDiagnostics(state) {
   out.push(`  Payment being checked: ${s.pendingPay ? 'yes' : 'no'}`)
   out.push(`  Unlock in progress: ${goalsShown.some((g) => g?.status === 'unlocking') ? 'yes' : 'no'}`)
   out.push(`  Deleted goals on this phone: ${Number(s.deletedCount) || 0}`)
+  // NIM put back in staking (dibs.restakes, lib/restake.js): a count and the last one; never a hash.
+  const rs = s.restakes
+  out.push(rs && rs.count
+    ? `  NIM put back in staking: ${rs.count} time(s), last ${dayTime(rs.last?.at, tz)} (${fmtNum(rs.last?.nim)} NIM)`
+    : '  NIM put back in staking: never')
 
   return out.join('\n')
 }
@@ -215,11 +220,15 @@ export async function gather({ storage, now, tzOffsetMin, version, lang, demo, u
 
   const pay = readJSON(storage, 'dibs.pending') // the payment-check record (kind 'pay'), written by Redeem; read only here
   const del = readJSON(storage, 'dibs.deleted')
+  const restakesRaw = readJSON(storage, 'dibs.restakes') // the restake log (lib/restake.js): { at, nim, tx }, last 20
+  const restakeArr = Array.isArray(restakesRaw) ? restakesRaw : []
+  const lastR = restakeArr.length ? restakeArr[restakeArr.length - 1] : null
   return {
     version, now, tzOffsetMin, lang, demo,
     accounts, usedAddress, staker, validatorAddress,
     goalsShown, copies,
     pendingPay: Boolean(pay && pay.kind === 'pay'),
     deletedCount: Array.isArray(del) ? del.length : 0,
+    restakes: { count: restakeArr.length, last: lastR ? { at: lastR.at, nim: lastR.nim } : null }, // never the tx hash
   }
 }

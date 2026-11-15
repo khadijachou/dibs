@@ -48,6 +48,7 @@ import { bigSheetFor, releaseOf } from './lib/bigUpdate.js'
 import { NEWS } from './lib/news.js'
 import { version as appVersion } from '../package.json'
 import WhatsNewSheet from './components/WhatsNewSheet.jsx'
+import { RestakeWatcher } from './components/Restake.jsx'
 
 // The Lab (#lab) is a developer screen: only in demo mode or in a build made with VITE_LAB=1.
 const labAllowed = () => import.meta.env.VITE_LAB === '1' || isDemo()
@@ -437,6 +438,7 @@ export default function App() {
       {intro && !isLab ? <div className="app intro-bg" aria-hidden="true" /> : (
         <div className={`app${tabs ? ' with-tabs' : ''}`}><Screen {...route.params} />{tabs && <TabBar current={route.name} />}<BadgeStamp id={stamps[0] || null} isBlocked={isBlocked} onDone={endStamp} />{toastText && <div className="toast" role="status"><i>i</i>{toastText}</div>}</div>
       )}
+      <RestakeWatcher />
       {shareAsk && !isLab && <ShareConfirmSheet onYes={confirmShare} onClose={() => setShareAsk(null)} />}
       {bigSheet && !isLab && route.name === 'home' && <WhatsNewSheet release={bigSheet.release} entry={bigSheet.entry} since={bigSheet.since} onClose={() => endBig()} onGo={(r) => endBig(() => go(r))} onSeeAll={() => endBig(() => go('legal', { page: 'news' }))} />}
     </AppCtx.Provider>

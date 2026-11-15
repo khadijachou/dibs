@@ -14,6 +14,9 @@ import { goalBrand } from './Home.jsx'
 import { chainReleaseAt, readyTimeText, ReleaseClock } from '../components/ReleaseClock.jsx'
 import WeekCard from '../components/WeekCard.jsx'
 import { MIN_SHOWN, splitSegments, stakeSplit } from '../components/stakeSplit.js'
+import { RestakeButton } from '../components/Restake.jsx'
+import { pending } from '../lib/deposit.js'
+import { isRestake, wholeGap } from '../lib/restake.js'
 
 export default function Stake() {
   const { t, lang, address } = useApp()
@@ -27,6 +30,13 @@ export default function Stake() {
   }, [address])
 
   useEffect(() => { load() }, [load])
+  // The restake band settles through the dibs:goals event (components/Restake.jsx): reload so the band and the figures
+  // follow the chain once the NIM is back in staking.
+  useEffect(() => {
+    const onGoals = () => load()
+    window.addEventListener('dibs:goals', onGoals)
+    return () => window.removeEventListener('dibs:goals', onGoals)
+  }, [load])
   useEffect(() => { markDailyOpen({ k: 'savings' }, listGoals(address)) }, [address]) // daily quest: Check your Savings
 
   const goals = listGoals(address)
@@ -89,20 +99,25 @@ function UnstakingCard({ goal, chainAt, retired }) {
 // Top card: Total saved, the split bar and its rows, then Earned so far and Pool. Display only: every figure comes from
 // stakeSummary() (lib/earned.js); the split only subtracts them (components/stakeSplit.js).
 function StakeHero({ st, sum }) {
-  const { t, lang, go } = useApp()
+  const { t, lang, go, address } = useApp()
   const fiat = useFiat()
-  const { total, earned, state: earnState, since, gap } = sum
+  const { total, earned, state: earnState, since, gap, gapExact } = sum
   // gap (lib/stakeGap.js): NIM the goals count that is not staked. When there is one, Total saved shows it too
-  // (total + gap, which is what the goals count), the split gets a butter "wallet" part, and a band names it.
+  // (total + the exact gap, which is what the goals count), the split gets a butter "wallet" part, and a band names it.
+  // gapExact is the same difference not rounded down, so the figures read as what the goals count (22,701, not 22,700);
+  // the amount a restake sends stays the whole floored number.
   const hasGap = gap != null
-  const totalSaved = hasGap ? total + gap : total
+  const totalSaved = hasGap ? total + gapExact : total
+  // A restake in flight (components/Restake.jsx): the pending lock makes gap null, so the gap band would vanish. Keep a
+  // "checking" band in its place, with the amount being staked, until the watcher settles it.
+  const restaking = isRestake(pending.get(address)) ? pending.get(address) : null
   const split = stakeSplit(sum)
   const value = st ? fmtFiatValue(totalSaved, fiat, lang) : null
   const rows = [
     { key: 'earning', label: t('stake_row_earning'), nim: split.earning, always: true },
     { key: 'outside', label: t('stake_row_other'), nim: split.outside, note: t('stake_row_other_note') },
     { key: 'unlocking', label: t('stake_row_leaving'), nim: split.unlocking, note: t('stake_row_leaving_note') },
-    ...(hasGap ? [{ key: 'wallet', label: t('stake_row_wallet'), nim: split.wallet }] : []),
+    ...(hasGap ? [{ key: 'wallet', label: t('stake_row_wallet'), nim: wholeGap(gapExact) }] : []),
   ].filter((r) => r.always || r.nim >= MIN_SHOWN)
   const segments = splitSegments(split)
   // Earned so far (lib/earnState.js): unknown shows a dash, nothing earned yet shows "First reward", stopped (all NIM
@@ -132,12 +147,25 @@ function StakeHero({ st, sum }) {
               </li>
             ))}
           </ul>
-          {hasGap && (
+          {hasGap && !restaking && (
             <div className="stake-gap">
               <span className="stake-gap-ic" aria-hidden="true"><Icon name="wallet" size={18} /></span>
               <div className="stake-gap-tx">
-                <b>{t('gap_title', { gap: fmtNim(gap, lang) })}</b>
+                <b>{t('gap_title', { gap: fmtNim(wholeGap(gapExact), lang) })}</b>
                 <p>{t('gap_line')}{' '}<button type="button" className="stake-gap-why" onClick={() => go('faq', { open: 'gap' })}>{t('gap_why')}</button></p>
+                <RestakeButton gapExact={gapExact} />
+              </div>
+            </div>
+          )}
+          {restaking && (
+            <div className="stake-gap checking">
+              <span className="stake-gap-ic" aria-hidden="true"><Icon name="wallet" size={18} /></span>
+              <div className="stake-gap-tx">
+                <b>{t('restake_checking_title', { n: fmtNim(restaking.nim, lang) })}</b>
+                <p>{t('restake_checking_line')}</p>
+                {/* Same button, still visible and disabled with its spinner, until the watcher settles the record.
+                    No "Why?" link in the checking state. gapExact is null here; the pending restake drives the wait. */}
+                <RestakeButton gapExact={null} />
               </div>
             </div>
           )}
