@@ -274,3 +274,47 @@ test('gather: no staker comes back as a clean null, not an error', async () => {
   assert.equal(state.staker, null)
   assert.ok(buildDiagnostics(state).includes('  no staker'))
 })
+
+// v1.2.9: goals live in one key (dibs.goals). It is the shown list, and shows as "main list" in "Every saved copy",
+// carrying the "<- shown" mark; the old per-address keys are still listed by their address, unchanged.
+test('main list: dibs.goals copies show "main list" and carry the <- shown mark, the old keys do not', () => {
+  const state = {
+    ...sample,
+    goalsShown: [airbnb, valorant5],
+    copies: [
+      { address: 'main list', main: true, goal: airbnb },
+      { address: 'main list', main: true, goal: valorant5 },
+      { address: A1, goal: airbnb },
+      { address: A2, goal: valorant250 },
+    ],
+  }
+  const lines = buildDiagnostics(state).split('\n')
+  const shown = lines.filter((l) => l.includes('<- shown'))
+  assert.equal(shown.length, 2)
+  assert.ok(shown.every((l) => l.startsWith('  main list  ')), 'the shown copies are the main-list ones')
+  // the old per-address copy of the same goal is listed by its address, never marked shown
+  assert.ok(lines.some((l) => l.includes('NQ11 … HHHH') && l.includes('Airbnb aaaa') && !l.includes('<- shown')))
+})
+
+test('gather: when dibs.goals exists, it is the shown list and appears as "main list"; old keys stay', async () => {
+  const initial = {
+    'dibs.goals': JSON.stringify([airbnb, valorant5]),
+    [`dibs.goals.${A1}`]: JSON.stringify([airbnb, valorant5]),
+    [`dibs.goals.${A2}`]: JSON.stringify([valorant250]),
+    'dibs.goalsMoved': '2026-11-15T00:00:00.000Z',
+  }
+  const { storage, writes } = makeStorage(initial)
+  const before = snapshot(storage)
+  const listAccounts = async () => [{ address: A1, nim: 100 }]
+  const readStaker = async () => ({ balance: 0, inactiveBalance: 0, retiredBalance: 0, delegation: GARUDA, address: A1 })
+  const state = await gather({ storage, now: sample.now, tzOffsetMin: 0, version: '1.2.9', lang: 'en', demo: false, usedAddress: A1, validatorAddress: GARUDA, listAccounts, readStaker })
+  assert.equal(snapshot(storage), before) // never writes
+  assert.equal(writes.length, 0)
+  assert.equal(state.goalsShown.length, 2) // shown from dibs.goals
+  assert.ok(state.copies.some((c) => c.main)) // the main list appears among the copies
+  const text = buildDiagnostics(state)
+  assert.ok(text.includes('main list'))
+  assert.ok(text.includes('NQ11 … HHHH') && text.includes('NQ22 … RRRR')) // old keys still listed by address
+  const shown = text.split('\n').filter((l) => l.includes('<- shown'))
+  assert.ok(shown.length >= 1 && shown.every((l) => l.startsWith('  main list  ')))
+})

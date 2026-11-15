@@ -55,6 +55,7 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
   const [flash, setFlash] = useState(null)
   const [earned, setEarned] = useState(0)
   const [earnedSince, setEarnedSince] = useState(null) // when Dibs started measuring rewards (not the first deposit)
+  const [partly, setPartly] = useState(false) // some goal NIM is not staked (a gap, lib/stakeGap.js): the status links to Savings
   const [stakerAddress, setStakerAddress] = useState(null) // BUG-15: the account line shows the staker, not the funded address
   // BUG-01: a deposit waiting for the chain (survives reloads), and the outcomes it can end in.
   const [pend, setPend] = useState(() => pending.get(address))
@@ -97,6 +98,7 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
       const sum = stakeSummary(st, address)
       setEarned(sum.earned == null ? 0 : sum.byGoal[goalId] ?? 0) // this goal's share of Savings' figure; hidden when unknown
       setEarnedSince(sum.since)
+      setPartly(sum.gap != null) // a gap: the status line says "Partly in your wallet" and opens Savings
     }).catch(() => { /* chain unreadable: keep the last known flag */ })
   }, [address, goalId])
 
@@ -399,7 +401,7 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
               {rs
                 ? <div className="m">{t('ready_saved_line')}<br />{t('ready_card_about', { price: fmtNim(rs.price, lang) })}</div>
                 : <div className="m">{t('goal_of2', { target: fmtNim(goal.targetNim, lang) })}<br />{t('goal_to_go', { amount: fmtNim(Math.round(remainingShown), lang) })}</div>}
-              <GoalStatus goal={goal} earned={earned} ready={rs} />
+              <GoalStatus goal={goal} earned={earned} ready={rs} partly={partly} />
             </div>
           </div>
           {rs && rs.kind !== 'covered' && <ReadyBox rs={rs} compact={goal.status !== 'ready'} /> /* unlocking: the short lines (the NIM is not back yet). Covered: no box (v1.1.12) */}

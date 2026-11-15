@@ -20,13 +20,22 @@ export function goalState(goal) {
 // The one status line under the amount on the goal card (Home) and the goal hero (Goal).
 // earned: this goal's share of the rewards (Stake's figure), when known.
 // ready: the goal's ready state (components/ReadyState.jsx useReady), which colours the line and its dot.
-export function GoalStatus({ goal, earned, ready = null }) {
-  const { t, lang } = useApp()
+// partly: some of this device's goal NIM is not staked (a gap, lib/stakeGap.js). A saving or reached goal then says
+// so and links to Savings; unlocking, ready, bought and withdrawn goals keep their own status.
+export function GoalStatus({ goal, earned, ready = null, partly = false }) {
+  const { t, lang, go } = useApp()
   const state = goalState(goal)
   // An unlocking goal keeps its release clock: "Released" only once the NIM is back.
   if (ready && state === 'ready') return <div className={`goal-status rs ready-${ready.kind}`}>{t(ready.kind === 'short' ? 'status_ready_add' : 'status_ready_buy')}</div>
   if (state === 'unlocking') return <div className="goal-status wait"><Releasing goal={goal} /></div>
   if (state === 'saving' && savedNim(goal) <= 0) return null // nothing staked yet
+  if (partly && (state === 'saving' || state === 'reached')) {
+    return (
+      <button type="button" className="goal-status partly" onClick={(e) => { e.stopPropagation(); go('stake') }}>
+        {t('status_partly')}{' ›'}
+      </button>
+    )
+  }
   const text = {
     saving: earned > 0 ? t('home_earned_chip', { amount: fmtEarned(earned, lang) }) : t('status_saving'),
     reached: t('status_reached'),

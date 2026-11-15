@@ -374,6 +374,21 @@ a.sheet-row { text-decoration: none; -webkit-tap-highlight-color: transparent; }
 .stake-facts b.mint { color: var(--teal); }
 .stake-facts b.first { color: var(--cream); }
 .stake-facts .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--teal); flex-shrink: 0; }
+/* v1.2.9 Savings gap: NIM the goals count that is not staked (lib/stakeGap.js). The wallet row and bar segment are
+   butter (striped in the bar); the band names it. Light mode softens the butter to the readable shades (theme-light.css). */
+.stake-bar .sp-wallet { background: repeating-linear-gradient(45deg, var(--butter) 0 4px, rgba(255, 201, 77, .4) 4px 8px); }
+.stake-rows .sp-wallet .sq { background: var(--butter); }
+.stake-rows .sp-wallet .amt { color: var(--butter); }
+.stake-gap { display: flex; gap: 10px; align-items: flex-start; margin-top: 12px; padding: 12px; border-radius: 14px; background: rgba(255, 201, 77, .08); border: 1px solid rgba(255, 201, 77, .32); }
+.stake-gap-ic { flex: none; width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; background: rgba(255, 201, 77, .18); color: var(--butter); }
+.stake-gap-tx { min-width: 0; }
+.stake-gap-tx b { display: block; font-weight: 600; color: var(--cream); font-size: var(--fs-body); line-height: var(--lh-body); }
+.stake-gap-tx p { margin: 2px 0 0; font-size: var(--fs-label); line-height: var(--lh-label); color: var(--muted); }
+.stake-gap-why { background: none; border: 0; padding: 0; font: inherit; color: var(--butter); text-decoration: underline; cursor: pointer; }
+.stake-facts b.on-hold { color: var(--butter); }
+/* The goal status when some goal NIM is not staked (components/GoalStatus.jsx): a butter line, a static dot, opens Savings. */
+.goal-status.partly { background: none; border: 0; padding: 0; cursor: pointer; text-align: left; font-family: inherit; color: var(--butter); }
+.goal-status.partly::before { background: var(--butter); animation: none; }
 /* The hero is positioned (its glow and shadow): what follows it on Savings paints above it, never dimmed by it. */
 .stake-hero ~ * { position: relative; z-index: 1; }
 .stake-line { margin-top: auto; display: flex; align-items: flex-start; gap: 8px; text-align: left; }

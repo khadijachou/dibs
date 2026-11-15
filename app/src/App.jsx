@@ -7,7 +7,8 @@ import { configureStats, dailyDue, flush, markDaily, snapshotData, track } from 
 import { stakeSummary } from './lib/earned.js'
 import { getPrices } from './lib/price.js'
 import { makeT } from './lib/i18n.js'
-import { adoptGoals, getGoal, listGoals, progress } from './lib/goals.js'
+import { getGoal, listGoals, progress } from './lib/goals.js'
+import { moveGoalsOnce } from './lib/goalsMove.js'
 import { initBurst, levelBandToAnnounce } from './lib/seen.js'
 import { markNewsSeen } from './lib/newsSeen.js'
 import { catalogFromServer, loadCatalog } from './lib/catalog.js'
@@ -218,7 +219,7 @@ export default function App() {
       preloadAvatar(wallet) // the Welcome back avatar is drawn before the splash leaves
       const funded = accounts.filter((a) => a.nim > 0).sort((a, b) => b.nim - a.nim)
       const addr = (funded[0] || accounts[0]).address
-      adoptGoals(addr)
+      moveGoalsOnce(localStorage, addr, Date.now()) // v1.2.9: one-time move of the old per-address keys into dibs.goals
       initBurst(listGoals(addr), (g) => progress(g) >= 1) // first run of this version: no burst for goals already full
       setAddress(addr)
       refreshBalance(addr)

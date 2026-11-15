@@ -6,7 +6,11 @@
 import { versionOf } from './version.js'
 import { savePref } from './prefs.js'
 
-const key = (address) => `dibs.goals.${address}`
+// v1.2.9: one key for every address. Nimiq Pay rotates the funded address, which once left copies of the same
+// goal under six keys on one phone. Goals now live under this one key; the address is still passed in (callers do
+// not change), it is simply no longer part of the key. The one-time move of the old dibs.goals.<address> keys into
+// here is lib/goalsMove.js (run at launch instead of adoptGoals). The old keys are never written again.
+const key = () => 'dibs.goals'
 
 function read(address) {
   try { return JSON.parse(localStorage.getItem(key(address))) || [] } catch { return [] }
@@ -115,14 +119,12 @@ function forget(ids) {
   const gone = deletedIds()
   for (const id of ids) gone.add(id)
   try { localStorage.setItem(DELETED, JSON.stringify([...gone])) } catch { /* storage blocked */ }
-  let keys = []
-  try { keys = Object.keys(localStorage).filter((k) => k.startsWith('dibs.goals.')) } catch { return }
-  for (const k of keys) {
-    let list
-    try { list = JSON.parse(localStorage.getItem(k)) || [] } catch { continue }
-    const kept = list.filter((x) => !gone.has(x?.id))
-    if (kept.length !== list.length) try { localStorage.setItem(k, JSON.stringify(kept)) } catch { /* storage blocked */ }
-  }
+  // Strip the deleted ids from the one main list only. The old dibs.goals.<address> keys are left untouched by this
+  // release (the id is remembered in dibs.deleted, so a stray copy never comes back through the move).
+  let list
+  try { list = JSON.parse(localStorage.getItem(key())) || [] } catch { return }
+  const kept = list.filter((x) => !gone.has(x?.id))
+  if (kept.length !== list.length) try { localStorage.setItem(key(), JSON.stringify(kept)) } catch { /* storage blocked */ }
 }
 
 // Deletes an empty goal everywhere on this device.
@@ -167,18 +169,20 @@ export const stakerFlag = {
   set: (address) => { try { localStorage.setItem(`dibs.hasStaker.${address}`, '1') } catch { /* ignore */ } },
 }
 
-// Goals are stored under the funded address, and that address can change: on 7 Nov, after
-// a Remove, Nimiq Pay stopped listing NQ80... and listed a new funded NQ64... instead.
-// So on start we merge goals saved under ANY address on this device into the current one, and never lose a goal to
-// a rotation. When the same goal is saved under two addresses, the right copy wins (newerCopy), not simply the one
-// under the current address (13 Nov: an old 'unlocking' copy beat the 'ready' one and offered Stop staking again).
-// Copies are never merged with each other, and the other addresses' copies are left in storage as they are.
+// The merge rules that used to run at every launch. v1.2.9 moved the launch path to lib/goalsMove.js (one-time move
+// into the single key); adoptGoals is kept here as the reference those rules are ported from (and the move reuses
+// newerCopy, openGoalFor, deletable from this file). It is no longer called at launch.
+// Goals used to be stored under the funded address, and that address can change: on 7 Nov, after a Remove, Nimiq Pay
+// stopped listing NQ80... and listed a new funded NQ64... instead. So this merged goals saved under ANY address on
+// this device into the current one, and never lost a goal to a rotation. When the same goal is saved under two
+// addresses, the right copy wins (newerCopy), not simply the one under the current address (13 Nov: an old
+// 'unlocking' copy beat the 'ready' one and offered Stop staking again). Copies are never merged with each other.
 // Recovery (10 Nov, after a reinstall): never a second open goal for the same card. An empty copy is dropped
 // when a goal for that card is already open; an empty open goal here gives way to a funded one found elsewhere.
 export function adoptGoals(address) {
   const gone = deletedIds()
   let keys = []
-  try { keys = Object.keys(localStorage).filter((k) => k.startsWith('dibs.goals.') && k !== key(address)) } catch { return }
+  try { keys = Object.keys(localStorage).filter((k) => k.startsWith('dibs.goals.') && k !== key()) } catch { return }
   const mine = read(address)
   const ids = new Set(mine.map((g) => g.id))
   const best = new Map() // id -> the best copy saved under another address

@@ -122,6 +122,8 @@ export function backfillEvents(goals, now = Date.now()) {
 function deviceGoals() {
   const byId = new Map()
   try {
+    // The one list first (v1.2.9), then the old per-address keys for any id not in it (onboarding before the move).
+    for (const g of readJson('dibs.goals', [])) if (g?.id && !byId.has(g.id)) byId.set(g.id, g)
     for (const k of Object.keys(localStorage)) {
       if (!k.startsWith('dibs.goals.')) continue
       for (const g of readJson(k, [])) if (g?.id && !byId.has(g.id)) byId.set(g.id, g)

@@ -8,7 +8,7 @@ import { markNewsSeen } from '../lib/newsSeen.js'
 // (More > Legal) and by the sheets opened from the onboarding agreement line.
 // Every sentence must stay true to the code: when what Dibs does with data changes, update the texts and LEGAL_UPDATED.
 export const APP_VERSION = version.replace(/\.0$/, '') // "1.0.0" -> "1.0"
-export const LEGAL_UPDATED = '2026-11-13'
+export const LEGAL_UPDATED = '2026-11-15'
 export const HELP_EMAIL = 'calldibs.contact@gmail.com'
 // Sections per page (privacy_1h..7b, terms_1h..7b). Rewards has its own layout since v1.1.12 (screens/Legal.jsx).
 const SECTIONS = { privacy: 7, terms: 7 }

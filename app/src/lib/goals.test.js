@@ -93,31 +93,34 @@ test('merge on start: a bought copy never blocks; an empty open goal here gives 
 // Deleted goals never come back.
 const { cardTakenBy, deletedIds, removeGoal } = await import('./goals.js')
 const OLD = 'NQ99 OLD'
-const savedUnder = (addr) => JSON.parse(localStorage.getItem(`dibs.goals.${addr}`) || '[]').map((g) => g.id)
+// v1.2.9: goals live in one key (dibs.goals). The current address's list is the main key; the old per-address keys
+// are left untouched by this release (forget/removeGoal only edit the main list; the id is remembered in dibs.deleted).
+const mainIds = () => JSON.parse(localStorage.getItem('dibs.goals') || '[]').map((g) => g.id)
+const oldUnder = (addr) => JSON.parse(localStorage.getItem(`dibs.goals.${addr}`) || '[]').map((g) => g.id)
 
-test('a deleted goal is removed under every address and never adopted again', () => {
+test('a deleted goal leaves the main list and is never adopted again; the old key is left as it is', () => {
   const g = make(STEAM_5_USA)
   localStorage.setItem(`dibs.goals.${OLD}`, JSON.stringify([{ ...g }])) // same goal, kept under a rotated address
   removeGoal(ADDR, g.id)
-  assert.deepEqual(savedUnder(ADDR), [])
-  assert.deepEqual(savedUnder(OLD), [])
+  assert.deepEqual(mainIds(), []) // gone from the main list
+  assert.deepEqual(oldUnder(OLD), [g.id]) // the old key is never touched by this release
   assert.ok(deletedIds().has(g.id))
-  // A copy that survives somewhere (storage restored, old backup): the merge on start drops it again.
-  localStorage.setItem(`dibs.goals.${OLD}`, JSON.stringify([{ ...g }]))
+  // A copy that survives under an old key: the merge on start never adopts it again.
   adoptGoals(ADDR)
-  assert.deepEqual(savedUnder(ADDR), [])
-  assert.deepEqual(savedUnder(OLD), [])
+  assert.deepEqual(mainIds(), [])
+  assert.deepEqual(oldUnder(OLD), [g.id]) // still untouched
 })
 
 test('an empty duplicate dropped on start does not come back after the open goal is bought', () => {
   const open = make(STEAM_5_USA, { deposits: [{ nim: 20000, at: '2026-11-01T00:00:00Z' }] })
   localStorage.setItem(`dibs.goals.${OLD}`, JSON.stringify([{ id: 'dup', itemId: STEAM_5_USA.id, status: 'saving', deposits: [], createdAt: '2026-11-02T00:00:00Z' }]))
   adoptGoals(ADDR)
-  assert.deepEqual(savedUnder(OLD), [])
+  assert.ok(deletedIds().has('dup')) // dropped as an empty duplicate (the old key itself is left as it is)
+  assert.deepEqual(mainIds(), [open.id])
   updateGoal(ADDR, open.id, { status: 'redeemed' })
   localStorage.setItem(`dibs.goals.${OLD}`, JSON.stringify([{ id: 'dup', itemId: STEAM_5_USA.id, status: 'saving', deposits: [], createdAt: '2026-11-02T00:00:00Z' }]))
   adoptGoals(ADDR)
-  assert.deepEqual(savedUnder(ADDR), [open.id])
+  assert.deepEqual(mainIds(), [open.id])
 })
 
 test('an empty open goal that gives way to a funded copy is deleted for good', () => {
@@ -127,7 +130,7 @@ test('an empty open goal that gives way to a funded copy is deleted for good', (
   assert.ok(deletedIds().has(empty.id))
   localStorage.setItem(`dibs.goals.${OLD}`, JSON.stringify([{ ...empty }, { id: 'funded', itemId: STEAM_5_USA.id, status: 'saving', deposits: [{ nim: 3000 }], createdAt: '2026-10-02T00:00:00Z' }]))
   adoptGoals(ADDR)
-  assert.deepEqual(savedUnder(ADDR), ['funded'])
+  assert.deepEqual(mainIds(), ['funded'])
 })
 
 // Change card (Plan.jsx): the new card must not already have another open goal.
@@ -158,12 +161,14 @@ const { newerCopy } = await import('./goals.js')
 const STEPS3 = [{ step: 'deactivate', tx: 'a', at: '2026-11-12T03:00:00Z' }, { step: 'retire', tx: 'b', at: '2026-11-12T15:00:00Z' }, { step: 'remove', tx: 'c', at: '2026-11-12T15:01:00Z' }]
 const copyOf = (patch) => ({ id: 'g1', itemId: STEAM_20_USA.id, deposits: [{ nim: 11753, at: '2026-11-01T00:00:00Z' }], unlockSteps: [], status: 'saving', createdAt: '2026-11-01T00:00:00Z', ...patch })
 const goalUnder = (addr, id = 'g1') => JSON.parse(localStorage.getItem(`dibs.goals.${addr}`) || '[]').find((g) => g.id === id)
+// v1.2.9: the copy "here" is the main list; "elsewhere" is a rotated per-address key (left untouched by the merge).
+const mainGoal = (id = 'g1') => JSON.parse(localStorage.getItem('dibs.goals') || '[]').find((g) => g.id === id)
 
 test('v1.1.9 an old unlocking copy here and a ready copy elsewhere (no stamps): the ready one is kept with all its steps', () => {
-  localStorage.setItem(`dibs.goals.${ADDR}`, JSON.stringify([copyOf({ status: 'unlocking', unlockSteps: STEPS3.slice(0, 1) })]))
+  localStorage.setItem('dibs.goals', JSON.stringify([copyOf({ status: 'unlocking', unlockSteps: STEPS3.slice(0, 1) })]))
   localStorage.setItem(`dibs.goals.${OLD}`, JSON.stringify([copyOf({ status: 'ready', unlockSteps: STEPS3 })]))
   adoptGoals(ADDR)
-  const g = goalUnder(ADDR)
+  const g = mainGoal()
   assert.equal(g.status, 'ready')
   assert.deepEqual(g.unlockSteps, STEPS3)
   assert.equal(listGoals(ADDR).length, 1)
@@ -173,15 +178,15 @@ test('v1.1.9 an old unlocking copy here and a ready copy elsewhere (no stamps): 
 test('v1.1.9 two stamped copies: the newer wins, whichever address it is under', () => {
   const older = copyOf({ status: 'ready', unlockSteps: STEPS3, updatedAt: '2026-11-13T10:00:00.000Z' })
   const newer = copyOf({ status: 'unlocking', unlockSteps: STEPS3.slice(0, 1), updatedAt: '2026-11-13T11:00:00.000Z' })
-  localStorage.setItem(`dibs.goals.${ADDR}`, JSON.stringify([older]))
+  localStorage.setItem('dibs.goals', JSON.stringify([older]))
   localStorage.setItem(`dibs.goals.${OLD}`, JSON.stringify([newer]))
   adoptGoals(ADDR)
-  assert.equal(goalUnder(ADDR).updatedAt, newer.updatedAt)
+  assert.equal(mainGoal().updatedAt, newer.updatedAt)
   store.clear()
-  localStorage.setItem(`dibs.goals.${ADDR}`, JSON.stringify([newer]))
+  localStorage.setItem('dibs.goals', JSON.stringify([newer]))
   localStorage.setItem(`dibs.goals.${OLD}`, JSON.stringify([older]))
   adoptGoals(ADDR)
-  assert.equal(goalUnder(ADDR).updatedAt, newer.updatedAt)
+  assert.equal(mainGoal().updatedAt, newer.updatedAt)
 })
 
 test('v1.1.9 unstamped copies: furthest status, then more unlock steps, then more deposits; a tie keeps the copy here', () => {
@@ -197,28 +202,28 @@ test('v1.1.9 unstamped copies: furthest status, then more unlock steps, then mor
   assert.ok(newerCopy(two, copyOf({})))
   assert.ok(!newerCopy(copyOf({}), copyOf({}))) // tie
   // Deposits are never merged: the kept copy has its own deposits only.
-  localStorage.setItem(`dibs.goals.${ADDR}`, JSON.stringify([copyOf({ deposits: [{ nim: 5 }] })]))
+  localStorage.setItem('dibs.goals', JSON.stringify([copyOf({ deposits: [{ nim: 5 }] })]))
   localStorage.setItem(`dibs.goals.${OLD}`, JSON.stringify([two]))
   adoptGoals(ADDR)
-  assert.deepEqual(goalUnder(ADDR).deposits, two.deposits)
+  assert.deepEqual(mainGoal().deposits, two.deposits)
 })
 
 test('v1.1.9 a stamped unlocking copy here beats an unstamped ready copy elsewhere, on every start', () => {
   const live = copyOf({ status: 'unlocking', unlockSteps: STEPS3.slice(0, 1), updatedAt: '2026-11-13T15:07:00.000Z' })
-  localStorage.setItem(`dibs.goals.${ADDR}`, JSON.stringify([live]))
+  localStorage.setItem('dibs.goals', JSON.stringify([live]))
   localStorage.setItem(`dibs.goals.${OLD}`, JSON.stringify([copyOf({ status: 'ready', unlockSteps: STEPS3 })]))
   for (let start = 1; start <= 3; start++) {
     adoptGoals(ADDR)
-    assert.deepEqual(goalUnder(ADDR), live, `start ${start}`)
+    assert.deepEqual(mainGoal(), live, `start ${start}`)
     assert.equal(goalUnder(OLD).status, 'ready', `start ${start}: the other copy stays in storage`)
   }
 })
 
 test('v1.1.9 one goal, one copy: adoptGoals changes nothing', () => {
   const g = make(STEAM_5_USA, { deposits: [{ nim: 5000, at: '2026-11-01T00:00:00Z' }] })
-  const before = localStorage.getItem(`dibs.goals.${ADDR}`)
+  const before = localStorage.getItem('dibs.goals')
   adoptGoals(ADDR)
-  assert.equal(localStorage.getItem(`dibs.goals.${ADDR}`), before)
+  assert.equal(localStorage.getItem('dibs.goals'), before)
   assert.equal(listGoals(ADDR)[0].id, g.id)
 })
 

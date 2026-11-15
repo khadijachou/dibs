@@ -142,12 +142,16 @@ export function buildDiagnostics(state) {
     const tb = Date.parse(b?.goal?.updatedAt) || 0
     return tb - ta // newest first
   })
-  const isShown = (c) => sameAddr(c?.address, s.usedAddress) &&
-    goalsShown.some((g) => g?.id === c?.goal?.id && String(g?.updatedAt) === String(c?.goal?.updatedAt))
+  // When the one main list exists, Dibs shows it, so "<- shown" marks the main-list copies; otherwise, as before,
+  // the copies under the used address. The old per-address copies are listed either way, by their address.
+  const hasMain = copies.some((c) => c?.main)
+  const matchesShown = (c) => goalsShown.some((g) => g?.id === c?.goal?.id && String(g?.updatedAt) === String(c?.goal?.updatedAt))
+  const isShown = (c) => matchesShown(c) && (hasMain ? Boolean(c?.main) : sameAddr(c?.address, s.usedAddress))
   for (const c of copies) {
     const g = c?.goal
     const mark = isShown(c) ? '  <- shown' : ''
-    out.push(`  ${short(c?.address)}  ${brandOf(g)} ${id4(g)}  ${valueOf(g)}  ${g?.status ?? '?'}  ${fmtNum(savedNim(g))}  ${stepsOf(g)}  ${dayTime(changedMs(g), tz)}${mark}`)
+    const addrCol = c?.main ? 'main list' : short(c?.address)
+    out.push(`  ${addrCol}  ${brandOf(g)} ${id4(g)}  ${valueOf(g)}  ${g?.status ?? '?'}  ${fmtNum(savedNim(g))}  ${stepsOf(g)}  ${dayTime(changedMs(g), tz)}${mark}`)
   }
   out.push('')
 
@@ -192,10 +196,14 @@ export async function gather({ storage, now, tzOffsetMin, version, lang, demo, u
     } else staker = null // "No staker": a clean null, not an error
   } catch { staker = 'error' }
 
-  const shownRaw = readJSON(storage, `dibs.goals.${usedAddress}`)
+  // v1.2.9: goals live in one key (dibs.goals). Dibs shows that list when it exists; before the move, the old
+  // per-address key as before. The old dibs.goals.<address> keys stay listed in "Every saved copy" as they are.
+  const mainList = readJSON(storage, 'dibs.goals')
+  const shownRaw = Array.isArray(mainList) ? mainList : readJSON(storage, `dibs.goals.${usedAddress}`)
   const goalsShown = Array.isArray(shownRaw) ? shownRaw : []
 
   const copies = []
+  if (Array.isArray(mainList)) for (const goal of mainList) if (goal) copies.push({ address: 'main list', main: true, goal })
   let keys = []
   try { keys = Object.keys(storage).filter((k) => k.startsWith('dibs.goals.')) } catch { keys = [] }
   for (const k of keys) {

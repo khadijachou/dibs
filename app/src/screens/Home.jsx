@@ -342,7 +342,7 @@ function GoalHero({ goal, earned }) {
                     <div className="m">{toGoLine}</div>
                     {toGoFiatFinal && <div ref={fit} className="m m-measure" aria-hidden="true">{t('goal_to_go_fiat', { amount: fmtNim(p.remaining, lang), fiat: toGoFiatFinal })}</div>}
                   </>}
-            <GoalStatus goal={goal} earned={earned?.byGoal[goal.id]} ready={rs} />
+            <GoalStatus goal={goal} earned={earned?.byGoal[goal.id]} ready={rs} partly={earned?.gap != null} />
           </div>
         </div>
         <MilestoneLine milestone={milestone} />

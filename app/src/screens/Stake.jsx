@@ -89,25 +89,31 @@ function UnstakingCard({ goal, chainAt, retired }) {
 // Top card: Total saved, the split bar and its rows, then Earned so far and Pool. Display only: every figure comes from
 // stakeSummary() (lib/earned.js); the split only subtracts them (components/stakeSplit.js).
 function StakeHero({ st, sum }) {
-  const { t, lang } = useApp()
+  const { t, lang, go } = useApp()
   const fiat = useFiat()
-  const { total, earned, state: earnState, since } = sum
+  const { total, earned, state: earnState, since, gap } = sum
+  // gap (lib/stakeGap.js): NIM the goals count that is not staked. When there is one, Total saved shows it too
+  // (total + gap, which is what the goals count), the split gets a butter "wallet" part, and a band names it.
+  const hasGap = gap != null
+  const totalSaved = hasGap ? total + gap : total
   const split = stakeSplit(sum)
-  const value = st ? fmtFiatValue(total, fiat, lang) : null
+  const value = st ? fmtFiatValue(totalSaved, fiat, lang) : null
   const rows = [
     { key: 'earning', label: t('stake_row_earning'), nim: split.earning, always: true },
     { key: 'outside', label: t('stake_row_other'), nim: split.outside, note: t('stake_row_other_note') },
     { key: 'unlocking', label: t('stake_row_leaving'), nim: split.unlocking, note: t('stake_row_leaving_note') },
+    ...(hasGap ? [{ key: 'wallet', label: t('stake_row_wallet'), nim: split.wallet }] : []),
   ].filter((r) => r.always || r.nim >= MIN_SHOWN)
   const segments = splitSegments(split)
   // Earned so far (lib/earnState.js): unknown shows a dash, nothing earned yet shows "First reward", stopped (all NIM
-  // leaving) keeps the figure. With no stake at all there is no reward to wait for: the figure stays.
+  // leaving) keeps the figure. With no stake at all there is no reward to wait for: the figure stays. A gap puts it
+  // on hold: Dibs cannot tell which goal each reward belongs to until all goal NIM is staked again.
   const first = !!st && earned === 0 && earnState !== 'stopped'
   return (
     <section className="hero stake-hero">
       <span className="stake-label">{t('stake_total_saved')}</span>
       <div className="stake-total">
-        <span className="n">{fmtNim(total, lang)} NIM</span>
+        <span className="n">{fmtNim(totalSaved, lang)} NIM</span>
         {value && <span className="stake-fiat">{value}</span>}
       </div>
       {st && (
@@ -126,12 +132,22 @@ function StakeHero({ st, sum }) {
               </li>
             ))}
           </ul>
+          {hasGap && (
+            <div className="stake-gap">
+              <span className="stake-gap-ic" aria-hidden="true"><Icon name="wallet" size={18} /></span>
+              <div className="stake-gap-tx">
+                <b>{t('gap_title', { gap: fmtNim(gap, lang) })}</b>
+                <p>{t('gap_line')}{' '}<button type="button" className="stake-gap-why" onClick={() => go('faq', { open: 'gap' })}>{t('gap_why')}</button></p>
+              </div>
+            </div>
+          )}
         </>
       )}
       <div className="stake-facts">
         <div>
           <span>{t('stake_earned')}</span>
-          {earned == null ? <b>-</b>
+          {hasGap ? <b className="on-hold">{t('stake_on_hold')}</b>
+            : earned == null ? <b>-</b>
             : first ? <><b className="first">{t('stake_first_reward')}</b><span>{t('stake_first_reward_sub')}</span></>
             : <><b className="mint">{fmtEarned(earned, lang)} NIM</b>{since && <span>{t('stake_since', { date: fmtDateYear(since, lang) })}</span>}</>}
         </div>

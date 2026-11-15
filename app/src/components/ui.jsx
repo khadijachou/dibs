@@ -36,6 +36,7 @@ const PATHS = {
   speaker: <><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" /><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" /></>, // Preferences > Sound, test sound
   swap: <><path d="M7 4 4 7l3 3M4 7h13" /><path d="M17 14l3 3-3 3M20 17H7" /></>, // two arrows (History, card changed)
   bulb: <><path d="M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1.1 2.2h5a3 3 0 0 1 1.1-2.2A6 6 0 0 0 12 3z" /><path d="M9.5 19h5M10.5 21.5h3" /></>, // a light bulb ("Did you know?")
+  wallet: <><rect x="3" y="6" width="18" height="13" rx="2.5" /><path d="M16 11.5h5v4h-5a2 2 0 0 1 0-4z" /></>, // a wallet (Savings: NIM back in your wallet)
 }
 
 // Bottom tab bar on the four top-level screens (App.jsx decides where it shows).

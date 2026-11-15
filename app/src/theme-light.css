@@ -328,3 +328,15 @@ html.is-fullscreen:where([data-theme="light"]) body::before { background: linear
 
 /* Big-update sheet: the butter icon needs the readable light shade (the mint tile uses var(--teal), the coral stays). */
 :where(:root[data-theme="light"]) .bigup-tile.butter { color: #906607; }
+
+/* v1.2.9 Savings gap: butter softens to the readable light shades (band #fff6e0, border #e9c877, tile #ffeec4, text
+   #a86a00); the wallet row fill and bar segment keep the light yellow fill #d99a0b (like the Unlocking row). */
+:where(:root[data-theme="light"]) .stake-bar .sp-wallet { background: repeating-linear-gradient(45deg, #d99a0b 0 4px, rgba(217, 154, 11, .4) 4px 8px); }
+:where(:root[data-theme="light"]) .stake-rows .sp-wallet .sq { background: #d99a0b; }
+:where(:root[data-theme="light"]) .stake-rows .sp-wallet .amt { color: #a86a00; }
+:where(:root[data-theme="light"]) .stake-gap { background: #fff6e0; border-color: #e9c877; }
+:where(:root[data-theme="light"]) .stake-gap-ic { background: #ffeec4; color: #a86a00; }
+:where(:root[data-theme="light"]) .stake-gap-why { color: #a86a00; }
+:where(:root[data-theme="light"]) .stake-facts b.on-hold { color: #a86a00; }
+:where(:root[data-theme="light"]) .goal-status.partly { color: #a86a00; }
+:where(:root[data-theme="light"]) .goal-status.partly::before { background: #d99a0b; }

@@ -4,6 +4,7 @@ import { readStaker } from './nimiq.js'
 import { stakeEarnings } from './profileStats.js'
 import { pending } from './deposit.js'
 import { activeNim, earnState, leavingNim } from './earnState.js'
+import { stakeGap } from './stakeGap.js'
 
 // Savings, Profile, the goal screen and the goal cards all read rewards through this one function:
 // { total, inGoals, other, earned, byGoal, since } (see profileStats.stakeEarnings), plus active (active stake, NIM)
@@ -23,7 +24,8 @@ function settlingNow(st, goals, address) {
 export function stakeSummary(st, address) {
   const goals = listGoals(address)
   const base = readBase()
-  const r = stakeEarnings(st, goals, base, { settling: settlingNow(st, goals, address) })
+  const settling = settlingNow(st, goals, address)
+  const r = stakeEarnings(st, goals, base, { settling })
   if (r.base && r.base !== base) writeBase(r.base)
   const unlockingNim = goals.filter((g) => g.status === 'unlocking').reduce((s, g) => s + savedNim(g), 0)
   return {
@@ -31,6 +33,8 @@ export function stakeSummary(st, address) {
     active: activeNim(st),
     leaving: leavingNim(st, unlockingNim), // NIM leaving staking (shown with "partial")
     state: earnState({ st, inGoals: r.inGoals, unlockingNim, earned: r.earned, since: r.since }),
+    // NIM the goals count that is not staked (null unless there is a real gap); Savings names it (lib/stakeGap.js).
+    gap: stakeGap({ st, goals, settling, pendingDeposit: Boolean(pending.get(address)) }),
   }
 }
 
