@@ -71,6 +71,7 @@ const EXCEPTIONS = {
   '.done-stamp': 'the Dibs! stamp on the code screen: 56 px (v1.2.1, listed exception, above the display token)',
   '.ring-wrap .pct': RING,'.hero .ring-wrap .pct': RING, '.ring-wrap.ready .pct .gap': RING, '.ring-wrap.ready .pct small': RING,
   '.code-box': CODE, '.lab .log': CODE, '.acct b': CODE, '.codecard .face.b .code-box': CODE, '.tl-tx': CODE, '.rw-box': CODE, '.tk-code': CODE,
+  '.diag-box': CODE, // Copy diagnostics readout: 11 px monospace, the approved listed exception (v1.2.8)
   '.fc b': SPLASH, '.fc span': SPLASH, '.splash-tag': SPLASH,
   '.ob-title': ONBOARD, '.gc-label': ONBOARD, '.gc-value': ONBOARD, '.gc-name': ONBOARD, '.coin': ONBOARD, '.coin.c2': ONBOARD,
   '.ir-mid b': ONBOARD, '.ir-mid span': ONBOARD, '.ccard .cc-label': ONBOARD, '.ccard b': ONBOARD, '.cc-copy': ONBOARD,

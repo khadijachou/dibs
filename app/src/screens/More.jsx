@@ -9,6 +9,7 @@ import { siX } from 'simple-icons'
 import { APP_VERSION, HELP_EMAIL } from '../components/LegalText.jsx'
 import { copyText } from '../lib/clipboard.js'
 import { FAQ } from './Faq.jsx'
+import { DiagnosticsButton } from '../components/Diagnostics.jsx'
 import { useUnreadNews } from '../lib/newsSeen.js'
 import { PROGRAM_END, active as rewardsActive } from '../lib/rewards.js'
 
@@ -207,6 +208,7 @@ export default function More() {
           <h3>{t('help_title')}</h3>
           <p>{t('help_body')}</p>
           <button type="button" className="help-email" aria-label={t('help_email')} onClick={copyEmail}>{HELP_EMAIL}</button>
+          <DiagnosticsButton />
         </section>
         <p className="legal-version">{t('legal_version', { v: APP_VERSION })}</p>
       </main>

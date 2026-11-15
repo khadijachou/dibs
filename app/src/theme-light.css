@@ -134,6 +134,11 @@
 :where(:root[data-theme="light"]) .list .row.move > span:first-child, :where(:root[data-theme="light"]) .list .row.withdraw > span:first-child { color: var(--muted); }
 :where(:root[data-theme="light"]) .help-email { background: var(--card-2); border: 1px solid var(--line); }
 :where(:root[data-theme="light"]) .help-email:active { background: #efe8de; }
+/* Copy diagnostics: the lines follow the light theme; the readout box keeps its dark inset for contrast. */
+:where(:root[data-theme="light"]) .diag-divider { background: var(--line); }
+:where(:root[data-theme="light"]) .diag-btn { border-color: var(--line); }
+:where(:root[data-theme="light"]) .diag-btn:active { background: var(--card-2); }
+:where(:root[data-theme="light"]) .diag-box { background: #1b1a22; border-color: #2b2834; color: #e4e1ea; }
 :where(:root[data-theme="light"]) .name-clear { background: #e9e1d6; }
 :where(:root[data-theme="light"]) .avatar-ph { background: #e9e1d6; }
 :where(:root[data-theme="light"]) .avatar img { filter: drop-shadow(0 6px 14px rgba(35, 33, 43, .18)); }

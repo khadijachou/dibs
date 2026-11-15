@@ -716,6 +716,18 @@ button.tl-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: -2
 .help-card p { margin: 0; font-size: var(--fs-body); line-height: var(--lh-body); color: var(--muted); }
 .help-email { max-width: 100%; overflow-wrap: anywhere; text-align: left; background: #2a2733; color: var(--cream); border: 1px solid #3a3744; border-radius: 999px; padding: 8px 14px; font: 600 var(--fs-body)/var(--lh-body) var(--font-body); cursor: pointer; }
 .help-email:active { background: #34303f; }
+/* Copy diagnostics (More > Need help?) */
+.diag-divider { align-self: stretch; height: 1px; background: #2b2834; margin-top: 12px; }
+.diag-btn { align-self: stretch; display: flex; align-items: flex-start; gap: 10px; text-align: left; background: transparent; border: 1.5px solid #3a3744; border-radius: 12px; padding: 12px 14px; color: var(--cream); cursor: pointer; }
+.diag-btn:active { background: #241f2b; }
+.diag-ic { flex: 0 0 auto; margin-top: 1px; color: var(--muted); }
+.diag-btn-tx { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.diag-btn-tx b { font: 600 var(--fs-body)/var(--lh-body) var(--font-display); color: var(--cream); }
+.diag-btn-tx small { font-size: var(--fs-meta); line-height: var(--lh-meta); color: var(--muted); }
+.diag-sub { margin: 0; font-size: var(--fs-meta); line-height: var(--lh-meta); color: var(--muted); }
+.diag-box { margin: 0; max-height: 46vh; overflow-y: auto; overflow-x: hidden; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; background: #141219; border: 1px solid #2b2834; border-radius: 12px; padding: 12px; color: #d9d6e0; font: 400 11px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; user-select: text; -webkit-user-select: text; }
+.diag-copy { align-self: stretch; }
+.diag-note { margin: 0; text-align: center; font-size: var(--fs-meta); line-height: var(--lh-meta); color: var(--muted); }
 /* Home: Recent dibs, link to History */
 .hist-cards { scroll-margin-top: 12px; }
 
