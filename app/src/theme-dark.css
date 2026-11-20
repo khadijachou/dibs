@@ -1572,3 +1572,81 @@ html.is-fullscreen .bstamp-live { top: calc(58px + var(--fs-top)); }
 .tl-badge.kept { background: #15896A; color: #fff; }
 .tl-row.kept .tl-ic { background: var(--teal-soft); color: var(--teal); }
 .list .row.kept > span:first-child { color: #cfcad8; }
+
+/* ===== See your saving (v1.3.0): Insights page, Savings row, weekly recap, week by week ===== */
+/* Default (dark) colours and the full layout live here; theme-light.css overrides only the colours. */
+
+/* The 8 weekly bars (Insights page and the goal's week-by-week card) */
+.ins-bars { display: flex; align-items: flex-end; gap: 6px; }
+.ins-bars.with-n { gap: 5px; }
+.ins-bar { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+.ins-bar-n { font-size: var(--fs-label); line-height: var(--lh-label); font-weight: 600; color: var(--cream); min-height: calc(var(--fs-label) * var(--lh-label)); }
+.ins-bar-track { width: 100%; height: 76px; display: flex; align-items: flex-end; background: #2b2834; border-radius: 7px; overflow: hidden; }
+.ins-bar-fill { width: 100%; background: var(--gold); border-radius: 7px; min-height: 6px; transition: height 500ms cubic-bezier(.2, .8, .2, 1); }
+.ins-bar-fill.now { background: var(--butter); }
+.ins-bar-fill.empty { height: 4px; min-height: 4px; background: #413d4a; border-radius: 4px; }
+.ins-bar-d { font-size: var(--fs-label); line-height: var(--lh-label); color: var(--muted); text-align: center; white-space: nowrap; }
+/* Goal card: "8 weeks ago" under the first bar, "Now" under the last, no amounts */
+.ins-ends { display: flex; justify-content: space-between; width: 100%; margin-top: 7px; }
+.ins-ends span { font-size: var(--fs-label); line-height: var(--lh-label); color: var(--muted); }
+
+/* Savings row: Insights, the total, 8 mini bars, a chevron */
+.ins-link { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; background: var(--card); border: 1px solid #2b2834; border-radius: 16px; padding: 14px 14px 14px 16px; cursor: pointer; }
+.ins-link:active { transform: scale(.995); }
+.ins-link-tx { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.ins-link-tx b { font-size: var(--fs-strong); line-height: var(--lh-strong); font-weight: 600; color: var(--cream); }
+.ins-link-tx span { font-size: var(--fs-meta); line-height: var(--lh-meta); color: var(--muted); }
+.ins-link .ins-mini { margin-left: auto; }
+.ins-link .chev { color: var(--muted); flex-shrink: 0; }
+.ins-mini { display: inline-flex; align-items: flex-end; gap: 3px; height: 26px; }
+.ins-mini-bar { width: 4px; background: var(--gold); border-radius: 2px; min-height: 5px; }
+.ins-mini-bar.empty { height: 4px; min-height: 4px; background: #413d4a; }
+
+/* Weeks-saved ring card and the three tiles */
+.ins-row2 { display: flex; gap: 12px; align-items: stretch; }
+.ins-ring-card { flex: 1 1 0; min-width: 0; flex-direction: row; align-items: center; gap: 12px; padding: 14px; }
+.ins-ring-tx { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.ins-ring-tx b { font: 600 var(--fs-heading)/var(--lh-heading) var(--font-display); color: var(--cream); }
+.ins-ring-tx span { font-size: var(--fs-meta); line-height: var(--lh-meta); color: var(--muted); }
+.ins-tiles { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.ins-tile { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; background: var(--card); border: 1px solid #2b2834; border-radius: 14px; padding: 9px 12px; }
+.ins-tile b { font-size: var(--fs-heading); line-height: var(--lh-heading); font-weight: 600; color: var(--cream); font-variant-numeric: tabular-nums; }
+.ins-tile span { font-size: var(--fs-label); line-height: var(--lh-label); color: var(--muted); }
+
+/* Your goals side by side */
+.ins-goals > h3 { margin: 0; font: 600 var(--fs-heading)/var(--lh-heading) var(--font-display); color: var(--cream); }
+.ins-goal { display: flex; align-items: center; gap: 12px; }
+.ins-goal-main { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.ins-goal-top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.ins-goal-top b { font-size: var(--fs-strong); line-height: var(--lh-strong); font-weight: 600; color: var(--cream); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ins-goal-top span { font-size: var(--fs-meta); line-height: var(--lh-meta); color: var(--muted); flex-shrink: 0; font-variant-numeric: tabular-nums; }
+.ins-goal-bar { display: block; height: 7px; border-radius: 4px; background: #2b2834; overflow: hidden; }
+.ins-goal-bar i { display: block; height: 100%; background: var(--gold); border-radius: 4px; }
+.ins-goal-bar i.full { background: #15896a; }
+
+/* Days you saved: 14 by 4 grid, four mint shades, a Less ... More legend */
+.ins-grid { display: grid; grid-template-columns: repeat(14, 1fr); gap: 4px; }
+.ins-cell { width: 100%; aspect-ratio: 1; border-radius: 3px; background: #2b2834; }
+.ins-cell.l1 { background: rgba(21, 137, 106, .3); }
+.ins-cell.l2 { background: rgba(21, 137, 106, .6); }
+.ins-cell.l3 { background: #15896a; }
+.ins-legend { display: flex; align-items: center; gap: 5px; justify-content: flex-end; }
+.ins-legend span { font-size: var(--fs-label); line-height: var(--lh-label); color: var(--muted); }
+.ins-legend .ins-cell { width: 12px; height: 12px; flex: none; aspect-ratio: auto; }
+.ins-note { text-align: left; }
+
+/* Weekly recap on Home: a soft mint gradient card */
+.recap { background: linear-gradient(135deg, rgba(21, 137, 106, .20), rgba(21, 137, 106, .05)); border: 1px solid rgba(21, 137, 106, .28); border-radius: 18px; padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 8px; }
+.recap-head { display: flex; align-items: center; justify-content: space-between; }
+.recap-label { font-size: var(--fs-label); line-height: var(--lh-label); font-weight: 700; letter-spacing: .08em; color: var(--teal); }
+.recap-x { background: none; border: 0; padding: 0 2px; cursor: pointer; color: var(--muted); line-height: 1; }
+.recap-amt { font: 600 22px/1.1 var(--font-display); color: var(--cream); white-space: nowrap; }
+.recap-added { font-size: var(--fs-meta); line-height: var(--lh-meta); color: var(--muted); margin-top: -4px; }
+.recap-strip { display: flex; gap: 5px; margin-top: 2px; }
+.recap-day { flex: 1 1 0; min-width: 0; aspect-ratio: 1; display: grid; place-items: center; border-radius: 6px; background: rgba(255, 255, 255, .08); font-size: var(--fs-label); line-height: 1; font-weight: 600; color: var(--muted); }
+.recap-day.on { background: #15896a; color: #fff; }
+.recap-div { height: 1px; background: rgba(255, 255, 255, .10); margin: 4px 0 2px; }
+.recap-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.recap-foot > span { font-size: var(--fs-meta); line-height: var(--lh-meta); color: var(--muted); }
+.recap-see { background: none; border: 0; padding: 0; cursor: pointer; display: inline-flex; align-items: center; gap: 2px; font-size: var(--fs-meta); line-height: var(--lh-meta); font-weight: 600; color: var(--teal); flex-shrink: 0; }
+.recap-see .chev { color: var(--teal); }

@@ -26,6 +26,7 @@ import Lab from './screens/Lab.jsx'
 import Splash from './screens/Splash.jsx'
 import Onboarding from './screens/Onboarding.jsx'
 import Stake from './screens/Stake.jsx'
+import Insights from './screens/Insights.jsx'
 import History from './screens/History.jsx'
 import More from './screens/More.jsx'
 import Profile from './screens/Profile.jsx'
@@ -67,7 +68,7 @@ const hostLang = () => { try { const l = String(host.language() || '').slice(0, 
 const AppCtx = createContext(null)
 export const useApp = () => useContext(AppCtx)
 
-const SCREENS = { home: Home, catalog: Catalog, plan: Plan, goal: Goal, unlock: Unlock, redeem: Redeem, done: Done, stake: Stake, history: History, profile: Profile, more: More, browse: Catalog, legal: Legal, faq: Faq, accounts: Accounts, prefAdd: AddPreference, prefs: Preferences }
+const SCREENS = { home: Home, catalog: Catalog, plan: Plan, goal: Goal, unlock: Unlock, redeem: Redeem, done: Done, stake: Stake, insights: Insights, history: History, profile: Profile, more: More, browse: Catalog, legal: Legal, faq: Faq, accounts: Accounts, prefAdd: AddPreference, prefs: Preferences }
 
 // Back with nothing behind (after a reload, or a screen opened with reset): where each screen goes.
 // Goals (home) has no parent: back from there leaves the app.
@@ -80,6 +81,7 @@ function parentOf(route) {
   if (route.name === 'faq') return { name: 'more', params: {} }
   if (route.name === 'accounts' || route.name === 'prefs') return { name: 'more', params: {} }
   if (route.name === 'prefAdd') return { name: 'accounts', params: {} }
+  if (route.name === 'insights') return { name: 'stake', params: {} }
   if (route.name === 'plan') return { name: 'catalog', params: route.params?.changeFor ? { changeFor: route.params.changeFor } : {} }
   if ((route.name === 'unlock' || route.name === 'redeem') && goalId) return { name: 'goal', params: { goalId } }
   return HOME

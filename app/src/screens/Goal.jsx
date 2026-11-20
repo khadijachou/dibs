@@ -33,6 +33,7 @@ import { GoalDot, GoalStatus } from '../components/GoalStatus.jsx'
 import { getUnlockState, settleGoal } from '../lib/unlockFlow.js'
 import { ReadyBox, useReady } from '../components/ReadyState.jsx'
 import { CardTodayBlock } from '../components/CardToday.jsx'
+import { GoalWeekCard } from '../components/InsightsParts.jsx'
 import DidYouKnow from '../components/DidYouKnow.jsx'
 
 const parseNim = (v) => Math.floor(Number(String(v).replace(/[^\d.]/g, ''))) || 0
@@ -429,6 +430,7 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
           </PaceLine>
         )}
         {goal.status === 'saving' && <CardTodayBlock goal={goal} onAdd={(gap) => go('goal', { goalId: goal.id, mode: 'add', amount: gap, topUp: true })} />}
+        <GoalWeekCard goal={goal} />
         <AboutCard goal={goal} brand={brand} />
         <CardIssue goal={goal} />
 

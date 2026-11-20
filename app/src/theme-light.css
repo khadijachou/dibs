@@ -347,3 +347,28 @@ html.is-fullscreen:where([data-theme="light"]) body::before { background: linear
 :where(:root[data-theme="light"]) .keep-row.on .radio { border-color: #e9c877; background: #e9c877; box-shadow: inset 0 0 0 4px #fff6e0; }
 :where(:root[data-theme="light"]) .keep-new, :where(:root[data-theme="light"]) .keep-rest { color: #a86a00; }
 :where(:root[data-theme="light"]) .list .row.kept > span:first-child { color: var(--muted); }
+
+/* ---- See your saving (v1.3.0): light colours only; the layout is in theme-dark.css ---- */
+/* Bars: coral and butter fills keep their brand colour; only the tracks and the empty bars take the light shades. */
+:where(:root[data-theme="light"]) .ins-bar-track { background: #F1E9DF; }
+:where(:root[data-theme="light"]) .ins-bar-fill.empty { background: #d9cdbd; }
+:where(:root[data-theme="light"]) .ins-mini-bar.empty { background: #d9cdbd; }
+:where(:root[data-theme="light"]) .ins-link, :where(:root[data-theme="light"]) .ins-tile { border-color: var(--line); }
+:where(:root[data-theme="light"]) .ins-link .chev { color: var(--muted); }
+:where(:root[data-theme="light"]) .ins-goal-bar { background: #F1E9DF; }
+:where(:root[data-theme="light"]) .ins-goal-bar i.full { background: #15896a; }
+/* Day grid: empty days on the light shade; the three mint shades keep their values. */
+:where(:root[data-theme="light"]) .ins-cell { background: #F1E9DF; }
+:where(:root[data-theme="light"]) .ins-cell.l1 { background: rgba(21, 137, 106, .3); }
+:where(:root[data-theme="light"]) .ins-cell.l2 { background: rgba(21, 137, 106, .6); }
+:where(:root[data-theme="light"]) .ins-cell.l3 { background: #15896a; }
+
+/* Weekly recap (approved light card) */
+:where(:root[data-theme="light"]) .recap { background: linear-gradient(135deg, #DFF3E9, #EEF8F2 55%, #FFFFFF); border-color: rgba(21, 137, 106, .22); box-shadow: 0 6px 18px rgba(35, 33, 43, .06); }
+:where(:root[data-theme="light"]) .recap-label, :where(:root[data-theme="light"]) .recap-see, :where(:root[data-theme="light"]) .recap-see .chev { color: #15896a; }
+:where(:root[data-theme="light"]) .recap-amt { color: #23212b; }
+:where(:root[data-theme="light"]) .recap-added, :where(:root[data-theme="light"]) .recap-foot > span { color: #5C5866; }
+:where(:root[data-theme="light"]) .recap-day { background: rgba(35, 33, 43, .08); color: #8A8594; }
+:where(:root[data-theme="light"]) .recap-day.on { background: #15896a; color: #fff; }
+:where(:root[data-theme="light"]) .recap-x { color: #8A8594; }
+:where(:root[data-theme="light"]) .recap-div { background: rgba(35, 33, 43, .08); }

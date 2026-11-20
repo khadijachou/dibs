@@ -13,6 +13,7 @@ import { fmtFiatValue } from '../lib/fiatValue.js'
 import { goalBrand } from './Home.jsx'
 import { chainReleaseAt, readyTimeText, ReleaseClock } from '../components/ReleaseClock.jsx'
 import WeekCard from '../components/WeekCard.jsx'
+import { InsightsRow } from '../components/InsightsParts.jsx'
 import { MIN_SHOWN, splitSegments, stakeSplit } from '../components/stakeSplit.js'
 import { RestakeButton } from '../components/Restake.jsx'
 import { KeepLink } from '../components/KeepInWallet.jsx'
@@ -58,6 +59,7 @@ export default function Stake() {
         {unlocking.map((g) => <UnstakingCard key={g.id} goal={g} chainAt={state.releaseAt} retired={stageOf(st, savedNim(g)).current === 'remove'} />)}
         {!st && <p className="small">{t('stake_none')}</p>}
         {active.length > 0 && <WeekCard goals={active} />}
+        <InsightsRow goals={goals} />
       </>
     )
   }

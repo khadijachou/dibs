@@ -20,6 +20,7 @@ import HowSteps from '../components/HowSteps.jsx'
 import GoalRing from '../components/GoalRing.jsx'
 import Num from '../components/Num.jsx'
 import PromoBanner from '../components/PromoBanner.jsx'
+import { RecapCard } from '../components/InsightsParts.jsx'
 import BrandSheet from '../components/BrandSheet.jsx'
 import { useReady } from '../components/ReadyState.jsx'
 import { QuestStrip } from '../components/QuestCard.jsx'
@@ -118,6 +119,7 @@ function Hub({ goals }) {
         {/* Several goals: the goals label shares its row with the carousel dots (GoalWallet). One goal: label, then the card. */}
         {/* Usage stats: asked once under the goals label to users who finished onboarding before the consent step. */}
         {live.length > 1 ? <GoalWallet goals={live} earned={earned} /> : <><GoalsLabel count={live.length} /><StatsCard />{active && <GoalHero goal={active} earned={earned} />}</>}
+        <RecapCard goals={goals} />
         <PromoBanner onOpen={setSheet} />
         {/* v1.1.12: this week's quest as one light row; it opens Profile on its Quests section. Hidden with no quest. */}
         <QuestStrip onOpen={() => go('profile', { section: 'quests', sectionAt: Date.now() })} />
