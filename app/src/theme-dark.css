@@ -1679,3 +1679,25 @@ html.is-fullscreen .bstamp-live { top: calc(58px + var(--fs-top)); }
 .sm-img img { display: block; width: 100%; height: auto; }
 .sm-ph { width: 100%; aspect-ratio: 1080 / 1350; background: #1b1920; }
 .sm-note { text-align: center; }
+
+/* v1.3.1 small improvements (base + dark; light overrides live in theme-light.css) */
+/* More header: the round theme button, a sun in dark (tap for light). */
+.theme-btn { width: 34px; height: 34px; flex-shrink: 0; border-radius: 17px; display: grid; place-items: center; cursor: pointer; border: 1px solid #34303f; background: #24212c; color: #FFC94D; }
+.theme-btn:active { transform: scale(.94); }
+/* The balance pill is a button (opens Savings); it keeps the chip look (border from .chip), with a pressed state. */
+.chip.bal { font-family: inherit; -webkit-appearance: none; appearance: none; cursor: pointer; text-align: left; }
+.chip.bal:active { transform: scale(.97); }
+/* The ring on a Home goal card opens Details: an invisible button sized to the ring. */
+.ring-tap { display: block; padding: 0; border: 0; background: none; cursor: pointer; line-height: 0; border-radius: 50%; -webkit-tap-highlight-color: transparent; }
+.ring-tap:active { transform: scale(.97); }
+/* Goal details: tap the staking address to copy the full one. Same look as the old bold text. */
+.acct-addr { background: none; border: 0; padding: 0; font: inherit; font-weight: 700; color: #d9d6e0; cursor: pointer; }
+.acct-addr:active { opacity: .6; }
+/* Toasts close with a tap or the small ×; the text keeps its place, the toast keeps its height. */
+.toast { cursor: pointer; }
+.toast-tx { flex: 0 1 auto; min-width: 0; }
+.toast-x { margin: -12px -6px -12px auto; width: 44px; height: 44px; flex-shrink: 0; display: grid; place-items: center; padding: 0; background: none; border: 0; color: inherit; opacity: .7; cursor: pointer; }
+.toast-x:active { opacity: 1; }
+/* Insights weekly card: title on its own line (never wrapping), total under it as the small grey line, left aligned. */
+.ins-weekly-head { flex-direction: column; align-items: flex-start; gap: 2px; }
+.ins-weekly-head h3 { white-space: nowrap; }

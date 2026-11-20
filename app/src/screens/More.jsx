@@ -112,7 +112,7 @@ export default function More() {
 
   return (
     <>
-      <Header langChip />
+      <Header langChip themeBtn />
       <main className="screen">
         <h2 className="title">{t('tab_more')}</h2>
         <NumbersCard />

@@ -15,6 +15,7 @@ import { catalogFromServer, loadCatalog } from './lib/catalog.js'
 import { migratePrefs, prunePrefs } from './lib/prefs.js'
 import { catalogBrands } from './lib/brands.js'
 import { readSimulateParam } from './lib/errors.js'
+import { startThemeAuto } from './lib/theme.js'
 import Home from './screens/Home.jsx'
 import Catalog from './screens/Catalog.jsx'
 import Plan from './screens/Plan.jsx'
@@ -34,7 +35,7 @@ import Legal from './screens/Legal.jsx'
 import Faq from './screens/Faq.jsx'
 import Accounts, { AddPreference } from './screens/Accounts.jsx'
 import Preferences from './screens/Preferences.jsx'
-import { TabBar, TAB_ROUTES } from './components/ui.jsx'
+import { Icon, TabBar, TAB_ROUTES } from './components/ui.jsx'
 import { preloadAvatar } from './components/Avatar.jsx'
 import WelcomeBack from './components/WelcomeBack.jsx'
 import HowItWorks from './components/HowItWorks.jsx'
@@ -114,6 +115,7 @@ export default function App() {
   const [history, setHistory] = useState([])
   const [toastText, setToastText] = useState(null)
   const toast = useCallback((text) => { setToastText(text); clearTimeout(window.__dibsToast); window.__dibsToast = setTimeout(() => setToastText(null), 4000) }, [])
+  const closeToast = useCallback(() => { clearTimeout(window.__dibsToast); setToastText(null) }, [])
   const [labHash, setLabHash] = useState(() => location.hash === '#lab')
   const isLab = labHash && labAllowed()
   // Language: the user's choice (dibs.lang) wins, else Nimiq Pay's language, else en.
@@ -126,6 +128,9 @@ export default function App() {
     setLangPick(l)
   }, [])
   useEffect(() => { document.documentElement.lang = lang }, [lang])
+  // Appearance on Auto: follow the phone's light/dark setting live (lib/theme.js). index.html set the look before the
+  // first paint; this wires the live follow for as long as the choice stays Auto. One listener, started once on launch.
+  useEffect(() => { startThemeAuto() }, [])
 
   // Landing: splash at least 900 ms, onboarding on first run without waiting for the wallet.
   const [onboarded, setOnboarded] = useState(() => { try { return localStorage.getItem('dibs.onboarded') === '1' } catch { return false } })
@@ -416,7 +421,7 @@ export default function App() {
 
   toastRef.current = toast
   tRef.current = t
-  const ctx = { t, lang, setLang, address, walletAddress, balance, refreshBalance, prices, demo: isDemo(), go, back, reset, toast, showHowTo, canGoBack, blockBack, shareBadge, shareMonth }
+  const ctx = { t, lang, setLang, address, walletAddress, balance, refreshBalance, prices, demo: isDemo(), go, back, reset, toast, showHowTo, canGoBack, blockBack, isBlocked, shareBadge, shareMonth }
 
   // The launch splash leaves (ring completes, then fades) once the next screen is ready to show.
   const splashDone = splashMin && (ready || Boolean(fatal) || (!onboarded && !isLab))
@@ -449,7 +454,7 @@ export default function App() {
       {intro === 'steps' && !isLab && <HowItWorks onDone={endIntro} />}
       {/* First-run intro: Home is not mounted behind it, so it loads (with its own entrance) after "Got it". */}
       {intro && !isLab ? <div className="app intro-bg" aria-hidden="true" /> : (
-        <div className={`app${tabs ? ' with-tabs' : ''}`}><Screen {...route.params} />{tabs && <TabBar current={route.name} />}<BadgeStamp id={stamps[0] || null} isBlocked={isBlocked} onDone={endStamp} />{toastText && <div className="toast" role="status"><i>i</i>{toastText}</div>}</div>
+        <div className={`app${tabs ? ' with-tabs' : ''}`}><Screen {...route.params} />{tabs && <TabBar current={route.name} />}<BadgeStamp id={stamps[0] || null} isBlocked={isBlocked} onDone={endStamp} />{toastText && <div className="toast" role="status" onClick={closeToast}><i aria-hidden="true">i</i><span className="toast-tx">{toastText}</span><button type="button" className="toast-x" aria-label={t('ob_close')} onClick={closeToast}><Icon name="close" size={20} stroke={2} /></button></div>}</div>
       )}
       <RestakeWatcher />
       {shareAsk && !isLab && <ShareConfirmSheet onYes={confirmShare} onClose={() => setShareAsk(null)} />}

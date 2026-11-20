@@ -4,14 +4,15 @@ import { itemLabel } from '../lib/itemName.js'
 import { BrandLogo, Header, Icon, Notice, useFiat } from '../components/ui.jsx'
 import { listGoals, savedNim } from '../lib/goals.js'
 import { markDailyOpen } from '../lib/quests.js'
-import { readStaker } from '../lib/nimiq.js'
+import { getBlockNumber, readStaker } from '../lib/nimiq.js'
 import { stakeSummary } from '../lib/earned.js'
+import { nextRewardAt } from '../lib/nextReward.js'
 import { stageOf } from '../lib/unlockStage.js'
 import { poolName } from '../lib/pace.js'
 import { fmtDateYear, fmtEarned, fmtNim } from '../lib/format.js'
 import { fmtFiatValue } from '../lib/fiatValue.js'
 import { goalBrand } from './Home.jsx'
-import { chainReleaseAt, readyTimeText, ReleaseClock } from '../components/ReleaseClock.jsx'
+import { chainReleaseAt, readyTimeText, ReleaseClock, timeText } from '../components/ReleaseClock.jsx'
 import WeekCard from '../components/WeekCard.jsx'
 import { InsightsRow } from '../components/InsightsParts.jsx'
 import { MIN_SHOWN, splitSegments, stakeSplit } from '../components/stakeSplit.js'
@@ -28,7 +29,11 @@ export default function Stake() {
     setState({ status: 'loading' })
     let st
     try { st = await readStaker(address) } catch { setState({ status: 'down' }); return }
-    setState({ status: 'ok', staker: st, releaseAt: await chainReleaseAt(st) })
+    // The block height, read once per load for the next-reward time. Unreadable: block stays null and Pool keeps
+    // "Pays every 12 hours".
+    let block = null
+    try { block = Number(await getBlockNumber()) } catch { /* height unknown */ }
+    setState({ status: 'ok', staker: st, releaseAt: await chainReleaseAt(st), block })
   }, [address])
 
   useEffect(() => { load() }, [load])
@@ -55,7 +60,7 @@ export default function Stake() {
     body = (
       <>
         {/* No staker at all: no top card, only the "Nothing staked yet" line. A stake that is only unlocking keeps it. */}
-        {st && <StakeHero st={st} sum={stakeSummary(st, address)} />}
+        {st && <StakeHero st={st} sum={stakeSummary(st, address)} block={state.block} />}
         {unlocking.map((g) => <UnstakingCard key={g.id} goal={g} chainAt={state.releaseAt} retired={stageOf(st, savedNim(g)).current === 'remove'} />)}
         {!st && <p className="small">{t('stake_none')}</p>}
         {active.length > 0 && <WeekCard goals={active} />}
@@ -101,9 +106,12 @@ function UnstakingCard({ goal, chainAt, retired }) {
 
 // Top card: Total saved, the split bar and its rows, then Earned so far and Pool. Display only: every figure comes from
 // stakeSummary() (lib/earned.js); the split only subtracts them (components/stakeSplit.js).
-function StakeHero({ st, sum }) {
+function StakeHero({ st, sum, block }) {
   const { t, lang, go, address } = useApp()
   const fiat = useFiat()
+  // Under Pool: the time of the next reward (the next epoch boundary, lib/nextReward.js), in the phone's local time
+  // through the app's clock formatter. Block height unknown: keep "Pays every 12 hours".
+  const nextReward = nextRewardAt(block, Date.now())
   const { total, earned, state: earnState, since, gap, gapExact } = sum
   // gap (lib/stakeGap.js): NIM the goals count that is not staked. When there is one, Total saved shows it too
   // (total + the exact gap, which is what the goals count), the split gets a butter "wallet" part, and a band names it.
@@ -186,7 +194,7 @@ function StakeHero({ st, sum }) {
         <div>
           <span>{t('stake_pool')}</span>
           <b><i className="dot" aria-hidden="true" />{poolName()}</b>
-          <span>{t('stake_pool_sub')}</span>
+          <span>{nextReward != null ? t('stake_next_reward', { time: timeText(nextReward, lang) }) : t('stake_pool_sub')}</span>
         </div>
       </div>
     </section>

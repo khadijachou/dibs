@@ -13,6 +13,7 @@ import { MIN_NEW_STAKER_NIM } from '../lib/config.js'
 import { readStaker, stakeNim } from '../lib/nimiq.js'
 import { confirmPending, expired, pending, stakedLuna, startPending, waitForDeposit } from '../lib/deposit.js'
 import { isRestake } from '../lib/restake.js'
+import { copyText } from '../lib/clipboard.js'
 import { audioContext, playDeposit } from '../lib/sound.js'
 import GoalRing from '../components/GoalRing.jsx'
 import Num from '../components/Num.jsx'
@@ -414,7 +415,7 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
           )}
           <MilestoneLine milestone={milestone} />
           {goal.status === 'unlocking' && unlockSt?.state === 'waiting' && unlockSt.releaseAt != null && <DidYouKnow list="U" />}
-          {saved > 0 && stakerAddress && <div className="acct">{t('goal_account', { address: '' }).trim()} <b>{shortAddress(stakerAddress)}</b><span className="pool">● {pool}</span></div>}
+          {saved > 0 && stakerAddress && <div className="acct">{t('goal_account', { address: '' }).trim()} <button type="button" className="acct-addr" aria-label={t('addr_copy')} onClick={async () => { if (await copyText(stakerAddress)) toast(t('addr_copied')) }}>{shortAddress(stakerAddress)}</button><span className="pool">● {pool}</span></div>}
         </section>
         </CardFlip>
         {goal.status === 'saving' && !reached && (

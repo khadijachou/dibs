@@ -9,6 +9,7 @@ import { fmtFiatValue, pickFiat } from '../lib/fiatValue.js'
 import { CURRENCY_EVENT, effectiveCurrency, getCurrency } from '../lib/currency.js'
 import { host } from '../lib/nimiq.js'
 import { useUnreadNews } from '../lib/newsSeen.js'
+import { getTheme, setTheme, THEME_EVENT } from '../lib/theme.js'
 import FullscreenSheet from './FullscreenSheet.jsx'
 
 const PATHS = {
@@ -39,6 +40,9 @@ const PATHS = {
   wallet: <><rect x="3" y="6" width="18" height="13" rx="2.5" /><path d="M16 11.5h5v4h-5a2 2 0 0 1 0-4z" /></>, // a wallet (Savings: NIM back in your wallet)
   chart: <><path d="M4 20h16" /><path d="M7 16.5v-4M12 16.5V6.5M17 16.5V10" /></>, // bars (Insights, big-update sheet)
   share: <><circle cx="18" cy="5" r="2.5" /><circle cx="6" cy="12" r="2.5" /><circle cx="18" cy="19" r="2.5" /><path d="M8.3 10.8 15.7 6.2M8.3 13.2l7.4 4.6" /></>, // share nodes (big-update sheet)
+  sun: <><circle cx="12" cy="12" r="4" /><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4" /></>, // sun (More: switch to light)
+  moon: <path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z" />, // crescent moon (More: switch to dark)
+  close: <path d="M6 6l12 12M18 6 6 18" />, // an × (close a toast)
 }
 
 // Bottom tab bar on the four top-level screens (App.jsx decides where it shows).
@@ -275,8 +279,36 @@ export function useFiat() {
   return prices?.live ? pickFiat(prices.rates, effectiveCurrency(host.fiat())) : null
 }
 
-export function Header({ onBack, onInk = false, langChip = false }) {
-  const { t, balance, demo, lang, reset } = useApp()
+// The look in effect ('dark' or 'light'), live: re-renders on any theme change (a tap, the Appearance row, or a live
+// Auto change of the phone's setting).
+const onTheme = (cb) => { window.addEventListener(THEME_EVENT, cb); return () => window.removeEventListener(THEME_EVENT, cb) }
+export const useThemeLook = () => useSyncExternalStore(onTheme, getTheme, () => 'dark')
+
+// More header: a round button that switches between dark and light at once. A sun in dark (tap for light), a moon in
+// light (tap for dark). From Auto it saves the explicit opposite of what is showing.
+function ThemeToggle() {
+  const { t } = useApp()
+  const look = useThemeLook()
+  const toLight = look === 'dark'
+  return (
+    <button type="button" className="theme-btn" aria-label={t(toLight ? 'theme_to_light' : 'theme_to_dark')}
+      onClick={() => setTheme(toLight ? 'light' : 'dark')}>
+      <Icon name={toLight ? 'sun' : 'moon'} size={18} stroke={2} />
+    </button>
+  )
+}
+
+export function Header({ onBack, onInk = false, langChip = false, themeBtn = false }) {
+  const { t, balance, demo, lang, reset, isBlocked } = useApp()
+  // The balance pill opens Savings from any screen that shows it; on Savings itself it does nothing visible.
+  // While a Nimiq Pay request is open (a deposit, an unlock step, a payment) back is blocked, so the pill is too:
+  // leaving the waiting screen would strand the deposit (the goal never records it, dibs:pending stays).
+  const openSavings = () => {
+    if (isBlocked?.()) return
+    let name = null
+    try { name = window.history.state?.route?.name } catch { /* no history state */ }
+    if (name !== 'stake') { reset('stake'); window.scrollTo(0, 0) }
+  }
   const balanceShown = useCountUp(balance)
   const fs = useFullscreen()
   const [fsAsk, setFsAsk] = useState(false)
@@ -286,7 +318,7 @@ export function Header({ onBack, onInk = false, langChip = false }) {
   const choice = useCurrencyChoice()
   const fiat = useFiat()
   const finalValue = balance == null ? null : fmtFiatValue(balance, fiat, lang)
-  const fits = useValueFits(headerRef, finalValue, [lang, choice, demo, onBack ? 1 : 0, langChip, fs.supported && !fs.on])
+  const fits = useValueFits(headerRef, finalValue, [lang, choice, demo, onBack ? 1 : 0, langChip, themeBtn, fs.supported && !fs.on])
   const valueShown = finalValue && fits ? fmtFiatValue(Math.round(balanceShown), fiat, lang) : null
   return (
     <header ref={headerRef} className={`header${onInk ? ' on-ink' : ''}`}>
@@ -300,14 +332,15 @@ export function Header({ onBack, onInk = false, langChip = false }) {
       </div>
       {demo && <span className="badge-demo">{t('demo')}</span>}
       {langChip && <LangChip />}
+      {themeBtn && <ThemeToggle />}
       {balance == null
         ? <span className="chip sk" aria-label={t('goal_reading')}>000,000 NIM</span>
         : (
-          <span className="chip bal">
+          <button type="button" className="chip bal" aria-label={t('balance_open')} onClick={openSavings}>
             {fmtNim(Math.round(balanceShown), lang)} NIM
             {valueShown && <span className="bal-v"><span aria-hidden="true">{' · '}</span>{valueShown}</span>}
             {finalValue && <span className="bal-m" aria-hidden="true">{' · '}{finalValue}</span>}
-          </span>
+          </button>
         )}
       {/* Only inside Nimiq Pay, and hidden in full screen: Nimiq Pay shows its own exit button there. */}
       {fs.supported && !fs.on && (

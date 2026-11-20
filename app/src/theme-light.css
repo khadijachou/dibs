@@ -384,3 +384,7 @@ html.is-fullscreen:where([data-theme="light"]) body::before { background: linear
 :where(:root[data-theme="light"]) .bests-state.prog { background: #F1E9DF; color: #6B6575; }
 :where(:root[data-theme="light"]) .bests-state.earned { background: rgba(21, 137, 106, .12); color: #15896A; }
 /* The month image keeps its fixed dark colours in both themes; only the sheet chrome follows the theme. */
+
+/* v1.3.1 small improvements (light) */
+:where(:root[data-theme="light"]) .theme-btn { border-color: #e6ddd2; background: #fff; color: #4a4558; }
+:where(:root[data-theme="light"]) .acct-addr { color: var(--cream); }

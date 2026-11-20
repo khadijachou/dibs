@@ -63,7 +63,8 @@ export function WeeklyCard({ data }) {
   const { t, lang } = useApp()
   return (
     <section className="card ins-card">
-      <div className="sec-head"><h3>{t('ins_weekly')}</h3><span className="small">{t('ins_total8', { n: fmtNim(data.total8, lang) })}</span></div>
+      {/* v1.3.1: title on its own line (never wrapping), total under it as the small grey line, left aligned. */}
+      <div className="sec-head ins-weekly-head"><h3>{t('ins_weekly')}</h3><span className="small">{t('ins_total8', { n: fmtNim(data.total8, lang) })}</span></div>
       <Bars weekly={data.weekly} weekStarts={data.weekStarts} amounts />
     </section>
   )

@@ -13,13 +13,16 @@ test('the day total sums deposits only', () => {
   assert.equal(dayDeposits([{ type: 'move', nim: 5 }]), 0)
 })
 
-test('the row time: en 11:12 PM, fr 23 h 12, es 23:12', () => {
+test('the row time: en 11:12 PM, fr 23 h 12, es 23:12, joined by no-break spaces', () => {
+  const NB = '\u00A0' // no-break space, so a time never splits across two lines
   const at = new Date(2026, 10, 13, 23, 12).toISOString()
-  const ws = (s) => s.replace(/[\s  ]/g, ' ')
-  assert.equal(ws(fmtTime(at, 'en')), '11:12 PM')
-  assert.equal(fmtTime(at, 'fr'), '23 h 12')
+  assert.equal(fmtTime(at, 'en'), `11:12${NB}PM`)
+  assert.equal(fmtTime(at, 'fr'), `23${NB}h${NB}12`)
   assert.equal(fmtTime(at, 'es'), '23:12')
-  assert.equal(fmtTime(new Date(2026, 10, 13, 9, 5).toISOString(), 'fr'), '9 h 05')
+  assert.equal(fmtTime(new Date(2026, 10, 13, 9, 5).toISOString(), 'fr'), `9${NB}h${NB}05`)
+  // no plain space in a time: nothing can break "PM" or "h 12" onto the next line
+  assert.ok(!/ /.test(fmtTime(at, 'en')), 'en has no plain space')
+  assert.ok(!/ /.test(fmtTime(at, 'fr')), 'fr has no plain space')
 })
 
 test('every unlock step has a short title in en, fr and es', () => {

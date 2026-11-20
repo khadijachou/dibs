@@ -333,7 +333,11 @@ function GoalHero({ goal, earned }) {
           <div className="tx"><div className="t1">{itemLabel(t, goal)}</div><DateLine goal={goal} date={fmtDate(goal.deadline, lang)} days={t(p.daysLeft === 1 ? 'days_left_one' : 'days_left_other', { count: p.daysLeft })} /></div>
         </div>
         <div className="mid">
-          <GoalRing goal={goal} pct={pct} milestone={milestone} ready={rs} />
+          {/* The ring opens this goal's Details, exactly like the Details button (same handler); the milestone and ready
+              animations and the wallet's "open on that goal" note (onClickCapture) still run. */}
+          <button type="button" className="ring-tap" aria-label={t('home_details')} onClick={details}>
+            <GoalRing goal={goal} pct={pct} milestone={milestone} ready={rs} />
+          </button>
           <div>
             <div className="n"><Num value={fmtNim(Math.round(savedShown), lang)} /> NIM</div>
             {rs
