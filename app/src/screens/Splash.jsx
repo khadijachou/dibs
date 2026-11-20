@@ -1,8 +1,9 @@
 import { useEffect, useRef } from 'react'
 import { useApp } from '../App.jsx'
-import { BrandLogo, CREAM, DibsMark, Wordmark } from '../components/ui.jsx'
+import { BrandLogo, CREAM, INK, DibsMark, Wordmark, useThemeLook } from '../components/ui.jsx'
 import { detailText } from '../lib/itemName.js'
-import { BRANDS } from '../lib/brands.js'
+import { BRANDS, brandGrad } from '../lib/brands.js'
+import { version } from '../../package.json'
 
 // Logos: the Dibs mark and wordmark (DibsMark, Wordmark) are vector; each card draws its BRANDS entry (found by key)
 // with BrandLogo, so the splash always shows the same logo as the rest of the app.
@@ -11,11 +12,14 @@ import { BRANDS } from '../lib/brands.js'
 // The coral ring draws itself in a loop while connecting. When `done` turns true the ring
 // completes from wherever it is, the splash fades, then onGone() lets App show the next screen.
 // Reduced motion: a static full ring and a small "Loading" line, no fade.
+// Each card is drawn as a gift card (v1.3.3): the real BrandLogo and the "GIFT CARD" label, then the name and price.
+// Dark fills it with the brand's two colours (--grad = brandGrad); light uses a cream face with a brand-coloured
+// left edge (--edge). `low` marks the two lower cards, hidden on very short screens.
 const CARDS = [
-  { key: 'steam', name: 'Steam', price: '5 USD', x: '-14px', y: '10%', r: '-14deg', dur: '5.5s', bg: 'linear-gradient(145deg, #1b2838, #0f1b2b)' },
-  { key: 'netflix', name: 'Netflix', price: '25 EUR', x: 'calc(100% - 118px)', y: '19%', r: '12deg', dur: '6.5s', bg: 'linear-gradient(145deg, #3a0f12, #1d0a0c)' },
-  { key: 'apple', name: 'Apple', price: '10 USD', x: '-18px', y: '76%', r: '8deg', dur: '6s', bg: 'linear-gradient(145deg, #2a2733, #1c1a22)' },
-  { key: 'amazon', name: 'Amazon', price: '10 USD', x: 'calc(100% - 168px)', y: '74%', r: '-6deg', dur: '7s', bg: 'linear-gradient(145deg, #2a2733, #1c1a22)' },
+  { key: 'steam', name: 'Steam', price: '5 USD', x: '14px', y: '8%', r: '-9deg', dur: '5.5s', edge: '#1B2838' },
+  { key: 'netflix', name: 'Netflix', price: '25 EUR', x: 'calc(100% - 172px)', y: '17%', r: '8deg', dur: '6.5s', edge: '#C40812' },
+  { key: 'apple', name: 'Apple', price: '10 USD', x: '18px', y: '73%', r: '7deg', dur: '6s', edge: '#23212B', low: true },
+  { key: 'amazon', name: 'Amazon', price: '10 USD', x: 'calc(100% - 176px)', y: '70%', r: '-6deg', dur: '7s', edge: '#FF9900', low: true },
 ]
 
 // The official Nimiq logo, path copied unchanged from @nimiq/style 0.8.5 (src/icons/hexagon.svg). Never redraw it.
@@ -37,6 +41,7 @@ const lines = (s) => s.split(/(?<=\.)\s+/)
 
 export default function Splash({ done = false, onGone }) {
   const { t } = useApp()
+  const look = useThemeLook() // the "d" is cream in dark, ink in light; set from the look in effect, right on first paint
   const tag = lines(t('splash_tag'))
   const arc = useRef(null)
   const root = useRef(null)
@@ -64,8 +69,11 @@ export default function Splash({ done = false, onGone }) {
       <p className="sr-only" role="status">{t('loading')}</p>
       <div className="splash-cards" aria-hidden="true">
         {CARDS.map((c, i) => (
-          <div key={c.key} className="fc" style={{ '--x': c.x, '--y': c.y, '--r': c.r, '--d': `${i * -1.3}s`, '--dur': c.dur, background: c.bg }}>
-            <BrandLogo brand={BRANDS.find((b) => b.key === c.key) || c} />
+          <div key={c.key} className={`fc${c.low ? ' low' : ''}`} style={{ '--x': c.x, '--y': c.y, '--r': c.r, '--d': `${i * -1.3}s`, '--dur': c.dur, '--grad': brandGrad(c.key), '--edge': c.edge }}>
+            <div className="fc-top">
+              <BrandLogo brand={BRANDS.find((b) => b.key === c.key) || c} />
+              <span className="fc-kind">{t('bs_gift')}</span>
+            </div>
             <b>{c.name}</b>
             <span>{t('cat_from', { price: detailText(t, { detail: c.price }) })}</span>
           </div>
@@ -78,15 +86,15 @@ export default function Splash({ done = false, onGone }) {
             <circle ref={arc} className="splash-arc" cx="78" cy="78" r={R} fill="none" stroke="#E8482A" strokeWidth="12" strokeLinecap="round"
               strokeDasharray={C.toFixed(1)} transform="rotate(-90 78 78)" style={{ '--c': `${C.toFixed(1)}px` }} />
           </svg>
-          <DibsMark className="splash-dmark" color={CREAM} />
+          <DibsMark className="splash-dmark" color={look === 'light' ? INK : CREAM} />
         </div>
         <p className="splash-loading" aria-hidden="true">{t('splash_loading')}</p>
         <Wordmark className="splash-word" />
         <p className="splash-tag">
-          {tag.map((l, i) => <span key={i} className={i === tag.length - 1 ? 'last' : ''}>{l}</span>)}
+          {tag.map((l, i) => <span key={i} className={i === tag.length - 1 ? 'last' : i === 1 ? 'mid' : ''}>{l}</span>)}
         </p>
       </div>
-      <p className="splash-line"><NimiqHex />{t('splash_line')}</p>
+      <p className="splash-line"><NimiqHex />{t('splash_line')}<span className="splash-ver">v{version}</span></p>
     </div>
   )
 }

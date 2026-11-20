@@ -74,6 +74,7 @@ const EXCEPTIONS = {
   '.code-box': CODE, '.lab .log': CODE, '.acct b': CODE, '.codecard .face.b .code-box': CODE, '.tl-tx': CODE, '.rw-box': CODE, '.tk-code': CODE,
   '.diag-box': CODE, // Copy diagnostics readout: 11 px monospace, the approved listed exception (v1.2.8)
   '.fc b': SPLASH, '.fc span': SPLASH, '.splash-tag': SPLASH,
+  '.fc-kind': 'the GIFT CARD label on the splash cards, 8.5 px, v1.3.3',
   '.ob-title': ONBOARD, '.gc-label': ONBOARD, '.gc-value': ONBOARD, '.gc-name': ONBOARD, '.coin': ONBOARD, '.coin.c2': ONBOARD,
   '.ir-mid b': ONBOARD, '.ir-mid span': ONBOARD, '.ccard .cc-label': ONBOARD, '.ccard b': ONBOARD, '.cc-copy': ONBOARD,
 }
