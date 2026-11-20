@@ -14,7 +14,7 @@ test('saving or reached goal: the plain message for each place', () => {
     assert.equal(duplicateMessage(place, goal('saving'), null).key, key)
     assert.equal(duplicateMessage(place, goal('saving'), waiting).key, key, 'a saving goal never takes an unlock message')
   }
-  assert.equal(say('en', 'new', goal('saving'), null), 'You already have a goal for this card. Here it is. Finish it first, then you can start a new one.')
+  assert.equal(say('en', 'new', goal('saving'), null), 'You already have a goal for this card. Here it is. Finish it first.')
 })
 
 test('unlock waiting: "is unlocking" with the release time from getUnlockState, in all three places', () => {

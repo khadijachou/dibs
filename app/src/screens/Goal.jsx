@@ -398,7 +398,7 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
               </>
             )}
           </section>
-          <p className="add-note"><span className="add-note-ic"><Icon name="info" size={16} /></span>{t('add_stake_note')}</p>
+          <p className="add-note"><span className="add-note-ic"><Icon name="info" size={16} /></span>{t('add_stake_note', { pool })}</p>
           {problemNotices}
 
           <div className="bottom">

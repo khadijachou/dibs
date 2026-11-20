@@ -35,7 +35,7 @@ export function planOf(goal, now = Date.now()) {
 
 // Known pools, by validator address. Plan and Goal both show this name.
 const POOLS = { 'NQ15 HNAH YRVH DFVM YHAG BSXG 0QHK KA0Q XDR7': 'Garuda Pool' }
-export const poolName = () => POOLS[config.defaultValidator] || shortAddress(config.defaultValidator) || 'Nimiq staking'
+export const poolName = () => POOLS[config.defaultValidator] || shortAddress(config.defaultValidator) || 'Garuda Pool'
 
 export const shortAddress = (a) => {
   if (!a) return ''

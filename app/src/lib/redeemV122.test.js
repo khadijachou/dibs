@@ -13,7 +13,7 @@ const src = readFileSync(new URL('../screens/Redeem.jsx', import.meta.url), 'utf
 // The strings added for the two-step payment screen.
 const NEW_KEYS = [
   'redeem_title1', 'redeem_continue', 'redeem_step_receipt', 'redeem_step_pay', 'redeem_step_code',
-  'redeem_you_pay', 'redeem_row_price', 'redeem_row_saved', 'redeem_row_wallet', 'redeem_row_receipt',
+  'redeem_row_price', 'redeem_row_saved', 'redeem_row_wallet', 'redeem_row_receipt',
   'redeem_price_moved', 'redeem_source', 'redeem_pay_btn',
 ]
 
@@ -51,7 +51,7 @@ test('Redeem.jsx keeps the exact button handlers and disabled guards', () => {
 test('no "sats" and no "invoice" wording in the redesigned API-mode redeem strings', () => {
   const shown = [
     'redeem_title1', 'redeem_step_receipt', 'redeem_step_pay', 'redeem_step_code', 'redeem_continue',
-    'redeem_email', 'redeem_email_why', 'redeem_email_bad', 'redeem_you_pay', 'redeem_row_price',
+    'redeem_email', 'redeem_email_why', 'redeem_email_bad', 'redeem_row_price',
     'redeem_row_saved', 'redeem_row_wallet', 'redeem_row_receipt', 'redeem_price_moved',
     'redeem_expires', 'redeem_pay_nim', 'redeem_source', 'redeem_pay_btn',
   ]

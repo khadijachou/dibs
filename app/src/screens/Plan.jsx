@@ -192,7 +192,7 @@ export default function Plan({ brandKey, region = null, itemId, moveFrom = null,
         <div className="plan-facts">
           <div className="pf-row">
             <span className="pf-ico grow" aria-hidden="true"><GrowIcon /></span>
-            <div><b>{t('plan_earns_t')}</b><span>{t('plan_earns_b', { validator: poolName() })}</span></div>
+            <div><b>{t('plan_earns_t')}</b><span>{t('plan_earns_b', { pool: poolName() })}</span></div>
           </div>
           <div className="pf-row">
             <span className="pf-ico wait" aria-hidden="true"><ClockIcon /></span>
