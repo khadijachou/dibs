@@ -3,14 +3,14 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useApp } from '../App.jsx'
 import { config, toLuna, toNim } from '../lib/config.js'
-import { listAccountsWithBalance, connect, describeError, getBalanceNim, getBlockNumber, getStaker, readStaker, host, isDemo, payInvoice, unlock } from '../lib/nimiq.js'
+import { listAccountsWithBalance, connect, describeError, getBalanceNim, getBlockNumber, getStaker, readStaker, host, isDemo, payInvoice, signMessage, unlock } from '../lib/nimiq.js'
 import { parseInvoice } from '../lib/invoice.js'
 import { getPrices } from '../lib/price.js'
 import { api } from '../lib/api.js'
 import { releaseBlockOf } from '../lib/release.js'
 
 export default function Lab() {
-  const { address } = useApp()
+  const { address, walletAddress } = useApp()
   const [log, setLog] = useState([])
   const [invoice, setInvoice] = useState('')
   const [validator, setValidator] = useState(config.defaultValidator)
@@ -41,6 +41,17 @@ export default function Lab() {
   }, [address])
   useEffect(() => { readRel() }, [readRel])
 
+  // Section 4 addresses, read when the section renders: the app address, the stable wallet address
+  // if it differs, and every address listAccountsWithBalance() shares.
+  const [signAddr, setSignAddr] = useState(null)
+  const readSignAddr = useCallback(async () => {
+    try {
+      const accounts = await listAccountsWithBalance()
+      setSignAddr({ address, walletAddress, accounts: accounts.map((a) => a.address) })
+    } catch (e) { setSignAddr({ error: describeError(e).message }) }
+  }, [address, walletAddress])
+  useEffect(() => { readSignAddr() }, [readSignAddr])
+
   const write = (label, data) =>
     setLog((l) => [...l, `[${new Date().toISOString().slice(11, 19)}] ${label}: ${typeof data === 'string' ? data : JSON.stringify(data)}`])
 
@@ -59,6 +70,26 @@ export default function Lab() {
   }
 
   const amount = () => Number(nim)
+
+  // Hex of the UTF-8 bytes of the Button C message, so the hex sent is exact and logged untouched.
+  const SIGN_C_TEXT = 'Dibs Friends test 2026-11-21 C'
+  const signCHex = [...new TextEncoder().encode(SIGN_C_TEXT)].map((b) => b.toString(16).padStart(2, '0')).join('')
+
+  // typeof and length of a returned field, and whether the string looks like hex or base64.
+  const describeField = (v) => {
+    if (typeof v !== 'string') return { type: typeof v, value: v }
+    const looksHex = /^[0-9a-fA-F]+$/.test(v) && v.length % 2 === 0
+    const looksBase64 = /^[A-Za-z0-9+/]+={0,2}$/.test(v)
+    return { type: 'string', length: v.length, looksLike: looksHex ? 'hex' : looksBase64 ? 'base64' : 'neither' }
+  }
+
+  // Runs one sign call and returns the message, the full result untouched, and the field shapes.
+  const runSign = async (message) => {
+    const { provider } = await connect()
+    if (typeof provider.sign !== 'function') return 'sign is not available in demo mode'
+    const result = await signMessage(message)
+    return { message, result, publicKey: describeField(result?.publicKey), signature: describeField(result?.signature) }
+  }
 
   const checks = {
     env: step('Environment', async () => ({
@@ -119,6 +150,9 @@ export default function Lab() {
     }),
     retire: step('sendRetireStakeTransaction', () => unlock.retire(amount())),
     remove: step('sendRemoveStakeTransaction', () => unlock.remove(amount())),
+    signA: step('Sign text', () => runSign('Dibs Friends test 2026-11-21 A')),
+    signB: step('Sign same text again', () => runSign('Dibs Friends test 2026-11-21 A')),
+    signC: step('Sign hex', () => runSign({ message: signCHex, isHex: true })),
   }
 
   const copy = () => navigator.clipboard?.writeText(log.join('\n'))
@@ -210,6 +244,24 @@ export default function Lab() {
           <button type="button" className="btn small" disabled={busy} onClick={checks.deactivate}>1. Deactivate</button>
           <button type="button" className="btn small" disabled={busy} onClick={checks.retire}>2. Retire</button>
           <button type="button" className="btn small" disabled={busy} onClick={checks.remove}>3. Remove</button>
+        </div>
+      </section>
+
+      <section className="card">
+        <h2>4. Sign a message</h2>
+        <p className="small">Signs a short text with the wallet, to prepare Friends. Nothing moves. Nimiq Pay asks to confirm each signature.</p>
+        {signAddr?.error && <p className="small">Addresses: could not read ({signAddr.error})</p>}
+        {signAddr && !signAddr.error && (
+          <p className="small">
+            App address {signAddr.address || '(none)'}
+            {signAddr.walletAddress && signAddr.walletAddress !== signAddr.address ? ` · wallet ${signAddr.walletAddress}` : ''}
+            {' '}· accounts {signAddr.accounts.length ? signAddr.accounts.join(', ') : '(none)'}
+          </p>
+        )}
+        <div className="btns">
+          <button type="button" className="btn small" disabled={busy} onClick={checks.signA}>Sign text</button>
+          <button type="button" className="btn small" disabled={busy} onClick={checks.signB}>Sign same text again</button>
+          <button type="button" className="btn small" disabled={busy} onClick={checks.signC}>Sign hex</button>
         </div>
       </section>
 
