@@ -14,8 +14,10 @@ export function preloadAvatar(address) {
   lib().then((I) => I.toDataUrl(key)).then((u) => cache.set(key, u)).catch(() => {})
 }
 
-export function Avatar({ address, size = 56, className = '', fallback = null }) {
-  const key = address ? friendly(address) : null
+// seed: draw the identicon from that text instead of a wallet address (friends are always drawn from their seed,
+// which is their user id, never their wallet). address: the wallet, as on Profile today.
+export function Avatar({ address, seed, size = 56, className = '', fallback = null }) {
+  const key = seed != null && seed !== '' ? String(seed) : address ? friendly(address) : null
   const [url, setUrl] = useState(() => (key && cache.get(key)) || null)
   const [failed, setFailed] = useState(false)
   useEffect(() => {

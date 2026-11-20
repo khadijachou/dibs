@@ -35,6 +35,10 @@ import Legal from './screens/Legal.jsx'
 import Faq from './screens/Faq.jsx'
 import Accounts, { AddPreference } from './screens/Accounts.jsx'
 import Preferences from './screens/Preferences.jsx'
+import Friends from './screens/Friends.jsx'
+import FriendProfile from './screens/FriendProfile.jsx'
+import { ProfileBackSheet } from './components/FriendsParts.jsx'
+import { isOn as friendsIsOn, enabled as friendsEnabled, syncQuiet, setPendingCode } from './lib/friends.js'
 import { Icon, TabBar, TAB_ROUTES } from './components/ui.jsx'
 import { preloadAvatar } from './components/Avatar.jsx'
 import WelcomeBack from './components/WelcomeBack.jsx'
@@ -69,7 +73,7 @@ const hostLang = () => { try { const l = String(host.language() || '').slice(0, 
 const AppCtx = createContext(null)
 export const useApp = () => useContext(AppCtx)
 
-const SCREENS = { home: Home, catalog: Catalog, plan: Plan, goal: Goal, unlock: Unlock, redeem: Redeem, done: Done, stake: Stake, insights: Insights, history: History, profile: Profile, more: More, browse: Catalog, legal: Legal, faq: Faq, accounts: Accounts, prefAdd: AddPreference, prefs: Preferences }
+const SCREENS = { home: Home, catalog: Catalog, plan: Plan, goal: Goal, unlock: Unlock, redeem: Redeem, done: Done, stake: Stake, insights: Insights, history: History, profile: Profile, more: More, browse: Catalog, legal: Legal, faq: Faq, accounts: Accounts, prefAdd: AddPreference, prefs: Preferences, friends: Friends, friendProfile: FriendProfile }
 
 // Back with nothing behind (after a reload, or a screen opened with reset): where each screen goes.
 // Goals (home) has no parent: back from there leaves the app.
@@ -83,6 +87,8 @@ function parentOf(route) {
   if (route.name === 'accounts' || route.name === 'prefs') return { name: 'more', params: {} }
   if (route.name === 'prefAdd') return { name: 'accounts', params: {} }
   if (route.name === 'insights') return { name: 'stake', params: {} }
+  if (route.name === 'friends') return { name: 'profile', params: {} }
+  if (route.name === 'friendProfile') return { name: 'friends', params: {} }
   if (route.name === 'plan') return { name: 'catalog', params: route.params?.changeFor ? { changeFor: route.params.changeFor } : {} }
   if ((route.name === 'unlock' || route.name === 'redeem') && goalId) return { name: 'goal', params: { goalId } }
   return HOME
@@ -260,6 +266,19 @@ export default function App() {
     }).catch(() => { /* chain unreadable: try on the next open */ })
   }, [ready, address]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (ready && address) runBadgeCheck() }, [ready, address, route, runBadgeCheck])
+  // Friends: the one-time "profile is back" sheet (a restore fires dibs:friends:back), and the once-per-launch
+  // upload of shared data when Friends is on. Both are no-ops with Friends off or friendsUrl empty.
+  const [backSheet, setBackSheet] = useState(false)
+  useEffect(() => {
+    const on = () => setBackSheet(true)
+    window.addEventListener('dibs:friends:back', on)
+    return () => window.removeEventListener('dibs:friends:back', on)
+  }, [])
+  const friendsSynced = useRef(false)
+  useEffect(() => {
+    if (!ready || !address || friendsSynced.current) return
+    if (friendsEnabled() && friendsIsOn()) { friendsSynced.current = true; syncQuiet(address) }
+  }, [ready, address])
   useEffect(() => {
     let timer
     const onGoals = () => { clearTimeout(timer); timer = setTimeout(() => badgeCheckRef.current(), 300) }
@@ -306,6 +325,19 @@ export default function App() {
     setRoute({ name, params })
     window.scrollTo(0, 0)
   }, [route])
+  // A ?friend=CODE link: with Friends on, open Add by code prefilled; with Friends off, remember the code for after
+  // turn-on (never auto-send an invite). Read from location.search, like ?sim and #lab. Runs once.
+  const friendParamDone = useRef(false)
+  useEffect(() => {
+    if (!ready || friendParamDone.current) return
+    friendParamDone.current = true
+    let code = null
+    try { const m = location.search.match(/[?&]friend=([A-Za-z0-9-]+)/); code = m ? m[1] : null } catch { code = null }
+    if (!code || !friendsEnabled()) return
+    if (friendsIsOn()) go('friends', { addCode: code })
+    else setPendingCode(code)
+  }, [ready]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // While a Nimiq Pay request is open (deposit, unlock step, payment), back is blocked: counter of open requests.
   const blocks = useRef(0)
   const blockBack = useCallback(() => {
@@ -458,6 +490,7 @@ export default function App() {
       )}
       <RestakeWatcher />
       {shareAsk && !isLab && <ShareConfirmSheet onYes={confirmShare} onClose={() => setShareAsk(null)} />}
+      {backSheet && !isLab && <ProfileBackSheet onClose={() => setBackSheet(false)} />}
       {bigSheet && !isLab && route.name === 'home' && <WhatsNewSheet release={bigSheet.release} entry={bigSheet.entry} since={bigSheet.since} onClose={() => endBig()} onGo={(r) => endBig(() => go(r))} onSeeAll={() => endBig(() => go('legal', { page: 'news' }))} />}
     </AppCtx.Provider>
   )

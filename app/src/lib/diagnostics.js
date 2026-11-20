@@ -165,6 +165,8 @@ export function buildDiagnostics(state) {
   out.push(rs && rs.count
     ? `  NIM put back in staking: ${rs.count} time(s), last ${dayTime(rs.last?.at, tz)} (${fmtNum(rs.last?.nim)} NIM)`
     : '  NIM put back in staking: never')
+  // Whether Friends is on. Never the device secret or the demo wallet key (gather does not read them).
+  out.push(`  Friends: ${s.friendsOn ? 'on' : 'off'}`)
 
   return out.join('\n')
 }
@@ -223,6 +225,8 @@ export async function gather({ storage, now, tzOffsetMin, version, lang, demo, u
   const restakesRaw = readJSON(storage, 'dibs.restakes') // the restake log (lib/restake.js): { at, nim, tx }, last 20
   const restakeArr = Array.isArray(restakesRaw) ? restakesRaw : []
   const lastR = restakeArr.length ? restakeArr[restakeArr.length - 1] : null
+  // Only whether Friends is on (dibs.friends.on). The device secret key and the demo wallet key are never read.
+  const friends = readJSON(storage, 'dibs.friends')
   return {
     version, now, tzOffsetMin, lang, demo,
     accounts, usedAddress, staker, validatorAddress,
@@ -230,5 +234,6 @@ export async function gather({ storage, now, tzOffsetMin, version, lang, demo, u
     pendingPay: Boolean(pay && pay.kind === 'pay'),
     deletedCount: Array.isArray(del) ? del.length : 0,
     restakes: { count: restakeArr.length, last: lastR ? { at: lastR.at, nim: lastR.nim } : null }, // never the tx hash
+    friendsOn: Boolean(friends?.on),
   }
 }

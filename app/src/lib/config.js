@@ -8,6 +8,8 @@ export const config = {
   redeemMode: env.VITE_REDEEM_MODE === 'manual' ? 'manual' : 'api',
   apiUrl: (env.VITE_API_URL || '').replace(/\/$/, ''),
   fallbackNimUsd: Number(env.VITE_FALLBACK_NIM_USD || 0.0003),
+  // Friends server base URL (part 2). Empty = Friends is off everywhere: no row, no request, no @noble code loaded.
+  friendsUrl: (env.VITE_FRIENDS_URL || '').replace(/\/$/, ''),
 }
 
 export const LUNA_PER_NIM = 100_000

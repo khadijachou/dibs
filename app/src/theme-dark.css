@@ -1751,3 +1751,91 @@ html.is-fullscreen .bstamp-live { top: calc(58px + var(--fs-top)); }
 .unl-change-ic.butter { background: rgba(255, 201, 77, .15); color: var(--butter); }
 .unl-change-ic.mint { background: rgba(21, 137, 106, .18); color: var(--teal); }
 .unl-change-ic.coral { background: rgba(232, 72, 42, .15); color: var(--gold); }
+
+/* ---- Friends (v1.4.0). Layout lives here (loaded after styles.css, so it applies in both themes); colours use the
+   theme variables, so light mode follows automatically. theme-light.css adds only the few coral-tint overrides. ---- */
+.prof-friends { margin: 0 0 14px; }
+.frd-prof-row, .frd-row { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
+  background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px; color: var(--cream); }
+.frd-prof-row { cursor: pointer; }
+.frd-prof-ic, .frd-empty-ic { display: grid; place-items: center; border-radius: 12px; background: var(--card-2); color: var(--muted); flex: none; }
+.frd-prof-ic { width: 36px; height: 36px; border-radius: 10px; }
+.frd-row-mid { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.frd-row-mid b { font-weight: 600; color: var(--cream); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.frd-row-mid small { color: var(--muted); font-size: var(--fs-meta); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.frd-prof-right { display: flex; align-items: center; gap: 6px; color: var(--muted); }
+.frd-count { font-weight: 700; color: var(--cream); }
+.frd-pill { background: var(--card-2); color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; font-size: var(--fs-label); font-weight: 600; white-space: nowrap; }
+
+.frd-invite { text-align: left; }
+.frd-invite h3 { margin: 0 0 4px; }
+.frd-codebox { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 100%; margin: 12px 0;
+  background: var(--card-2); border: 1px dashed var(--line); border-radius: 14px; padding: 14px; cursor: pointer; }
+.frd-codebox b { font-family: 'Poppins', sans-serif; font-weight: 700; font-size: var(--fs-title); letter-spacing: .06em; color: var(--cream); }
+.frd-codebox small { color: var(--muted); }
+.frd-invite-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.frd-invite-btns .btn { margin: 0; }
+
+.frd-sec { margin: 16px 0 0; }
+.sec-head-h { margin: 0 0 8px; font-size: var(--fs-strong); }
+.frd-sec .frd-row + .frd-row { margin-top: 8px; }
+.frd-av { flex: none; }
+.frd-inv-acts { display: flex; align-items: center; gap: 8px; flex: none; }
+.frd-accept { background: var(--gold); color: #fff; border: 0; border-radius: 999px; padding: 6px 14px; font-weight: 600; cursor: pointer; }
+.frd-x { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 999px; background: var(--card-2); color: var(--muted); border: 0; cursor: pointer; }
+
+.frd-empty { text-align: center; padding: 24px 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.frd-empty-ic { width: 56px; height: 56px; border-radius: 16px; }
+.frd-empty b { font-size: var(--fs-heading); }
+.frd-empty .frd-invite-btns { width: 100%; margin-top: 6px; }
+
+.frd-seg { display: grid; grid-template-columns: 1fr 1fr 1fr; background: var(--card-2); border: 1px solid var(--line); border-radius: 10px; padding: 3px; }
+.frd-seg button { border: 0; background: transparent; color: var(--muted); font-weight: 600; font-size: var(--fs-label); padding: 7px 4px; border-radius: 8px; cursor: pointer; white-space: nowrap; }
+.frd-seg button.on { background: var(--gold); color: #fff; }
+
+.frd-skel { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.frd-skel-row { height: 60px; border-radius: 16px; background: var(--card-2); animation: frd-pulse 1.3s ease-in-out infinite; }
+@keyframes frd-pulse { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .frd-skel-row { animation: none; } }
+
+.frd-sheet-lead { color: var(--muted); margin: 0 0 14px; }
+.frd-note { color: var(--muted); font-size: var(--fs-meta); margin: 10px 0 0; }
+.frd-quiet { color: var(--muted); font-size: var(--fs-meta); margin: 10px 0 0; }
+.frd-shared-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 12px 0; padding: 10px 12px; background: var(--card-2); border-radius: 12px; }
+.frd-shared-row span:first-child { display: flex; flex-direction: column; min-width: 0; }
+.frd-shared-row small { color: var(--muted); font-size: var(--fs-label); }
+
+.frd-back { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px; margin-bottom: 14px; }
+.frd-back-line { color: var(--cream); font-weight: 600; }
+
+.frd-match { display: flex; align-items: center; gap: 12px; margin: 12px 0; padding: 10px 12px; background: var(--card-2); border-radius: 12px; }
+.frd-code-in { text-transform: uppercase; letter-spacing: .08em; font-weight: 700; }
+
+.frd-prof-head { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 4px; margin-bottom: 16px; }
+.frd-prof-head h3 { margin: 4px 0 0; }
+.frd-sub { color: var(--muted); font-size: var(--fs-body); margin: 0; }
+.frd-asfriend-banner { margin: 6px 0 0; font-size: var(--fs-meta); color: var(--gold); font-weight: 600; }
+.frd-name-edit { background: transparent; border: 0; color: var(--cream); font-family: 'Poppins', sans-serif; font-weight: 700; font-size: var(--fs-heading); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.frd-pencil { color: var(--muted); font-size: var(--fs-body); }
+
+.frd-card { text-align: left; }
+.frd-vis-row { padding: 12px 0; border-top: 1px solid var(--line); }
+.frd-vis-row:first-of-type { border-top: 0; padding-top: 4px; }
+.frd-vis-head { display: flex; flex-direction: column; gap: 2px; margin-bottom: 8px; }
+.frd-vis-head b { font-weight: 600; }
+.frd-vis-head small { color: var(--muted); font-size: var(--fs-label); }
+
+.frd-badge-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.frd-badge { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
+.frd-badge small { color: var(--muted); font-size: var(--fs-label); line-height: 1.1; }
+.frd-brand-row, .frd-goal-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; }
+.frd-brand-row + .frd-brand-row, .frd-goal-row + .frd-goal-row { border-top: 1px solid var(--line); }
+.frd-brand-row .blogo, .frd-goal-row .blogo, .frd-logo-wrap .blogo { width: 40px; height: 40px; border-radius: 10px; }
+.frd-logo-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
+.frd-goalbar { display: block; height: 6px; border-radius: 999px; background: var(--line); overflow: hidden; margin-top: 6px; }
+.frd-goalbar i { display: block; height: 100%; background: var(--gold); border-radius: 999px; }
+.frd-pct { color: var(--muted); font-weight: 600; font-size: var(--fs-meta); flex: none; }
+
+.frd-muted-link { display: block; width: 100%; text-align: center; background: transparent; border: 0; color: var(--muted); font-size: var(--fs-meta); padding: 14px; margin-top: 6px; cursor: pointer; }
+.frd-private { color: var(--muted); font-size: var(--fs-meta); margin: 14px 2px 0; }
+.btn.danger { background: #b42318; color: #fff; box-shadow: none; }

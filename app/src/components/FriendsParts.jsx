@@ -1,0 +1,217 @@
+// Friends: the shared pieces (the turn-on sheet, the profile-back sheet, the add-by-code sheet, confirm sheets,
+// the 3-way visibility switch, rows and the notice). Screens Friends.jsx and FriendProfile.jsx build on these.
+import { useEffect, useState } from 'react'
+import { useApp, useBlockBack } from '../App.jsx'
+import { Sheet, Notice } from './ui.jsx'
+import { Avatar } from './Avatar.jsx'
+import { getName } from '../lib/name.js'
+import { NAME_MAX } from '../lib/name.js'
+import { copyText } from '../lib/clipboard.js'
+import { BRANDS, catalogBrands } from '../lib/brands.js'
+import {
+  turnOn, getState, getBackSeen, markBackSeen, getFriends, sendInvite, lookup, syncQuiet,
+} from '../lib/friends.js'
+
+// A friends error code -> a user-facing message. Anything else is the generic save failure.
+export const errMsg = (t, code) => ({
+  BAD_CODE: t('frd_err_bad_code'),
+  OWN_CODE: t('frd_err_own'),
+  ALREADY_FRIENDS: t('frd_err_already'),
+  LIMIT: t('frd_err_limit'),
+}[code] || t('frd_save_fail'))
+
+// A brand object for a stored brand key (catalogue first, then the static list). Unknown keys return null.
+export const brandByKey = (key) => (key ? catalogBrands().find((b) => b.key === key) || BRANDS.find((b) => b.key === key) || null : null)
+
+// The item names used in the "keeps some things private" line and the switches.
+export const itemLabel = (t, key) => ({ level: t('frd_item_level'), badges: t('badges_title'), cards: t('frd_item_cards'), goals: t('frd_item_goals'), wishlist: t('frd_item_wishlist') }[key] || key)
+
+// Live Friends state for the screens that react to turn-on / off and visibility changes.
+export function useFriends() {
+  const [v, setV] = useState(() => getState())
+  useEffect(() => {
+    const on = () => setV(getState())
+    window.addEventListener('dibs:friends', on)
+    return () => window.removeEventListener('dibs:friends', on)
+  }, [])
+  return v
+}
+
+// Off / Friends / Everyone, as a segmented control. Full width so the labels fit at 360 px, including fr.
+export function ThreeWay({ value, onChange, disabled }) {
+  const { t } = useApp()
+  const opts = [['off', t('frd_off')], ['friends', t('frd_title')], ['everyone', t('frd_everyone')]]
+  return (
+    <div className="frd-seg" role="group">
+      {opts.map(([o, label]) => (
+        <button type="button" key={o} lang={undefined} aria-pressed={o === value} disabled={disabled}
+          className={o === value ? 'on' : ''} onClick={() => o !== value && onChange(o)}>{label}</button>
+      ))}
+    </div>
+  )
+}
+
+export function Skeleton({ rows = 3 }) {
+  return <div className="frd-skel" aria-hidden="true">{Array.from({ length: rows }, (_, i) => <div key={i} className="frd-skel-row" />)}</div>
+}
+
+// The one notice for a Friends screen that cannot load (down or timeout). Never shown on other screens.
+export function FriendNotice({ onRetry }) {
+  const { t } = useApp()
+  return <Notice tone="info" title={t('frd_down_title')} sub={t('frd_down_sub')} actions={onRetry ? [{ label: t('retry'), onClick: onRetry }] : []} />
+}
+
+// A person row: avatar from the seed (never a wallet), a name, an optional sub-line, and a right slot.
+export function PersonRow({ seed, name, sub, right, onClick }) {
+  const inner = (
+    <>
+      <Avatar seed={seed} size={40} className="frd-av" />
+      <span className="frd-row-mid"><b>{name}</b>{sub && <small>{sub}</small>}</span>
+      {right}
+    </>
+  )
+  return onClick
+    ? <button type="button" className="frd-row" onClick={onClick}>{inner}</button>
+    : <div className="frd-row">{inner}</div>
+}
+
+// The muted line naming what a friend keeps private (names only, never data).
+export function PrivateLine({ name, hidden }) {
+  const { t } = useApp()
+  if (!Array.isArray(hidden) || !hidden.length) return null
+  const list = hidden.map((k) => itemLabel(t, k)).join(', ')
+  return <p className="frd-private">{t('frd_private_line', { name, list })}</p>
+}
+
+// A plain confirm sheet (remove a friend, delete the profile). danger makes the main button red.
+export function ConfirmSheet({ title, body, confirmLabel, cancelLabel, danger, onConfirm, onClose }) {
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState(null)
+  const go = async () => {
+    setBusy(true); setErr(null)
+    try { await onConfirm() } catch (e) { setErr(e); setBusy(false) }
+  }
+  const { t } = useApp()
+  return (
+    <Sheet title={title} onClose={busy ? () => {} : onClose}>
+      {body && <p className="frd-sheet-lead">{body}</p>}
+      {err && <p className="frd-quiet">{t('frd_save_fail')}</p>}
+      <button type="button" className={`btn${danger ? ' danger' : ''}`} disabled={busy} onClick={go}>{confirmLabel}</button>
+      <button type="button" className="btn ghost" disabled={busy} onClick={onClose}>{cancelLabel}</button>
+    </Sheet>
+  )
+}
+
+// Turn-on sheet: name, the Shared row (Nothing), Turn on. Blocks back while Nimiq Pay is open.
+export function TurnOnSheet({ onClose }) {
+  const { t, address } = useApp()
+  const [name, setName] = useState(() => getName())
+  const [busy, setBusy] = useState(false)
+  const [refused, setRefused] = useState(false)
+  const [err, setErr] = useState(null)
+  useBlockBack(busy)
+  const clean = name.trim().slice(0, NAME_MAX)
+
+  const submit = async () => {
+    setBusy(true); setRefused(false); setErr(null)
+    try {
+      const out = await turnOn(clean)
+      syncQuiet(address)
+      if (out.restored && !getBackSeen()) { markBackSeen(); try { window.dispatchEvent(new Event('dibs:friends:back')) } catch { /* no window */ } }
+      onClose()
+    } catch (e) {
+      setBusy(false)
+      if (e.friendsError === 'SIGN_REFUSED') setRefused(true)
+      else setErr(e)
+    }
+  }
+
+  return (
+    <Sheet title={t('frd_turn_on')} onClose={busy ? () => {} : onClose}>
+      <p className="frd-sheet-lead">{t('frd_turn_lead')}</p>
+      <label className="small" htmlFor="frd-name">{t('name_label')}</label>
+      <input id="frd-name" value={name} maxLength={NAME_MAX} onChange={(e) => setName(e.target.value)} placeholder={t('name_label')} />
+      <div className="frd-shared-row">
+        <span><b>{t('frd_shared')}</b><small>{t('frd_shared_sub')}</small></span>
+        <span className="frd-pill">{t('frd_nothing')}</span>
+      </div>
+      {refused && <p className="frd-quiet">{t('frd_sign_refused')}</p>}
+      {err && <p className="frd-quiet">{t('frd_save_fail')}</p>}
+      <button type="button" className="btn" disabled={busy || !clean} onClick={submit}>{busy ? t('restake_waiting') : t('frd_turn_on')}</button>
+      <p className="frd-note">{t('frd_no_account')}</p>
+    </Sheet>
+  )
+}
+
+// Profile is back (register answered restored: true). Shown once; App.jsx renders it on the dibs:friends:back event.
+export function ProfileBackSheet({ onClose }) {
+  const { t } = useApp()
+  const st = getState()
+  const [n, setN] = useState(null)
+  useEffect(() => { getFriends().then((f) => setN(f.friends?.length ?? 0)).catch(() => setN(null)) }, [])
+  const line = n == null ? st?.name : t('frd_back_line', { name: st?.name, n })
+  return (
+    <Sheet label={t('frd_back_title')} onClose={onClose}>
+      <div className="frd-back">
+        <Avatar seed={st?.id} size={72} />
+        <h3>{t('frd_back_title')}</h3>
+        <p className="frd-back-line">{line}</p>
+        <p className="frd-note">{t('frd_back_note')}</p>
+      </div>
+      <button type="button" className="btn" onClick={onClose}>{t('redeem_continue')}</button>
+    </Sheet>
+  )
+}
+
+// Add by code: type a code, look it up, send an invite. Prefill from a ?friend link.
+export function AddByCodeSheet({ prefill, onClose, onSent }) {
+  const { t, toast } = useApp()
+  const [code, setCode] = useState(() => String(prefill || '').toUpperCase())
+  const [match, setMatch] = useState(null) // { id, name, seed, level?, rank? }
+  const [err, setErr] = useState(null)
+  const [busy, setBusy] = useState(false)
+  const normalized = code.trim().toUpperCase().replace(/^DIBS-?/, '')
+  const full = normalized ? `DIBS-${normalized}` : ''
+
+  // Look up on a short debounce once the code looks complete (4 to 5 characters).
+  useEffect(() => {
+    setMatch(null); setErr(null)
+    if (normalized.length < 4) return undefined
+    let live = true
+    const id = setTimeout(() => {
+      lookup(full).then((m) => { if (live) setMatch(m) }).catch((e) => { if (live) { setMatch(null); if (e.friendsError !== 'BAD_CODE') setErr(e) } })
+    }, 300)
+    return () => { live = false; clearTimeout(id) }
+  }, [normalized]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const send = async () => {
+    setBusy(true); setErr(null)
+    try { await sendInvite(full); toast(t('frd_invite_sent')); onSent?.() } catch (e) { setErr(e); setBusy(false) }
+  }
+
+  return (
+    <Sheet title={t('frd_add_title')} onClose={busy ? () => {} : onClose}>
+      <label className="small" htmlFor="frd-code">{t('frd_code_label')}</label>
+      <input id="frd-code" className="frd-code-in" value={code} autoCapitalize="characters" autoCorrect="off" spellCheck={false}
+        onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="DIBS-" />
+      {match && (
+        <div className="frd-match">
+          <Avatar seed={match.seed} size={40} className="frd-av" />
+          <span className="frd-row-mid"><b>{match.name}</b>{match.level != null && <small>{t('frd_level_rank', { n: match.level, rank: t(`rank_${match.rank}`) })}</small>}</span>
+        </div>
+      )}
+      {err && <p className="frd-quiet">{errMsg(t, err.friendsError)}</p>}
+      <button type="button" className="btn" disabled={busy || normalized.length < 4} onClick={send}>{t('frd_send_invite')}</button>
+      <p className="frd-note">{t('frd_add_note', { name: match?.name || '' })}</p>
+    </Sheet>
+  )
+}
+
+// Share the invite: the share sheet with the copy fallback the app already uses.
+export async function shareInvite(t, code, toast) {
+  const url = `${location.origin}${location.pathname}?friend=${encodeURIComponent(code.replace(/^DIBS-/, ''))}`
+  const text = `${t('frd_share_text', { code })} ${url}`
+  try { if (navigator.share) { await navigator.share({ text }); return } } catch { /* cancelled or unavailable */ }
+  if (await copyText(text)) toast(t('share_copied'))
+}
+export async function copyCode(t, code, toast) { if (await copyText(code)) toast(t('done_copied')) }

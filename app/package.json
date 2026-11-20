@@ -12,6 +12,8 @@
   "dependencies": {
     "@nimiq/identicons": "1.6.2",
     "@nimiq/mini-app-sdk": "0.2.4",
+    "@noble/curves": "2.4.0",
+    "@noble/hashes": "2.4.0",
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "simple-icons": "16.36.0"

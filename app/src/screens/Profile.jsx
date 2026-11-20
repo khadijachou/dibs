@@ -18,6 +18,8 @@ import { STREAK_BARS, claimable, streakView } from './profileView.js'
 import { RANKS, XP } from '../lib/xp.js'
 import { useXp } from '../lib/useXp.js'
 import { levelToPlay, markBadges, newBadges, setLevelSeen } from '../lib/seen.js'
+import { enabled as friendsEnabled, getFriends } from '../lib/friends.js'
+import { useFriends, TurnOnSheet } from '../components/FriendsParts.jsx'
 
 const TOTAL = BADGES.length
 const longDate = (d, lang) => new Intl.DateTimeFormat(lang, { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(d)).replace(/ /g, ' ')
@@ -44,7 +46,7 @@ function useBadges() {
 // card, all from data the app already has (goal ledger, dibs.name, dibs.badges). badge/badgeAt: open that badge's sheet.
 // section 'quests' (Home's Quests strip, with sectionAt): scroll to the Quests section.
 export default function Profile({ badge: askedBadge, badgeAt, section, sectionAt }) {
-  const { t, lang, address, walletAddress, reset } = useApp()
+  const { t, lang, address, walletAddress, reset, go } = useApp()
   const name = getName() // changed only in More > Settings
   const fiat = useFiat()
   const badges = useBadges()
@@ -89,6 +91,17 @@ export default function Profile({ badge: askedBadge, badgeAt, section, sectionAt
   const toClaim = claimable({ badges, goals })
   const xp = useXp(address)
   const [xpSheet, setXpSheet] = useState(null) // 'ranks' | 'xp'
+  // Friends row (hidden when config.friendsUrl is empty). The friend count loads only when Friends is on.
+  const friendsState = useFriends()
+  const friendsOn = Boolean(friendsState?.on)
+  const [turnOnOpen, setTurnOnOpen] = useState(false)
+  const [friendCount, setFriendCount] = useState(null)
+  useEffect(() => {
+    if (!friendsOn || !friendsEnabled()) { setFriendCount(null); return undefined }
+    let live = true
+    getFriends().then((f) => { if (live) setFriendCount(f.friends?.length ?? 0) }).catch(() => { /* no error on Profile */ })
+    return () => { live = false }
+  }, [friendsOn])
 
   return (
     <>
@@ -102,6 +115,18 @@ export default function Profile({ badge: askedBadge, badgeAt, section, sectionAt
             {name && <span className="prof-name">{name}</span>}
           </div>
         </section>
+
+        {friendsEnabled() && (
+          <section className="prof-friends">
+            <button type="button" className="frd-prof-row" onClick={() => (friendsOn ? go('friends') : setTurnOnOpen(true))}>
+              <span className="frd-prof-ic" aria-hidden="true"><Icon name="tabProfile" size={20} /></span>
+              <span className="frd-row-mid"><b>{t('frd_title')}</b><small>{t('frd_row_sub')}</small></span>
+              {friendsOn
+                ? <span className="frd-prof-right">{friendCount != null && <span className="frd-count">{friendCount}</span>}<span className="chev" aria-hidden="true">›</span></span>
+                : <span className="frd-pill">{t('frd_off')}</span>}
+            </button>
+          </section>
+        )}
 
         {toClaim.map((id) => (
           <button type="button" className="claim-banner" key={id} onClick={() => setSheet(id)}>
@@ -164,6 +189,7 @@ export default function Profile({ badge: askedBadge, badgeAt, section, sectionAt
       {xpSheet === 'ranks' && <RanksSheet x={xp} onHow={() => setXpSheet('xp')} onClose={() => setXpSheet(null)} />}
       {xpSheet === 'xp' && <XpSheet x={xp} onClose={() => setXpSheet(null)} />}
       {sheet && <BadgeSheet id={sheet} badges={badges} goals={goals} onClose={() => setSheet(null)} />}
+      {turnOnOpen && <TurnOnSheet onClose={() => setTurnOnOpen(false)} />}
     </>
   )
 }

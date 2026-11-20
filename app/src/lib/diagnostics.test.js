@@ -60,8 +60,32 @@ test('the brief sample renders exactly, line by line', () => {
     '  Unlock in progress: no',
     '  Deleted goals on this phone: 0',
     '  NIM put back in staking: never',
+    '  Friends: off',
   ].join('\n')
   assert.equal(buildDiagnostics(sample), expected)
+})
+
+test('Friends: on when the state says so', () => {
+  assert.ok(buildDiagnostics({ ...sample, friendsOn: true }).includes('Friends: on'))
+})
+
+test('gather never copies the device secret key or the demo wallet key', async () => {
+  const MARK = 'SECRETMARKER_DO_NOT_COPY'
+  const { storage } = makeStorage({
+    'dibs.friends': JSON.stringify({ on: true, id: 'u1', code: 'DIBS-ABCD' }),
+    'dibs.friends.key': MARK,
+    'dibs.friends.demoWallet': MARK,
+    'dibs.goals': JSON.stringify([airbnb]),
+  })
+  const state = await gather({
+    storage, now: sample.now, tzOffsetMin: 0, version: '1.4.0', lang: 'en', demo: true,
+    usedAddress: A1, validatorAddress: GARUDA,
+    listAccounts: async () => [{ address: A1, nim: 100 }], readStaker: async () => null,
+  })
+  const text = buildDiagnostics(state)
+  assert.ok(!text.includes(MARK), 'the secret marker must never appear in the copied text')
+  assert.equal(state.friendsOn, true)
+  assert.ok(text.includes('Friends: on'))
 })
 
 test('<- shown marks only the copy in goalsShown read under the used address', () => {

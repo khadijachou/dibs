@@ -1,0 +1,185 @@
+// Friends client: the device key, the two signatures, the API calls and the local state.
+//
+// Privacy: the device secret key (dibs.friends.key) and the demo wallet key (dibs.friends.demoWallet) never leave
+// this module and are never sent anywhere. The wallet public key leaves the phone only inside the one signed
+// register call. Nothing else about the wallet (address, balance, NIM amounts, goal names, dates) is ever sent.
+//
+// @noble is loaded only when a crypto function runs (dynamic import), so a phone with Friends off never downloads it
+// and the first paint does not pay for it. With config.friendsUrl empty, every call is a no-op.
+import { config } from './config.js'
+import { describeError, isDemo, signMessage } from './nimiq.js'
+import { xpSummary } from './xp.js'
+import { BADGES, getBadges } from './badges.js'
+import { listGoals } from './goals.js'
+import { sharedPayload } from './friendsShare.js'
+
+const TIMEOUT_MS = 6000
+export const FRIENDS_EVENT = 'dibs:friends'
+const DEFAULT_VIS = { level: 'off', badges: 'off', cards: 'off', goals: 'off', wishlist: 'off' }
+
+const K = {
+  main: 'dibs.friends', // { on, id, code, name, devicePub, since } (no secret here)
+  key: 'dibs.friends.key', // the device secret key, hex (only this module reads it)
+  vis: 'dibs.friends.vis', // the last known visibility map
+  demo: 'dibs.friends.demoWallet', // the demo wallet secret key, hex (demo mode only)
+  backSeen: 'dibs.friends.backSeen', // '1' once the "profile is back" sheet was shown
+  pending: 'dibs.friends.pending', // a friend code from a ?friend link, kept until Friends is on
+}
+
+// ---- storage ------------------------------------------------------------------------------------------------
+const readJSON = (k, fallback = null) => { try { const v = localStorage.getItem(k); return v == null ? fallback : JSON.parse(v) } catch { return fallback } }
+const writeJSON = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)) } catch { /* private mode */ } }
+const readStr = (k) => { try { return localStorage.getItem(k) } catch { return null } }
+const writeStr = (k, v) => { try { localStorage.setItem(k, v) } catch { /* private mode */ } }
+const del = (k) => { try { localStorage.removeItem(k) } catch { /* private mode */ } }
+const notify = () => { try { window.dispatchEvent(new Event(FRIENDS_EVENT)) } catch { /* no window */ } }
+
+export const enabled = () => Boolean(config.friendsUrl)
+export const getState = () => readJSON(K.main, null)
+export const isOn = () => Boolean(getState()?.on)
+export const getVis = () => ({ ...DEFAULT_VIS, ...(readJSON(K.vis, null) || {}) })
+export const getBackSeen = () => readStr(K.backSeen) === '1'
+export const markBackSeen = () => writeStr(K.backSeen, '1')
+export const getPendingCode = () => readStr(K.pending) || null
+export const setPendingCode = (code) => { if (code) writeStr(K.pending, String(code)); else del(K.pending) }
+const clearAll = () => { for (const k of Object.values(K)) del(k) }
+
+// ---- crypto (loaded on demand) ------------------------------------------------------------------------------
+const toHex = (u8) => Array.from(u8, (b) => b.toString(16).padStart(2, '0')).join('')
+const fromHex = (h) => { const a = new Uint8Array(h.length / 2); for (let i = 0; i < a.length; i++) a[i] = parseInt(h.slice(i * 2, i * 2 + 2), 16); return a }
+const utf8 = (s) => new TextEncoder().encode(String(s))
+const concat = (...ps) => { const n = ps.reduce((s, p) => s + p.length, 0); const o = new Uint8Array(n); let i = 0; for (const p of ps) { o.set(p, i); i += p.length } return o }
+const randomHex = (n) => { const a = new Uint8Array(n); globalThis.crypto.getRandomValues(a); return toHex(a) }
+
+let _lib = null
+async function lib() {
+  if (_lib) return _lib
+  const [{ ed25519 }, { sha256 }] = await Promise.all([import('@noble/curves/ed25519.js'), import('@noble/hashes/sha2.js')])
+  _lib = { ed25519, sha256 }
+  return _lib
+}
+const sha256hex = (sha256, str) => toHex(sha256(utf8(str)))
+
+// The exact register message (also the format the server checks).
+export const registerMessage = (devicePub, iso) => `Dibs Friends: link this wallet\nDevice: ${devicePub}\nTime: ${iso}`
+// The exact canonical string signed by the device key.
+export const canonicalString = (method, pathWithQuery, ts, nonce, bodyHash) => `${method}\n${pathWithQuery}\n${ts}\n${nonce}\n${bodyHash}`
+// The Nimiq signed-message hash (used to sign with the demo wallet, same format as Nimiq Pay).
+const nimiqHash = (sha256, message) => { const m = utf8(message); return sha256(concat(Uint8Array.of(0x16), utf8('Nimiq Signed Message:\n'), utf8(String(m.length)), m)) }
+
+const fail = (code, status = 0) => { const e = new Error(code); e.friendsError = code; e.status = status; return e }
+
+// ---- HTTP ---------------------------------------------------------------------------------------------------
+async function doFetch(method, path, bodyText, headers) {
+  const ctl = new AbortController()
+  const timer = setTimeout(() => ctl.abort(), TIMEOUT_MS)
+  let r
+  try {
+    r = await fetch(`${config.friendsUrl}${path}`, { method, headers, body: method === 'GET' ? undefined : bodyText, signal: ctl.signal })
+  } catch {
+    throw fail('SRV_DOWN') // network error or the 6 s timeout aborted it
+  } finally { clearTimeout(timer) }
+  if (r.status === 401) { onUnauthorized(); throw fail('UNAUTHORIZED', 401) }
+  const data = await r.json().catch(() => ({}))
+  if (!r.ok) throw fail(/^[A-Z_]+$/.test(data?.error || '') ? data.error : 'GENERIC', r.status)
+  return data
+}
+
+// One signed request for every route but register. Signs with the device key as the README describes.
+export async function request(method, path, body) {
+  if (!config.friendsUrl) throw fail('NOT_CONFIGURED')
+  const skHex = readStr(K.key)
+  const st = getState()
+  if (!skHex || !st?.id) throw fail('NOT_ON')
+  const { ed25519, sha256 } = await lib()
+  const bodyText = body === undefined ? '' : JSON.stringify(body)
+  const ts = Date.now()
+  const nonce = randomHex(16)
+  const canonical = canonicalString(method, path, ts, nonce, sha256hex(sha256, bodyText))
+  const sig = toHex(ed25519.sign(utf8(canonical), fromHex(skHex)))
+  const headers = { 'X-Dibs-Id': st.id, 'X-Dibs-Ts': String(ts), 'X-Dibs-Nonce': nonce, 'X-Dibs-Sig': sig }
+  if (method !== 'GET') headers['content-type'] = 'application/json'
+  return doFetch(method, path, bodyText, headers)
+}
+
+// A 401 on a signed call means this device key is unknown (for example the profile was deleted elsewhere):
+// go back to Off locally, keep the wishlist, no retry loop.
+function onUnauthorized() {
+  const st = getState()
+  if (st?.on) { writeJSON(K.main, { ...st, on: false }); notify() }
+}
+
+// ---- turn on / off ------------------------------------------------------------------------------------------
+export async function turnOn(name) {
+  if (!config.friendsUrl) throw fail('NOT_CONFIGURED')
+  const { ed25519, sha256 } = await lib()
+  const existingKey = readStr(K.key)
+  const devSk = existingKey ? fromHex(existingKey) : ed25519.utils.randomSecretKey()
+  const devicePub = toHex(ed25519.getPublicKey(devSk))
+  const message = registerMessage(devicePub, new Date().toISOString())
+
+  let wallet
+  let demoHex = null
+  if (isDemo()) {
+    const existingDemo = readStr(K.demo)
+    const dwSk = existingDemo ? fromHex(existingDemo) : ed25519.utils.randomSecretKey()
+    demoHex = toHex(dwSk)
+    wallet = { message, publicKey: toHex(ed25519.getPublicKey(dwSk)), signature: toHex(ed25519.sign(nimiqHash(sha256, message), dwSk)) }
+  } else {
+    let res
+    try { res = await signMessage(message) } catch (e) { throw describeError(e).type === 'PERMISSION_DENIED' ? fail('SIGN_REFUSED') : fail('SIGN_FAILED') }
+    if (!res?.publicKey || !res?.signature) throw fail('SIGN_FAILED')
+    wallet = { message, publicKey: String(res.publicKey), signature: String(res.signature) }
+  }
+
+  const out = await doFetch('POST', '/v1/register', JSON.stringify({ name, devicePub, wallet }), { 'content-type': 'application/json' })
+
+  // Success: persist the keys and the state (nothing was written before this, so a refusal leaves storage untouched).
+  writeStr(K.key, toHex(devSk))
+  if (demoHex) writeStr(K.demo, demoHex)
+  writeJSON(K.main, { on: true, id: out.id, code: out.code, name: out.name, devicePub, since: new Date().toISOString() })
+  writeJSON(K.vis, out.visibility || DEFAULT_VIS)
+  setPendingCode(null)
+  notify()
+  return out
+}
+
+// deleteProfile true calls DELETE /v1/me first; a failed call throws and keeps everything.
+export async function turnOff({ deleteProfile } = {}) {
+  if (deleteProfile) await request('DELETE', '/v1/me')
+  clearAll()
+  notify()
+}
+
+// ---- API (all signed) ---------------------------------------------------------------------------------------
+export const me = () => request('GET', '/v1/me')
+export const asFriend = () => request('GET', '/v1/me/as-friend')
+export const getFriends = () => request('GET', '/v1/friends')
+export const lookup = (code) => request('GET', `/v1/lookup?code=${encodeURIComponent(code)}`)
+export const sendInvite = (code) => request('POST', '/v1/invites', { code })
+export const acceptInvite = (id) => request('POST', `/v1/invites/${encodeURIComponent(id)}/accept`)
+export const declineInvite = (id) => request('DELETE', `/v1/invites/${encodeURIComponent(id)}`)
+export const removeFriend = (id) => request('DELETE', `/v1/friends/${encodeURIComponent(id)}`)
+export const userProfile = (id) => request('GET', `/v1/users/${encodeURIComponent(id)}`)
+
+// PATCH my identity (name / visibility / look). Keeps the local name and visibility in step.
+export async function patchMe(patch) {
+  const out = await request('PATCH', '/v1/me', patch)
+  const st = getState()
+  if (st) writeJSON(K.main, { ...st, name: out.name ?? st.name })
+  if (out.visibility) writeJSON(K.vis, out.visibility)
+  notify()
+  return out
+}
+
+// Upload the shared data for the items that are on. Silent on failure (callers outside Friends screens ignore it).
+const getWishlist = () => { const v = readJSON('dibs.wishlist', []); return Array.isArray(v) ? v : [] }
+export async function syncShared(address) {
+  if (!isOn() || !config.friendsUrl) return null
+  const s = xpSummary({ goals: listGoals(address), badges: getBadges() })
+  const earned = Object.keys(getBadges()).filter((id) => BADGES.some((b) => b.id === id))
+  const body = sharedPayload({ visibility: getVis(), xp: { level: s.level, rank: s.rank.id }, badges: earned, goals: listGoals(address), wishlist: getWishlist() })
+  return request('PUT', '/v1/me/shared', body)
+}
+// Fire-and-forget sync (after turn-on, after a visibility change, once per launch). Never throws to the caller.
+export const syncQuiet = (address) => { syncShared(address).catch(() => { /* silent outside Friends screens */ }) }

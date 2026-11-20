@@ -406,3 +406,7 @@ html.is-fullscreen:where([data-theme="light"]) body::before { background: linear
 :where(:root[data-theme="light"]) .unl-change-ic.butter { color: #906607; }
 :where(:root[data-theme="light"]) .unl-change-ic.mint { color: #15896a; }
 :where(:root[data-theme="light"]) .unl-change-ic.coral { color: #cc3316; }
+
+/* ---- Friends (v1.4.0): the selected 3-way tile is the light coral tint, not a coral fill. Everything else uses
+   the theme variables already set above (card #fff, inner tiles, muted, lines), so it follows light mode. ---- */
+:where(:root[data-theme="light"]) .frd-seg button.on { background: #fdece6; color: #cc3316; }
