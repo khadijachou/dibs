@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useApp, useBlockBack } from '../App.jsx'
 import { detailText, itemLabel, itemName, localName } from '../lib/itemName.js'
-import { BrandLogo, FieldError, Header, Notice, Stamp, useFiat, WeekDots } from '../components/ui.jsx'
+import { BrandLogo, FieldError, Header, Icon, Notice, Stamp, useFiat, WeekDots } from '../components/ui.jsx'
 import { fmtFiatValue } from '../lib/fiatValue.js'
 import { classify, lastLogText } from '../lib/errors.js'
 import { canManageGoal } from '../lib/manage.js'
@@ -17,7 +17,8 @@ import { copyText } from '../lib/clipboard.js'
 import { audioContext, playDeposit } from '../lib/sound.js'
 import GoalRing from '../components/GoalRing.jsx'
 import Num from '../components/Num.jsx'
-import { fmtDate, fmtEarned, fmtNim, fmtUsd, weeksUntil } from '../lib/format.js'
+import { fmtDate, fmtEarned, fmtNim, fmtPct, fmtUsd, weeksUntil } from '../lib/format.js'
+import { addPreview, caretAfterDigits, cleanDigits, digitsBefore, formatAmount } from '../lib/addPreview.js'
 import { findItem } from '../lib/catalog.js'
 import { DeleteSheet, ManageSheet, MoveSheet } from './GoalManage.jsx'
 import { useCountUp } from '../lib/useCountUp.js'
@@ -322,6 +323,10 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
 
   // Add: a compact hero, the amount card and the Add button. The deposit itself is unchanged.
   if (adding) {
+    // Display only: where this deposit takes the goal (bar and the percent before/after). The amount shown with
+    // thousands separators; the value sent to Nimiq Pay stays the raw digits in `amount` (amountNim above).
+    const amtDisplay = formatAmount(amount, lang)
+    const prev = addPreview(saved, goal.targetNim, amountNim, balance)
     return (
       <>
         <Header onBack={onBack} />
@@ -341,8 +346,19 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
 
           <section className="card">
             <label htmlFor="amt" className="sub">{t('goal_add_label')}</label>
-            <div className={`amount${cantOpen || underMin || tooMuch ? ' bad' : ''}`}>
-              <input id="amt" inputMode="numeric" value={amount} onChange={(e) => setAmount(e.target.value)} />
+            <div className={`amount addf${cantOpen || underMin || tooMuch ? ' bad' : ''}`}>
+              <input id="amt" inputMode="numeric" value={amtDisplay} size={Math.max(1, amtDisplay.length)} onChange={(e) => {
+                // Keep the digits in state and format only for display: the caret is put back after the same digit
+                // once a separator shifts. The value sent to the deposit (amountNim) is these digits, as before.
+                const el = e.target
+                const left = digitsBefore(el.value, el.selectionStart)
+                const next = cleanDigits(el.value)
+                const shown = formatAmount(next, lang)
+                el.value = shown
+                const c = caretAfterDigits(shown, left)
+                try { el.setSelectionRange(c, c) } catch { /* selection not settable here: the field still updates */ }
+                setAmount(next)
+              }} />
               <span>NIM</span>
             </div>
             <AmountFiat nim={amountNim} />
@@ -353,6 +369,21 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
               </>
             ) : (
               <>
+                <div className="add-div" aria-hidden="true" />
+                <div className="add-bar" aria-hidden="true">
+                  <i className="add-saved" style={{ width: `${prev.savedW}%` }} />
+                  <i className="add-new" style={{ width: `${prev.addW}%` }} />
+                </div>
+                <div className="add-prev">
+                  <div className="add-prev-l">
+                    <div className="add-pct"><span>{fmtPct(prev.p0 / 100, lang)}</span>{' → '}<span className="mint">{fmtPct(prev.p1 / 100, lang)}</span></div>
+                    <div className="add-prev-sub">{t(tooMuch ? 'add_with_have' : 'add_after')}</div>
+                  </div>
+                  <div className="add-prev-r">
+                    <div className="add-total">{fmtNim(prev.total, lang)} NIM</div>
+                    <div className="add-prev-sub">{t('goal_of2', { target: fmtNim(goal.targetNim, lang) })}</div>
+                  </div>
+                </div>
                 {underMin && <FieldError>{t('err_DEP_FIRST_UNDER_MIN_field', { min: MIN_NEW_STAKER_NIM })}</FieldError>}
                 {overBalance && <FieldError>{t('err_DEP_ABOVE_BALANCE_field', { nim: fmtNim(balance, lang) })}</FieldError>}
                 <div className="pills">
@@ -367,12 +398,13 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
               </>
             )}
           </section>
+          <p className="add-note"><span className="add-note-ic"><Icon name="info" size={16} /></span>{t('add_stake_note')}</p>
           {problemNotices}
 
           <div className="bottom">
-            <button type="button" className={`btn tall${p.pace.kind === 'ahead' && !flash && !pend ? ' ghost' : ''}`} disabled={busy || !!pend || invalid || balance == null} onClick={add}>
-              {pend ? t('deposit_button_waiting') : cantOpen ? t('goal_add_min', { min: MIN_NEW_STAKER_NIM }) : p.pace.kind === 'ahead' && !flash ? t('goal_add_more') : t('goal_add', { nim: fmtNim(amountNim, lang) })}
-              {!pend && <small>{balance == null ? t('goal_waiting_balance') : cantOpen ? t('goal_add_min_sub', { amount: fmtNim(balance, lang) }) : t('confirm_hint')}</small>}
+            <button type="button" className="btn tall" disabled={busy || !!pend || invalid || balance == null} onClick={add}>
+              {pend ? t('deposit_button_waiting') : cantOpen ? t('goal_add_min', { min: MIN_NEW_STAKER_NIM }) : t('goal_add', { nim: fmtNim(amountNim, lang) })}
+              {!pend && <small>{balance == null ? t('goal_waiting_balance') : cantOpen ? t('goal_add_min_sub', { amount: fmtNim(balance, lang) }) : p.pace.kind === 'ahead' && !flash ? t('add_extra') : t('confirm_hint')}</small>}
             </button>
           </div>
         </main>

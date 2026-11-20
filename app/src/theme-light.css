@@ -388,3 +388,15 @@ html.is-fullscreen:where([data-theme="light"]) body::before { background: linear
 /* v1.3.1 small improvements (light) */
 :where(:root[data-theme="light"]) .theme-btn { border-color: #e6ddd2; background: #fff; color: #4a4558; }
 :where(:root[data-theme="light"]) .acct-addr { color: var(--cream); }
+
+/* v1.3.2 Add NIM bar and preview, and the Unlock "What changes" icons: the readable light shades (A9). The track,
+   the saved part, the divider and the ink numbers are light-only; mint is #15896a (never coral). */
+:where(:root[data-theme="light"]) .add-div { background: #ece4da; }
+:where(:root[data-theme="light"]) .add-bar { background: #f1e9df; }
+:where(:root[data-theme="light"]) .add-bar .add-saved { background: #b9b2c2; }
+:where(:root[data-theme="light"]) .add-bar .add-new { background: #15896a; }
+:where(:root[data-theme="light"]) .add-pct, :where(:root[data-theme="light"]) .add-total { color: #23212b; }
+:where(:root[data-theme="light"]) .add-pct .mint { color: #15896a; }
+:where(:root[data-theme="light"]) .unl-change-ic.butter { color: #906607; }
+:where(:root[data-theme="light"]) .unl-change-ic.mint { color: #15896a; }
+:where(:root[data-theme="light"]) .unl-change-ic.coral { color: #cc3316; }

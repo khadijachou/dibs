@@ -1701,3 +1701,36 @@ html.is-fullscreen .bstamp-live { top: calc(58px + var(--fs-top)); }
 /* Insights weekly card: title on its own line (never wrapping), total under it as the small grey line, left aligned. */
 .ins-weekly-head { flex-direction: column; align-items: flex-start; gap: 2px; }
 .ins-weekly-head h3 { white-space: nowrap; }
+
+/* v1.3.2 Add NIM (screens/Goal.jsx): the amount field shows thousands separators as you type, with the unit right
+   after the number (muted); under the fiat line a bar previews where this deposit takes the goal. Layout + dark
+   colours here; theme-light.css recolours the bar and numbers for light. Display only, no new behaviour. */
+.amount.addf input { flex: 0 1 auto; width: auto; min-width: 1ch; }
+.amount.addf span { color: var(--muted); }
+.add-div { height: 1px; background: #2b2834; margin: 2px 0; }
+.add-bar { display: flex; height: 8px; border-radius: 4px; background: #2f2c38; overflow: hidden; }
+.add-bar > i { display: block; height: 100%; flex: none; }
+.add-bar .add-saved { background: #6b6775; }
+.add-bar .add-new { background: #2bc48f; }
+.add-prev { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.add-prev-r { text-align: right; }
+.add-pct { white-space: nowrap; font: 600 var(--fs-strong)/var(--lh-strong) var(--font-body); color: var(--cream); }
+.add-pct .mint { color: #2bc48f; }
+.add-total { font: 600 var(--fs-strong)/var(--lh-strong) var(--font-body); color: var(--cream); }
+.add-prev-sub { margin-top: 2px; color: var(--muted); font-size: var(--fs-meta); line-height: var(--lh-meta); }
+.add-note { display: flex; align-items: flex-start; gap: 8px; margin: 0; color: var(--muted); font-size: var(--fs-meta); line-height: var(--lh-meta); }
+.add-note-ic { flex: none; display: grid; color: var(--teal); padding-top: 1px; }
+
+/* v1.3.2 Unlock (screens/Unlock.jsx): the goal as a row with its brand logo, and a "What changes" card above the
+   steps, three lines with small butter / mint / coral icons. */
+.unl-head { display: flex; align-items: center; gap: 12px; }
+.unl-head-tx { flex: 1; min-width: 0; }
+.unl-head-item { font: 600 var(--fs-strong)/var(--lh-strong) var(--font-body); color: var(--cream); }
+.unl-head-sub { margin-top: 2px; color: var(--muted); font-size: var(--fs-meta); line-height: var(--lh-meta); }
+.unl-changes h3 { margin: 0; font: 600 var(--fs-heading)/var(--lh-heading) var(--font-display); color: var(--cream); }
+.unl-change { display: flex; align-items: center; gap: 10px; font-size: var(--fs-body); line-height: var(--lh-body); color: var(--cream); }
+.unl-change > span:last-child { min-width: 0; }
+.unl-change-ic { flex: none; width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; }
+.unl-change-ic.butter { background: rgba(255, 201, 77, .15); color: var(--butter); }
+.unl-change-ic.mint { background: rgba(21, 137, 106, .18); color: var(--teal); }
+.unl-change-ic.coral { background: rgba(232, 72, 42, .15); color: var(--gold); }

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useApp, useBlockBack } from '../App.jsx'
-import { itemName } from '../lib/itemName.js'
-import { Header, Icon, Notice } from '../components/ui.jsx'
+import { itemLabel, itemName } from '../lib/itemName.js'
+import { BrandLogo, Header, Icon, Notice } from '../components/ui.jsx'
 import { classify } from '../lib/errors.js'
 import { getGoal, savedNim, unlockRunning, updateGoal } from '../lib/goals.js'
 import { txOutcome } from '../lib/nimiq.js'
@@ -172,7 +172,13 @@ export default function Unlock({ goalId, mode: modeParam }) {
         {!otherRelease && relKnown && startMs != null && <UnlockTimer brand={goalBrand(goal)} startMs={startMs} releaseMs={readyAt} released={state === 'ready'} />}
         <p className="sub unl-intro"><span className="unl-intro-ic"><Icon name="info" size={16} /></span><span>{t(withdraw ? 'withdraw_intro' : 'unlock_intro')}</span></p>
         <section className="card">
-          <div className="row"><span className="sub">{itemName(t, goal, { title: true })}</span><b>{fmtNim(amount, lang)} NIM</b></div>
+          <div className="unl-head">
+            <BrandLogo brand={goalBrand(goal)} />
+            <div className="unl-head-tx">
+              <div className="unl-head-item">{itemLabel(t, goal)}</div>
+              <div className="unl-head-sub">{t('unl_to_unlock', { n: fmtNim(amount, lang) })}</div>
+            </div>
+          </div>
           <div className={`steps${withdraw ? ' mint' : ''}`}>
             {STEPS.map((s, i) => {
               const isDone = done.includes(s)
@@ -191,8 +197,10 @@ export default function Unlock({ goalId, mode: modeParam }) {
                         ? <>{rec?.at ? t('unl_row_done_at', { time: whenText(rec.at, lang) }) : t('unl_row_done')}
                             {hash && <> · <a href={`${EXPLORER}${hash}`} target="_blank" rel="noopener noreferrer">{t('hist_view_tx')}</a></>}</>
                         : wait ? t('unl_row_wait', { left: leftText(t, clockOf(us.releaseAt - Date.now())) })
-                        : isNext ? t(busy === 'checking' ? 'unl_row_checking' : 'unl_row_next')
-                        : t('unl_row_after', { n: i })}
+                        : isNext ? t(busy === 'checking' ? 'unl_row_checking' : 'unl_row_now')
+                        : s === 'remove' ? t('unl_row_after_step2')
+                        : readyAt != null ? t('unl_row_after_release', { time: readyTimeText(readyAt, lang) })
+                        : t('unl_row_after_release_plain')}
                     </span>
                   </div>
                 </div>
@@ -200,6 +208,14 @@ export default function Unlock({ goalId, mode: modeParam }) {
             })}
           </div>
         </section>
+        {!withdraw && !otherRelease && current && !done.includes('deactivate') && (
+          <section className="card unl-changes">
+            <h3>{t('unl_changes_title')}</h3>
+            <div className="unl-change"><span className="unl-change-ic butter"><Icon name="chart" size={16} /></span><span>{t('unl_change_earning')}</span></div>
+            <div className="unl-change"><span className="unl-change-ic mint"><Icon name="wallet" size={16} /></span><span>{readyAt != null ? t('unl_change_back', { time: readyTimeText(readyAt, lang) }) : t('unl_change_back_plain')}</span></div>
+            <div className="unl-change"><span className="unl-change-ic coral"><Icon name="gift" size={16} /></span><span>{t('unl_change_card')}</span></div>
+          </section>
+        )}
         {!withdraw && current === 'deactivate' && !done.includes('deactivate') && (
           <UnlockGapBand goal={goal} onAdd={(gap) => reset('goal', { goalId: goal.id, mode: 'add', amount: gap, topUp: true })} />
         )}
