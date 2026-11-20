@@ -3,7 +3,8 @@
 process.env.TZ = 'Europe/Paris'
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { insights, goalWeekly, recap, compactNim, weekStart, weekKey, dayStart } from './insights.js'
+import { insights, goalWeekly, recap, compactNim, weekStart, weekKey, dayStart,
+  bestWeekEarned, weeks8Earned, weeks8Progress, longestRunWeeks, monthKey, monthShareStats } from './insights.js'
 
 const NBSP = ' '
 // A deposit at a chosen local wall-clock time (noon unless given), as an ISO instant the code parses back.
@@ -188,4 +189,58 @@ test('an empty goal list gives zeroed numbers and no best week or recap', () => 
   assert.equal(r.weekStarts.length, 8)
   assert.equal(r.days.length, 56)
   assert.equal(recap([], now), null)
+})
+
+// ---- Part 2 badge rules and the month share ----
+
+// Helper: a deposit n weeks before `now`, at midday of that week's Wednesday-ish (offset keeps it inside the week).
+const weeksBack = (now, n) => at(2026, 10, 18 - n * 7, 12)
+
+test('bestWeekEarned needs 3 earlier weeks with a deposit; an equal week does not beat; the current week never earns it', () => {
+  const now = at(2026, 10, 18, 12) // current week Mon 16 Nov
+  // Only 3 deposit-weeks total (the 3rd biggest): not earned, there is no 4th week that beats 3 earlier ones.
+  assert.equal(bestWeekEarned([goal([dep(100, weeksBack(now, 3)), dep(200, weeksBack(now, 2)), dep(500, weeksBack(now, 1))])], now), false)
+  // 3 earlier weeks, then a 4th finished week that beats them all: earned.
+  assert.equal(bestWeekEarned([goal([dep(100, weeksBack(now, 4)), dep(200, weeksBack(now, 3)), dep(300, weeksBack(now, 2)), dep(400, weeksBack(now, 1))])], now), true)
+  // The 4th week only equals the best earlier week: not earned.
+  assert.equal(bestWeekEarned([goal([dep(100, weeksBack(now, 4)), dep(400, weeksBack(now, 3)), dep(200, weeksBack(now, 2)), dep(400, weeksBack(now, 1))])], now), false)
+  // A huge deposit in the CURRENT (unfinished) week never earns it, even over 3+ earlier weeks.
+  assert.equal(bestWeekEarned([goal([dep(100, weeksBack(now, 3)), dep(100, weeksBack(now, 2)), dep(100, weeksBack(now, 1)), dep(9999, weeksBack(now, 0))])], now), false)
+})
+
+test('weeks8Earned needs 8 consecutive weeks; 7 with a gap does not earn it; progress is the longest run', () => {
+  const now = at(2026, 10, 18, 12)
+  const run = (weeks) => goal(weeks.map((w) => dep(50, weeksBack(now, w))))
+  // 8 in a row (weeks 0..7): earned, progress 8.
+  const eight = run([0, 1, 2, 3, 4, 5, 6, 7])
+  assert.equal(weeks8Earned([eight], now), true)
+  assert.equal(longestRunWeeks([eight]), 8)
+  // 7 in a row with a gap at week 4: not earned, longest run is 4 (weeks 0..3) or 3 (5..7) -> 4.
+  const gap = run([0, 1, 2, 3, 5, 6, 7])
+  assert.equal(weeks8Earned([gap], now), false)
+  assert.equal(weeks8Progress([gap], now), 4)
+})
+
+test('monthKey is the local YYYY-MM', () => {
+  assert.equal(monthKey(at(2026, 10, 20, 15)), '2026-11')
+  assert.equal(monthKey(at(2026, 0, 1, 0)), '2026-01')
+})
+
+test('monthShareStats returns totals and ids only, counting this month', () => {
+  const now = at(2026, 10, 18, 12) // Nov 2026
+  const goals = [
+    goal([dep(300, at(2026, 10, 2)), dep(200, at(2026, 10, 17)), dep(50, at(2026, 9, 28))], 'saving', { id: 'a', targetNim: 400 }),
+    goal([dep(100, at(2026, 10, 10))], 'ready', { id: 'b', targetNim: 50 }),
+    goal([dep(10, at(2026, 10, 5), { kind: 'move' })], 'saving', { id: 'c' }), // a move: never counts
+  ]
+  const s = monthShareStats(goals, now)
+  assert.equal(s.nim, 600) // 300 + 200 + 100 this month (28 Oct and the move excluded)
+  assert.deepEqual(s.goalIds.sort(), ['a', 'b'])
+  assert.equal(s.at100, 2) // a is over 400, b is over 50
+  assert.equal(s.weekly.length, 8)
+  assert.equal(typeof s.weeksSaved, 'number')
+  assert.equal(typeof s.goalsCount, 'number')
+  assert.equal(s.monthKey, '2026-11')
+  // No field leaks an address, a balance, a fiat value, a name or a code.
+  assert.deepEqual(Object.keys(s).sort(), ['at100', 'goalIds', 'goalsCount', 'monthKey', 'nim', 'weekly', 'weeksSaved'])
 })

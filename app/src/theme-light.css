@@ -372,3 +372,15 @@ html.is-fullscreen:where([data-theme="light"]) body::before { background: linear
 :where(:root[data-theme="light"]) .recap-day.on { background: #15896a; color: #fff; }
 :where(:root[data-theme="light"]) .recap-x { color: #8A8594; }
 :where(:root[data-theme="light"]) .recap-div { background: rgba(35, 33, 43, .08); }
+
+/* ---- See your saving part 2 (v1.3.0): Personal bests light colours ---- */
+:where(:root[data-theme="light"]) .best-tile { background: #F7F1EA; }
+:where(:root[data-theme="light"]) .best-tile b { color: #23212B; }
+:where(:root[data-theme="light"]) .best-tile span { color: #6B6575; }
+:where(:root[data-theme="light"]) .best-tile.star { background: rgba(255, 201, 77, .28); }
+:where(:root[data-theme="light"]) .best-tile.star .best-ic { color: #A87400; }
+:where(:root[data-theme="light"]) .best-tile.run { background: rgba(21, 137, 106, .12); }
+:where(:root[data-theme="light"]) .best-tile.run .best-ic { color: #15896A; }
+:where(:root[data-theme="light"]) .bests-state.prog { background: #F1E9DF; color: #6B6575; }
+:where(:root[data-theme="light"]) .bests-state.earned { background: rgba(21, 137, 106, .12); color: #15896A; }
+/* The month image keeps its fixed dark colours in both themes; only the sheet chrome follows the theme. */

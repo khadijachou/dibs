@@ -6,6 +6,7 @@ import { planOf } from './pace.js'
 import { CHIPS } from './brands.js'
 import { chipOf } from './badges.js'
 import { addQuestDone, dayKey, dayStart, fireXp, getDailyDays, getQuestsDone, getVisits, isoWeek, recordDailyDay, weekKey, weekStart } from './xp.js'
+import { insights } from './insights.js'
 import { MIN_NEW_STAKER_NIM } from './config.js'
 
 export const KINDS = ['round', 'week', 'new', 'two', 'days5']
@@ -187,6 +188,8 @@ export function dailyPool(goals, now = Date.now()) {
     for (const g of active) out.push({ id: 'goal', goalId: g.id })
   }
   if (hasHistoryRow(goals)) out.push({ id: 'history' })
+  // Look at your Insights: only once there is something to show there (a counted deposit in the last 8 weeks).
+  if (insights(goals, now).total8 > 0) out.push({ id: 'insights' })
   if (addDaysThisWeek(now) < 2) for (const g of savers) if (!aheadOfPlan(g, now)) out.push({ id: 'add', goalId: g.id })
   return out
 }
@@ -268,6 +271,7 @@ export function markDailyOpen(ev, goals = [], now = Date.now()) {
     : s.id === 'goal' ? ev.k === 'goal' && ev.goalId === s.goalId
     : s.id === 'history' ? ev.k === 'history'
     : s.id === 'badges' ? ev.k === 'badges'
+    : s.id === 'insights' ? ev.k === 'insights'
     : false)
   const fresh = []
   for (const s of set.slots) {

@@ -4,7 +4,7 @@ import { Header } from '../components/ui.jsx'
 
 // The FAQ, moved out of More (More > FAQ). Numbered entries use faq_<n>q / faq_<n>a; named ones faq_<name>_q /
 // faq_<name>_a (card versions, after FAQ 10; the gap, last). Shown numbered in this order.
-export const FAQ = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 'region', 11, 'gap']
+export const FAQ = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 'region', 11, 'gap', 'insights']
 const qKey = (n) => (typeof n === 'number' ? `faq_${n}q` : `faq_${n}_q`)
 const aKey = (n) => (typeof n === 'number' ? `faq_${n}a` : `faq_${n}_a`)
 

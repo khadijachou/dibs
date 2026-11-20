@@ -63,6 +63,7 @@ export default function DailyQuests() {
     : s.id === 'goal' ? t('dq_goal', { brand: brandName(s.goalId) })
     : s.id === 'history' ? t('dq_history')
     : s.id === 'badges' ? t('dq_badges')
+    : s.id === 'insights' ? t('dq_insights')
     : t('dq_add', { brand: brandName(s.goalId) })
   const openSlot = (s) => {
     if (s.id === 'savings') go('stake')
@@ -71,6 +72,7 @@ export default function DailyQuests() {
     else if (s.id === 'goal') go('goal', { goalId: s.goalId, mode: 'details' })
     else if (s.id === 'history') go('history')
     else if (s.id === 'badges') go('profile', { section: 'badges', sectionAt: Date.now() })
+    else if (s.id === 'insights') go('insights')
     else if (s.id === 'add') go('goal', { goalId: s.goalId, mode: 'add' })
   }
 

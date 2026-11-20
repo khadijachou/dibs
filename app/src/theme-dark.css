@@ -1650,3 +1650,32 @@ html.is-fullscreen .bstamp-live { top: calc(58px + var(--fs-top)); }
 .recap-foot > span { font-size: var(--fs-meta); line-height: var(--lh-meta); color: var(--muted); }
 .recap-see { background: none; border: 0; padding: 0; cursor: pointer; display: inline-flex; align-items: center; gap: 2px; font-size: var(--fs-meta); line-height: var(--lh-meta); font-weight: 600; color: var(--teal); flex-shrink: 0; }
 .recap-see .chev { color: var(--teal); }
+
+/* ===== See your saving part 2 (v1.3.0): Personal bests, Share my month ===== */
+.ins-bests { gap: 14px; }
+.ins-bests > h3 { margin: 0; font: 600 var(--fs-heading)/var(--lh-heading) var(--font-display); color: var(--cream); }
+.bests-tiles { display: flex; gap: 12px; }
+.best-tile { flex: 1 1 0; min-width: 0; border-radius: 14px; padding: 12px 14px; display: flex; flex-direction: column; gap: 3px; }
+.best-tile .best-ic { font-size: var(--fs-heading); line-height: 1; display: inline-flex; align-items: center; height: calc(var(--fs-heading) * 1.1); }
+.best-tile b { font: 600 var(--fs-heading)/var(--lh-heading) var(--font-display); color: var(--cream); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.best-tile span { font-size: var(--fs-label); line-height: var(--lh-label); color: var(--muted); }
+.best-tile.star { background: rgba(255, 201, 77, .14); }
+.best-tile.star .best-ic { color: var(--butter); }
+.best-tile.run { background: rgba(43, 196, 143, .14); }
+.best-tile.run .best-ic { color: var(--teal); }
+.bests-badge { display: flex; align-items: center; gap: 10px; }
+.bests-badge .medal { flex: none; }
+.bests-badge-tx { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; }
+.bests-badge-tx b { font-size: var(--fs-strong); line-height: var(--lh-strong); font-weight: 600; color: var(--cream); }
+.bests-badge-tx small { font-size: var(--fs-meta); line-height: var(--lh-meta); color: var(--muted); }
+.bests-state { flex: none; font-size: var(--fs-label); line-height: 1; font-weight: 600; padding: 6px 11px; border-radius: 999px; white-space: nowrap; }
+.bests-state.prog { background: #2b2834; color: var(--muted); }
+.bests-state.earned { background: var(--teal-soft); color: var(--teal); }
+
+/* Share my month: the button and the sheet (the image itself is a fixed-colour picture, drawn by lib/poster.js). */
+.sm-btn { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.sm-btn-ic { display: inline-flex; }
+.sm-img { border-radius: 16px; overflow: hidden; background: #1b1920; }
+.sm-img img { display: block; width: 100%; height: auto; }
+.sm-ph { width: 100%; aspect-ratio: 1080 / 1350; background: #1b1920; }
+.sm-note { text-align: center; }

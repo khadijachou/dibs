@@ -190,6 +190,21 @@ test('daily pool: add drops out when the goal is ahead of plan or at 100 %, or t
   assert.ok(!dailyPool([g], at(4)).some((s) => s.id === 'add'), 'twice already')
 })
 
+test('daily quest: Look at your Insights appears with a counted deposit in the last 8 weeks, not without, and completes when opened', () => {
+  // No deposit: not offered. A move does not count.
+  assert.ok(!dailyPool([goal()], at(4)).some((s) => s.id === 'insights'), 'no deposit')
+  assert.ok(!dailyPool([goal({ deposits: [dep(50, at(2), { kind: 'move' })] })], at(4)).some((s) => s.id === 'insights'), 'a move does not count')
+  // A real deposit this month: offered.
+  const g = goal({ id: 'g1', deposits: [dep(50, at(2))] })
+  assert.ok(dailyPool([g], at(4)).some((s) => s.id === 'insights'), 'offered with a recent deposit')
+  // Completion: opening Insights marks the slot (like the other "look at" quests).
+  setDaily([{ id: 'open' }, { id: 'insights' }, { id: 'badges' }])
+  markDailyOpen({ k: 'insights' }, [g], at(4))
+  assert.ok(slotDone([g], 'insights'))
+  // A record for the slot: it is a 5 XP real quest (not the check-in, not Add NIM).
+  assert.equal(dayRecord({ slots: [{ id: 'open' }, { id: 'insights' }], done: ['insights'] }, [g]).xp, 5)
+})
+
 test('daily pick: check-in first, two different real quests, deterministic for the day and data', () => {
   const g = goal({ deposits: [dep(50, at(2))] })
   const a = pickDaily([g], at(4))

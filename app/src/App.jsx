@@ -43,7 +43,7 @@ import ShareConfirmSheet from './components/ShareConfirmSheet.jsx'
 import { check as checkBadges, getBadges, setShared, shareEarns } from './lib/badges.js'
 import { addSharedId, getDailyDays, getQuestsDone, levelOf, rankOf, recordVisit, xpSummary } from './lib/xp.js'
 import { checkDaily, checkQuest, weeklyXp } from './lib/quests.js'
-import { shareBadge as sharePoster } from './lib/poster.js'
+import { shareBadge as sharePoster, shareMonth as sharePosterMonth } from './lib/poster.js'
 import { getName } from './lib/name.js'
 import { bigSheetFor, releaseOf } from './lib/bigUpdate.js'
 import { NEWS } from './lib/news.js'
@@ -347,6 +347,17 @@ export default function App() {
     }
     return result
   }, [t, toast, runBadgeCheck, address])
+  // Share your month (components/ShareMonth.jsx builds the stats, label and logos): the same share path and the same
+  // confirm step as a badge. On a real share the confirm grants +30 XP once a month (dibs.badges.sharedIds, keyed
+  // month:YYYY-MM, so sharing the same month again adds nothing).
+  const shareMonth = useCallback(async ({ stats, monthLabel, logos }) => {
+    let result = 'failed'
+    try { result = await sharePosterMonth({ stats, monthLabel, logos, t, lang, toast }) } finally {
+      if (shareEarns(result)) setShareAsk(`month:${stats.monthKey}`)
+      runBadgeCheck()
+    }
+    return result
+  }, [t, lang, toast, runBadgeCheck])
 
   // Big-update sheet (components/WhatsNewSheet.jsx, lib/bigUpdate.js): once per launch, the moment Welcome back has
   // closed and Home is showing. Closing it (any way) saves dibs.bigSeen so it never comes back for that release.
@@ -405,7 +416,7 @@ export default function App() {
 
   toastRef.current = toast
   tRef.current = t
-  const ctx = { t, lang, setLang, address, walletAddress, balance, refreshBalance, prices, demo: isDemo(), go, back, reset, toast, showHowTo, canGoBack, blockBack, shareBadge }
+  const ctx = { t, lang, setLang, address, walletAddress, balance, refreshBalance, prices, demo: isDemo(), go, back, reset, toast, showHowTo, canGoBack, blockBack, shareBadge, shareMonth }
 
   // The launch splash leaves (ring completes, then fades) once the next screen is ready to show.
   const splashDone = splashMin && (ready || Boolean(fatal) || (!onboarded && !isLab))

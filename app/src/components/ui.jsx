@@ -37,6 +37,8 @@ const PATHS = {
   swap: <><path d="M7 4 4 7l3 3M4 7h13" /><path d="M17 14l3 3-3 3M20 17H7" /></>, // two arrows (History, card changed)
   bulb: <><path d="M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1.1 2.2h5a3 3 0 0 1 1.1-2.2A6 6 0 0 0 12 3z" /><path d="M9.5 19h5M10.5 21.5h3" /></>, // a light bulb ("Did you know?")
   wallet: <><rect x="3" y="6" width="18" height="13" rx="2.5" /><path d="M16 11.5h5v4h-5a2 2 0 0 1 0-4z" /></>, // a wallet (Savings: NIM back in your wallet)
+  chart: <><path d="M4 20h16" /><path d="M7 16.5v-4M12 16.5V6.5M17 16.5V10" /></>, // bars (Insights, big-update sheet)
+  share: <><circle cx="18" cy="5" r="2.5" /><circle cx="6" cy="12" r="2.5" /><circle cx="18" cy="19" r="2.5" /><path d="M8.3 10.8 15.7 6.2M8.3 13.2l7.4 4.6" /></>, // share nodes (big-update sheet)
 }
 
 // Bottom tab bar on the four top-level screens (App.jsx decides where it shows).

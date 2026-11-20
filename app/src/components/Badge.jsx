@@ -26,6 +26,8 @@ const GLYPHS = {
   loop: '<path d="M4 12a8 8 0 0 1 14-5.3L20 9"/><path d="M20 4v5h-5"/><path d="M20 12a8 8 0 0 1-14 5.3L4 15"/><path d="M4 20v-5h5"/>',
   three: '<circle cx="6" cy="14" r="2.5"/><circle cx="12" cy="8" r="2.5"/><circle cx="18" cy="14" r="2.5"/>',
   swap: '<path d="M4 8h14l-3-3M20 16H6l3 3"/>',
+  peak: '<path d="M5 21v-5M12 21v-8M19 21v-4"/><path d="M12 2.6l1.45 3 3.3.38-2.45 2.25.67 3.25L12 9.85l-2.97 1.63.67-3.25-2.45-2.25 3.3-.38z" fill="currentColor"/>',
+  eight: '<text x="12" y="17" text-anchor="middle" font-family="Poppins" font-weight="700" font-size="13" fill="currentColor" stroke="none">8</text>',
   pad: '<rect x="3" y="8" width="18" height="10" rx="5"/><path d="M8 11v4M6 13h4M15.5 12h.01M17.5 14h.01"/>',
   plane: '<path d="M10.5 13.5 3 11l1.5-1.5 8 1L17 6c1-1 2.5-1 3 0s0 2-1 3l-4.5 4.5 1 8L14 23l-2.5-7.5L8 19v2l-1.5 1.5-1-3.5-3.5-1L3.5 16.5h2z"/>',
   play: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9.5v5l4.5-2.5z" fill="currentColor"/>',

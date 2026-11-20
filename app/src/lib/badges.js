@@ -3,6 +3,7 @@
 import { savedNim } from './goals.js'
 import { BRANDS, CHIPS } from './brands.js'
 import { planOf } from './pace.js'
+import { bestWeekEarned, weeks8Earned } from './insights.js'
 
 // In display order. group: way (On the way), set (Collection), grow (Earned from staking), special.
 export const BADGES = [
@@ -16,6 +17,8 @@ export const BADGES = [
   { id: 'comeback', group: 'way', glyph: 'loop' },
   { id: 'juggler', group: 'way', glyph: 'three' },
   { id: 'rebalancer', group: 'way', glyph: 'swap' },
+  { id: 'best_week', group: 'way', glyph: 'peak' },
+  { id: 'weeks8', group: 'way', glyph: 'eight' },
   { id: 'player', group: 'set', glyph: 'pad', chip: 'games' },
   { id: 'globe', group: 'set', glyph: 'plane', chip: 'travel' },
   { id: 'movie', group: 'set', glyph: 'play', chip: 'streaming' },
@@ -87,6 +90,9 @@ export function evaluate({ goals = [], earnedNim = 0, shared = false, dailyDays 
   if ((g = find((x) => hasGap(x) && onPace(x, now)))) add('comeback', g)
   if (goals.filter(isOpen).length >= 3) add('juggler')
   if ((g = find((x) => (x.deposits || []).some((d) => d.kind === 'move')))) add('rebalancer', g)
+  // v1.3.0 (lib/insights.js, counted deposits only): a record week beaten, and 8 weeks in a row.
+  if (bestWeekEarned(goals, now)) add('best_week')
+  if (weeks8Earned(goals, now)) add('weeks8')
   for (const b of BADGES.filter((x) => x.chip)) {
     if ((g = redeemed.find((x) => chipOf(x) === b.chip))) add(b.id, g)
   }

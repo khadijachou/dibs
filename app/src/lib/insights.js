@@ -189,3 +189,69 @@ export function compactNim(n, lang = 'en') {
   if (v >= 1_000) return `${sign}${dec(v / 1_000)}${gap}k`
   return sign + String(Math.floor(v))
 }
+
+// ---------------------------------------------------------------------------
+// Part 2: the two badge rules (pure), the longest-run progress, and the month-share data.
+
+// The longest run of consecutive calendar weeks with a counted deposit, over all history (a current, in-progress week
+// counts as soon as it has a deposit).
+export function longestRunWeeks(goals) {
+  const by = weekBuckets(countedDeposits(goals))
+  const has = (w) => (by.get(w) || 0) > 0
+  let longest = 0
+  const seen = new Set()
+  for (const w of by.keys()) {
+    if (has(prevWeek(w)) || seen.has(w)) continue // only start a run at its first week
+    let run = 0
+    let cur = w
+    while (has(cur)) { run++; seen.add(cur); cur = weekStep(cur, 1) }
+    if (run > longest) longest = run
+  }
+  return longest
+}
+
+// "8 weeks running": at least 8 consecutive calendar weeks with a deposit (the current run or any past run).
+export const weeks8Earned = (goals, now) => longestRunWeeks(goals, now) >= 8
+// Progress for the Personal bests card: the longest run so far (shown out of 8).
+export const weeks8Progress = (goals, now) => longestRunWeeks(goals, now)
+
+// "Best week ever": a FINISHED week whose total beats every earlier week, once there are at least 3 earlier weeks with a
+// deposit (so the first weeks do not give it away). The current, unfinished week never earns it; an equal week does not
+// beat.
+export function bestWeekEarned(goals, now) {
+  const by = weekBuckets(countedDeposits(goals))
+  const cur = weekStart(now)
+  const weeks = [...by.keys()].filter((w) => w < cur).sort((a, b) => a - b) // finished deposit-weeks, oldest first
+  for (let i = 3; i < weeks.length; i++) {
+    const maxEarlier = Math.max(...weeks.slice(0, i).map((x) => by.get(x)))
+    if (by.get(weeks[i]) > maxEarlier) return true
+  }
+  return false
+}
+
+// A per-calendar-month key, local time (used for the once-a-month share XP, like weekKey for weeks).
+export function monthKey(ms) {
+  const d = new Date(ms)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+}
+
+// The data the month-share image is drawn from. Totals and ids only: no address, no balance, no fiat value, no code,
+// no user-typed goal name. goalIds = the goals that received a counted deposit this calendar month (the screen maps
+// them to brand logos); the image never carries a name.
+export function monthShareStats(goals, now) {
+  const mStart = monthStart(now)
+  let nim = 0
+  const ids = new Set()
+  for (const g of goals || []) {
+    for (const d of g?.deposits || []) {
+      if (d.kind || !(d.nim > 0)) continue
+      const at = Date.parse(d.at)
+      if (Number.isFinite(at) && at >= mStart) { nim += d.nim; ids.add(g.id) }
+    }
+  }
+  const { weekly } = windowSums(countedDeposits(goals), eightStarts(now))
+  const base = insights(goals, now)
+  const net = (g) => (g.deposits || []).reduce((s, d) => s + (d.nim || 0), 0)
+  const at100 = (goals || []).filter((g) => g.status !== 'withdrawn' && g.targetNim > 0 && net(g) >= g.targetNim).length
+  return { nim, weekly, weeksSaved: base.weeksSaved, goalsCount: base.goalsCount, at100, goalIds: [...ids], monthKey: monthKey(now) }
+}

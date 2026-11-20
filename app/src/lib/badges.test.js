@@ -26,9 +26,16 @@ const has = (args, id) => evaluate({ now: AFTER, ...args }).some((x) => x.id ===
 
 beforeEach(() => store.clear())
 
-test('24 badges in five groups', () => {
-  assert.equal(BADGES.length, 24)
-  assert.equal(new Set(BADGES.map((b) => b.id)).size, 24)
+test('26 badges in five groups', () => {
+  assert.equal(BADGES.length, 26)
+  assert.equal(new Set(BADGES.map((b) => b.id)).size, 26)
+})
+
+// v1.3.0: the two Insights badges sit in the On the way group, right after rebalancer.
+test('best_week and weeks8 follow rebalancer in the On the way group', () => {
+  const way = BADGES.filter((b) => b.group === 'way').map((b) => b.id)
+  assert.equal(way[way.indexOf('rebalancer') + 1], 'best_week')
+  assert.equal(way[way.indexOf('rebalancer') + 2], 'weeks8')
 })
 
 test('the Quests group sits before Special, with its three badges', () => {
@@ -170,7 +177,22 @@ test('Quests badges: dayone and days7 from full days, quests50 from daily plus w
   assert.ok(has({ dailyDays: seven }, 'days7'))
   assert.ok(!has({ dailyDays: seven, weeklyDone: 35 }, 'quests50')) // 14 daily + 35 weekly = 49
   assert.ok(has({ dailyDays: seven, weeklyDone: 36 }, 'quests50'))  // 14 + 36 = 50
-  assert.equal(BADGES.length, 24)
+  assert.equal(BADGES.length, 26)
+})
+
+// v1.3.0: the two new rules (lib/insights.js) earn best_week and weeks8, and change nothing else for the same inputs.
+test('best_week and weeks8 earn from counted deposits, and leave every other badge unchanged', () => {
+  const DEP = (nim, weeksAgo) => dep(nim, NOW - weeksAgo * 7 * DAY)
+  // 8 weeks in a row, the 4th finished week beating the first three, plus a move (rebalancer) and earned NIM (growing).
+  const deposits = [DEP(100, 8), DEP(200, 7), DEP(300, 6), DEP(900, 5), DEP(120, 4), DEP(130, 3), DEP(140, 2), DEP(150, 1), dep(-5, NOW, { kind: 'move' })]
+  // A large target keeps the goal well under 50 %, so halfway/ahead stay out and the baseline is clean.
+  const g = goal({ targetNim: 100000, deposits })
+  const got = ids(evaluate({ goals: [g], earnedNim: 5, now: NOW }))
+  assert.ok(got.includes('best_week'), 'best_week earned')
+  assert.ok(got.includes('weeks8'), 'weeks8 earned')
+  // Removing the two new ids gives exactly what the old rules gave for these inputs.
+  const others = got.filter((x) => x !== 'best_week' && x !== 'weeks8')
+  assert.deepEqual(others, ['cycle3', 'first', 'growing', 'planted', 'rebalancer'].sort())
 })
 
 // v1.2.11: a 'kept' entry is not a deposit and not a move; evaluate ignores it, and a recorded badge is never removed.

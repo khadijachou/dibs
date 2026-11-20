@@ -3,12 +3,15 @@
 // from lib/insights.js (pure) over the goals already on this phone. Nothing is sent anywhere.
 import { useState } from 'react'
 import { useApp } from '../App.jsx'
-import { BrandLogo, Ring } from './ui.jsx'
+import { BrandLogo, Icon, Ring } from './ui.jsx'
+import { Medal } from './Badge.jsx'
+import { getBadges } from '../lib/badges.js'
 import { fmtNim } from '../lib/format.js'
 import { itemLabel } from '../lib/itemName.js'
 import { progress } from '../lib/goals.js'
 import { goalBrand } from '../screens/Home.jsx'
-import { compactNim, goalWeekly, insights, recap, weekKey } from '../lib/insights.js'
+import { compactNim, goalWeekly, insights, longestRunWeeks, monthShareStats, recap, weekKey, weeks8Progress } from '../lib/insights.js'
+import ShareMonth, { monthName } from './ShareMonth.jsx'
 
 // Short date for a bar label: day + short month in the user's language (Intl's narrow space swapped for a plain
 // no-break space, as lib/format.js does, so Inter renders it).
@@ -191,5 +194,65 @@ export function GoalWeekCard({ goal }) {
       <div className="sec-head"><h3>{t('gw_title')}</h3><span className="small">{t('ins_total8', { n: fmtNim(total8, lang) })}</span></div>
       <Bars weekly={weekly} ends />
     </section>
+  )
+}
+
+// Personal bests (Insights): the best week and the longest run, then the two new badges with their state.
+function BestBadgeRow({ id, earned, progressText }) {
+  const { t } = useApp()
+  return (
+    <div className="bests-badge">
+      <Medal id={id} earned={earned} size={34} />
+      <div className="bests-badge-tx"><b>{t(`badge_${id}`)}</b><small>{earned ? t(`badge_${id}_done`) : t(`badge_${id}_how`)}</small></div>
+      {earned
+        ? <span className="bests-state earned">{t('ins_earned')}</span>
+        : progressText && <span className="bests-state prog">{progressText}</span>}
+    </div>
+  )
+}
+
+export function PersonalBests({ goals }) {
+  const { t, lang } = useApp()
+  const now = Date.now()
+  const data = insights(goals, now)
+  const badges = getBadges()
+  const bw = data.bestWeek
+  const run = longestRunWeeks(goals, now)
+  return (
+    <section className="card ins-bests">
+      <h3>{t('ins_bests')}</h3>
+      <div className="bests-tiles">
+        <div className="best-tile star">
+          <span className="best-ic" aria-hidden="true">★</span>
+          <b>{fmtNim(bw ? bw.nim : 0, lang)} NIM</b>
+          <span>{bw ? t('ins_best_week', { date: shortDate(bw.start, lang) }) : t('ins_run')}</span>
+        </div>
+        <div className="best-tile run">
+          <span className="best-ic" aria-hidden="true">↗</span>
+          <b>{t('ins_run_n', { n: run })}</b>
+          <span>{t('ins_run')}</span>
+        </div>
+      </div>
+      {/* Part 2: the two Insights badges with their state. */}
+      <BestBadgeRow id="best_week" earned={Boolean(badges.best_week)} />
+      <BestBadgeRow id="weeks8" earned={Boolean(badges.weeks8)} progressText={`${Math.min(8, weeks8Progress(goals, now))} / 8`} />
+    </section>
+  )
+}
+
+// Share my {month}: hidden in a month with no counted deposit. Opens the Share your month sheet.
+export function ShareMonthButton({ goals }) {
+  const { t, lang } = useApp()
+  const [open, setOpen] = useState(false)
+  const stats = monthShareStats(goals, Date.now())
+  if (!(stats.nim > 0)) return null
+  return (
+    <>
+      <button type="button" className="btn ghost sm-btn" onClick={() => setOpen(true)}>
+        <span className="sm-btn-ic" aria-hidden="true"><Icon name="share" size={18} /></span>
+        {t('share_month_btn', { month: monthName(Date.now(), lang) })}
+      </button>
+      {open && <ShareMonth onClose={() => setOpen(false)} />}
+    </>
   )
 }
