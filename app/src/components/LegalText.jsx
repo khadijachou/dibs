@@ -11,7 +11,7 @@ export const APP_VERSION = version.replace(/\.0$/, '') // "1.0.0" -> "1.0"
 export const LEGAL_UPDATED = '2026-11-15'
 export const HELP_EMAIL = 'calldibs.contact@gmail.com'
 // Sections per page (privacy_1h..7b, terms_1h..7b). Rewards has its own layout since v1.1.12 (screens/Legal.jsx).
-const SECTIONS = { privacy: 7, terms: 7 }
+const SECTIONS = { privacy: 8, terms: 7 }
 // What's new: the release list is in lib/news.js (plain JS, read by the tests and lib/newsSeen.js).
 export { NEWS }
 const NEWS_SHOWN = 3 // the others wait behind "Show earlier updates"

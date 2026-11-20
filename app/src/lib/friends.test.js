@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { ed25519 } from '@noble/curves/ed25519.js'
 import { sha256 } from '@noble/hashes/sha2.js'
 import { config } from './config.js'
-import { registerMessage, canonicalString, request, me, getState, isOn, getVis, setPendingCode, getPendingCode } from './friends.js'
+import { registerMessage, canonicalString, request, requestSeq, SEQ_TIMEOUTS, me, getState, isOn, getVis, setPendingCode, getPendingCode } from './friends.js'
 
 const hex = (u8) => Buffer.from(u8).toString('hex')
 const utf8 = (s) => new TextEncoder().encode(String(s))
@@ -103,4 +103,47 @@ test('getVis defaults every item to off; pending code round-trips', () => {
   assert.equal(getPendingCode(), 'DIBS-ABCD')
   setPendingCode(null)
   assert.equal(getPendingCode(), null)
+})
+
+// ---- the sleeping-server retry sequence (section C) ---------------------------------------------------------
+const down = () => { throw new DOMException('aborted', 'AbortError') } // what the timeout abort throws
+
+test('SEQ_TIMEOUTS is 6 s, 15 s, 25 s', () => {
+  assert.deepEqual(SEQ_TIMEOUTS, [6000, 15000, 25000])
+})
+
+test('requestSeq retries on a slow (SRV_DOWN) answer, then succeeds', async () => {
+  seedOn()
+  let n = 0
+  globalThis.fetch = async () => { n++; if (n < 3) down(); return { status: 200, ok: true, json: async () => ({ friends: [] }) } }
+  const out = await requestSeq('GET', '/v1/friends')
+  assert.deepEqual(out, { friends: [] })
+  assert.equal(n, 3) // two slow tries, then the third answers
+})
+
+test('requestSeq gives up after the last timeout', async () => {
+  seedOn()
+  let n = 0
+  globalThis.fetch = async () => { n++; down() }
+  await assert.rejects(() => requestSeq('GET', '/v1/friends'), (e) => e.friendsError === 'SRV_DOWN')
+  assert.equal(n, SEQ_TIMEOUTS.length) // one try per timeout, no more
+})
+
+test('requestSeq does not retry a definite error (401)', async () => {
+  seedOn()
+  let n = 0
+  globalThis.fetch = async () => { n++; return { status: 401, ok: false, json: async () => ({ error: 'UNAUTHORIZED' }) } }
+  await assert.rejects(() => requestSeq('GET', '/v1/me'), (e) => e.friendsError === 'UNAUTHORIZED')
+  assert.equal(n, 1) // thrown at once, no retry
+})
+
+test('the abort timer fires at the given timeout (fake timers)', async (t) => {
+  seedOn()
+  t.mock.timers.enable({ apis: ['setTimeout'] })
+  globalThis.fetch = (url, opts) => new Promise((_, reject) => { opts.signal.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError'))) })
+  const p = request('GET', '/v1/me', undefined, { timeout: 6000 })
+  const assertion = assert.rejects(p, (e) => e.friendsError === 'SRV_DOWN')
+  for (let i = 0; i < 20; i++) await Promise.resolve() // let request() load @noble, sign, and arm the abort timer
+  t.mock.timers.tick(6000)
+  await assertion
 })

@@ -7,6 +7,9 @@ import { markDailyOpen } from '../lib/quests.js'
 import { fromText } from '../lib/itemName.js'
 import { useReducedMotion } from '../components/UnlockTimer.jsx'
 import BrandSheet from '../components/BrandSheet.jsx'
+import { useWishlist } from '../components/FriendsParts.jsx'
+import { toggle as toggleWish } from '../lib/wishlist.js'
+import { isOn as friendsIsOn, getVis as friendsVis, syncQuiet } from '../lib/friends.js'
 
 // Entrance stagger: 40 ms per tile, never more than 400 ms for the last one.
 const STAGGER_MS = 40
@@ -80,21 +83,30 @@ export function BrandChips({ brands, chip, onChip }) {
 }
 
 // A brand as a gift card: logo and delivery pill on top, name and lowest price at the bottom. A tap opens the sheet.
-export function GiftTile({ brand, big = false, style, onOpen }) {
+// The heart (bottom right) toggles the wishlist; it is a sibling button, not nested in the tile, and never navigates.
+export function GiftTile({ brand, big = false, style, onOpen, hearted = false, onHeart }) {
   const { t } = useApp()
   return (
-    <button type="button" className={`gtile${big ? ' big' : ''}`} aria-haspopup="dialog"
-      style={{ ...style, background: brandGrad(brand.key) }} onClick={() => onOpen(brand)}>
-      <i className="gift-sheen" aria-hidden="true" />
-      <span className="gtile-top">
-        <BrandLogo brand={brand} />
-        {brand.delivers && <span className="gtile-pill">{t(`dlv_short_${brand.delivers}`)}</span>}
-      </span>
-      <span className="gtile-bot">
-        <b>{brand.name}</b>
-        <span>{fromText(t, brand)}</span>
-      </span>
-    </button>
+    <div className={`gtile-wrap${big ? ' big' : ''}`} style={style}>
+      <button type="button" className={`gtile${big ? ' big' : ''}`} aria-haspopup="dialog"
+        style={{ background: brandGrad(brand.key) }} onClick={() => onOpen(brand)}>
+        <i className="gift-sheen" aria-hidden="true" />
+        <span className="gtile-top">
+          <BrandLogo brand={brand} />
+          {brand.delivers && <span className="gtile-pill">{t(`dlv_short_${brand.delivers}`)}</span>}
+        </span>
+        <span className="gtile-bot">
+          <b>{brand.name}</b>
+          <span>{fromText(t, brand)}</span>
+        </span>
+      </button>
+      {onHeart && (
+        <button type="button" className="gtile-heart" aria-pressed={hearted}
+          aria-label={t(hearted ? 'frd_wl_remove' : 'frd_wl_add', { brand: brand.name })} onClick={() => onHeart(brand)}>
+          <span className="gtile-heart-ic" aria-hidden="true"><Icon name={hearted ? 'heartFilled' : 'heart'} size={18} /></span>
+        </button>
+      )}
+    </div>
   )
 }
 
@@ -112,6 +124,13 @@ export default function Catalog({ moveFrom = null, changeFor = null, chip: initi
   const query = q.trim()
   const shown = filterBrands(brands, { q, chip })
   const popular = POPULAR.map((k) => brands.find((b) => b.key === k)).filter(Boolean)
+  // Wishlist hearts: toggle locally, and only push to the Friends server when Wishlist is shared (friends/everyone).
+  const wished = useWishlist()
+  const onHeart = (brand) => {
+    toggleWish(brand.key)
+    const v = friendsVis().wishlist
+    if (friendsIsOn() && (v === 'friends' || v === 'everyone')) syncQuiet(address)
+  }
   // daily quests: Browse the catalog, and Look at a brand in {category}, complete when a brand sheet opens from here.
   const openSheet = (b) => { markDailyOpen({ k: 'brand', chip: b.chip }, listGoals(address)); setOpen(b.key) }
   const sheetBrand = brands.find((b) => b.key === open)
@@ -134,7 +153,7 @@ export default function Catalog({ moveFrom = null, changeFor = null, chip: initi
           <section className="cat-pop">
             <div className="sec-head"><h3>{t('cat_popular')}</h3></div>
             <div className="pop-row">
-              {popular.map((b) => <GiftTile key={b.key} brand={b} big onOpen={openSheet} />)}
+              {popular.map((b) => <GiftTile key={b.key} brand={b} big onOpen={openSheet} hearted={wished.includes(b.key)} onHeart={onHeart} />)}
             </div>
           </section>
         )}
@@ -145,7 +164,7 @@ export default function Catalog({ moveFrom = null, changeFor = null, chip: initi
           // key: a new grid per category, so the entrance plays on first load and on each switch, never on scroll.
           <div className={`grid gift-grid${reduced ? '' : ' enter'}`} key={chip}>
             {shown.map((b, i) => (
-              <GiftTile key={b.key} brand={b} onOpen={openSheet} style={{ '--delay': `${Math.min(i * STAGGER_MS, STAGGER_MAX_MS)}ms` }} />
+              <GiftTile key={b.key} brand={b} onOpen={openSheet} hearted={wished.includes(b.key)} onHeart={onHeart} style={{ '--delay': `${Math.min(i * STAGGER_MS, STAGGER_MAX_MS)}ms` }} />
             ))}
           </div>
         )}

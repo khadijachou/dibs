@@ -13,7 +13,9 @@ import { BADGES, getBadges } from './badges.js'
 import { listGoals } from './goals.js'
 import { sharedPayload } from './friendsShare.js'
 
-const TIMEOUT_MS = 6000
+const TIMEOUT_MS = 6000 // most calls
+export const REGISTER_TIMEOUT_MS = 45000 // the server can take up to ~50 s to answer the first request after idle
+export const SEQ_TIMEOUTS = [6000, 15000, 25000] // loading a screen or a profile: retry quietly before giving up
 export const FRIENDS_EVENT = 'dibs:friends'
 const DEFAULT_VIS = { level: 'off', badges: 'off', cards: 'off', goals: 'off', wishlist: 'off' }
 
@@ -70,9 +72,9 @@ const nimiqHash = (sha256, message) => { const m = utf8(message); return sha256(
 const fail = (code, status = 0) => { const e = new Error(code); e.friendsError = code; e.status = status; return e }
 
 // ---- HTTP ---------------------------------------------------------------------------------------------------
-async function doFetch(method, path, bodyText, headers) {
+async function doFetch(method, path, bodyText, headers, timeout = TIMEOUT_MS) {
   const ctl = new AbortController()
-  const timer = setTimeout(() => ctl.abort(), TIMEOUT_MS)
+  const timer = setTimeout(() => ctl.abort(), timeout)
   let r
   try {
     r = await fetch(`${config.friendsUrl}${path}`, { method, headers, body: method === 'GET' ? undefined : bodyText, signal: ctl.signal })
@@ -86,7 +88,7 @@ async function doFetch(method, path, bodyText, headers) {
 }
 
 // One signed request for every route but register. Signs with the device key as the README describes.
-export async function request(method, path, body) {
+export async function request(method, path, body, { timeout = TIMEOUT_MS } = {}) {
   if (!config.friendsUrl) throw fail('NOT_CONFIGURED')
   const skHex = readStr(K.key)
   const st = getState()
@@ -99,7 +101,18 @@ export async function request(method, path, body) {
   const sig = toHex(ed25519.sign(utf8(canonical), fromHex(skHex)))
   const headers = { 'X-Dibs-Id': st.id, 'X-Dibs-Ts': String(ts), 'X-Dibs-Nonce': nonce, 'X-Dibs-Sig': sig }
   if (method !== 'GET') headers['content-type'] = 'application/json'
-  return doFetch(method, path, bodyText, headers)
+  return doFetch(method, path, bodyText, headers, timeout)
+}
+
+// For loading a screen or a profile: keep trying with growing timeouts (6 s, 15 s, 25 s) while the server is just slow
+// to wake up, and only give up on the last one. A definite error (401, BAD_CODE, ...) is not retried.
+export async function requestSeq(method, path, body, timeouts = SEQ_TIMEOUTS) {
+  let lastErr
+  for (const timeout of timeouts) {
+    try { return await request(method, path, body, { timeout }) }
+    catch (e) { if (e.friendsError !== 'SRV_DOWN') throw e; lastErr = e }
+  }
+  throw lastErr
 }
 
 // A 401 on a signed call means this device key is unknown (for example the profile was deleted elsewhere):
@@ -132,7 +145,7 @@ export async function turnOn(name) {
     wallet = { message, publicKey: String(res.publicKey), signature: String(res.signature) }
   }
 
-  const out = await doFetch('POST', '/v1/register', JSON.stringify({ name, devicePub, wallet }), { 'content-type': 'application/json' })
+  const out = await doFetch('POST', '/v1/register', JSON.stringify({ name, devicePub, wallet }), { 'content-type': 'application/json' }, REGISTER_TIMEOUT_MS)
 
   // Success: persist the keys and the state (nothing was written before this, so a refusal leaves storage untouched).
   writeStr(K.key, toHex(devSk))
@@ -161,6 +174,10 @@ export const acceptInvite = (id) => request('POST', `/v1/invites/${encodeURIComp
 export const declineInvite = (id) => request('DELETE', `/v1/invites/${encodeURIComponent(id)}`)
 export const removeFriend = (id) => request('DELETE', `/v1/friends/${encodeURIComponent(id)}`)
 export const userProfile = (id) => request('GET', `/v1/users/${encodeURIComponent(id)}`)
+// Loading variants that retry quietly while the server wakes up (used by the Friends screen and profiles).
+export const loadFriends = () => requestSeq('GET', '/v1/friends')
+export const loadProfile = (id) => requestSeq('GET', `/v1/users/${encodeURIComponent(id)}`)
+export const loadAsFriend = () => requestSeq('GET', '/v1/me/as-friend')
 
 // PATCH my identity (name / visibility / look). Keeps the local name and visibility in step.
 export async function patchMe(patch) {

@@ -6,7 +6,7 @@ import { Header, Icon } from '../components/ui.jsx'
 import {
   useFriends, PersonRow, Skeleton, FriendNotice, AddByCodeSheet, shareInvite, copyCode,
 } from '../components/FriendsParts.jsx'
-import { getFriends, acceptInvite, declineInvite, getPendingCode, setPendingCode } from '../lib/friends.js'
+import { loadFriends, acceptInvite, declineInvite, getPendingCode, setPendingCode } from '../lib/friends.js'
 
 export default function Friends({ addCode }) {
   const { t, go, back, toast } = useApp()
@@ -21,7 +21,7 @@ export default function Friends({ addCode }) {
 
   const load = useCallback(() => {
     setErr(false)
-    return getFriends().then((d) => { setData(d); setLoading(false) }).catch(() => { setErr(true); setLoading(false) })
+    return loadFriends().then((d) => { setData(d); setLoading(false) }).catch(() => { setErr(true); setLoading(false) })
   }, [])
   useEffect(() => { load() }, [load])
 

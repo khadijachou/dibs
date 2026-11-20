@@ -876,6 +876,17 @@ button.tl-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: -2
 @keyframes gtile-in { from { opacity: 0; transform: translateY(10px); } }
 @media (prefers-reduced-motion: reduce) { .gtile { transition: none; } .grid.enter .gtile { animation: none; } }
 
+/* Wishlist heart on a brand tile (v1.4.0). The wrapper is now the grid/flex item; the tile fills it and the heart
+   is a sibling (not nested in the tile button), so a tap on the heart never opens the brand. */
+.gtile-wrap { position: relative; min-width: 0; }
+.gtile-wrap.big { flex: 0 0 236px; scroll-snap-align: start; }
+.gtile-wrap > .gtile { width: 100%; }
+.gtile-heart { position: absolute; right: 4px; bottom: 4px; width: 44px; height: 44px; display: grid; place-items: center; background: transparent; border: 0; cursor: pointer; z-index: 2; }
+.gtile-heart-ic { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 999px; background: rgba(255, 255, 255, .25); color: #fff; transition: transform 120ms ease, background 120ms ease; }
+.gtile-heart[aria-pressed="true"] .gtile-heart-ic { background: #fff; color: var(--gold); }
+.gtile-heart:active .gtile-heart-ic { transform: scale(.88); }
+.gtile-heart:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 999px; }
+
 .cat-search { display: flex; align-items: center; gap: 10px; height: 46px; padding: 0 14px; box-sizing: border-box; background: var(--card); border: 1px solid #2b2834; border-radius: 14px; color: var(--muted); cursor: text; }
 .cat-search:focus-within { border-color: #4a4756; }
 .cat-search input { flex: 1; min-width: 0; height: 100%; background: none; border: 0; outline: none; color: var(--cream); font: 500 16px var(--font-body); } /* 16 px: iOS zooms the page on focus below 16 px */
@@ -1839,3 +1850,15 @@ html.is-fullscreen .bstamp-live { top: calc(58px + var(--fs-top)); }
 .frd-muted-link { display: block; width: 100%; text-align: center; background: transparent; border: 0; color: var(--muted); font-size: var(--fs-meta); padding: 14px; margin-top: 6px; cursor: pointer; }
 .frd-private { color: var(--muted); font-size: var(--fs-meta); margin: 14px 2px 0; }
 .btn.danger { background: #b42318; color: #fff; box-shadow: none; }
+
+/* Profile Friends section: a title and up to two rows (Friends, Wishlist). */
+.prof-friends .sec-head-h { margin: 2px 0 8px; }
+.prof-friends .frd-prof-row + .frd-prof-row { margin-top: 8px; }
+.frd-prof-ic.heart { color: var(--gold); }
+
+/* Wishlist screen rows: the brand opens the sheet, the filled heart removes it. */
+.frd-row-open { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; background: transparent; border: 0; text-align: left; color: var(--cream); cursor: pointer; padding: 0; }
+.frd-wl-remove { flex: none; background: transparent; border: 0; cursor: pointer; display: grid; place-items: center; width: 40px; height: 40px; }
+.frd-wl-remove .gtile-heart-ic { background: transparent; color: var(--gold); width: 32px; height: 32px; }
+.frd-wl-remove:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 999px; }
+.frd-wl-foot { margin-top: 16px; }

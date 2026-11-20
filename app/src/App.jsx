@@ -37,6 +37,7 @@ import Accounts, { AddPreference } from './screens/Accounts.jsx'
 import Preferences from './screens/Preferences.jsx'
 import Friends from './screens/Friends.jsx'
 import FriendProfile from './screens/FriendProfile.jsx'
+import Wishlist from './screens/Wishlist.jsx'
 import { ProfileBackSheet } from './components/FriendsParts.jsx'
 import { isOn as friendsIsOn, enabled as friendsEnabled, syncQuiet, setPendingCode } from './lib/friends.js'
 import { Icon, TabBar, TAB_ROUTES } from './components/ui.jsx'
@@ -73,7 +74,7 @@ const hostLang = () => { try { const l = String(host.language() || '').slice(0, 
 const AppCtx = createContext(null)
 export const useApp = () => useContext(AppCtx)
 
-const SCREENS = { home: Home, catalog: Catalog, plan: Plan, goal: Goal, unlock: Unlock, redeem: Redeem, done: Done, stake: Stake, insights: Insights, history: History, profile: Profile, more: More, browse: Catalog, legal: Legal, faq: Faq, accounts: Accounts, prefAdd: AddPreference, prefs: Preferences, friends: Friends, friendProfile: FriendProfile }
+const SCREENS = { home: Home, catalog: Catalog, plan: Plan, goal: Goal, unlock: Unlock, redeem: Redeem, done: Done, stake: Stake, insights: Insights, history: History, profile: Profile, more: More, browse: Catalog, legal: Legal, faq: Faq, accounts: Accounts, prefAdd: AddPreference, prefs: Preferences, friends: Friends, friendProfile: FriendProfile, wishlist: Wishlist }
 
 // Back with nothing behind (after a reload, or a screen opened with reset): where each screen goes.
 // Goals (home) has no parent: back from there leaves the app.
@@ -89,6 +90,7 @@ function parentOf(route) {
   if (route.name === 'insights') return { name: 'stake', params: {} }
   if (route.name === 'friends') return { name: 'profile', params: {} }
   if (route.name === 'friendProfile') return { name: 'friends', params: {} }
+  if (route.name === 'wishlist') return { name: 'profile', params: {} }
   if (route.name === 'plan') return { name: 'catalog', params: route.params?.changeFor ? { changeFor: route.params.changeFor } : {} }
   if ((route.name === 'unlock' || route.name === 'redeem') && goalId) return { name: 'goal', params: { goalId } }
   return HOME
@@ -413,6 +415,9 @@ export default function App() {
     let stored = null
     try { stored = localStorage.getItem('dibs.bigSeen') } catch { /* private mode */ }
     const info = bigSheetFor({ version: appVersion, stored, onboarded, news: NEWS })
+    // 1.4's sheet describes Friends; with no Friends server configured its first rows point at something the user
+    // cannot find, so skip the sheet for 1.4 (but still save dibs.bigSeen, so it never tries again).
+    if (info && info.release === '1.4' && !friendsEnabled()) { try { localStorage.setItem('dibs.bigSeen', info.release) } catch { /* private mode */ } return }
     if (info) setBigSheet(info)
   }, [ready, splashGone, isLab, intro, howTo, welcome, route.name, shareAsk, stamps, onboarded])
 

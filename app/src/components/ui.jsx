@@ -43,6 +43,10 @@ const PATHS = {
   sun: <><circle cx="12" cy="12" r="4" /><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4" /></>, // sun (More: switch to light)
   moon: <path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z" />, // crescent moon (More: switch to dark)
   close: <path d="M6 6l12 12M18 6 6 18" />, // an × (close a toast)
+  heart: <path d="M12 20s-7-4.6-9.3-9A5 5 0 0 1 12 6a5 5 0 0 1 9.3 5c-2.3 4.4-9.3 9-9.3 9z" />, // wishlist heart (outline)
+  heartFilled: <path d="M12 20s-7-4.6-9.3-9A5 5 0 0 1 12 6a5 5 0 0 1 9.3 5c-2.3 4.4-9.3 9-9.3 9z" fill="currentColor" stroke="none" />, // hearted
+  users: <><circle cx="9" cy="8.5" r="3.2" /><path d="M3.5 19c.7-3 3-4.6 5.5-4.6s4.8 1.6 5.5 4.6" /><path d="M16 5.6a3.2 3.2 0 0 1 0 6M17.8 19c-.3-1.6-1-2.9-2-3.8" /></>, // Friends (two people)
+  eye: <><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" /><circle cx="12" cy="12" r="3" /></>, // who sees what
 }
 
 // Bottom tab bar on the four top-level screens (App.jsx decides where it shows).

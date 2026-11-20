@@ -11,7 +11,7 @@ import { useXp } from '../lib/useXp.js'
 import {
   ThreeWay, ConfirmSheet, PrivateLine, Skeleton, FriendNotice, brandByKey,
 } from '../components/FriendsParts.jsx'
-import { getState, getVis, patchMe, syncQuiet, turnOff, userProfile, asFriend, removeFriend } from '../lib/friends.js'
+import { getState, getVis, patchMe, syncQuiet, turnOff, loadProfile, loadAsFriend, removeFriend } from '../lib/friends.js'
 
 const fmtSince = (iso, lang) => { try { return new Intl.DateTimeFormat(lang, { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(iso)) } catch { return '' } }
 
@@ -26,7 +26,7 @@ function ProfileCards({ profile }) {
     <>
       {badges.length > 0 && (
         <section className="card frd-card">
-          <div className="sec-head"><h3>{t('badges_title')}</h3><span className="small">{badges.length}</span></div>
+          <div className="sec-head"><h3>{t('frd_item_badges')}</h3><span className="small">{badges.length}</span></div>
           <div className="frd-badge-grid">{badges.map((id) => (
             <span key={id} className="frd-badge"><Medal id={id} earned size={48} /><small>{t(`badge_${id}`)}</small></span>
           ))}</div>
@@ -34,7 +34,7 @@ function ProfileCards({ profile }) {
       )}
       {wishlist.length > 0 && (
         <section className="card frd-card">
-          <h3>{t('frd_item_wishlist')}</h3>
+          <div className="sec-head"><h3>{t('frd_item_wishlist')}</h3></div>
           {wishlist.map((b) => (
             <div className="frd-brand-row" key={b.key}><BrandLogo brand={b} className="frd-brand-logo" /><span className="frd-row-mid"><b>{b.name}</b><small>{t('ob_gift')}</small></span></div>
           ))}
@@ -48,7 +48,7 @@ function ProfileCards({ profile }) {
       )}
       {goals.length > 0 && (
         <section className="card frd-card">
-          <h3>{t('frd_item_goals')}</h3>
+          <div className="sec-head"><h3>{t('frd_item_goals')}</h3></div>
           {goals.map((g, i) => {
             const b = brandByKey(g.brandKey)
             return (
@@ -89,7 +89,7 @@ function FriendProfileView({ id, since }) {
   const [loading, setLoading] = useState(true)
   const [confirm, setConfirm] = useState(false)
 
-  const load = () => { setErr(false); userProfile(id).then((p) => { setProfile(p); setLoading(false) }).catch(() => { setErr(true); setLoading(false) }) }
+  const load = () => { setErr(false); setLoading(true); loadProfile(id).then((p) => { setProfile(p); setLoading(false) }).catch(() => { setErr(true); setLoading(false) }) }
   useEffect(load, [id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
@@ -138,7 +138,7 @@ function NameSheet({ initial, onClose }) {
 
 const VIS_ITEMS = [
   { key: 'level', label: 'frd_item_level' },
-  { key: 'badges', label: 'badges_title' },
+  { key: 'badges', label: 'frd_item_badges' },
   { key: 'cards', label: 'frd_item_cards', sub: 'frd_brands_only' },
   { key: 'goals', label: 'frd_item_goals' },
   { key: 'wishlist', label: 'frd_item_wishlist' },
@@ -161,7 +161,7 @@ function MyProfileView() {
     catch { setVis(prev); setSaveErr(true) }
   }
 
-  const openPreview = () => { setPreview('loading'); asFriend().then(setPreview).catch(() => setPreview('error')) }
+  const openPreview = () => { setPreview('loading'); loadAsFriend().then(setPreview).catch(() => setPreview('error')) }
 
   return (
     <>

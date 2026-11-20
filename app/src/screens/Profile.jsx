@@ -18,8 +18,8 @@ import { STREAK_BARS, claimable, streakView } from './profileView.js'
 import { RANKS, XP } from '../lib/xp.js'
 import { useXp } from '../lib/useXp.js'
 import { levelToPlay, markBadges, newBadges, setLevelSeen } from '../lib/seen.js'
-import { enabled as friendsEnabled, getFriends } from '../lib/friends.js'
-import { useFriends, TurnOnSheet } from '../components/FriendsParts.jsx'
+import { enabled as friendsEnabled, getFriends, getVis as friendsVis } from '../lib/friends.js'
+import { useFriends, useWishlist, TurnOnSheet } from '../components/FriendsParts.jsx'
 
 const TOTAL = BADGES.length
 const longDate = (d, lang) => new Intl.DateTimeFormat(lang, { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(d)).replace(/ /g, ' ')
@@ -102,6 +102,12 @@ export default function Profile({ badge: askedBadge, badgeAt, section, sectionAt
     getFriends().then((f) => { if (live) setFriendCount(f.friends?.length ?? 0) }).catch(() => { /* no error on Profile */ })
     return () => { live = false }
   }, [friendsOn])
+  // Wishlist row: count on this phone; "friends see it" only when Friends is on and Wishlist is shared.
+  const wished = useWishlist()
+  const wlShared = friendsOn && ['friends', 'everyone'].includes(friendsVis().wishlist)
+  const wlSub = wished.length === 0
+    ? t('frd_wl_empty')
+    : `${t(wished.length === 1 ? 'frd_wl_cards_one' : 'frd_wl_cards', { n: wished.length })} · ${t(wlShared ? 'frd_wl_friends' : 'frd_wl_onlyyou')}`
 
   return (
     <>
@@ -116,17 +122,23 @@ export default function Profile({ badge: askedBadge, badgeAt, section, sectionAt
           </div>
         </section>
 
-        {friendsEnabled() && (
-          <section className="prof-friends">
+        <section className="prof-friends">
+          <h3 className="sec-head-h">{friendsEnabled() ? t('frd_title') : t('frd_item_wishlist')}</h3>
+          {friendsEnabled() && (
             <button type="button" className="frd-prof-row" onClick={() => (friendsOn ? go('friends') : setTurnOnOpen(true))}>
-              <span className="frd-prof-ic" aria-hidden="true"><Icon name="tabProfile" size={20} /></span>
+              <span className="frd-prof-ic" aria-hidden="true"><Icon name="users" size={20} /></span>
               <span className="frd-row-mid"><b>{t('frd_title')}</b><small>{t('frd_row_sub')}</small></span>
               {friendsOn
                 ? <span className="frd-prof-right">{friendCount != null && <span className="frd-count">{friendCount}</span>}<span className="chev" aria-hidden="true">›</span></span>
                 : <span className="frd-pill">{t('frd_off')}</span>}
             </button>
-          </section>
-        )}
+          )}
+          <button type="button" className="frd-prof-row" onClick={() => go('wishlist')}>
+            <span className="frd-prof-ic heart" aria-hidden="true"><Icon name="heartFilled" size={18} /></span>
+            <span className="frd-row-mid"><b>{t('frd_item_wishlist')}</b><small>{wlSub}</small></span>
+            <span className="chev" aria-hidden="true">›</span>
+          </button>
+        </section>
 
         {toClaim.map((id) => (
           <button type="button" className="claim-banner" key={id} onClick={() => setSheet(id)}>

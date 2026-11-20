@@ -8,6 +8,7 @@ import { getName } from '../lib/name.js'
 import { NAME_MAX } from '../lib/name.js'
 import { copyText } from '../lib/clipboard.js'
 import { BRANDS, catalogBrands } from '../lib/brands.js'
+import { getWishlist, subscribe as subscribeWishlist } from '../lib/wishlist.js'
 import {
   turnOn, getState, getBackSeen, markBackSeen, getFriends, sendInvite, lookup, syncQuiet,
 } from '../lib/friends.js'
@@ -23,8 +24,9 @@ export const errMsg = (t, code) => ({
 // A brand object for a stored brand key (catalogue first, then the static list). Unknown keys return null.
 export const brandByKey = (key) => (key ? catalogBrands().find((b) => b.key === key) || BRANDS.find((b) => b.key === key) || null : null)
 
-// The item names used in the "keeps some things private" line and the switches.
-export const itemLabel = (t, key) => ({ level: t('frd_item_level'), badges: t('badges_title'), cards: t('frd_item_cards'), goals: t('frd_item_goals'), wishlist: t('frd_item_wishlist') }[key] || key)
+// The item names used in the "keeps some things private" line and the switches. On Friends surfaces badges is "Badges"
+// (frd_item_badges), not the Profile tab's "Your badges" (badges_title).
+export const itemLabel = (t, key) => ({ level: t('frd_item_level'), badges: t('frd_item_badges'), cards: t('frd_item_cards'), goals: t('frd_item_goals'), wishlist: t('frd_item_wishlist') }[key] || key)
 
 // Live Friends state for the screens that react to turn-on / off and visibility changes.
 export function useFriends() {
@@ -35,6 +37,13 @@ export function useFriends() {
     return () => window.removeEventListener('dibs:friends', on)
   }, [])
   return v
+}
+
+// Live wishlist (dibs.wishlist), for the Catalog hearts, the Profile row and the Wishlist screen.
+export function useWishlist() {
+  const [list, setList] = useState(getWishlist)
+  useEffect(() => subscribeWishlist(() => setList(getWishlist())), [])
+  return list
 }
 
 // Off / Friends / Everyone, as a segmented control. Full width so the labels fit at 360 px, including fr.
@@ -109,7 +118,13 @@ export function TurnOnSheet({ onClose }) {
   const [busy, setBusy] = useState(false)
   const [refused, setRefused] = useState(false)
   const [err, setErr] = useState(null)
+  const [slow, setSlow] = useState(false) // the first register can take up to a minute while the server wakes up
   useBlockBack(busy)
+  useEffect(() => {
+    if (!busy) { setSlow(false); return undefined }
+    const id = setTimeout(() => setSlow(true), 6000)
+    return () => clearTimeout(id)
+  }, [busy])
   const clean = name.trim().slice(0, NAME_MAX)
 
   const submit = async () => {
@@ -137,6 +152,7 @@ export function TurnOnSheet({ onClose }) {
       </div>
       {refused && <p className="frd-quiet">{t('frd_sign_refused')}</p>}
       {err && <p className="frd-quiet">{t('frd_save_fail')}</p>}
+      {busy && slow && !refused && !err && <p className="frd-quiet">{t('frd_connecting')}</p>}
       <button type="button" className="btn" disabled={busy || !clean} onClick={submit}>{busy ? t('restake_waiting') : t('frd_turn_on')}</button>
       <p className="frd-note">{t('frd_no_account')}</p>
     </Sheet>
@@ -149,7 +165,7 @@ export function ProfileBackSheet({ onClose }) {
   const st = getState()
   const [n, setN] = useState(null)
   useEffect(() => { getFriends().then((f) => setN(f.friends?.length ?? 0)).catch(() => setN(null)) }, [])
-  const line = n == null ? st?.name : t('frd_back_line', { name: st?.name, n })
+  const line = n == null ? st?.name : t(n === 1 ? 'frd_back_line_one' : 'frd_back_line', { name: st?.name, n })
   return (
     <Sheet label={t('frd_back_title')} onClose={onClose}>
       <div className="frd-back">
