@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { blocksLeft, clockOf, earliestStepBlockOf, progressOf, readyMinute, releaseAtMs, releaseBlockOf } from './release.js'
+import { blocksLeft, clockOf, earliestStepBlockOf, progressOf, readyMinute, releaseAtMs, releaseBlockOf, releaseIfStartedNow } from './release.js'
 
 // Both cases read on mainnet: inactiveFrom is the next election block after step 1, release is one epoch + 1 later.
 test('mainnet 6 Nov: inactiveFrom 66,182,400 releases at 66,225,601', () => {
@@ -39,6 +39,19 @@ test('past the release block the wait is 0, never negative', () => {
 
 test('timer start fallback: the epoch before inactiveFrom, so the 9 Nov step 1 block falls inside the window', () => {
   assert.equal(earliestStepBlockOf(66_441_600), 66_398_400)
+})
+
+test('release if started now: inactiveFrom is the next epoch boundary, release one epoch later (6 Nov example)', () => {
+  // Mid-epoch block: step 1 at 66,181,946 -> inactiveFrom 66,182,400 -> release 66,225,601, as measured on mainnet.
+  const ms = releaseIfStartedNow(66_181_946, 0)
+  assert.equal(ms, (66_225_601 - 66_181_946) * 1000) // 43,655 blocks at 1 s
+  assert.ok(ms >= 12 * 3_600_000 && ms <= 24 * 3_600_000) // 12 to 24 h ahead
+})
+
+test('release if started now: a block exactly on a multiple of 43,200 waits a whole extra epoch', () => {
+  // On the boundary the next inactiveFrom is strictly after: block + 43,200, release block + 86,401.
+  assert.equal(releaseIfStartedNow(43_200, 0), 86_401 * 1000)
+  assert.equal(releaseIfStartedNow(66_182_400, 0), (66_182_400 + 86_401 - 66_182_400) * 1000) // same, near 24 h
 })
 
 test('progress: 0 at the start, 1 at the release, clamped outside', () => {

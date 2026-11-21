@@ -362,7 +362,9 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
               <BrandLogo brand={brand} />
               <div className="grow">
                 <div className="t1">{itemLabel(t, goal)}</div>
-                <div className="t2">{t('add_hero_line', { pct: Math.round(pct * 100), saved: fmtNim(Math.round(savedShown), lang), target: fmtNim(goal.targetNim, lang) })}</div>
+                <div className="t2">{Math.round(saved) > goal.targetNim
+                  ? t('add_hero_over', { extra: fmtNim(Math.round(saved - goal.targetNim), lang) })
+                  : t('add_hero_line', { pct: Math.round(pct * 100), saved: fmtNim(Math.round(savedShown), lang), target: fmtNim(goal.targetNim, lang) })}</div>
               </div>
             </div>
           </section>

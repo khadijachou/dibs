@@ -14,7 +14,7 @@ import { leftText, readyTimeText, ReleaseClock, useStableReadyAt } from '../comp
 import { UnlockTimer, usePageVisible } from '../components/UnlockTimer.jsx'
 import { goalBrand } from './Home.jsx'
 import { track } from '../lib/stats.js'
-import { BLOCK_MS, clockOf, earliestStepBlockOf } from '../lib/release.js'
+import { BLOCK_MS, clockOf, earliestStepBlockOf, releaseIfStartedNow } from '../lib/release.js'
 import { UnlockGapBand } from '../components/CardToday.jsx'
 
 const LABELS = { deactivate: 'unlock_s1', retire: 'unlock_s2', remove: 'unlock_s3' }
@@ -111,6 +111,9 @@ export default function Unlock({ goalId, mode: modeParam }) {
   const relKnown = us?.releaseBlock != null
   const step1 = goal.unlockSteps.find((x) => x.step === 'deactivate')
   const startMs = step1 ? Date.parse(step1.at) : relKnown ? us.releaseAt - (us.releaseBlock - earliestStepBlockOf(us.inactiveFrom)) * BLOCK_MS : null
+  // Before step 1 is sent and with no release known, estimate when the NIM would be released if step 1 went now, from
+  // the chain's block height (us.block, already read). A demo wallet or a failed read leaves it null: plain text stays.
+  const estReleaseAt = !step1 && readyAt == null && us?.block > 0 ? releaseIfStartedNow(us.block) : null
   const earlyText = (at) => {
     const clock = clockOf(at - Date.now())
     return clock.due ? `${t('err_UNL_NOT_RELEASED_title')}. ${t('stake_release_due')}.` : t('err_UNL_NOT_RELEASED_toast', { time: readyTimeText(at, lang), duration: leftText(t, clock) })
@@ -200,6 +203,7 @@ export default function Unlock({ goalId, mode: modeParam }) {
                         : isNext ? t(busy === 'checking' ? 'unl_row_checking' : 'unl_row_now')
                         : s === 'remove' ? t('unl_row_after_step2')
                         : readyAt != null ? t('unl_row_after_release', { time: readyTimeText(readyAt, lang) })
+                        : estReleaseAt != null ? t('unl_row_after_release', { time: readyTimeText(estReleaseAt, lang) })
                         : t('unl_row_after_release_plain')}
                     </span>
                   </div>

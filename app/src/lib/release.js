@@ -24,6 +24,14 @@ export const releaseAtMs = (inactiveFrom, currentBlock, now = Date.now()) =>
 // Used as the timer's start when the goal has no step 1 time on record.
 export const earliestStepBlockOf = (inactiveFrom) => inactiveFrom - EPOCH
 
+// If step 1 (Stop staking) were sent right now at currentBlock, when would the NIM be released?
+// The chain sets inactiveFrom to the next election block (a multiple of EPOCH) strictly after currentBlock, and the
+// release is one epoch later (releaseBlockOf). Shown in the "After the release" row before step 1 is sent.
+export function releaseIfStartedNow(currentBlock, now = Date.now()) {
+  const inactiveFrom = (Math.floor(currentBlock / EPOCH) + 1) * EPOCH
+  return now + (releaseBlockOf(inactiveFrom) - currentBlock) * BLOCK_MS
+}
+
 // Share of the wait already behind us, 0 to 1. A missing or inverted window reads as 0.
 export function progressOf(startMs, endMs, now = Date.now()) {
   if (!(endMs > startMs)) return now >= endMs ? 1 : 0

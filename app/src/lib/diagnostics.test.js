@@ -48,7 +48,7 @@ test('the brief sample renders exactly, line by line', () => {
     '',
     'Goals Dibs shows',
     '  Airbnb 50 USD · aaaa · saving · 3,200 NIM · 2 deposits · no unlock steps · changed 14 Nov 09:05',
-    '  Valorant 5 EUR · bbbb · saving · 19,501 NIM · 1 deposits · no unlock steps · changed 15 Nov 08:00',
+    '  Valorant 5 EUR · bbbb · saving · 19,501 NIM · 1 deposit · no unlock steps · changed 15 Nov 08:00',
     '',
     'Every saved copy (address · goal · card · status · NIM · steps · changed)',
     '  NQ11 … HHHH  Airbnb aaaa  50 USD  saving  3,200  0  14 Nov 09:05  <- shown',
@@ -134,7 +134,7 @@ test('a single address', () => {
 test('a goal with no updatedAt uses createdAt for changed', () => {
   const g = { id: 'dddd1111', brandName: 'Steam', faceValue: '20', currency: 'USD', status: 'saving', deposits: [{ nim: 500 }], unlockSteps: [], createdAt: new Date(T_VAL250).toISOString() }
   const t = buildDiagnostics({ ...sample, goalsShown: [g], copies: [{ address: A1, goal: g }] })
-  assert.ok(t.includes('Steam 20 USD · dddd · saving · 500 NIM · 1 deposits · no unlock steps · changed 13 Nov 22:15'))
+  assert.ok(t.includes('Steam 20 USD · dddd · saving · 500 NIM · 1 deposit · no unlock steps · changed 13 Nov 22:15'))
 })
 
 test('a negative difference shows a minus sign', () => {
@@ -143,6 +143,25 @@ test('a negative difference shows a minus sign', () => {
   const t = buildDiagnostics({ ...sample, staker: { active: 2000, inactive: 0, retired: 0, delegation: GARUDA, stakers: [A1] }, goalsShown: [g], copies: [{ address: A1, goal: g }] })
   assert.ok(t.includes('  Total in goals that should be staked: 500'))
   assert.ok(t.includes('  Difference: −1,500 NIM'))
+})
+
+test('deposits count: "1 deposit" for exactly one, plural otherwise', () => {
+  const one = { id: 'iiii1111', brandName: 'Steam', faceValue: '20', currency: 'USD', status: 'saving', deposits: [{ nim: 500 }], unlockSteps: [], updatedAt: new Date(T_VAL5).toISOString() }
+  const none = { id: 'jjjj1111', brandName: 'Nike', faceValue: '25', currency: 'USD', status: 'saving', deposits: [], unlockSteps: [], updatedAt: new Date(T_VAL5).toISOString() }
+  const two = { id: 'kkkk1111', brandName: 'Uber', faceValue: '10', currency: 'USD', status: 'saving', deposits: [{ nim: 100 }, { nim: 200 }], unlockSteps: [], updatedAt: new Date(T_VAL5).toISOString() }
+  const t = buildDiagnostics({ ...sample, goalsShown: [one, none, two], copies: [] })
+  assert.ok(t.includes('· 1 deposit ·'), 'exactly one reads "1 deposit"')
+  assert.ok(t.includes('· 0 deposits ·'), 'none reads "0 deposits"')
+  assert.ok(t.includes('· 2 deposits ·'), 'two reads "2 deposits"')
+  assert.ok(!t.includes('1 deposits'), 'never "1 deposits"')
+})
+
+test('Difference is always a whole number: a tiny gap reads "0", never "+0.00034"', () => {
+  // Total 2000.00034, active 2000 -> gap 0.00034, which must round to 0
+  const g = { id: 'llll1111', brandName: 'Steam', faceValue: '20', currency: 'USD', status: 'saving', deposits: [{ nim: 2000.00034 }], unlockSteps: [], updatedAt: new Date(T_VAL5).toISOString() }
+  const t = buildDiagnostics({ ...sample, staker: { active: 2000, inactive: 0, retired: 0, delegation: GARUDA, stakers: [A1] }, goalsShown: [g], copies: [{ address: A1, goal: g }] })
+  assert.ok(t.includes('  Difference: 0 NIM'), 'a sub-NIM gap rounds to 0')
+  assert.ok(!t.includes('0.00034'))
 })
 
 test('a half-hour time zone offset', () => {

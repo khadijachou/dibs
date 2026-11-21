@@ -124,14 +124,16 @@ export function buildDiagnostics(state) {
       out.push(`  ${addrs}  active ${fmtNum(active)} · inactive ${fmtNum(inactive)} · retired ${fmtNum(retired)} · ${validator}`)
     }
     out.push(`  Total in goals that should be staked: ${fmtNum(total)}`)
-    out.push(`  Difference: ${signed(total - (active + inactive))} NIM`)
+    // Always whole NIM: a tiny gap reads "0", never "+0.00034".
+    out.push(`  Difference: ${signed(Math.round(total - (active + inactive)))} NIM`)
   }
   out.push('')
 
   // Goals Dibs shows
   out.push('Goals Dibs shows')
   for (const g of goalsShown) {
-    out.push(`  ${brandOf(g)} ${valueOf(g)} · ${id4(g)} · ${g?.status ?? '?'} · ${fmtNum(savedNim(g))} NIM · ${depositsOf(g)} deposits · ${stepsOf(g) || 'no'} unlock steps · changed ${dayTime(changedMs(g), tz)}`)
+    const nDep = depositsOf(g)
+    out.push(`  ${brandOf(g)} ${valueOf(g)} · ${id4(g)} · ${g?.status ?? '?'} · ${fmtNum(savedNim(g))} NIM · ${nDep} deposit${nDep === 1 ? '' : 's'} · ${stepsOf(g) || 'no'} unlock steps · changed ${dayTime(changedMs(g), tz)}`)
   }
   out.push('')
 
