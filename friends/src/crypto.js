@@ -73,9 +73,15 @@ export function addressOf(publicKeyHex) {
 
 // walletKey(address) = HMAC-SHA256 of the address with FRIENDS_SALT, hex. The only stored form of the wallet.
 const DEV_SALT = 'dibs-friends-dev-salt-not-for-production'
+const salt = () => process.env.FRIENDS_SALT || DEV_SALT
 export function walletKey(address) {
-  const salt = process.env.FRIENDS_SALT || DEV_SALT
-  return toHex(hmac(sha256, utf8(salt), utf8(address)))
+  return toHex(hmac(sha256, utf8(salt()), utf8(address)))
+}
+
+// txKey(hash) = HMAC-SHA256 of the transaction hash with FRIENDS_SALT, hex, namespaced so it can never collide with a
+// walletKey. The only form of a counted deposit the server keeps: the hash itself is never stored (board XP dedupe).
+export function txKey(hash) {
+  return toHex(hmac(sha256, utf8(salt()), utf8('tx:' + String(hash))))
 }
 
 // ---- device signature (our own request signing) -------------------------------------------------------------

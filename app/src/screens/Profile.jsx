@@ -19,7 +19,8 @@ import { RANKS, XP } from '../lib/xp.js'
 import { useXp } from '../lib/useXp.js'
 import { levelToPlay, markBadges, newBadges, setLevelSeen } from '../lib/seen.js'
 import { enabled as friendsEnabled, getFriends, getVis as friendsVis, visSummary } from '../lib/friends.js'
-import { useFriends, useWishlist, TurnOnSheet } from '../components/FriendsParts.jsx'
+import { useFriends, useWishlist, TurnOnSheet, JoinBoardsSheet } from '../components/FriendsParts.jsx'
+import { enabled as boardsEnabled, onAnyBoard as onBoards, cardHidden as boardsCardHidden, hideCard as hideBoardsCard, BOARDS_EVENT } from '../lib/boards.js'
 import { useLook, accentClass } from '../components/LookParts.jsx'
 import { accentChoice } from '../lib/looks.js'
 
@@ -98,6 +99,16 @@ export default function Profile({ badge: askedBadge, badgeAt, section, sectionAt
   const friendsState = useFriends()
   const friendsOn = Boolean(friendsState?.on)
   const [turnOnOpen, setTurnOnOpen] = useState(false)
+  // Leaderboards (v1.7): the row (when Friends is on) and the quiet card (Friends on, boards on, not joined, not hidden).
+  const [, bumpBoards] = useState(0)
+  const [joinOpen, setJoinOpen] = useState(false)
+  useEffect(() => {
+    const on = () => bumpBoards((x) => x + 1)
+    window.addEventListener(BOARDS_EVENT, on)
+    return () => window.removeEventListener(BOARDS_EVENT, on)
+  }, [])
+  const showBoards = friendsOn && boardsEnabled()
+  const showBoardsCard = showBoards && !onBoards() && !boardsCardHidden() // re-read on the boards event (bumpBoards)
   const [friendCount, setFriendCount] = useState(null)
   useEffect(() => {
     if (!friendsOn || !friendsEnabled()) { setFriendCount(null); return undefined }
@@ -151,7 +162,25 @@ export default function Profile({ badge: askedBadge, badgeAt, section, sectionAt
               <span className="chev" aria-hidden="true">›</span>
             </button>
           )}
+          {showBoards && (
+            <button type="button" className="frd-prof-row" onClick={() => go('boards')}>
+              <span className="frd-prof-ic" aria-hidden="true"><Icon name="chart" size={20} /></span>
+              <span className="frd-row-mid"><b>{t('board_prof_row')}</b><small>{t('board_prof_sub')}</small></span>
+              <span className="chev" aria-hidden="true">›</span>
+            </button>
+          )}
         </section>
+
+        {showBoardsCard && (
+          <section className="card brd-card">
+            <b>{t('board_card_title')}</b>
+            <p className="small">{t('board_card_body')}</p>
+            <div className="brd-card-btns">
+              <button type="button" className="btn" onClick={() => setJoinOpen(true)}>{t('board_card_join')}</button>
+              <button type="button" className="btn ghost" onClick={() => hideBoardsCard()}>{t('board_card_not')}</button>
+            </div>
+          </section>
+        )}
 
         {toClaim.map((id) => (
           <button type="button" className="claim-banner" key={id} onClick={() => setSheet(id)}>
@@ -223,6 +252,7 @@ export default function Profile({ badge: askedBadge, badgeAt, section, sectionAt
       {xpSheet === 'xp' && <XpSheet x={xp} onClose={() => setXpSheet(null)} />}
       {sheet && <BadgeSheet id={sheet} badges={badges} goals={goals} onClose={() => setSheet(null)} />}
       {turnOnOpen && <TurnOnSheet onClose={() => setTurnOnOpen(false)} />}
+      {joinOpen && <JoinBoardsSheet onClose={() => setJoinOpen(false)} onJoined={() => { setJoinOpen(false); go('boards') }} />}
     </>
   )
 }

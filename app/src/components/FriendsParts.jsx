@@ -13,6 +13,7 @@ import { getWishlist, subscribe as subscribeWishlist } from '../lib/wishlist.js'
 import {
   turnOn, getState, getBackSeen, markBackSeen, getFriends, sendInvite, lookup, syncQuiet, inviteText,
 } from '../lib/friends.js'
+import { setBoards } from '../lib/boards.js'
 
 // A friends error code -> a user-facing message. Anything else is the generic save failure.
 export const errMsg = (t, code) => ({
@@ -199,6 +200,37 @@ export function TurnOnSheet({ onClose }) {
       {busy && slow && !refused && !err && <p className="frd-quiet">{t('frd_connecting')}</p>}
       <button type="button" className="btn" disabled={busy || !clean} onClick={submit}>{busy ? t('restake_waiting') : t('frd_turn_on')}</button>
       <p className="frd-note">{t('frd_no_account')}</p>
+    </Sheet>
+  )
+}
+
+// Join the leaderboards (v1.7): a switch per board, Friends on by default and Global off by default. Join saves the
+// choice to the server. Opened from the Profile card, the Profile row and the Board screen. Light mode via the shared
+// sheet and switch styles. onJoined runs after a successful join (so a caller can open the board screen).
+export function JoinBoardsSheet({ onClose, onJoined }) {
+  const { t } = useApp()
+  const [friends, setFriends] = useState(true)
+  const [global, setGlobal] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState(false)
+  const join = async () => {
+    setBusy(true); setErr(false)
+    try { await setBoards({ friends, global }); onJoined?.() } catch { setErr(true); setBusy(false) }
+  }
+  return (
+    <Sheet title={t('board_join_title')} onClose={busy ? () => {} : onClose}>
+      <p className="frd-sheet-lead">{t('board_join_lead')}</p>
+      <div className="brd-sw-row">
+        <span className="frd-row-mid"><b>{t('board_sw_friends')}</b></span>
+        <button type="button" role="switch" aria-checked={friends} aria-label={t('board_sw_friends')} className={`switch${friends ? ' on' : ''}`} onClick={() => setFriends((v) => !v)}><i /></button>
+      </div>
+      <div className="brd-sw-row">
+        <span className="frd-row-mid"><b>{t('board_sw_global')}</b><small>{t('board_sw_global_sub')}</small></span>
+        <button type="button" role="switch" aria-checked={global} aria-label={t('board_sw_global')} className={`switch${global ? ' on' : ''}`} onClick={() => setGlobal((v) => !v)}><i /></button>
+      </div>
+      {err && <p className="frd-quiet">{t('frd_save_fail')}</p>}
+      <button type="button" className="btn" disabled={busy || (!friends && !global)} onClick={join}>{busy ? t('restake_waiting') : t('board_join_btn')}</button>
+      <p className="frd-note">{t('board_join_note')}</p>
     </Sheet>
   )
 }

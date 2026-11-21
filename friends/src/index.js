@@ -15,8 +15,11 @@ import {
 import {
   MAX_OPEN_CLAIMS, claim, release, markSent, thank, ownerClaims, sentGifts, dropClaimedBetween, dropAllFor, openClaimCount,
 } from './gifts.js'
+import {
+  BOARDS, boardsChoice, boardMembers, setBoards, xpOf, dropBoardsFor, makeChecker, monthOf,
+} from './boards.js'
 
-export const VERSION = '1.4.3'
+export const VERSION = '1.7.0'
 const AVATAR_ROW_CAP = 50 // avatars travel on at most the first 50 friend rows (size guard)
 
 const MINUTE = 60_000
@@ -45,7 +48,7 @@ function limiter() {
 
 const ipOf = (c) => c.req.header('x-forwarded-for')?.split(',')[0]?.trim() || c.env?.incoming?.socket?.remoteAddress || 'unknown'
 
-export function makeApp(store, env = process.env) {
+export function makeApp(store, env = process.env, opts = {}) {
   const app = new Hono()
 
   // Keys (all prefixed fr:).
@@ -62,6 +65,9 @@ export function makeApp(store, env = process.env) {
 
   const loadUser = (id) => store.get(uKey(id))
   const saveUser = (u) => store.set(uKey(u.id), u)
+  // The chain-check queue for board deposit XP (in memory). Tests pass their own; otherwise one is built from the env.
+  const checker = opts.checker || makeChecker(store, { loadUser, rpcUrl: env.NIMIQ_RPC_URL })
+  app.__checker = checker // exposed so the run-directly block (and tests) can drive checker.tick()
   const loadShared = async (id) => (await store.get(sharedKey(id))) || {}
   // Public identity only: never the walletKey, never the stored user object as-is.
   const meObject = (u) => ({ id: u.id, code: u.code, name: u.name, visibility: fullVisibility(u.visibility), look: cleanLook(u.look) })
@@ -93,6 +99,7 @@ export function makeApp(store, env = process.env) {
   const limitIp = limiter()
   const limitLookupMin = limiter()
   const limitLookupDay = limiter()
+  const limitXp = limiter() // reporting a deposit hash: a write, rate-limited per id
 
   // ---- middleware ---------------------------------------------------------------------------------------------
 
@@ -221,7 +228,7 @@ export function makeApp(store, env = process.env) {
     const u = c.get('user')
     const shared = await loadShared(u.id)
     const prof = visibleProfile({ id: u.id, name: u.name, visibility: u.visibility, shared, look: u.look }, 'self')
-    return c.json({ ...prof, code: u.code, gifts: await giftsReceived(u.id) })
+    return c.json({ ...prof, code: u.code, gifts: await giftsReceived(u.id), boards: boardsChoice(u) })
   })
 
   app.get('/v1/me/as-friend', async (c) => {
@@ -264,8 +271,108 @@ export function makeApp(store, env = process.env) {
     for (const iid of await store.smembers(inboxKey(id))) { const inv = await store.get(invKey(iid)); if (inv) { await store.srem(sentKey(inv.from), iid); await store.del(pairKey(inv.from, inv.to)) } await store.del(invKey(iid)) }
     for (const iid of await store.smembers(sentKey(id))) { const inv = await store.get(invKey(iid)); if (inv) { await store.srem(inboxKey(inv.to), iid); await store.del(pairKey(inv.from, inv.to)) } await store.del(invKey(iid)) }
     await dropAllFor(store, id) // every claim and gift where this user is giver or owner
+    await dropBoardsFor(store, id) // off every board, and every monthly XP record gone
+    invalidateGlobal()
     await store.del(friendsKey(id), inboxKey(id), sentKey(id), wkKey(u.wk), codeKey(u.code), sharedKey(id), uKey(id))
     return c.json({ ok: true })
+  })
+
+  // ---- leaderboards -------------------------------------------------------------------------------------------
+  // Opt-in, by XP the server has checked (deposits only), this UTC month. Rows never carry a wallet address or a hash.
+
+  let globalCache = null // the computed Global board, cached 60 s; cleared at once when a membership changes
+  const invalidateGlobal = () => { globalCache = null }
+
+  // Join or leave the boards. { friends, global } booleans. Joining sets joinedAt once; leaving removes the user at once.
+  app.put('/v1/me/boards', async (c) => {
+    const u = c.get('user')
+    const body = parseJson(c.get('rawBody'))
+    if (!body || typeof body !== 'object') return c.json({ error: 'BAD_REQUEST' }, 400)
+    const want = { friends: body.friends === true, global: body.global === true }
+    await setBoards(store, u, want)
+    await saveUser(u)
+    invalidateGlobal()
+    return c.json({ boards: boardsChoice(u) })
+  })
+
+  // Report a deposit to be checked on the chain and counted (background, like the orders server). Accepted only while
+  // the user is on at least one board. The hash is a 64-hex transaction id; it is never stored, only checked and
+  // fingerprinted for dedupe. A valid report always answers { queued: true }; the counting happens later.
+  app.post('/v1/me/xp/deposit', async (c) => {
+    const me = c.get('me')
+    const u = c.get('user')
+    if (!limitXp(me, MINUTE, 20)) return c.json({ error: 'LIMIT' }, 429)
+    if (!boardsChoice(u).friends && !boardsChoice(u).global) return c.json({ error: 'NOT_ON_BOARD' }, 409)
+    const body = parseJson(c.get('rawBody'))
+    const tx = typeof body?.tx === 'string' ? body.tx.toLowerCase() : ''
+    if (!isHex64(tx)) return c.json({ error: 'BAD_REQUEST' }, 400)
+    checker.enqueue(u.id, tx)
+    return c.json({ queued: true })
+  })
+
+  // Is a member's level visible to this viewer? Their level visibility (friends / everyone / off) decides it, with self
+  // always able to see its own. `friend` says whether the viewer is a friend of the member.
+  const levelVisible = (member, relation) => {
+    if (relation === 'self') return true
+    const v = fullVisibility(member.visibility).level
+    return v === 'everyone' || (v === 'friends' && relation === 'friend')
+  }
+  // Build one board row for a member id. relation: 'self' | 'friend' | 'stranger'. Carries only id (the avatar seed),
+  // name, xp, and level when visible. Never an avatar picture, a wallet or anything else from the profile.
+  async function boardRow(id, relation, month) {
+    const u = await loadUser(id)
+    if (!u) return null
+    const row = { id: u.id, name: u.name, xp: await xpOf(store, id, month) }
+    if (levelVisible(u, relation)) { const sh = await loadShared(id); if (sh.level) row.level = sh.level.level }
+    // The Friends board shows a friend's name in their accent and their avatar in their rank frame (their stored look,
+    // which the client only ever sends while they share level and rank). The Global board carries no look at all.
+    if (relation !== 'stranger') row.look = cleanLook(u.look)
+    return row
+  }
+  const byXp = (a, b) => b.xp - a.xp || (a.id < b.id ? -1 : 1)
+  const placed = (rows) => rows.map((r, i) => ({ place: i + 1, ...r }))
+
+  // The Friends board: me plus my friends who joined it, this month. Returned only when I have at least 3 friends.
+  app.get('/v1/boards/friends', async (c) => {
+    const me = c.get('me')
+    const friendIds = await store.smembers(friendsKey(me))
+    if (friendIds.length < 3) return c.json({ needFriends: true, friends: friendIds.length })
+    const month = monthOf(Date.now())
+    const onBoard = []
+    for (const fid of friendIds) if (await store.sismember(`fr:board:friends`, fid)) onBoard.push(fid)
+    const rows = []
+    const mine = await boardRow(me, 'self', month)
+    if (mine) rows.push(mine)
+    for (const fid of onBoard) { const r = await boardRow(fid, 'friend', month); if (r) rows.push(r) }
+    rows.sort(byXp)
+    return c.json({ board: 'friends', month, count: onBoard.length, rows: placed(rows) })
+  })
+
+  // The Global board (cached 60 s): the top 5 and my own row with my place, plus the total number of members. Global
+  // rows carry only name, level (everyone-visible, or my own) and xp, with the id for the identicon.
+  async function globalRanking() {
+    if (globalCache && Date.now() - globalCache.at < 60_000) return globalCache
+    const month = monthOf(Date.now())
+    const ids = await boardMembers(store, 'global')
+    const scored = []
+    for (const id of ids) { const r = await boardRow(id, 'stranger', month); if (r) scored.push(r) }
+    scored.sort(byXp)
+    globalCache = { at: Date.now(), month, rows: placed(scored) }
+    return globalCache
+  }
+  app.get('/v1/boards/global', async (c) => {
+    const me = c.get('me')
+    const u = c.get('user')
+    const { month, rows } = await globalRanking()
+    const top = rows.slice(0, 5)
+    const mineRanked = rows.find((r) => r.id === me) || null
+    let mine = null
+    if (mineRanked) {
+      // My own row: show my level to myself even when my level is not set to everyone.
+      mine = { ...mineRanked }
+      if (mine.level === undefined) { const sh = await loadShared(me); if (fullVisibility(u.visibility).level !== 'off' && sh.level) mine.level = sh.level.level }
+    }
+    return c.json({ board: 'global', month, count: rows.length, top, me: mine })
   })
 
   // ---- lookup -------------------------------------------------------------------------------------------------
@@ -476,6 +583,8 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   }
   const store = createStore()
   const app = makeApp(store)
+  // Drain the board deposit-check queue twice a second (two RPC calls a second at most), like the orders server.
+  setInterval(() => { app.__checker.tick().catch(() => { /* a hiccup: retried on the next tick */ }) }, 500).unref()
   const port = Number(process.env.PORT || 8788)
   serve({ fetch: app.fetch, port }, () => console.log(`friends server on http://localhost:${port} (store: ${store.kind}, version ${VERSION})`))
 }

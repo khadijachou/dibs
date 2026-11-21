@@ -35,6 +35,7 @@ import { goalVersion } from '../lib/version.js'
 import { stakeSummary } from '../lib/earned.js'
 import { track } from '../lib/stats.js'
 import { txHash } from '../lib/history.js'
+import { queueDeposit } from '../lib/boards.js'
 import { MilestoneLine, useGoalMilestone } from '../components/Milestone.jsx'
 import { GoalDot, GoalStatus } from '../components/GoalStatus.jsx'
 import { getUnlockState, settleGoal } from '../lib/unlockFlow.js'
@@ -139,6 +140,8 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
       if (r === 'landed') {
         const g = confirmPending(p, address)
         if (g) track('deposit', { goalId: p.goalId, depositId: p.id, nim: p.nim, tx: txHash(p.tx) || undefined })
+        if (g) queueDeposit(txHash(p.tx)) // leaderboards: report the hash for an on-chain XP check, only when on a board
+
         setPend(null)
         setHasStaker(true); stakerFlag.set(address)
         if (g && g.id === goalId) setGoal(g)

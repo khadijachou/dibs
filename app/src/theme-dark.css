@@ -2057,3 +2057,30 @@ html.is-fullscreen .bstamp-live { top: calc(58px + var(--fs-top)); }
 .bs-box-note.instore { color: var(--butter); font-weight: 600; }
 .bs-box-note + .bs-box-note { margin-top: -6px; }
 .tk-instore { margin: 0; font-size: var(--fs-meta); line-height: var(--lh-meta); color: var(--butter); font-weight: 600; }
+
+/* Leaderboards (v1.7): tabs, rows with a place and XP, the join card and the leave switches. Base layout + dark
+   colours; the light theme overrides only colours (theme-light.css). Font sizes are --fs-* tokens (typeScale.test). */
+.brd-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; background: var(--card-2); border: 1px solid var(--line); border-radius: 10px; padding: 3px; margin: 2px 0 12px; }
+.brd-tabs button { border: 0; background: transparent; color: var(--muted); font-weight: 600; font-size: var(--fs-strong); line-height: var(--lh-strong); padding: 8px 4px; border-radius: 8px; cursor: pointer; }
+.brd-tabs button.on { background: var(--gold); color: #fff; }
+.brd-meta { margin: 0 0 10px; font-size: var(--fs-meta); line-height: var(--lh-meta); color: var(--muted); }
+.brd-list { display: flex; flex-direction: column; gap: 8px; }
+.brd-row { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; }
+.brd-row.me { border-color: var(--gold); border-width: 1.5px; }
+.brd-place { flex: none; width: 22px; text-align: center; font-weight: 700; font-size: var(--fs-strong); line-height: var(--lh-strong); color: var(--muted); }
+.brd-row.me .brd-place { color: var(--gold); }
+.brd-you { color: var(--gold); font-size: var(--fs-label); font-weight: 600; }
+.brd-xp { margin-left: auto; flex: none; font-weight: 700; font-size: var(--fs-strong); line-height: var(--lh-strong); color: var(--cream); }
+.brd-gap { text-align: center; color: var(--muted); letter-spacing: .3em; font-size: var(--fs-strong); padding: 2px 0; }
+.brd-note { margin: 12px 0 0; font-size: var(--fs-meta); line-height: var(--lh-meta); color: var(--muted); }
+.brd-need { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 22px 16px; }
+.brd-need b { font-size: var(--fs-heading); line-height: var(--lh-heading); }
+.brd-need .frd-invite-btns { width: 100%; margin-top: 6px; }
+.brd-card, .brd-join-card { text-align: left; }
+.brd-card b, .brd-join-card b { font-size: var(--fs-heading); line-height: var(--lh-heading); }
+.brd-card-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.brd-card-btns .btn { margin: 0; }
+.brd-leave { margin: 18px 0 0; }
+.brd-sw-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); }
+.brd-sw-row:first-child { border-top: 0; }
+.brd-sw-row .frd-row-mid { flex: 1; }

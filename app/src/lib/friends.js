@@ -174,6 +174,8 @@ export async function turnOff({ deleteProfile } = {}) {
   if (deleteProfile) await request('DELETE', '/v1/me')
   clearAll()
   clearGifts() // the local gift tags go too (the server dropped the claims on delete)
+  // The leaderboards state is local to this device; drop it so a later turn-on starts clean (keys from lib/boards.js).
+  for (const k of ['dibs.boards', 'dibs.boardsQueue', 'dibs.boardsCardHidden']) del(k)
   notify()
 }
 

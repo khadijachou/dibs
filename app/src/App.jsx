@@ -40,10 +40,12 @@ import Friends from './screens/Friends.jsx'
 import FriendProfile from './screens/FriendProfile.jsx'
 import Wishlist from './screens/Wishlist.jsx'
 import MyLook from './screens/MyLook.jsx'
+import Boards from './screens/Boards.jsx'
 import { ProfileBackSheet } from './components/FriendsParts.jsx'
 import { RankSheet } from './components/LookParts.jsx'
 import { rankToAnnounce, markRankSeen } from './lib/looks.js'
 import { isOn as friendsIsOn, enabled as friendsEnabled, getState as friendsGetState, syncQuiet, setPendingCode } from './lib/friends.js'
+import { refreshBoards, flushQueue as flushBoardsQueue } from './lib/boards.js'
 import { Icon, TabBar, TAB_ROUTES } from './components/ui.jsx'
 import { preloadAvatar } from './components/Avatar.jsx'
 import WelcomeBack from './components/WelcomeBack.jsx'
@@ -78,7 +80,7 @@ const hostLang = () => { try { const l = String(host.language() || '').slice(0, 
 const AppCtx = createContext(null)
 export const useApp = () => useContext(AppCtx)
 
-const SCREENS = { home: Home, catalog: Catalog, plan: Plan, goal: Goal, unlock: Unlock, redeem: Redeem, done: Done, stake: Stake, insights: Insights, history: History, profile: Profile, more: More, browse: Catalog, legal: Legal, faq: Faq, accounts: Accounts, prefAdd: AddPreference, prefs: Preferences, friends: Friends, friendProfile: FriendProfile, wishlist: Wishlist, myLook: MyLook }
+const SCREENS = { home: Home, catalog: Catalog, plan: Plan, goal: Goal, unlock: Unlock, redeem: Redeem, done: Done, stake: Stake, insights: Insights, history: History, profile: Profile, more: More, browse: Catalog, legal: Legal, faq: Faq, accounts: Accounts, prefAdd: AddPreference, prefs: Preferences, friends: Friends, friendProfile: FriendProfile, wishlist: Wishlist, myLook: MyLook, boards: Boards }
 
 // Back with nothing behind (after a reload, or a screen opened with reset): where each screen goes.
 // Goals (home) has no parent: back from there leaves the app.
@@ -96,6 +98,7 @@ function parentOf(route) {
   if (route.name === 'friendProfile') return { name: 'friends', params: {} }
   if (route.name === 'wishlist') return { name: 'profile', params: {} }
   if (route.name === 'myLook') return { name: 'profile', params: {} }
+  if (route.name === 'boards') return { name: 'profile', params: {} }
   if (route.name === 'plan') return { name: 'catalog', params: route.params?.changeFor ? { changeFor: route.params.changeFor } : {} }
   if ((route.name === 'unlock' || route.name === 'redeem') && goalId) return { name: 'goal', params: { goalId } }
   return HOME
@@ -300,7 +303,12 @@ export default function App() {
   const friendsSynced = useRef(false)
   useEffect(() => {
     if (!ready || !address || friendsSynced.current) return
-    if (friendsEnabled() && friendsIsOn()) { friendsSynced.current = true; syncQuiet(address) }
+    if (friendsEnabled() && friendsIsOn()) {
+      friendsSynced.current = true
+      syncQuiet(address)
+      refreshBoards() // keep the local board choice in step with the server
+      flushBoardsQueue() // report any deposit hashes that could not be sent before
+    }
   }, [ready, address])
   useEffect(() => {
     let timer
