@@ -30,6 +30,8 @@ const K = {
   backSeen: 'dibs.friends.backSeen', // '1' once the "profile is back" sheet was shown
   pending: 'dibs.friends.pending', // a friend code from a ?friend link, kept until Friends is on
   lookSent: 'dibs.friends.lookSent', // the last look (accent, frame) sent to the server, so a sync re-sends only on a change
+  enc: 'dibs.friends.enc', // the gift-box X25519 secret key, hex (lib/giftBox.js owns it; listed so Friends off clears it)
+  encSent: 'dibs.friends.encSent', // the gift-box public key last registered with the server, to avoid re-sending it
 }
 
 // ---- storage ------------------------------------------------------------------------------------------------
@@ -258,6 +260,19 @@ async function pushLookIfChanged(address) {
   writeJSON(K.lookSent, look)
 }
 export const syncLookQuiet = (address) => { pushLookIfChanged(address).catch(() => { /* silent outside Friends screens */ }) }
+
+// Register this phone's gift-box public key so a friend can seal a gift card code for it (v1.7.3). One signed PUT, only
+// when the server does not already have this key (tracked in encSent), and quiet on failure: a gift can still be shared
+// with the fallback share sheet. Called once per launch and after turn-on. The private key never leaves lib/giftBox.js.
+export async function ensureEncKey() {
+  if (!isOn() || !config.friendsUrl) return
+  const { encPub } = await import('./giftBox.js')
+  const pub = await encPub()
+  if (readStr(K.encSent) === pub) return
+  await request('PUT', '/v1/me/enc-key', { encPub: pub })
+  writeStr(K.encSent, pub)
+}
+export const ensureEncKeyQuiet = () => { ensureEncKey().catch(() => { /* fall back to the share sheet */ }) }
 
 export async function syncShared(address, walletAddress) {
   if (!isOn() || !config.friendsUrl) return null

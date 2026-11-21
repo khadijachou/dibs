@@ -11,16 +11,17 @@ import {
 } from './crypto.js'
 import {
   cleanName, cleanVisibility, cleanLook, fullVisibility, applyShared, pruneShared, visibleProfile, sharesNothing, sharedHasError, wishesFor,
-  cleanGiftMessage, cleanGiftBanner,
+  cleanGiftMessage, cleanGiftBanner, cleanEncPub, validBox,
 } from './rules.js'
 import {
-  MAX_OPEN_CLAIMS, claim, release, markSent, thank, ownerClaims, sentGifts, dropClaimedBetween, dropAllFor, openClaimCount, stripGiftExtra,
+  MAX_OPEN_CLAIMS, claim, release, markSent, thank, ownerClaims, receivedGifts, dropClaimedBetween, dropAllFor, openClaimCount, stripGiftExtra,
+  deliverBoxes, openGift,
 } from './gifts.js'
 import {
   BOARDS, boardsChoice, boardMembers, setBoards, xpOf, dropBoardsFor, makeChecker, monthOf,
 } from './boards.js'
 
-export const VERSION = '1.7.1'
+export const VERSION = '1.7.3'
 const AVATAR_ROW_CAP = 50 // avatars travel on at most the first 50 friend rows (size guard)
 
 const MINUTE = 60_000
@@ -125,7 +126,10 @@ export function makeApp(store, env = process.env, opts = {}) {
   app.use('/v1/*', async (c, next) => {
     if (c.req.method === 'GET' || c.req.method === 'HEAD') { c.set('rawBody', ''); return next() }
     const text = await c.req.text().catch(() => '')
-    const limit = (c.req.method === 'PUT' && new URL(c.req.url).pathname === '/v1/me/shared') ? 32 * 1024 : 16 * 1024
+    const pathname = new URL(c.req.url).pathname
+    let limit = 16 * 1024
+    if (c.req.method === 'PUT' && pathname === '/v1/me/shared') limit = 32 * 1024 // an avatar plus the rest
+    else if (c.req.method === 'POST' && pathname.endsWith('/deliver')) limit = 4 * 1024 // gift boxes: a small, bounded set
     if (text.length > limit) return c.json({ error: 'TOO_LARGE' }, 413)
     c.set('rawBody', text)
     await next()
@@ -149,12 +153,14 @@ export function makeApp(store, env = process.env, opts = {}) {
     if (!user) return fail()
     const u = new URL(c.req.url)
     const canonical = `${c.req.method}\n${u.pathname}${u.search}\n${ts}\n${nonce}\n${sha256hex(c.get('rawBody') || '')}`
-    if (!(user.devices || []).some((pub) => verifyDeviceSignature(pub, canonical, sig))) return fail()
+    const devicePub = (user.devices || []).find((pub) => verifyDeviceSignature(pub, canonical, sig))
+    if (!devicePub) return fail()
     // Replay guard: the nonce must be fresh for this id. Checked after the signature so nonces cannot be burned.
     if (!(await store.setIfAbsent(`fr:nonce:${id}:${nonce}`, 1, NONCE_TTL))) return fail()
 
     c.set('user', user)
     c.set('me', id)
+    c.set('devicePub', devicePub) // which device signed: used to hand back only this device's gift box
     await next()
   })
 
@@ -192,6 +198,8 @@ export function makeApp(store, env = process.env, opts = {}) {
       const devices = (user.devices || []).filter((d) => d !== devicePub)
       devices.push(devicePub)
       user.devices = devices.slice(-MAX_DEVICES)
+      // Drop the encryption key of any device that just fell off the list (its gift boxes can no longer be opened).
+      if (user.encKeys) { for (const k of Object.keys(user.encKeys)) if (!user.devices.includes(k)) delete user.encKeys[k] }
       await saveUser(user)
       return c.json({ restored: true, ...meObject(user) })
     }
@@ -216,15 +224,19 @@ export function makeApp(store, env = process.env, opts = {}) {
 
   // The gifts the owner has received: state 'sent' only (never a claim in state 'claimed', so the surprise holds), each
   // with the giver's identity and, when the giver added them, the message and banner. This is the ONLY route that carries
-  // the message and banner. [{ brandKey, from: { id, name, seed }, thanked, message?, banner? }].
-  async function giftsReceived(ownerId) {
+  // the message and banner. v1.7.3: for a gift delivered in Dibs, `delivered: true` and the ONE sealed box addressed to
+  // the calling device's encryption key (`encPub`) - never another device's box, never after the owner opens it.
+  // [{ brandKey, from: { id, name, seed }, thanked, message?, banner?, delivered?, box? }].
+  async function giftsReceived(ownerId, encPub) {
     const out = []
-    for (const g of await sentGifts(store, ownerId)) {
+    for (const g of await receivedGifts(store, ownerId, encPub)) {
       const from = await loadUser(g.by)
       if (from) out.push({
         brandKey: g.brandKey, from: { id: from.id, name: from.name, seed: from.id }, thanked: g.thanked,
         ...(g.message ? { message: g.message } : {}),
         ...(g.banner ? { banner: g.banner } : {}),
+        ...(g.delivered ? { delivered: true } : {}),
+        ...(g.box ? { box: g.box } : {}),
       })
     }
     return out
@@ -232,9 +244,10 @@ export function makeApp(store, env = process.env, opts = {}) {
 
   app.get('/v1/me', async (c) => {
     const u = c.get('user')
+    const encPub = (u.encKeys || {})[c.get('devicePub')] || null
     const shared = await loadShared(u.id)
     const prof = visibleProfile({ id: u.id, name: u.name, visibility: u.visibility, shared, look: u.look }, 'self')
-    return c.json({ ...prof, code: u.code, gifts: await giftsReceived(u.id), boards: boardsChoice(u) })
+    return c.json({ ...prof, code: u.code, gifts: await giftsReceived(u.id, encPub), boards: boardsChoice(u) })
   })
 
   app.get('/v1/me/as-friend', async (c) => {
@@ -256,6 +269,22 @@ export function makeApp(store, env = process.env, opts = {}) {
     const pruned = pruneShared(shared, u.visibility)
     if (json(pruned) !== json(shared)) await store.set(sharedKey(u.id), pruned)
     return c.json(meObject(u))
+  })
+
+  // Register this device's gift-encryption public key (v1.7.3). Device-signed, so it is stored against the signing
+  // device (always one of `devices`); encKeys is pruned to the current devices. Never anything but the public key.
+  app.put('/v1/me/enc-key', async (c) => {
+    const u = c.get('user')
+    const devicePub = c.get('devicePub')
+    const body = parseJson(c.get('rawBody'))
+    const encPub = cleanEncPub(body?.encPub)
+    if (!encPub) return c.json({ error: 'BAD_REQUEST' }, 400)
+    const keys = {}
+    for (const [dev, k] of Object.entries(u.encKeys || {})) if ((u.devices || []).includes(dev)) keys[dev] = k
+    keys[devicePub] = encPub
+    u.encKeys = keys
+    await saveUser(u)
+    return c.json({ ok: true })
   })
 
   app.put('/v1/me/shared', async (c) => {
@@ -589,6 +618,48 @@ export function makeApp(store, env = process.env, opts = {}) {
     const r = await thank(store, me, c.req.param('brandKey'))
     if (r === 'not_found') return c.json({ error: 'NOT_FOUND' }, 404)
     return c.json({ ok: true, thanked: true })
+  })
+
+  // The owner opened a gift in Dibs (v1.7.3): delete every box and mark it opened. Owner only, idempotent.
+  app.post('/v1/me/gifts/:brandKey/opened', async (c) => {
+    const me = c.get('me')
+    const r = await openGift(store, me, c.req.param('brandKey'))
+    if (r === 'not_found') return c.json({ error: 'NOT_FOUND' }, 404)
+    return c.json({ ok: true, opened: true })
+  })
+
+  // A giver who holds a claim (claimed or sent) on one of the owner's wishes may read the owner's gift-encryption public
+  // keys, so they can seal a box for each of the owner's devices. Anyone else: an indistinguishable 404.
+  app.get('/v1/users/:id/enc-keys', async (c) => {
+    const me = c.get('me')
+    const owner = c.req.param('id')
+    const claims = await ownerClaims(store, owner)
+    const holds = Object.values(claims).some((r) => r.by === me && (r.state === 'claimed' || r.state === 'sent'))
+    if (!holds) return c.json({ error: 'NOT_FOUND' }, 404)
+    const u = await loadUser(owner)
+    if (!u) return c.json({ error: 'NOT_FOUND' }, 404)
+    return c.json({ encKeys: [...new Set(Object.values(u.encKeys || {}))] })
+  })
+
+  // The giver delivers the sealed gift boxes on their own sent claim (v1.7.3). At most 5 boxes, each `to` one of the
+  // owner's current encryption keys; the 4 KB body limit bounds the set. A resend replaces the boxes; refused once the
+  // owner opened it. The server stores and relays the boxes but can never read them.
+  app.post('/v1/users/:id/wishes/:brandKey/deliver', async (c) => {
+    const me = c.get('me')
+    const owner = c.req.param('id')
+    const brand = c.req.param('brandKey')
+    const body = parseJson(c.get('rawBody'))
+    const boxes = body?.boxes
+    if (!Array.isArray(boxes) || boxes.length < 1 || boxes.length > 5 || !boxes.every(validBox)) return c.json({ error: 'BAD_REQUEST' }, 400)
+    const u = await loadUser(owner)
+    if (!u) return c.json({ error: 'NOT_FOUND' }, 404)
+    const encPubs = new Set(Object.values(u.encKeys || {}))
+    if (!boxes.every((b) => encPubs.has(b.to))) return c.json({ error: 'BAD_REQUEST' }, 400)
+    const r = await deliverBoxes(store, owner, brand, me, boxes)
+    if (r === 'not_found') return c.json({ error: 'NOT_FOUND' }, 404)
+    if (r === 'not_sent') return c.json({ error: 'NOT_SENT' }, 409)
+    if (r === 'opened') return c.json({ error: 'OPENED' }, 409)
+    return c.json({ ok: true })
   })
 
   app.notFound((c) => c.json({ error: 'NOT_FOUND' }, 404))

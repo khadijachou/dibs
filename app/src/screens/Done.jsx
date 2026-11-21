@@ -11,13 +11,14 @@ import { isDemo } from '../lib/nimiq.js'
 import { track } from '../lib/stats.js'
 import { txHash, shortHash } from '../lib/history.js'
 import { copyText } from '../lib/clipboard.js'
-import { fmtNim } from '../lib/format.js'
+import { fmtNim, fmtDate } from '../lib/format.js'
 import { fmtFiatValue } from '../lib/fiatValue.js'
 import { brandGrad } from '../lib/brands.js'
 import { playPop, playGoalDone, playTing, playClink } from '../lib/sound.js'
 import DidYouKnow from '../components/DidYouKnow.jsx'
-import { giftOf, markSent as markGiftSent, sendSent, giftMessageError } from '../lib/gifts.js'
-import { getState as friendsState } from '../lib/friends.js'
+import { giftOf, markSent as markGiftSent, sendSent, giftMessageError, getEncKeys, deliverGift, markDelivered } from '../lib/gifts.js'
+import { getState as friendsState, userProfile } from '../lib/friends.js'
+import { seal } from '../lib/giftBox.js'
 import GiftBanner from '../components/GiftBanner.jsx'
 import { useXp } from '../lib/useXp.js'
 import { LEVEL_BANNERS, isUnlocked as bannerUnlocked } from '../lib/giftBanners.js'
@@ -94,6 +95,11 @@ export default function Done({ goalId }) {
   const [sentErr, setSentErr] = useState(false)
   const [linkErr, setLinkErr] = useState(false)
   const [sending, setSending] = useState(false)
+  // Send in Dibs (v1.7.3): deliver the code to the friend end to end encrypted. recipientKeys: null while loading, []
+  // when the friend's Dibs has no key yet (fall back to Send with…), or the keys to seal a box for each of their devices.
+  const [recipientKeys, setRecipientKeys] = useState(null)
+  const [delivered, setDelivered] = useState(giftTag?.delivered || false)
+  const [openedAt, setOpenedAt] = useState(null)
 
   // Polls our server until the shop delivers, then saves the redemption on the goal.
   useEffect(() => {
@@ -151,6 +157,22 @@ export default function Done({ goalId }) {
     return () => clearTimeout(settle)
   }, [enter])
 
+  // Send in Dibs: read the friend's gift-box keys (so the button knows if their Dibs can receive it), and, for a gift
+  // already delivered, read whether they have opened it (the giver-only openedAt on their wishes map). Quiet on failure.
+  useEffect(() => {
+    if (!giftTag || !final || !red || !friendsState()?.on) return undefined
+    let live = true
+    getEncKeys(giftTag.friendId)
+      .then((r) => { if (live) setRecipientKeys(Array.isArray(r?.encKeys) ? r.encKeys : []) })
+      .catch(() => { if (live) setRecipientKeys([]) })
+    if (giftTag.delivered) {
+      userProfile(giftTag.friendId)
+        .then((p) => { const w = p?.wishes?.[giftTag.brandKey]; if (live && w?.openedAt) setOpenedAt(w.openedAt) })
+        .catch(() => { /* quiet: the waiting line stays */ })
+    }
+    return () => { live = false }
+  }, [final]) // eslint-disable-line react-hooks/exhaustive-deps
+
   if (!goal) return null
   const stepIdx = Math.max(0, STEPS.indexOf(status))
   const code = red?.code || null
@@ -188,6 +210,26 @@ export default function Done({ goalId }) {
     setLinkErr(false); setSending(true); setSentErr(false)
     try { await sendSent(giftTag.friendId, giftTag.brandKey, { message: msg, banner }); markGiftSent(goalId, { message: msg, banner }); setSentState(true) }
     catch { setSentErr(true) } finally { setSending(false) }
+  }
+
+  // Send in Dibs: mark the gift sent (if not yet), seal the redemption for each of the friend's devices, and deliver the
+  // boxes. The code is sealed on this phone (lib/giftBox.js) and only the friend's phone can open it. On failure nothing
+  // is marked delivered; the share sheet stays as the fallback.
+  const meId = friendsState()?.id || ''
+  const doSendInDibs = async () => {
+    const msg = note.trim()
+    if (giftMessageError(msg)) { setLinkErr(true); return }
+    const keys = recipientKeys || []
+    if (!keys.length) return // the button is disabled in this case; guard anyway
+    setLinkErr(false); setSending(true)
+    try {
+      if (!sentState) { await sendSent(giftTag.friendId, giftTag.brandKey, { message: msg, banner }); markGiftSent(goalId, { message: msg, banner }); setSentState(true) }
+      const aad = `${giftTag.friendId}:${giftTag.brandKey}:${meId}`
+      const boxes = []
+      for (const k of keys) boxes.push(await seal(red, k, aad))
+      await deliverGift(giftTag.friendId, giftTag.brandKey, boxes)
+      markDelivered(goalId); setDelivered(true)
+    } catch { toast(t('frd_save_fail')) } finally { setSending(false) }
   }
 
   const hash = goal.payment?.hash || null
@@ -328,7 +370,19 @@ export default function Done({ goalId }) {
               <p className="gift-pre-card">{giftValue}</p>
               {(hasCode || link) && <p className="gift-pre-code">{show ? copyValue : '•••• •••• ••••'}</p>}
             </div>
-            <button type="button" className="btn gold" onClick={sendGift}>{t('frd_gift_share')}</button>
+            {red && (
+              <>
+                <button type="button" className="btn gold gift-send-dibs"
+                  disabled={sending || delivered || recipientKeys === null || (recipientKeys && recipientKeys.length === 0)}
+                  onClick={doSendInDibs}>{t('frd_gift_send_dibs')}</button>
+                <p className="frd-note">
+                  {delivered
+                    ? (openedAt ? t('frd_gift_opened_on', { date: fmtDate(openedAt, lang) }) : t('frd_gift_delivered_wait', { name: giftTag.name }))
+                    : (recipientKeys && recipientKeys.length === 0 ? t('frd_gift_no_key', { name: giftTag.name }) : t('frd_gift_locked_only', { name: giftTag.name }))}
+                </p>
+              </>
+            )}
+            <button type="button" className={`btn ${red ? 'ghost' : 'gold'}`} onClick={sendGift}>{t('frd_gift_share')}</button>
             <p className="frd-note">{t('frd_gift_share_note')}</p>
             {sentState
               ? <p className="gift-sent-ok">{t('frd_gift_marked_sent')}{giftTag.thanked ? ` · ${t('frd_gift_thanks', { name: giftTag.name })}` : ''}</p>

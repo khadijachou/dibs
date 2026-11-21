@@ -30,8 +30,28 @@ export function markSent(goalId, extra = {}) {
   write(m)
 }
 export function setThanked(goalId, thanked = true) { const m = read(); if (m[goalId]) { m[goalId].thanked = thanked; write(m) } }
+// Mark the local tag delivered in Dibs (the sealed boxes reached the server). Shown on the Done screen when the giver
+// reopens the gift from Past dibs.
+export function markDelivered(goalId) { const m = read(); if (m[goalId]) { m[goalId].delivered = true; write(m) } }
 export function clearGift(goalId) { const m = read(); if (goalId in m) { delete m[goalId]; write(m) } }
 export function clearAll() { try { localStorage.removeItem(KEY) } catch { /* private mode */ } } // Friends off / delete profile
+
+// ---- received gift codes opened on this phone (v1.7.3) ------------------------------------------------------------
+// When a receiver opens a gift delivered in Dibs, the redemption ({ code, pin, link }) is decrypted on the phone and
+// kept here, keyed "<from id>:<brandKey>", so the Wishlist card can show it again with "Show code" after the server has
+// deleted the box. This is the receiver's own gift card, like a goal's saved redemption: it is NOT cleared by Friends
+// off (that would lose a gift the server no longer holds). Never sent anywhere.
+const IN_KEY = 'dibs.giftsIn'
+const readIn = () => { try { return JSON.parse(localStorage.getItem(IN_KEY)) || {} } catch { return {} } }
+const writeIn = (m) => { try { localStorage.setItem(IN_KEY, JSON.stringify(m)) } catch { /* private mode */ } }
+export const giftInKey = (fromId, brandKey) => `${fromId}:${brandKey}`
+export const getGiftIn = (fromId, brandKey) => readIn()[giftInKey(fromId, brandKey)] || null
+export function setGiftIn(fromId, brandKey, redemption) {
+  if (!redemption) return
+  const m = readIn()
+  m[giftInKey(fromId, brandKey)] = redemption
+  writeIn(m)
+}
 
 // ---- the Friends API (all signed, through friends.js request) -----------------------------------------------
 const wish = (friendId, brandKey, tail = '') => `/v1/users/${encodeURIComponent(friendId)}/wishes/${encodeURIComponent(brandKey)}${tail}`
@@ -39,6 +59,11 @@ export const claim = (friendId, brandKey) => request('POST', wish(friendId, bran
 export const releaseClaim = (friendId, brandKey) => request('DELETE', wish(friendId, brandKey, '/claim'))
 export const sendSent = (friendId, brandKey, { message = '', banner = 'none' } = {}) => request('POST', wish(friendId, brandKey, '/sent'), { message, banner })
 export const sayThanks = (brandKey) => request('POST', `/v1/me/gifts/${encodeURIComponent(brandKey)}/thanks`)
+// Gift box relay (v1.7.3): read the receiver's gift-box public keys (giver, needs a claim), deliver the sealed boxes,
+// and mark a received gift opened (owner). The code itself is sealed on the phone (lib/giftBox.js) and never reaches here.
+export const getEncKeys = (friendId) => request('GET', `/v1/users/${encodeURIComponent(friendId)}/enc-keys`)
+export const deliverGift = (friendId, brandKey, boxes) => request('POST', wish(friendId, brandKey, '/deliver'), { boxes })
+export const markGiftOpened = (brandKey) => request('POST', `/v1/me/gifts/${encodeURIComponent(brandKey)}/opened`)
 
 // The same refusal rules as the Friends server (friends/src/rules.js cleanGiftMessage), run on the phone before sending
 // so the giver sees why nothing was sent. Line breaks count as spaces. Returns an error reason ('link' | 'long') or null

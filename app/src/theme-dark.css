@@ -1949,6 +1949,13 @@ html.is-fullscreen .bstamp-live { top: calc(58px + var(--fs-top)); }
 .gift-card-row .frd-row-mid { flex: 1; min-width: 0; }
 .gift-card-thx { align-self: flex-start; }
 .gift-note-line { margin-top: 12px; }
+/* Send in Dibs (v1.7.3): the primary button sits above Send with…; the line under it says locked / delivered / opened. */
+.gift-send-dibs { margin-top: 4px; }
+/* Show code on an opened gift (Wishlist): a quiet link, then the code chip(s) when revealed. */
+.gift-show-code { align-self: flex-start; margin-top: 4px; }
+.gift-code-reveal { display: flex; flex-direction: column; gap: 6px; width: 100%; margin-top: 8px; }
+/* The gifted wish pill adds a small "Delivered" / "Opened" line next to "Gifted". */
+.frd-gift-deliv { color: var(--muted); font-size: var(--fs-meta); white-space: nowrap; }
 /* Send card: the level-banner picker (screens/Done.jsx), seven tiles wrapping to two rows, locked ones dimmed. */
 .gift-pick-lv { flex-wrap: wrap; overflow: visible; }
 .gift-lv-tile { position: relative; width: 84px; }
@@ -1992,6 +1999,12 @@ html.is-fullscreen .bstamp-live { top: calc(58px + var(--fs-top)); }
 .rv-brand { display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 16px; text-align: left; background: rgba(255, 255, 255, 0.06); border-radius: 14px; padding: 10px 12px; }
 .rv-brand .frd-row-mid { flex: 1; min-width: 0; }
 .rv-code { margin: 12px 0 0; font-size: var(--fs-meta); line-height: var(--lh-meta); color: var(--muted); }
+/* The decrypted code in the reveal (v1.7.3): the ticket code chip(s), copy buttons, then the "locked for you" line. */
+.rv-redeem { display: flex; flex-direction: column; gap: 8px; width: 100%; margin-top: 16px; }
+.rv-redeem .tk-label { align-self: flex-start; }
+.rv-copy-acts { display: flex; gap: 8px; width: 100%; }
+.rv-copy-btn { flex: 1; }
+.rv-ask { margin-top: 4px; }
 .rv-confetti { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
 .rvc { position: absolute; left: 50%; top: 42%; width: 12px; height: 12px; opacity: 0; animation: rv-conf 0.95s ease-out both; }
 @keyframes rv-conf { 0% { opacity: 0; transform: translate(-50%, -50%) scale(0.4) rotate(0); } 15% { opacity: 1; } 100% { opacity: 0; transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) rotate(var(--rot)); } }

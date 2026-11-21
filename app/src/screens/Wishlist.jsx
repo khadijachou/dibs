@@ -12,9 +12,32 @@ import GiftBanner from '../components/GiftBanner.jsx'
 import { brandByKey, useWishlist } from '../components/FriendsParts.jsx'
 import { toggle as toggleWish } from '../lib/wishlist.js'
 import { enabled as friendsEnabled, isOn as friendsIsOn, getVis as friendsVis, syncQuiet, me as loadMe } from '../lib/friends.js'
-import { sayThanks } from '../lib/gifts.js'
+import { sayThanks, getGiftIn } from '../lib/gifts.js'
+import { copyText } from '../lib/clipboard.js'
 import { listGoals } from '../lib/goals.js'
 import { markDailyOpen } from '../lib/quests.js'
+
+// Show code (v1.7.3): for a gift the receiver opened in Dibs, the redemption is kept on this phone (lib/gifts.js
+// dibs.giftsIn). A quiet "Show code" link reveals it again (the server has deleted its copy). No link: nothing shows.
+function GiftCodeLink({ gift }) {
+  const { t, toast } = useApp()
+  const red = getGiftIn(gift.from?.id, gift.brandKey)
+  const [show, setShow] = useState(false)
+  if (!red) return null
+  const copy = async (text, key) => { if (text && (await copyText(text))) toast(t(key)) }
+  if (!show) return <button type="button" className="txt-link gift-show-code" onClick={() => setShow(true)}>{t('frd_gift_show_code')}</button>
+  return (
+    <div className="gift-code-reveal">
+      <button type="button" className="tk-code on" aria-label={t('done_copy')} onClick={() => copy(red.code || red.link, 'done_copied')}>{red.code || red.link}</button>
+      {red.pin && (
+        <>
+          <span className="tk-label tk-label-pin">{t('done_pin')}</span>
+          <button type="button" className="tk-code on" aria-label={t('done_pin')} onClick={() => copy(red.pin, 'done_pin_copied')}>{red.pin}</button>
+        </>
+      )}
+    </div>
+  )
+}
 
 // A received gift (state sent on the server): a mint pill, "Got it, from {name}", and Say thanks -> Thanks sent.
 function ReceivedGift({ gift }) {
@@ -33,6 +56,7 @@ function ReceivedGift({ gift }) {
       {thanked
         ? <span className="frd-gift-thx-done">{t('frd_gift_thanks_sent')}</span>
         : <button type="button" className="frd-gift-thx" disabled={busy} onClick={say}>{t('frd_gift_say_thanks', { name })}</button>}
+      <GiftCodeLink gift={gift} />
     </div>
   )
 }
@@ -62,6 +86,7 @@ function ReceivedGiftCard({ gift }) {
       {thanked
         ? <span className="frd-gift-thx-done gift-card-thx">{t('frd_gift_thanks_sent')}</span>
         : <button type="button" className="btn ghost gift-card-thx" disabled={busy} onClick={say}>{t('frd_gift_say_thanks', { name })}</button>}
+      <GiftCodeLink gift={gift} />
     </section>
   )
 }

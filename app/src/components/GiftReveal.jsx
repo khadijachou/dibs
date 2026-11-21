@@ -4,8 +4,11 @@ import { useApp } from '../App.jsx'
 import { Icon, BrandLogo } from './ui.jsx'
 import GiftBanner, { PlainGiftCard } from './GiftBanner.jsx'
 import { brandByKey } from './FriendsParts.jsx'
-import { sayThanks } from '../lib/gifts.js'
-import { playGoalDone } from '../lib/sound.js'
+import { sayThanks, markGiftOpened, setGiftIn } from '../lib/gifts.js'
+import { getState as friendsState } from '../lib/friends.js'
+import { open as openBox } from '../lib/giftBox.js'
+import { playGoalDone, playClink } from '../lib/sound.js'
+import { copyText } from '../lib/clipboard.js'
 
 // Gift reveal (v1.7.2): the full-screen overlay the RECEIVER gets for a gift a friend marked as sent (lib/reveal.js
 // picks the next one; App.jsx mounts this above Home and the nav, only with Friends on). Three states: a sealed card
@@ -36,15 +39,21 @@ const CONFETTI = ['f0', 'f1', 'f2', 'f3', 'f4', 'f5', 'f6', 'f7', 'f8', 'f9', 'f
 const Confetti = () => <div className="rv-confetti" aria-hidden="true">{CONFETTI.map((c) => <i key={c} className={`rvc ${c}`} />)}</div>
 
 export default function GiftReveal({ gift, onClose }) {
-  const { t, toast } = useApp()
+  const { t, toast, lang } = useApp()
   const reduced = prefersReduced()
   const [phase, setPhase] = useState('closed') // 'closed' | 'opening' | 'open'
   const [thanked, setThanked] = useState(Boolean(gift?.thanked))
   const [busy, setBusy] = useState(false)
+  // The sealed code (v1.7.3): when the gift carries a box, decrypt it on this phone the moment the card opens. red is
+  // the { code, pin, link } once opened; openErr means the box could not be opened on this phone (a new device).
+  const [red, setRed] = useState(null)
+  const [openErr, setOpenErr] = useState(false)
   const name = gift?.from?.name || ''
   const brand = brandByKey(gift?.brandKey)
   const brandName = (brand?.name || gift?.brandKey || '').replace(/ gift card$/i, '')
   const hasBanner = gift?.banner && gift.banner !== 'none'
+  const hasBox = Boolean(gift?.box)
+  const pinLabel = t('done_pin')
 
   // State 2 runs for about a second, then opens. Reduced motion skips straight to state 3 (a plain fade). The sound
   // follows the Sound setting either way (playGoalDone is silent when Sound is off).
@@ -58,6 +67,26 @@ export default function GiftReveal({ gift, onClose }) {
     const id = setTimeout(() => setPhase('open'), 1050)
     return () => clearTimeout(id)
   }, [phase])
+
+  // Open the sealed box when the card opens (state 3). Decrypt with this phone's key, keep the redemption locally so the
+  // Wishlist card can show it again, then tell the server it is opened (which deletes the boxes). A box that cannot be
+  // opened (a new phone, or an expired box) falls back to the "outside Dibs" line plus "ask again".
+  useEffect(() => {
+    if (phase !== 'open' || !hasBox || red || openErr) return
+    let live = true
+    const aad = `${friendsState()?.id || ''}:${gift.brandKey}:${gift.from?.id || ''}`
+    openBox(gift.box, aad)
+      .then((r) => {
+        if (!live) return
+        setRed(r)
+        setGiftIn(gift.from?.id, gift.brandKey, r) // keep this gift card on the phone (Wishlist "Show code")
+        markGiftOpened(gift.brandKey).catch(() => { /* quiet: it will be reported again next time */ })
+      })
+      .catch(() => { if (live) setOpenErr(true) })
+    return () => { live = false }
+  }, [phase]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const copy = async (text, key) => { if (text && (await copyText(text))) { toast(t(key)); playClink() } }
 
   const say = async () => {
     setBusy(true)
@@ -94,7 +123,31 @@ export default function GiftReveal({ gift, onClose }) {
                 {brand && <BrandLogo brand={brand} className="frd-brand-logo" />}
                 <span className="frd-row-mid"><b>{t('rv_card', { brand: brandName })}</b><small>{t('rv_from', { name })}</small></span>
               </div>
-              <p className="rv-code">{t('rv_code', { name })}</p>
+              {hasBox ? (
+                red ? (
+                  <div className="rv-redeem">
+                    <button type="button" className="tk-code on rv-tk-code" aria-label={t('done_copy')} onClick={() => copy(red.code || red.link, 'done_copied')}>{red.code || red.link}</button>
+                    {red.pin && (
+                      <>
+                        <span className="tk-label tk-label-pin">{pinLabel}</span>
+                        <button type="button" className="tk-code on rv-tk-code" aria-label={pinLabel} onClick={() => copy(red.pin, 'done_pin_copied')}>{red.pin}</button>
+                      </>
+                    )}
+                    <div className="rv-copy-acts">
+                      <button type="button" className="btn gold rv-copy-btn" onClick={() => copy(red.code || red.link, 'done_copied')}>{t('done_copy')}</button>
+                      {red.pin && <button type="button" className="btn ghost rv-copy-btn" onClick={() => copy(red.pin, 'done_pin_copied')}>{t('frd_gift_copy_pin')}</button>}
+                    </div>
+                    <p className="rv-code">{t('rv_locked_you', { name })}</p>
+                  </div>
+                ) : openErr ? (
+                  <>
+                    <p className="rv-code">{t('rv_code', { name })}</p>
+                    <p className="rv-code rv-ask">{t('frd_gift_ask_again', { name })}</p>
+                  </>
+                ) : <p className="rv-code">{t('rv_locked_you', { name })}</p>
+              ) : (
+                <p className="rv-code">{t('rv_code', { name })}</p>
+              )}
               <div className="rv-acts">
                 {thanked
                   ? <button type="button" className="btn rv-open-btn" disabled>{t('rv_thanks_sent')}</button>

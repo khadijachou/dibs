@@ -94,16 +94,19 @@ export function PersonRow({ avatar, name, sub, right, onClick, look = null }) {
 //   'taken'    a grey "Someone's on it" pill (another friend called dibs; not tappable, never who)
 //   'mine_sent' "Gifted", plus "{name} says thanks" once the friend thanked
 //   'gifted'   a grey "Gifted" pill (another friend marked it sent)
-export function WishPill({ status, thanked, name, onCall }) {
+export function WishPill({ status, thanked, delivered, openedAt, name, onCall }) {
   const { t } = useApp()
   if (!status) return <button type="button" className="frd-gift-cta" onClick={onCall}>{t('frd_gift_call')}</button>
   if (status === 'mine') return <span className="frd-gift-mine">{t('frd_gift_mine')}</span>
   if (status === 'taken') return <span className="frd-pill">{t('frd_gift_taken')}</span>
   if (status === 'gifted') return <span className="frd-pill">{t('frd_gift_gifted')}</span>
   if (status === 'mine_sent') {
+    // v1.7.3: a gift I delivered in Dibs adds "Delivered", then "Opened" once my friend opens it (giver-only fields).
     return (
       <span className="frd-gift-sent">
         <span className="frd-pill">{t('frd_gift_gifted')}</span>
+        {openedAt ? <small className="frd-gift-deliv">{t('frd_gift_pill_opened')}</small>
+          : delivered ? <small className="frd-gift-deliv">{t('frd_gift_pill_delivered')}</small> : null}
         {thanked && <small className="frd-gift-thanks">{t('frd_gift_thanks', { name })}</small>}
       </span>
     )

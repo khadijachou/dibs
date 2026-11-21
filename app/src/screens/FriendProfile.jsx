@@ -100,7 +100,7 @@ function ProfileCards({ profile, friend = null }) {
               <>
                 <BrandLogo brand={b} className="frd-brand-logo" />
                 <span className="frd-row-mid"><b>{b.name}</b><small>{t('ob_gift')}</small></span>
-                {friend && <WishPill status={status} thanked={w?.thanked} name={profile.name} onCall={() => setGiftBrand(b)} />}
+                {friend && <WishPill status={status} thanked={w?.thanked} delivered={w?.delivered} openedAt={w?.openedAt} name={profile.name} onCall={() => setGiftBrand(b)} />}
               </>
             )
             return mineGoalId

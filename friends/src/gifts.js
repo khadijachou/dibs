@@ -87,14 +87,76 @@ export async function markSent(store, owner, brand, giver, extra = {}) {
   return 'sent'
 }
 
-// The owner removed a wish (a brand left shared.wishlist): drop the message and banner from its sent claim, keeping the
-// claim itself (the gift is still on its way). Quiet no-op when there is nothing to drop.
+// The owner removed a wish (a brand left shared.wishlist): drop the message, banner and any sealed boxes from its sent
+// claim, keeping the claim itself (the gift is still on its way). Quiet no-op when there is nothing to drop.
 export async function stripGiftExtra(store, owner, brand) {
   const rec = await store.get(claimKey(owner, brand))
-  if (!rec || (rec.message === undefined && rec.banner === undefined)) return
+  if (!rec || (rec.message === undefined && rec.banner === undefined && rec.boxes === undefined)) return
   delete rec.message
   delete rec.banner
+  delete rec.boxes
   await store.set(claimKey(owner, brand), rec)
+}
+
+// ---- gift box delivery (v1.7.3) -----------------------------------------------------------------------------------
+// The giver delivers a gift card code to the owner end to end encrypted: a set of sealed boxes (one per owner device),
+// which the server relays but cannot read. A box is { to, eph, iv, ct } base64url; the plaintext is only ever the
+// owner's to open. Stored on the sent claim as `boxes`, with `deliveredAt`; `openedAt` once the owner opens it.
+export const BOX_TTL_MS = 30 * 24 * 60 * 60 * 1000 // boxes are relayed, not kept: dropped 30 days after delivery
+const boxesExpired = (rec) => Boolean(rec.deliveredAt) && (Date.now() - Date.parse(rec.deliveredAt) > BOX_TTL_MS)
+
+// The giver delivers (or resends) the sealed boxes on their own sent claim. Replaces any previous boxes (a resend) and
+// updates deliveredAt. Refused once the owner has opened it. Returns 'ok' | 'not_found' | 'not_sent' | 'opened'.
+export async function deliverBoxes(store, owner, brand, giver, boxes) {
+  const rec = await store.get(claimKey(owner, brand))
+  if (!rec || rec.by !== giver) return 'not_found'
+  if (rec.state !== 'sent') return 'not_sent'
+  if (rec.openedAt) return 'opened'
+  rec.boxes = boxes
+  rec.deliveredAt = new Date().toISOString()
+  await store.set(claimKey(owner, brand), rec)
+  return 'ok'
+}
+
+// The owner opens the gift: delete every box (the relay is done) and set openedAt once. Idempotent. Returns 'ok' or
+// 'not_found' (no sent gift for this brand).
+export async function openGift(store, owner, brand) {
+  const rec = await store.get(claimKey(owner, brand))
+  if (!rec || rec.state !== 'sent') return 'not_found'
+  if (rec.boxes !== undefined) delete rec.boxes
+  if (!rec.openedAt) rec.openedAt = new Date().toISOString()
+  await store.set(claimKey(owner, brand), rec)
+  return 'ok'
+}
+
+// The single box addressed to this device's encryption key on a sent claim, honouring the 30-day TTL (an expired set is
+// deleted and persisted, then none is returned). `rec` is the claim record. Returns the box or undefined.
+export async function ownerBox(store, owner, brand, rec, encPub) {
+  if (!rec?.boxes || !rec.deliveredAt) return undefined
+  if (boxesExpired(rec)) { delete rec.boxes; await store.set(claimKey(owner, brand), rec); return undefined }
+  if (!encPub) return undefined
+  return (rec.boxes || []).find((b) => b && b.to === encPub) || undefined
+}
+
+// The owner's received gifts (state 'sent' only), with delivery for this device: [{ brandKey, by, thanked, message?,
+// banner?, delivered?, box? }]. `box` is the single box for `encPub` (this device), never any other device's box. The
+// giver's name/seed is added by the route (it loads the user). Never any claim in state 'claimed'.
+export async function receivedGifts(store, owner, encPub) {
+  const claims = await ownerClaims(store, owner)
+  const out = []
+  for (const [brandKey, r] of Object.entries(claims)) {
+    if (r.state !== 'sent') continue
+    const entry = { brandKey, by: r.by, thanked: Boolean(r.thanked) }
+    if (r.message) entry.message = r.message
+    if (r.banner) entry.banner = r.banner
+    if (r.deliveredAt) {
+      entry.delivered = true
+      const box = await ownerBox(store, owner, brandKey, r, encPub)
+      if (box) entry.box = box
+    }
+    out.push(entry)
+  }
+  return out
 }
 
 // The owner says thanks (only when the gift is in state 'sent'). Idempotent. Returns 'ok' or 'not_found'.
@@ -115,23 +177,15 @@ export async function ownerClaims(store, owner) {
   return out
 }
 
-// The owner's received gifts (state 'sent' only): [{ brandKey, by, thanked, message?, banner? }]. The giver's name/seed
-// is added by the route (it loads the user). Never any claim in state 'claimed'.
-export async function sentGifts(store, owner) {
-  const claims = await ownerClaims(store, owner)
-  return Object.entries(claims).filter(([, r]) => r.state === 'sent').map(([brandKey, r]) => ({
-    brandKey, by: r.by, thanked: Boolean(r.thanked),
-    ...(r.message ? { message: r.message } : {}),
-    ...(r.banner ? { banner: r.banner } : {}),
-  }))
-}
-
-// Unfriend: drop the claims in state 'claimed' between the two users, both directions. Sent gifts stay.
+// Unfriend: drop the claims in state 'claimed' between the two users, both directions. A sent gift stays, but its sealed
+// boxes are stripped (the two are no longer friends, so the relay stops; the claim and its history remain).
 export async function dropClaimedBetween(store, a, b) {
   for (const [owner, giver] of [[a, b], [b, a]]) {
     for (const brand of await store.smembers(ownerSetKey(owner))) {
       const rec = await store.get(claimKey(owner, brand))
-      if (rec && rec.by === giver && rec.state === 'claimed') await remove(store, owner, brand, giver)
+      if (!rec || rec.by !== giver) continue
+      if (rec.state === 'claimed') { await remove(store, owner, brand, giver); continue }
+      if (rec.boxes !== undefined) { delete rec.boxes; await store.set(claimKey(owner, brand), rec) }
     }
   }
 }

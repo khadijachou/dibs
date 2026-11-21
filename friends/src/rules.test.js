@@ -1,6 +1,42 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { cleanName, cleanVisibility, cleanLook, fullVisibility, applyShared, pruneShared, visibleProfile, sharesNothing, sharedHasError, ITEMS, cleanGiftMessage, cleanGiftBanner } from './rules.js'
+import { cleanName, cleanVisibility, cleanLook, fullVisibility, applyShared, pruneShared, visibleProfile, sharesNothing, sharedHasError, ITEMS, cleanGiftMessage, cleanGiftBanner, cleanEncPub, validBox, wishesFor } from './rules.js'
+
+test('cleanEncPub: accepts base64url and hex (normalised to base64url), rejects the rest', () => {
+  const b64 = 'A'.repeat(43) // 32 bytes in base64url
+  assert.equal(cleanEncPub(b64), b64)
+  const hex = '00'.repeat(32)
+  assert.equal(cleanEncPub(hex), Buffer.from(hex, 'hex').toString('base64url'))
+  assert.equal(cleanEncPub('A'.repeat(42)), null) // too short
+  assert.equal(cleanEncPub('A'.repeat(44)), null) // too long
+  assert.equal(cleanEncPub('xy+/' + 'A'.repeat(39)), null) // not base64url (+ and /)
+  assert.equal(cleanEncPub(123), null)
+  assert.equal(cleanEncPub(undefined), null)
+})
+
+test('validBox: a well-formed box passes; missing fields or a bad to fail', () => {
+  const to = 'A'.repeat(43)
+  const ok = { to, eph: 'B'.repeat(43), iv: 'C'.repeat(16), ct: 'D'.repeat(80) }
+  assert.equal(validBox(ok), true)
+  assert.equal(validBox({ ...ok, to: 'A'.repeat(10) }), false) // bad to length
+  assert.equal(validBox({ ...ok, ct: '' }), false) // empty ct
+  assert.equal(validBox({ ...ok, ct: 'D'.repeat(2000) }), false) // ct too long
+  assert.equal(validBox({ ...ok, iv: '*'.repeat(16) }), false) // not base64url
+  assert.equal(validBox(null), false)
+  assert.equal(validBox({ to }), false) // missing eph/iv/ct
+})
+
+test('wishesFor: delivered and openedAt ride only on my own mine_sent', () => {
+  const claims = {
+    steam: { by: 'me', state: 'sent', thanked: true, deliveredAt: 'D', openedAt: 'O' },
+    netflix: { by: 'other', state: 'sent', deliveredAt: 'D', openedAt: 'O' }, // another giver: nothing extra
+    spotify: { by: 'me', state: 'sent' }, // sent but not delivered: no delivered/openedAt
+  }
+  const out = wishesFor(['steam', 'netflix', 'spotify'], claims, 'me')
+  assert.deepEqual(out.steam, { status: 'mine_sent', thanked: true, delivered: true, openedAt: 'O' })
+  assert.deepEqual(out.netflix, { status: 'gifted' }) // never delivered/openedAt for someone else
+  assert.deepEqual(out.spotify, { status: 'mine_sent' })
+})
 
 test('cleanGiftMessage: trims, turns line breaks into spaces, bounds at 140 code points', () => {
   assert.equal(cleanGiftMessage('  Happy birthday  '), 'Happy birthday')

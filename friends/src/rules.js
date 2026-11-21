@@ -58,6 +58,28 @@ export function cleanGiftBanner(raw) {
   return GIFT_BANNERS.includes(raw) ? raw : null
 }
 
+// An encryption public key (X25519, 32 bytes) a device registers so a giver can seal a gift box for it (v1.7.3).
+// Accepts hex (64 chars) or base64url (43 chars) and normalises to base64url, so the stored key and a box's `to` field
+// (always base64url from the app) compare as equal strings. Returns null when it is not a valid 32-byte key.
+const B64URL32 = /^[A-Za-z0-9_-]{43}$/
+export function cleanEncPub(raw) {
+  if (typeof raw !== 'string') return null
+  if (/^[0-9a-f]{64}$/i.test(raw)) return Buffer.from(raw, 'hex').toString('base64url')
+  return B64URL32.test(raw) ? raw : null
+}
+
+// One sealed gift box { to, eph, iv, ct } (v1.7.3). `to` is a recipient public key (base64url 32 bytes); eph/iv/ct are
+// base64url with sane caps (the plaintext is a tiny JSON of code/pin/link, so ct stays small). Shape only; the route
+// also checks `to` against the owner's current keys and the 4 KB body limit bounds the whole set.
+const B64URL = /^[A-Za-z0-9_-]+$/
+export function validBox(b) {
+  return Boolean(b) && typeof b === 'object'
+    && typeof b.to === 'string' && B64URL32.test(b.to)
+    && typeof b.eph === 'string' && b.eph.length >= 1 && b.eph.length <= 64 && B64URL.test(b.eph)
+    && typeof b.iv === 'string' && b.iv.length >= 1 && b.iv.length <= 32 && B64URL.test(b.iv)
+    && typeof b.ct === 'string' && b.ct.length >= 1 && b.ct.length <= 1024 && B64URL.test(b.ct)
+}
+
 // Name: 1 to 24 characters after trimming, control characters and line breaks removed, no "<" or ">".
 export function cleanName(raw) {
   if (typeof raw !== 'string') return null
@@ -225,6 +247,8 @@ export const sharesNothing = (visibility) => ITEMS.every((k) => fullVisibility(v
 // Each value is an object { status } (plus thanked: true on a thanked 'mine_sent'):
 //   'mine'       I called dibs (state claimed)      'mine_sent'  I marked it sent
 //   'taken'      another friend called dibs          'gifted'     another friend marked it sent
+// On my own 'mine_sent' only, v1.7.3 adds delivered: true (I delivered a sealed box in Dibs) and openedAt (my friend
+// opened it), field by field. Never for another giver's 'gifted', and never a box: nobody else sees any of this.
 export function wishesFor(wishlist, claims, viewerId) {
   const out = {}
   if (!Array.isArray(wishlist)) return out
@@ -232,7 +256,14 @@ export function wishesFor(wishlist, claims, viewerId) {
     const rec = claims?.[brand]
     if (!rec) continue
     if (rec.by === viewerId) {
-      out[brand] = rec.state === 'sent' ? { status: 'mine_sent', ...(rec.thanked ? { thanked: true } : {}) } : { status: 'mine' }
+      if (rec.state === 'sent') {
+        out[brand] = {
+          status: 'mine_sent',
+          ...(rec.thanked ? { thanked: true } : {}),
+          ...(rec.deliveredAt ? { delivered: true } : {}),
+          ...(rec.openedAt ? { openedAt: rec.openedAt } : {}),
+        }
+      } else out[brand] = { status: 'mine' }
     } else {
       out[brand] = { status: rec.state === 'sent' ? 'gifted' : 'taken' }
     }

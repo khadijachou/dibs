@@ -44,7 +44,7 @@ import Boards from './screens/Boards.jsx'
 import { ProfileBackSheet } from './components/FriendsParts.jsx'
 import { RankSheet } from './components/LookParts.jsx'
 import { rankToAnnounce, markRankSeen } from './lib/looks.js'
-import { isOn as friendsIsOn, enabled as friendsEnabled, getState as friendsGetState, syncQuiet, setPendingCode, me as loadMe } from './lib/friends.js'
+import { isOn as friendsIsOn, enabled as friendsEnabled, getState as friendsGetState, syncQuiet, setPendingCode, me as loadMe, ensureEncKeyQuiet } from './lib/friends.js'
 import { nextReveal, markRevealSeen } from './lib/reveal.js'
 import { gbToAnnounce, lineKey } from './lib/giftBanners.js'
 import GiftReveal from './components/GiftReveal.jsx'
@@ -449,6 +449,7 @@ export default function App() {
   useEffect(() => {
     if (!ready || !address) return undefined
     if (!(friendsEnabled() && friendsIsOn())) { setRevealReady(true); return undefined }
+    ensureEncKeyQuiet() // register this phone's gift-box key if the server does not have it (quiet)
     let live = true
     loadMe()
       .then((r) => { if (live) giftsRef.current = Array.isArray(r?.gifts) ? r.gifts : [] })
