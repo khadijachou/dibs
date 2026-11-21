@@ -440,3 +440,7 @@ html.is-fullscreen:where([data-theme="light"]) body::before { background: linear
 /* The My look tiles sit on --card-2; the frame swatch hexagon needs a visible muted fill on light. */
 :where(:root[data-theme="light"]) .lk-sw-frame .avatar-ph { background: #9c9284; }
 :where(:root[data-theme="light"]) .lk-sw-acc { border-color: rgba(0, 0, 0, .14); }
+
+/* v1.6.0 Electronics: butter as text and the new dot take the readable light shades (as .goal-status.partly). */
+:where(:root[data-theme="light"]) .cat-new { background: #d99a0b; }
+:where(:root[data-theme="light"]) .bs-box-note.instore, :where(:root[data-theme="light"]) .tk-instore { color: #a86a00; }

@@ -4,7 +4,7 @@
 // existing PNG files in public/logos (kept for brands simple-icons does not have).
 import {
   siAirbnb, siBurgerking, siDiscord, siDoordash, siGoogleplay, siHandm, siHotelsdotcom, siNetflix,
-  siNike, siPlaystation, siRiotgames, siRoblox, siStarbucks, siTwitch, siUbereats, siValorant,
+  siNike, siPlaystation, siRiotgames, siRoblox, siSamsung, siStarbucks, siTwitch, siUbereats, siValorant,
 } from 'simple-icons'
 
 // Brand key (lib/brands.js) → simple-icons entry.
@@ -27,6 +27,7 @@ export const BRAND_ICONS = {
   nike: siNike, // #111111: black swoosh on the white plate (brandColor falls back to the neutral tint)
   twitch: siTwitch,
   burgerking: siBurgerking,
+  samsung: siSamsung, // v1.6.0, #1428A0
 }
 
 export const brandIcon = (key) => BRAND_ICONS[key] || null

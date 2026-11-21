@@ -3710,5 +3710,430 @@
       "fr": "Pour les restaurants Burger King participants aux États-Unis",
       "es": "Para restaurantes Burger King participantes en EE. UU."
     }
+  },
+  {
+    "id": "currys-pc-world-uk-10",
+    "slug": "currys-pc-world-uk",
+    "packageValue": "10",
+    "name": "Currys gift card",
+    "detail": "10 GBP",
+    "icon": "bag",
+    "fallbackUsd": 13.08,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Currys and PC World in the UK, online and in store.",
+      "fr": "Pour Currys et PC World au Royaume-Uni, en ligne et en magasin.",
+      "es": "Para Currys y PC World en el Reino Unido, en línea y en tienda."
+    },
+    "pending": true
+  },
+  {
+    "id": "currys-pc-world-uk-20",
+    "slug": "currys-pc-world-uk",
+    "packageValue": "20",
+    "name": "Currys gift card",
+    "detail": "20 GBP",
+    "icon": "bag",
+    "fallbackUsd": 26.15,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Currys and PC World in the UK, online and in store.",
+      "fr": "Pour Currys et PC World au Royaume-Uni, en ligne et en magasin.",
+      "es": "Para Currys y PC World en el Reino Unido, en línea y en tienda."
+    },
+    "pending": true
+  },
+  {
+    "id": "currys-pc-world-uk-50",
+    "slug": "currys-pc-world-uk",
+    "packageValue": "50",
+    "name": "Currys gift card",
+    "detail": "50 GBP",
+    "icon": "bag",
+    "fallbackUsd": 65.39,
+    "region": "UK",
+    "currency": "GBP",
+    "worksWith": {
+      "en": "For Currys and PC World in the UK, online and in store.",
+      "fr": "Pour Currys et PC World au Royaume-Uni, en ligne et en magasin.",
+      "es": "Para Currys y PC World en el Reino Unido, en línea y en tienda."
+    },
+    "pending": true
+  },
+  {
+    "id": "media-markt-germany-10",
+    "slug": "media-markt-germany",
+    "packageValue": "10",
+    "name": "MediaMarkt gift card",
+    "detail": "10 EUR",
+    "icon": "bag",
+    "fallbackUsd": 10.97,
+    "region": "Germany",
+    "currency": "EUR",
+    "worksWith": {
+      "en": "For MediaMarkt in Germany only, online and in store.",
+      "fr": "Pour MediaMarkt en Allemagne seulement, en ligne et en magasin.",
+      "es": "Para MediaMarkt solo en Alemania, en línea y en tienda."
+    },
+    "pending": true
+  },
+  {
+    "id": "media-markt-germany-20",
+    "slug": "media-markt-germany",
+    "packageValue": "20",
+    "name": "MediaMarkt gift card",
+    "detail": "20 EUR",
+    "icon": "bag",
+    "fallbackUsd": 21.94,
+    "region": "Germany",
+    "currency": "EUR",
+    "worksWith": {
+      "en": "For MediaMarkt in Germany only, online and in store.",
+      "fr": "Pour MediaMarkt en Allemagne seulement, en ligne et en magasin.",
+      "es": "Para MediaMarkt solo en Alemania, en línea y en tienda."
+    },
+    "pending": true
+  },
+  {
+    "id": "media-markt-germany-50",
+    "slug": "media-markt-germany",
+    "packageValue": "50",
+    "name": "MediaMarkt gift card",
+    "detail": "50 EUR",
+    "icon": "bag",
+    "fallbackUsd": 54.84,
+    "region": "Germany",
+    "currency": "EUR",
+    "worksWith": {
+      "en": "For MediaMarkt in Germany only, online and in store.",
+      "fr": "Pour MediaMarkt en Allemagne seulement, en ligne et en magasin.",
+      "es": "Para MediaMarkt solo en Alemania, en línea y en tienda."
+    },
+    "pending": true
+  },
+  {
+    "id": "fnac-darty-france-20",
+    "slug": "fnac-darty-france",
+    "packageValue": "20",
+    "name": "FNAC Darty gift card",
+    "detail": "20 EUR",
+    "icon": "bag",
+    "fallbackUsd": 21.94,
+    "region": "France",
+    "currency": "EUR",
+    "worksWith": {
+      "en": "For Fnac and Darty in mainland France, online and in store.",
+      "fr": "Pour Fnac et Darty en France métropolitaine, en ligne et en magasin.",
+      "es": "Para Fnac y Darty en la Francia continental, en línea y en tienda."
+    },
+    "pending": true
+  },
+  {
+    "id": "fnac-darty-france-50",
+    "slug": "fnac-darty-france",
+    "packageValue": "50",
+    "name": "FNAC Darty gift card",
+    "detail": "50 EUR",
+    "icon": "bag",
+    "fallbackUsd": 54.84,
+    "region": "France",
+    "currency": "EUR",
+    "worksWith": {
+      "en": "For Fnac and Darty in mainland France, online and in store.",
+      "fr": "Pour Fnac et Darty en France métropolitaine, en ligne et en magasin.",
+      "es": "Para Fnac y Darty en la Francia continental, en línea y en tienda."
+    },
+    "pending": true
+  },
+  {
+    "id": "electro-depot-france-10",
+    "slug": "electro-depot-france",
+    "packageValue": "10",
+    "name": "Electro Dépôt gift card",
+    "detail": "10 EUR",
+    "icon": "bag",
+    "fallbackUsd": 10.97,
+    "region": "France",
+    "currency": "EUR",
+    "worksWith": {
+      "en": "For Electro Dépôt in France, online and in store.",
+      "fr": "Pour Electro Dépôt en France, en ligne et en magasin.",
+      "es": "Para Electro Dépôt en Francia, en línea y en tienda."
+    },
+    "pending": true
+  },
+  {
+    "id": "electro-depot-france-20",
+    "slug": "electro-depot-france",
+    "packageValue": "20",
+    "name": "Electro Dépôt gift card",
+    "detail": "20 EUR",
+    "icon": "bag",
+    "fallbackUsd": 21.94,
+    "region": "France",
+    "currency": "EUR",
+    "worksWith": {
+      "en": "For Electro Dépôt in France, online and in store.",
+      "fr": "Pour Electro Dépôt en France, en ligne et en magasin.",
+      "es": "Para Electro Dépôt en Francia, en línea y en tienda."
+    },
+    "pending": true
+  },
+  {
+    "id": "electro-depot-france-40",
+    "slug": "electro-depot-france",
+    "packageValue": "40",
+    "name": "Electro Dépôt gift card",
+    "detail": "40 EUR",
+    "icon": "bag",
+    "fallbackUsd": 43.87,
+    "region": "France",
+    "currency": "EUR",
+    "worksWith": {
+      "en": "For Electro Dépôt in France, online and in store.",
+      "fr": "Pour Electro Dépôt en France, en ligne et en magasin.",
+      "es": "Para Electro Dépôt en Francia, en línea y en tienda."
+    },
+    "pending": true
+  },
+  {
+    "id": "electro-depot-france-60",
+    "slug": "electro-depot-france",
+    "packageValue": "60",
+    "name": "Electro Dépôt gift card",
+    "detail": "60 EUR",
+    "icon": "bag",
+    "fallbackUsd": 65.81,
+    "region": "France",
+    "currency": "EUR",
+    "worksWith": {
+      "en": "For Electro Dépôt in France, online and in store.",
+      "fr": "Pour Electro Dépôt en France, en ligne et en magasin.",
+      "es": "Para Electro Dépôt en Francia, en línea y en tienda."
+    },
+    "pending": true
+  },
+  {
+    "id": "electro-depot-france-80",
+    "slug": "electro-depot-france",
+    "packageValue": "80",
+    "name": "Electro Dépôt gift card",
+    "detail": "80 EUR",
+    "icon": "bag",
+    "fallbackUsd": 87.74,
+    "region": "France",
+    "currency": "EUR",
+    "worksWith": {
+      "en": "For Electro Dépôt in France, online and in store.",
+      "fr": "Pour Electro Dépôt en France, en ligne et en magasin.",
+      "es": "Para Electro Dépôt en Francia, en línea y en tienda."
+    },
+    "pending": true
+  },
+  {
+    "id": "slot-nigeria-1000",
+    "slug": "slot-nigeria",
+    "packageValue": "1000",
+    "name": "SLOT gift card",
+    "detail": "1000 NGN",
+    "icon": "bag",
+    "fallbackUsd": 0.75,
+    "region": "Nigeria",
+    "currency": "NGN",
+    "worksWith": {
+      "en": "For SLOT stores in Nigeria. In store only.",
+      "fr": "Pour les magasins SLOT au Nigéria. En magasin seulement.",
+      "es": "Para las tiendas SLOT en Nigeria. Solo en tienda."
+    },
+    "pending": true
+  },
+  {
+    "id": "slot-nigeria-2000",
+    "slug": "slot-nigeria",
+    "packageValue": "2000",
+    "name": "SLOT gift card",
+    "detail": "2000 NGN",
+    "icon": "bag",
+    "fallbackUsd": 1.48,
+    "region": "Nigeria",
+    "currency": "NGN",
+    "worksWith": {
+      "en": "For SLOT stores in Nigeria. In store only.",
+      "fr": "Pour les magasins SLOT au Nigéria. En magasin seulement.",
+      "es": "Para las tiendas SLOT en Nigeria. Solo en tienda."
+    },
+    "pending": true
+  },
+  {
+    "id": "slot-nigeria-5000",
+    "slug": "slot-nigeria",
+    "packageValue": "5000",
+    "name": "SLOT gift card",
+    "detail": "5000 NGN",
+    "icon": "bag",
+    "fallbackUsd": 3.7,
+    "region": "Nigeria",
+    "currency": "NGN",
+    "worksWith": {
+      "en": "For SLOT stores in Nigeria. In store only.",
+      "fr": "Pour les magasins SLOT au Nigéria. En magasin seulement.",
+      "es": "Para las tiendas SLOT en Nigeria. Solo en tienda."
+    },
+    "pending": true
+  },
+  {
+    "id": "slot-nigeria-10000",
+    "slug": "slot-nigeria",
+    "packageValue": "10000",
+    "name": "SLOT gift card",
+    "detail": "10000 NGN",
+    "icon": "bag",
+    "fallbackUsd": 7.38,
+    "region": "Nigeria",
+    "currency": "NGN",
+    "worksWith": {
+      "en": "For SLOT stores in Nigeria. In store only.",
+      "fr": "Pour les magasins SLOT au Nigéria. En magasin seulement.",
+      "es": "Para las tiendas SLOT en Nigeria. Solo en tienda."
+    },
+    "pending": true
+  },
+  {
+    "id": "slot-nigeria-20000",
+    "slug": "slot-nigeria",
+    "packageValue": "20000",
+    "name": "SLOT gift card",
+    "detail": "20000 NGN",
+    "icon": "bag",
+    "fallbackUsd": 14.75,
+    "region": "Nigeria",
+    "currency": "NGN",
+    "worksWith": {
+      "en": "For SLOT stores in Nigeria. In store only.",
+      "fr": "Pour les magasins SLOT au Nigéria. En magasin seulement.",
+      "es": "Para las tiendas SLOT en Nigeria. Solo en tienda."
+    },
+    "pending": true
+  },
+  {
+    "id": "slot-nigeria-50000",
+    "slug": "slot-nigeria",
+    "packageValue": "50000",
+    "name": "SLOT gift card",
+    "detail": "50000 NGN",
+    "icon": "bag",
+    "fallbackUsd": 36.89,
+    "region": "Nigeria",
+    "currency": "NGN",
+    "worksWith": {
+      "en": "For SLOT stores in Nigeria. In store only.",
+      "fr": "Pour les magasins SLOT au Nigéria. En magasin seulement.",
+      "es": "Para las tiendas SLOT en Nigeria. Solo en tienda."
+    },
+    "pending": true
+  },
+  {
+    "id": "slot-nigeria-100000",
+    "slug": "slot-nigeria",
+    "packageValue": "100000",
+    "name": "SLOT gift card",
+    "detail": "100000 NGN",
+    "icon": "bag",
+    "fallbackUsd": 73.76,
+    "region": "Nigeria",
+    "currency": "NGN",
+    "worksWith": {
+      "en": "For SLOT stores in Nigeria. In store only.",
+      "fr": "Pour les magasins SLOT au Nigéria. En magasin seulement.",
+      "es": "Para las tiendas SLOT en Nigeria. Solo en tienda."
+    },
+    "pending": true
+  },
+  {
+    "id": "samsung-nigeria-5000",
+    "slug": "samsung-nigeria",
+    "packageValue": "5000",
+    "name": "Samsung gift card",
+    "detail": "5000 NGN",
+    "icon": "bag",
+    "fallbackUsd": 3.7,
+    "region": "Nigeria",
+    "currency": "NGN",
+    "worksWith": {
+      "en": "For Samsung MGS stores in Nigeria. In store only.",
+      "fr": "Pour les magasins Samsung MGS au Nigéria. En magasin seulement.",
+      "es": "Para las tiendas Samsung MGS en Nigeria. Solo en tienda."
+    },
+    "pending": true
+  },
+  {
+    "id": "samsung-nigeria-10000",
+    "slug": "samsung-nigeria",
+    "packageValue": "10000",
+    "name": "Samsung gift card",
+    "detail": "10000 NGN",
+    "icon": "bag",
+    "fallbackUsd": 7.38,
+    "region": "Nigeria",
+    "currency": "NGN",
+    "worksWith": {
+      "en": "For Samsung MGS stores in Nigeria. In store only.",
+      "fr": "Pour les magasins Samsung MGS au Nigéria. En magasin seulement.",
+      "es": "Para las tiendas Samsung MGS en Nigeria. Solo en tienda."
+    },
+    "pending": true
+  },
+  {
+    "id": "samsung-nigeria-20000",
+    "slug": "samsung-nigeria",
+    "packageValue": "20000",
+    "name": "Samsung gift card",
+    "detail": "20000 NGN",
+    "icon": "bag",
+    "fallbackUsd": 14.75,
+    "region": "Nigeria",
+    "currency": "NGN",
+    "worksWith": {
+      "en": "For Samsung MGS stores in Nigeria. In store only.",
+      "fr": "Pour les magasins Samsung MGS au Nigéria. En magasin seulement.",
+      "es": "Para las tiendas Samsung MGS en Nigeria. Solo en tienda."
+    },
+    "pending": true
+  },
+  {
+    "id": "samsung-nigeria-50000",
+    "slug": "samsung-nigeria",
+    "packageValue": "50000",
+    "name": "Samsung gift card",
+    "detail": "50000 NGN",
+    "icon": "bag",
+    "fallbackUsd": 36.89,
+    "region": "Nigeria",
+    "currency": "NGN",
+    "worksWith": {
+      "en": "For Samsung MGS stores in Nigeria. In store only.",
+      "fr": "Pour les magasins Samsung MGS au Nigéria. En magasin seulement.",
+      "es": "Para las tiendas Samsung MGS en Nigeria. Solo en tienda."
+    },
+    "pending": true
+  },
+  {
+    "id": "samsung-nigeria-100000",
+    "slug": "samsung-nigeria",
+    "packageValue": "100000",
+    "name": "Samsung gift card",
+    "detail": "100000 NGN",
+    "icon": "bag",
+    "fallbackUsd": 73.76,
+    "region": "Nigeria",
+    "currency": "NGN",
+    "worksWith": {
+      "en": "For Samsung MGS stores in Nigeria. In store only.",
+      "fr": "Pour les magasins Samsung MGS au Nigéria. En magasin seulement.",
+      "es": "Para las tiendas Samsung MGS en Nigeria. Solo en tienda."
+    },
+    "pending": true
   }
 ]

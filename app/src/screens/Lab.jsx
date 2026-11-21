@@ -9,6 +9,7 @@ import { getPrices } from '../lib/price.js'
 import { api } from '../lib/api.js'
 import { releaseAtMs, releaseBlockOf } from '../lib/release.js'
 import { CHECKED, checkedPool, sameAddress } from '../lib/pools.js'
+import { catalogPreview, refreshCatalog } from '../lib/catalog.js'
 
 export default function Lab() {
   const { address, walletAddress } = useApp()
@@ -82,6 +83,17 @@ export default function Lab() {
 
   const write = (label, data) =>
     setLog((l) => [...l, `[${new Date().toISOString().slice(11, 19)}] ${label}: ${typeof data === 'string' ? data : JSON.stringify(data)}`])
+
+  // Section 6: items marked pending in server/catalog.json, shown on this phone only (dibs.catalogPreview), so they can
+  // be tested before launch. Reloads the catalogue at once.
+  const [preview, setPreview] = useState(catalogPreview)
+  const togglePreview = async () => {
+    const on = !preview
+    try { if (on) localStorage.setItem('dibs.catalogPreview', '1'); else localStorage.removeItem('dibs.catalogPreview') } catch { /* storage blocked */ }
+    setPreview(catalogPreview())
+    const items = await refreshCatalog()
+    write('Pending catalog', `${catalogPreview() ? 'on' : 'off'} · ${items.length} items loaded`)
+  }
 
   const step = (label, fn) => async () => {
     setBusy(true)
@@ -344,6 +356,15 @@ export default function Lab() {
           <button type="button" className="btn small" disabled={busy} onClick={afterAction(checks.poolStakeAll)}>Stake all again</button>
         </div>
         <p className="small">Test account only. A refusal is a useful answer: copy the log.</p>
+      </section>
+
+      <section className="card">
+        <h2>6. Pending catalog</h2>
+        <div className="row">
+          <span className="small">Show pending catalog items</span>
+          <button type="button" role="switch" aria-checked={preview} aria-label="Show pending catalog items" className={`switch${preview ? ' on' : ''}`} onClick={togglePreview}><i /></button>
+        </div>
+        <p className="small">This phone only. Items marked pending on the server join the catalogue (?preview=1) so a test purchase can be made before launch.</p>
       </section>
 
       <section className="card">

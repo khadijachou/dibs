@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useApp } from '../App.jsx'
 import { BrandLogo, Sheet } from './ui.jsx'
-import { brandGrad, brandRegion, defaultRegion } from '../lib/brands.js'
+import { SINGLE_COUNTRY, brandGrad, brandRegion, defaultRegion } from '../lib/brands.js'
 import { getPref } from '../lib/prefs.js'
 import { copyText } from '../lib/clipboard.js'
 import { HELP_EMAIL } from './LegalText.jsx'
@@ -25,6 +25,9 @@ const GlobeIcon = () => (
 // Versions (USA, Europe, UK, Nigeria): with more than one, the Region card shows chips; a chip only changes what is
 // shown: the version is saved when the user calls dibs (lib/prefs.js), or in More > Your accounts. The globe (every
 // brand) opens a sheet with the help email.
+// v1.6.0: a Germany or France version reads "Germany only" with a muted "Not valid in other EU countries"; an in-store
+// card (delivers: 'instore') adds a butter "In store only: {store} stores. Not online." and its how line says where to
+// show the code.
 // pref: Your accounts' version step (card face, Region card; no values, no delivery line, as before). onSave(versionKey)
 // saves it; onRemove (a brand already saved) removes it.
 export default function BrandSheet({ brand, onClose, onPick, pref = false, onSave, onRemove }) {
@@ -45,6 +48,8 @@ export default function BrandSheet({ brand, onClose, onPick, pref = false, onSav
     : detailText(t, lo, { short: true })
   const estimated = items.some((it) => it.live === false)
   const valuesTitle = t(items.length > 1 ? 'bs_values_title' : 'bs_value_title')
+  const single = SINGLE_COUNTRY.includes(version?.key)
+  const instore = brand.delivers === 'instore'
   return (
     <Sheet label={brand.name} onClose={onClose}>
       <div className="bs-card" style={{ background: brandGrad(brand.key) }}>
@@ -73,8 +78,10 @@ export default function BrandSheet({ brand, onClose, onPick, pref = false, onSav
             ))}
           </div>
         ) : (
-          <b className="bs-box-val">{version ? t(`region_${version.key}`) : '-'}</b>
+          <b className="bs-box-val">{!version ? '-' : single ? t('region_only', { region: t(`region_${version.key}`) }) : t(`region_${version.key}`)}</b>
         )}
+        {single && <span className="bs-box-note">{t('region_not_eu')}</span>}
+        {instore && <span className="bs-box-note instore">{t('instore_only', { store: brand.store || brand.name })}</span>}
       </section>
       {!pref && items.length > 0 && (
         <section className="bs-box">
@@ -104,7 +111,7 @@ export default function BrandSheet({ brand, onClose, onPick, pref = false, onSav
       {!pref && brand.delivers && (
         <p className="bs-how">
           <i aria-hidden="true" />
-          <span>{t(brand.delivers === 'link' ? 'bs_how_link2' : `bs_how_${brand.delivers}`)}</span>
+          <span>{instore ? t('instore_how', { store: brand.store || brand.name }) : t(brand.delivers === 'link' ? 'bs_how_link2' : `bs_how_${brand.delivers}`)}</span>
         </p>
       )}
       {pref ? (

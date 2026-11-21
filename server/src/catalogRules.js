@@ -1,11 +1,12 @@
 // What Dibs sells, as rules (scripts/catalog.js and the tests use them; the server only reads catalog.json).
 //
-// Versions: USA (USD), Europe (EUR), UK (GBP), Nigeria (NGN). Nothing else. A version comes from the shop's own
-// country and currency, never from the user's wallet or language. Europe is one Europe-wide EUR product
-// (country EU): per-country cards like Amazon.de are not a Europe version.
+// Versions: USA (USD), Europe (EUR), Germany (EUR), France (EUR), UK (GBP), Nigeria (NGN). Nothing else. A version
+// comes from the shop's own country and currency, never from the user's wallet or language. Europe is one
+// Europe-wide EUR product (country EU). Germany and France are single-country EUR cards (country DE or FR, like
+// MediaMarkt Germany): valid in that country only, never shown as Europe. Other per-country cards stay refused.
 // Values: the fixed packages paid in USD whose payment price is 100 USD or less, at most 8 per product
 // (the largest are dropped first).
-export const REGIONS = ['USA', 'Europe', 'UK', 'Nigeria']
+export const REGIONS = ['USA', 'Europe', 'Germany', 'France', 'UK', 'Nigeria']
 export const MAX_USD = 100
 export const MAX_VALUES = 8
 
@@ -14,6 +15,8 @@ export const MAX_VALUES = 8
 export function regionOf({ country, currency }) {
   if (currency === 'USD' && (country === 'US' || country === 'XI')) return { region: 'USA', currency }
   if (currency === 'EUR' && country === 'EU') return { region: 'Europe', currency }
+  if (currency === 'EUR' && country === 'DE') return { region: 'Germany', currency }
+  if (currency === 'EUR' && country === 'FR') return { region: 'France', currency }
   if (currency === 'GBP' && country === 'GB') return { region: 'UK', currency }
   if (currency === 'NGN' && country === 'NG') return { region: 'Nigeria', currency }
   return null
@@ -37,3 +40,9 @@ export const detailOf = (value, currency) => (/^\d+(\.\d+)?$/.test(value) ? `${v
 export function validWorksWith(w) {
   return Boolean(w) && ['en', 'fr', 'es'].every((l) => typeof w[l] === 'string' && w[l].trim() && !/[—!]/.test(w[l]))
 }
+
+// Catalogue visibility. enabled: false is off everywhere. pending: true is a finished item kept out of the public
+// catalogue until it has been tested: GET /api/catalog lists it only with ?preview=1 (the Lab switch), while redeem
+// and the price refresher still accept it, so a test purchase works before launch.
+export const sellable = (items) => items.filter((i) => i.enabled !== false)
+export const listed = (items, { preview = false } = {}) => sellable(items).filter((i) => preview || i.pending !== true)

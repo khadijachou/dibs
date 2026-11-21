@@ -1,13 +1,13 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { MAX_USD, MAX_VALUES, REGIONS, detailOf, itemId, keptPackages, regionOf, validWorksWith } from './catalogRules.js'
+import { MAX_USD, MAX_VALUES, REGIONS, detailOf, itemId, keptPackages, listed, regionOf, sellable, validWorksWith } from './catalogRules.js'
 
 const items = JSON.parse(readFileSync(new URL('../catalog.json', import.meta.url), 'utf8'))
 
 // The ids sold before card versions (v1.0.0). Goals point at them: they must never change.
 const OLD_IDS = 'steam-50,steam-20,steam-5,amazon_com-usa-10,amazon_com-usa-20,amazon_com-usa-50,netflix-usa-60,apple-usa-10,apple-usa-25,apple-usa-50,sony-playstation-usa-50,sony-playstation-usa-100,netflix-eu-25,netflix-eu-50,uber-eats-usa-50,uber-eats-usa-20,airbnb-usa-50,airbnb-usa-100,airbnb-usa-200,google-play-usa-5,google-play-usa-10,google-play-usa-20,nintendo-eshop-usa-10,nintendo-eshop-usa-20,nintendo-eshop-usa-50,roblox-usa-10,roblox-usa-20,roblox-usa-50,valorant-usa-9-99,valorant-usa-24-99,valorant-usa-49-99,riot-access-usa-9-99,riot-access-usa-24-99,riot-access-usa-49-99,xbox-usa-10,xbox-usa-25,xbox-usa-50,discord-nitro-usa-1-year,flightgift-usa-50,flightgift-usa-100,flightgift-usa-200,starbucks-usa-10,starbucks-usa-50,best-buy-usa-50,best-buy-usa-100,hotels_com-usa-50,hotels_com-usa-100,hotels_com-usa-200,uber-usa-50,uber-usa-100,disney-usa-50,disney-usa-100,doordash-usa-50,doordash-usa-100'.split(',')
-const CURRENCY = { USA: 'USD', Europe: 'EUR', UK: 'GBP', Nigeria: 'NGN' }
+const CURRENCY = { USA: 'USD', Europe: 'EUR', Germany: 'EUR', France: 'EUR', UK: 'GBP', Nigeria: 'NGN' }
 
 test('every item has a version, its currency and a works-with line in en, fr and es', () => {
   for (const i of items) {
@@ -48,7 +48,11 @@ test('versions come from the shop country and currency only', () => {
   assert.deepEqual(regionOf({ country: 'EU', currency: 'EUR' }), { region: 'Europe', currency: 'EUR' })
   assert.deepEqual(regionOf({ country: 'GB', currency: 'GBP' }), { region: 'UK', currency: 'GBP' })
   assert.deepEqual(regionOf({ country: 'NG', currency: 'NGN' }), { region: 'Nigeria', currency: 'NGN' })
-  assert.equal(regionOf({ country: 'FR', currency: 'EUR' }), null, 'per-country cards (Amazon.fr) are not Europe')
+  assert.deepEqual(regionOf({ country: 'DE', currency: 'EUR' }), { region: 'Germany', currency: 'EUR' })
+  assert.deepEqual(regionOf({ country: 'FR', currency: 'EUR' }), { region: 'France', currency: 'EUR' })
+  assert.equal(regionOf({ country: 'IT', currency: 'EUR' }), null, 'other per-country EUR cards stay refused')
+  assert.equal(regionOf({ country: 'ES', currency: 'EUR' }), null)
+  assert.equal(regionOf({ country: 'DE', currency: 'USD' }), null)
   assert.equal(regionOf({ country: 'CA', currency: 'CAD' }), null)
 })
 
@@ -68,4 +72,20 @@ test('one item per value per version: no two items share slug + packageValue', (
     assert.ok(!seen.has(k), `${i.id} repeats ${seen.get(k)} (${k})`)
     seen.set(k, i.id)
   }
+})
+
+test('pending items: out of the public catalogue, listed with preview, still sellable', () => {
+  const list = [{ id: 'a' }, { id: 'b', pending: true }, { id: 'c', enabled: false }, { id: 'd', pending: true, enabled: false }, { id: 'e', pending: false }]
+  assert.deepEqual(listed(list).map((i) => i.id), ['a', 'e'])
+  assert.deepEqual(listed(list, { preview: false }).map((i) => i.id), ['a', 'e'])
+  assert.deepEqual(listed(list, { preview: true }).map((i) => i.id), ['a', 'b', 'e'])
+  // Redeem and the price refresher use sellable(): pending accepted, enabled: false still off.
+  assert.deepEqual(sellable(list).map((i) => i.id), ['a', 'b', 'e'])
+})
+
+test('the public catalogue (no preview) is exactly the items that are neither pending nor off', () => {
+  const pub = listed(items)
+  assert.ok(pub.every((i) => i.pending !== true && i.enabled !== false))
+  assert.equal(pub.length, items.filter((i) => i.pending !== true && i.enabled !== false).length)
+  for (const i of items.filter((x) => x.pending === true)) assert.ok(sellable(items).includes(i) || i.enabled === false, i.id)
 })

@@ -17,6 +17,12 @@ export const FALLBACK_CATALOG = [
   { id: 'steam-5', name: 'Steam gift card', detail: '5 USD', faceValue: '5', usd: 5.62, icon: 'game', shopUrl: 'https://www.bitrefill.com/steam-usa/', live: false, inStock: true, ...STEAM_USA },
 ]
 
+// Lab > 6. Pending catalog: with dibs.catalogPreview = '1' the catalogue also asks for the items marked pending on
+// the server (?preview=1). Without it the request is exactly /api/catalog.
+export function catalogPreview() {
+  try { return localStorage.getItem('dibs.catalogPreview') === '1' } catch { return false }
+}
+
 let catalog = FALLBACK_CATALOG
 let loaded = false
 let fromServer = false
@@ -24,7 +30,7 @@ let fromServer = false
 export async function loadCatalog() {
   if (loaded) return catalog
   try {
-    const items = await api.catalog()
+    const items = await api.catalog(catalogPreview())
     if (Array.isArray(items) && items.length) { catalog = items; fromServer = true }
   } catch { /* server down: keep the fallback (or the last good list) */ }
   loaded = true

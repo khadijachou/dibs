@@ -27,7 +27,7 @@ async function call(path, opts = {}) {
 
 export const api = {
   health: () => call('/health'),
-  catalog: () => call('/catalog'),
+  catalog: (preview = false) => call(preview ? '/catalog?preview=1' : '/catalog'),
   // -> { orderId, orderToken, invoice, sats, usd, expiresAt }. orderToken is needed to read the order later.
   createOrder: (itemId, email) => call('/redeem', { method: 'POST', body: JSON.stringify({ itemId, email }) }),
   // -> { status, code }

@@ -1,7 +1,7 @@
 // Badges: worked out on the phone from data the app already has (goal ledger, the earned figure, the share flag).
 // Nothing here is sent anywhere. evaluate() is pure; check() records newly met badges on this device.
 import { savedNim } from './goals.js'
-import { BRANDS, CHIPS } from './brands.js'
+import { BRANDS, CLASSIC_CHIPS } from './brands.js'
 import { planOf } from './pace.js'
 import { bestWeekEarned, weeks8Earned } from './insights.js'
 
@@ -96,7 +96,7 @@ export function evaluate({ goals = [], earnedNim = 0, shared = false, dailyDays 
   for (const b of BADGES.filter((x) => x.chip)) {
     if ((g = redeemed.find((x) => chipOf(x) === b.chip))) add(b.id, g)
   }
-  if (CHIPS.every((c) => redeemed.some((x) => chipOf(x) === c))) add('fullset')
+  if (CLASSIC_CHIPS.every((c) => redeemed.some((x) => chipOf(x) === c))) add('fullset') // the five pre-v1.6.0 categories
   for (const b of BADGES.filter((x) => x.nim)) if (earned >= b.nim) add(b.id)
   // Quests group (daily records in dibs.daily.days, plus the weekly quests done). quests50 counts real daily quests
   // (never the check-in) and weekly quests; dayone/days7 count whole days finished (not in a row).

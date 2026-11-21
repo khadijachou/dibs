@@ -237,6 +237,8 @@ export default function Done({ goalId }) {
                   </>
                 )}
                 {link && !safeLink && <p className="tk-rawlink">{link}</p>}
+                {/* v1.6.0 in-store cards (SLOT, Samsung MGS): where the code works. */}
+                {brand.delivers === 'instore' && <p className="tk-instore">{t('instore_how', { store: brand.store || brandName })}</p>}
                 <div className="tk-acts">
                   {hasCode && <button type="button" className="btn gold tk-btn" onClick={() => copy(copyValue, 'done_copied')}>{t('done_copy')}</button>}
                   {safeLink && <a className={`btn tk-btn ${hasCode ? 'ghost' : 'gold'}`} href={safeLink} target="_blank" rel="noopener noreferrer">{t('done_open_link')}</a>}

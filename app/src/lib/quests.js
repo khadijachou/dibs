@@ -3,7 +3,7 @@
 // Done quests give XP (lib/xp.js); nothing here pays NIM or leaves the phone.
 import { savedNim } from './goals.js'
 import { planOf } from './pace.js'
-import { CHIPS } from './brands.js'
+import { questChips } from './brands.js'
 import { chipOf } from './badges.js'
 import { addQuestDone, dayKey, dayStart, fireXp, getDailyDays, getQuestsDone, getVisits, isoWeek, recordDailyDay, weekKey, weekStart } from './xp.js'
 import { insights } from './insights.js'
@@ -38,10 +38,11 @@ function pickWeek(goals, now) {
   return first ? { id: 'week', goalId: first.g.id, amount: Math.ceil(first.plan.pace.amount) } : null
 }
 
-// New territory: the first category (catalogue order) with no goal ever.
+// New territory: the first category (catalogue order) with no goal ever. Only categories with a visible brand
+// (lib/brands.js questChips): never a chip whose brands are all pending (v1.6.0 Electronics before launch).
 function pickNew(goals) {
   const used = new Set(goals.map(chipOf))
-  const chip = CHIPS.find((c) => !used.has(c))
+  const chip = questChips().find((c) => !used.has(c))
   return chip ? { id: 'new', chip } : null
 }
 
@@ -184,7 +185,7 @@ export function dailyPool(goals, now = Date.now()) {
   out.push({ id: 'badges' })
   if (active.length) {
     const used = new Set(active.map(chipOf))
-    for (const c of CHIPS) if (!used.has(c)) out.push({ id: 'category', chip: c })
+    for (const c of questChips()) if (!used.has(c)) out.push({ id: 'category', chip: c })
     for (const g of active) out.push({ id: 'goal', goalId: g.id })
   }
   if (hasHistoryRow(goals)) out.push({ id: 'history' })

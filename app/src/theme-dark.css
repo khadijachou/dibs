@@ -2021,3 +2021,12 @@ html.is-fullscreen .bstamp-live { top: calc(58px + var(--fs-top)); }
   .lk-ring-glow { animation: none; filter: drop-shadow(0 0 3px rgba(232, 72, 42, .6)); }
   .lk-tile.shake { animation: none; }
 }
+
+/* v1.6.0 Electronics. Catalog: the butter "new" dot on the Electronics chip (on ink; the light shade in theme-light.css).
+   Brand sheet Region box: a muted second line (Germany only, France only) and a butter one for in-store cards.
+   Code screen: the in-store how line under the code. */
+.cat-new { display: inline-block; width: 7px; height: 7px; margin-left: 6px; border-radius: 50%; background: var(--butter); vertical-align: 1px; }
+.bs-box-note { font-size: var(--fs-meta); line-height: var(--lh-meta); color: var(--muted); margin-top: -4px; }
+.bs-box-note.instore { color: var(--butter); font-weight: 600; }
+.bs-box-note + .bs-box-note { margin-top: -6px; }
+.tk-instore { margin: 0; font-size: var(--fs-meta); line-height: var(--lh-meta); color: var(--butter); font-weight: 600; }

@@ -9,9 +9,11 @@ import { bitrefillEnabled, createLightningInvoice, getInvoice, getProduct } from
 import { adminStats, countCatalogFallback, forget, intake, publicStats, statsEnabled } from './stats.js'
 import { adminPage, statsPage } from './pages.js'
 import { createPriceBook, priceOf } from './prices.js'
+import { listed, sellable } from './catalogRules.js'
 
 // What Dibs sells: server/catalog.json, managed with `npm run catalog`.
-// Read again whenever the file changes, so new items show after a page reload.
+// Read again whenever the file changes, so new items show after a page reload. catalog() is every sellable item,
+// pending ones included (redeem, prices); GET /api/catalog lists pending items only with ?preview=1.
 import { readFileSync, statSync } from 'node:fs'
 const CATALOG_FILE = new URL('../catalog.json', import.meta.url)
 let catalogCache = { mtime: 0, items: [] }
@@ -22,7 +24,7 @@ function catalog() {
   } catch (e) {
     console.error('catalog.json unreadable:', e.message)
   }
-  return catalogCache.items.filter((i) => i.enabled !== false)
+  return sellable(catalogCache.items)
 }
 
 const app = new Hono()
@@ -59,10 +61,10 @@ prices.start(() => catalog().map((i) => i.slug))
 
 app.get('/api/health', (c) => c.json({ ok: true, bitrefill: bitrefillEnabled() }))
 
-// region (USA, Europe, UK, Nigeria), currency (the card's face currency) and worksWith ({ en, fr, es }: which
+// region (USA, Europe, Germany, France, UK, Nigeria), currency (the card's face currency) and worksWith ({ en, fr, es }: which
 // accounts the card works with) come from catalog.json.
 app.get('/api/catalog', async (c) => {
-  const items = catalog()
+  const items = listed(catalog(), { preview: c.req.query('preview') === '1' })
   await prices.warm()
   const out = items.map((i) => {
     const p = priceOf(i, prices.cached(i.slug))

@@ -1,7 +1,7 @@
 // Brand layer over the catalogue: the server lists one item per card value,
 // the app shows one tile per brand and lets the user pick the value on the Plan screen.
 // Brand is derived from the Bitrefill slug in shopUrl, so the server needs no change.
-import { getCatalog } from './catalog.js'
+import { catalogFromServer, getCatalog } from './catalog.js'
 import { notSold } from './availability.js'
 import { getPref } from './prefs.js'
 import { getCurrency, regionForCurrency } from './currency.js'
@@ -17,6 +17,7 @@ import { getCurrency, regionForCurrency } from './currency.js'
 // logoPlate (logo files only): absent = white plate, logo contained at 84 % (Amazon); '#rrggbb' = that plate colour
 // (a light logo on a transparent background, or a wide logo with its own solid background: plate and picture blend);
 // 'fill' = the picture fills the tile, no plate, no padding (a square picture with its own background).
+// store (delivers: 'instore' only): the shop name in "In store only: {store} stores" and "Show the code at a {store} store".
 export const BRANDS = [
   { key: 'steam',       name: 'Steam',             color: ['#2a475e', '#121a24'], chip: 'games',     logo: '/logos/steam.png',       slugs: ['steam-usa', 'steam-eur-international'], popular: true, delivers: 'code', region: ['USA', 'Europe'], about: 'brand_about_steam' },
   { key: 'amazon',      name: 'Amazon',            color: ['#37475a', '#161c24'], chip: 'shopping',  logo: '/logos/amazon.png',      slugs: ['amazon_com-usa', 'amazon-uk'], popular: true, delivers: 'code', region: ['USA', 'UK'], about: 'brand_about_amazon' },
@@ -40,6 +41,17 @@ export const BRANDS = [
   // v1.1.0. Bolt: ride and food credit added with a code in the app (Promotions), no USA version: it opens on UK.
   { key: 'bolt',        name: 'Bolt',              color: ['#11894c', '#06301b'], chip: 'travel',    logo: '/logos/bolt.png', tile: { bg: '#11894C', fg: '#fff', letter: 'B' }, slugs: ['bolt-uk', 'bolt-nigeria'], delivers: 'code', region: ['UK', 'Nigeria'], about: 'brand_about_bolt' },
   { key: 'bestbuy',     name: 'Best Buy',          color: ['#0046be', '#001a4a'], chip: 'shopping',  logo: '/logos/Best-Buy.png', tile: { bg: '#0046BE', fg: '#fff', letter: 'B' }, slugs: ['best-buy-usa'], delivers: 'pin', region: ['USA'], about: 'brand_about_bestbuy' },         // confirm
+  // v1.6.0 Electronics (pending in server/catalog.json until tested). One version each: Germany and France are
+  // single-country EUR cards. delivers from the shop's instructions (Currys: "gift card number and pin"); SLOT and
+  // Samsung (MGS stores) are used in store only.
+  // logo files and colours come in v1.6.0 part 2 (neutral letter tiles for now, GRAD_FALLBACK colours: never guessed).
+  { key: 'currys',       name: 'Currys',            color: ['#3a3744', '#1b1a20'], chip: 'electronics', logo: null, tile: { bg: '#3a3744', fg: '#fff', letter: 'C' }, slugs: ['currys-pc-world-uk'], delivers: 'pin', region: ['UK'], about: 'brand_about_currys' },
+  { key: 'mediamarkt',   name: 'MediaMarkt',        color: ['#3a3744', '#1b1a20'], chip: 'electronics', logo: null, tile: { bg: '#3a3744', fg: '#fff', letter: 'M' }, slugs: ['media-markt-germany'], delivers: 'pin', region: ['Germany'], about: 'brand_about_mediamarkt' },
+  { key: 'fnacdarty',    name: 'FNAC Darty',        color: ['#3a3744', '#1b1a20'], chip: 'electronics', logo: null, tile: { bg: '#3a3744', fg: '#fff', letter: 'F' }, slugs: ['fnac-darty-france'], delivers: 'pin', region: ['France'], about: 'brand_about_fnacdarty' },
+  { key: 'electrodepot', name: 'Electro Dépôt',     color: ['#3a3744', '#1b1a20'], chip: 'electronics', logo: null, tile: { bg: '#3a3744', fg: '#fff', letter: 'E' }, slugs: ['electro-depot-france'], delivers: 'code', region: ['France'], about: 'brand_about_electrodepot' },
+  { key: 'slot',         name: 'SLOT',              color: ['#3a3744', '#1b1a20'], chip: 'electronics', logo: null, tile: { bg: '#3a3744', fg: '#fff', letter: 'S' }, slugs: ['slot-nigeria'], delivers: 'instore', store: 'SLOT', region: ['Nigeria'], about: 'brand_about_slot' },
+  // Samsung: simple-icons glyph (lib/brandIcons.js siSamsung, #1428A0); the second stop is #1428A0 darkened, as Best Buy.
+  { key: 'samsung',      name: 'Samsung',           color: ['#1428a0', '#081044'], chip: 'electronics', logo: null, tile: { bg: '#1428A0', fg: '#fff', letter: 'S' }, slugs: ['samsung-nigeria'], delivers: 'instore', store: 'Samsung MGS', region: ['Nigeria'], about: 'brand_about_samsung' },
   { key: 'handm',       name: 'H&M',               color: ['#cf000f', '#4a0006'], chip: 'shopping',  logo: null, tile: { bg: '#E50010', fg: '#fff', letter: 'H' }, slugs: ['handm-usa', 'handm-uk'], delivers: 'pin', region: ['USA', 'UK'], about: 'brand_about_handm' },
   { key: 'nike',        name: 'Nike',              color: ['#3a3a3c', '#0b0b0c'], chip: 'shopping',  logo: null, tile: { bg: '#111111', fg: '#fff', letter: 'N' }, slugs: ['nike-usa', 'nike-uk'], delivers: 'pin', region: ['USA', 'UK'], about: 'brand_about_nike' },
   { key: 'disney',      name: 'Disney',            color: ['#1b4fe0', '#08185c'], chip: 'streaming', logo: '/logos/DGC-Logo.png', tile: { bg: '#113CCF', fg: '#fff', letter: 'D' }, slugs: ['disney-usa'], delivers: 'code', region: ['USA'], about: 'brand_about_disney' },              // confirm
@@ -50,10 +62,19 @@ export const BRANDS = [
 ]
 
 // About this card (Goal Details): about = i18n key of the one-line description; delivers = what the shop sends
-// ('code' | 'pin' = card number + PIN | 'link'); region = the versions it sells (USA, Europe, UK, Nigeria; the live catalogue
+// ('code' | 'pin' = card number + PIN | 'link' | 'instore' = a code shown at the shop's counter, never online);
+// region = the versions it sells (USA, Europe, Germany, France, UK, Nigeria; the live catalogue
 // decides what shows: catalogBrands().regions). Airbnb, Discord, Flightgift and
 // Disney: the shop's product data does not state the delivery form, so these follow the brand sheet (9 Nov).
-export const CHIPS = ['games', 'travel', 'shopping', 'streaming', 'food']
+// Chip order on the Catalog screen, after All. A chip shows only when a visible brand uses it (Catalog usedChips).
+export const CHIPS = ['electronics', 'games', 'travel', 'shopping', 'streaming', 'food']
+// The five categories before v1.6.0. The Full set badge stays on these (nobody needs an Electronics card for a badge
+// they were close to), and quests use them while the live catalogue is not loaded (it says nothing about what is sold).
+export const CLASSIC_CHIPS = ['games', 'travel', 'shopping', 'streaming', 'food']
+// The categories a quest may ask for: chips with at least one visible brand in the live catalogue (a chip whose
+// brands are all pending, out of stock or withdrawn is skipped), else CLASSIC_CHIPS. Pure form for tests: shownChips.
+export const shownChips = (brands, fromServer) => (fromServer ? CHIPS.filter((c) => brands.some((b) => b.chip === c)) : CLASSIC_CHIPS)
+export const questChips = () => (catalogFromServer() ? shownChips(catalogBrands(), true) : CLASSIC_CHIPS)
 
 const slugOf = (item) => (item.shopUrl || '').split('/').filter(Boolean).pop() || ''
 
@@ -71,12 +92,15 @@ export function brandGrad(key) {
   return `linear-gradient(145deg, ${from} 0%, ${to} 100%)`
 }
 
-// Card versions: USA (USD), Europe (EUR), UK (GBP), Nigeria (NGN), in this order. A version is the shop's own
+// Card versions: USA (USD), Europe (EUR), Germany (EUR), France (EUR), UK (GBP), Nigeria (NGN), in this order.
+// Germany and France are single-country cards (MediaMarkt Germany): never valid in the rest of the EU. A version is the shop's own
 // product (steam-usa, steam-eur-international); what a card works with depends on the brand (Steam: the wallet
 // currency; Riot: the account region; others: the store country), so Dibs never guesses it: each version carries
 // the shop's line (worksWith, from the server catalogue) and the user picks.
-export const REGION_ORDER = ['USA', 'Europe', 'UK', 'Nigeria']
-const CURRENCY_OF = { USA: 'USD', Europe: 'EUR', UK: 'GBP', Nigeria: 'NGN' }
+export const REGION_ORDER = ['USA', 'Europe', 'Germany', 'France', 'UK', 'Nigeria']
+const CURRENCY_OF = { USA: 'USD', Europe: 'EUR', Germany: 'EUR', France: 'EUR', UK: 'GBP', Nigeria: 'NGN' }
+// Versions valid in one country only: the brand sheet says "Germany only" and "Not valid in other EU countries".
+export const SINGLE_COUNTRY = ['Germany', 'France']
 const regionRank = (k) => { const i = REGION_ORDER.indexOf(k); return i < 0 ? 99 : i }
 const byValue = (x, y) => (Number(x.faceValue) || 0) - (Number(y.faceValue) || 0) || (x.usd ?? 0) - (y.usd ?? 0)
 
@@ -94,7 +118,7 @@ export function defaultRegion(brand) {
 export const brandRegion = (brand, key) => brand?.regions?.find((r) => r.key === key) || defaultRegion(brand)
 
 // Brands that have at least one item in the live catalogue.
-//   regions: [{ key, currency, worksWith, items }] (items sorted by value; order USA, Europe, UK, Nigeria)
+//   regions: [{ key, currency, worksWith, items }] (items sorted by value; REGION_ORDER)
 //   items:   the default version's items, so screens that show one list (tiles, Home) keep working
 export function catalogBrands(all = getCatalog()) {
   const map = new Map()

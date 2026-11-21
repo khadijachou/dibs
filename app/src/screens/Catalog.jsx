@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useApp } from '../App.jsx'
 import { BrandLogo, Header, Icon } from '../components/ui.jsx'
 import { CHIPS, brandGrad, catalogBrands, filterBrands } from '../lib/brands.js'
@@ -62,16 +62,28 @@ export function BrandSearch({ brands, q, onQ }) {
   )
 }
 
+// v1.6.0: a butter "new" dot on the Electronics chip until it is first opened (dibs.chipNew160). The chip itself only
+// shows once a visible brand uses it (usedChips), so the dot never shows while every Electronics brand is pending.
+const NEW_CHIP = 'electronics'
+const NEW_CHIP_KEY = 'dibs.chipNew160'
+const newChipSeen = () => { try { return localStorage.getItem(NEW_CHIP_KEY) === '1' } catch { return false } }
+
 export function BrandChips({ brands, chip, onChip }) {
   const { t } = useApp()
   const reduced = useReducedMotion()
   const usedChips = CHIPS.filter((c) => brands.some((b) => b.chip === c))
+  const [seen, setSeen] = useState(newChipSeen)
+  useEffect(() => {
+    if (chip !== NEW_CHIP || seen) return
+    setSeen(true)
+    try { localStorage.setItem(NEW_CHIP_KEY, '1') } catch { /* private mode: the dot goes for this session only */ }
+  }, [chip, seen])
   const slide = useChipSlide(chip, reduced)
   const pickChip = (c) => { if (c === chip) return; slide.remember(); onChip(c) }
   const chipBtn = (c, label) => (
     <button type="button" key={c} className={`cat${chip === c ? ' on' : ''}`} aria-pressed={chip === c} onClick={() => pickChip(c)}>
       {chip === c && <i className="cat-hl" ref={slide.hl} aria-hidden="true" />}
-      <span>{label}</span>
+      <span>{label}{c === NEW_CHIP && !seen && <><i className="cat-new" aria-hidden="true" /><span className="sr-only"> · {t('chip_new')}</span></>}</span>
     </button>
   )
   return (
