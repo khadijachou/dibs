@@ -11,15 +11,16 @@ import {
 } from './crypto.js'
 import {
   cleanName, cleanVisibility, cleanLook, fullVisibility, applyShared, pruneShared, visibleProfile, sharesNothing, sharedHasError, wishesFor,
+  cleanGiftMessage, cleanGiftBanner,
 } from './rules.js'
 import {
-  MAX_OPEN_CLAIMS, claim, release, markSent, thank, ownerClaims, sentGifts, dropClaimedBetween, dropAllFor, openClaimCount,
+  MAX_OPEN_CLAIMS, claim, release, markSent, thank, ownerClaims, sentGifts, dropClaimedBetween, dropAllFor, openClaimCount, stripGiftExtra,
 } from './gifts.js'
 import {
   BOARDS, boardsChoice, boardMembers, setBoards, xpOf, dropBoardsFor, makeChecker, monthOf,
 } from './boards.js'
 
-export const VERSION = '1.7.0'
+export const VERSION = '1.7.1'
 const AVATAR_ROW_CAP = 50 // avatars travel on at most the first 50 friend rows (size guard)
 
 const MINUTE = 60_000
@@ -213,13 +214,18 @@ export function makeApp(store, env = process.env, opts = {}) {
 
   // ---- me -----------------------------------------------------------------------------------------------------
 
-  // The gifts the owner has received: state 'sent' only (never a claim in state 'claimed', so the surprise holds),
-  // each with the giver's identity. [{ brandKey, from: { id, name, seed }, thanked }].
+  // The gifts the owner has received: state 'sent' only (never a claim in state 'claimed', so the surprise holds), each
+  // with the giver's identity and, when the giver added them, the message and banner. This is the ONLY route that carries
+  // the message and banner. [{ brandKey, from: { id, name, seed }, thanked, message?, banner? }].
   async function giftsReceived(ownerId) {
     const out = []
     for (const g of await sentGifts(store, ownerId)) {
       const from = await loadUser(g.by)
-      if (from) out.push({ brandKey: g.brandKey, from: { id: from.id, name: from.name, seed: from.id }, thanked: g.thanked })
+      if (from) out.push({
+        brandKey: g.brandKey, from: { id: from.id, name: from.name, seed: from.id }, thanked: g.thanked,
+        ...(g.message ? { message: g.message } : {}),
+        ...(g.banner ? { banner: g.banner } : {}),
+      })
     }
     return out
   }
@@ -261,6 +267,11 @@ export function makeApp(store, env = process.env, opts = {}) {
     const current = await loadShared(u.id)
     const next = applyShared(current, body, u.visibility)
     await store.set(sharedKey(u.id), next)
+    // A wish that just left the shared wishlist: drop any gift message and banner from its sent claim (the claim stays).
+    if (Array.isArray(next.wishlist)) {
+      const before = Array.isArray(current.wishlist) ? current.wishlist : []
+      for (const brand of before) if (!next.wishlist.includes(brand)) await stripGiftExtra(store, u.id, brand)
+    }
     return c.json(next)
   })
 
@@ -555,9 +566,20 @@ export function makeApp(store, env = process.env, opts = {}) {
     return c.json({ ok: true })
   })
 
+  // Mark a claim as sent. An optional body { message?, banner? } carries the gift text the giver typed; a request with no
+  // body (old phones) works exactly as before. The code, PIN or link never reach here (unchanged rule): only the message
+  // and the banner choice. The message and banner are stored only on the transition to sent (see markSent).
   app.post('/v1/users/:id/wishes/:brandKey/sent', async (c) => {
     const me = c.get('me')
-    const r = await markSent(store, c.req.param('id'), c.req.param('brandKey'), me)
+    const body = parseJson(c.get('rawBody'))
+    let message = ''; let banner = ''
+    if (body && typeof body === 'object') {
+      message = cleanGiftMessage(body.message)
+      if (message === null) return c.json({ error: 'BAD_MESSAGE' }, 400)
+      banner = cleanGiftBanner(body.banner)
+      if (banner === null) return c.json({ error: 'BAD_BANNER' }, 400)
+    }
+    const r = await markSent(store, c.req.param('id'), c.req.param('brandKey'), me, { message, banner })
     if (r === 'not_found') return c.json({ error: 'NOT_FOUND' }, 404)
     return c.json({ ok: true, state: 'sent' })
   })

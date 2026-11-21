@@ -1,6 +1,39 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { cleanName, cleanVisibility, cleanLook, fullVisibility, applyShared, pruneShared, visibleProfile, sharesNothing, sharedHasError, ITEMS } from './rules.js'
+import { cleanName, cleanVisibility, cleanLook, fullVisibility, applyShared, pruneShared, visibleProfile, sharesNothing, sharedHasError, ITEMS, cleanGiftMessage, cleanGiftBanner } from './rules.js'
+
+test('cleanGiftMessage: trims, turns line breaks into spaces, bounds at 140 code points', () => {
+  assert.equal(cleanGiftMessage('  Happy birthday  '), 'Happy birthday')
+  assert.equal(cleanGiftMessage('line one\nline two'), 'line one line two')
+  assert.equal(cleanGiftMessage('a\r\nb\tc'), 'a b c')
+  assert.equal(cleanGiftMessage(''), '') // empty = no message
+  assert.equal(cleanGiftMessage('   '), '')
+  assert.equal(cleanGiftMessage(undefined), '')
+  assert.equal(cleanGiftMessage(null), '')
+  assert.equal(cleanGiftMessage(42), null)
+  assert.equal(cleanGiftMessage('x'.repeat(140)), 'x'.repeat(140))
+  assert.equal(cleanGiftMessage('x'.repeat(141)), null)
+  assert.equal(cleanGiftMessage('🎉'.repeat(140)), '🎉'.repeat(140)) // counted by code points, not UTF-16 units
+  assert.equal(cleanGiftMessage('🎉'.repeat(141)), null)
+})
+
+test('cleanGiftMessage: refuses anything that looks like a link', () => {
+  for (const bad of ['see http://x', 'HTTPS everywhere', 'go to www.site', 'WWW.SITE', 'buy at shop.com/deal', 'a b.co/x']) {
+    assert.equal(cleanGiftMessage(bad), null, bad)
+  }
+  // a bare dot in a sentence is fine (no slash after a tld)
+  assert.equal(cleanGiftMessage('Thanks a lot. Enjoy it.'), 'Thanks a lot. Enjoy it.')
+  assert.equal(cleanGiftMessage('5.0 stars for you'), '5.0 stars for you')
+})
+
+test('cleanGiftBanner: one of the four, or empty for none/absent, null otherwise', () => {
+  for (const ok of ['birthday', 'thanks', 'congrats', 'because']) assert.equal(cleanGiftBanner(ok), ok)
+  assert.equal(cleanGiftBanner('none'), '')
+  assert.equal(cleanGiftBanner(undefined), '')
+  assert.equal(cleanGiftBanner(null), '')
+  assert.equal(cleanGiftBanner('party'), null)
+  assert.equal(cleanGiftBanner(42), null)
+})
 
 test('cleanName: trims, strips control chars and angle brackets, bounds length', () => {
   assert.equal(cleanName('  Aziz  '), 'Aziz')

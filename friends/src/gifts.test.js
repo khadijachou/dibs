@@ -240,6 +240,99 @@ test('limit: at most 10 open claims per giver', async () => {
   assert.equal((await call(a, A, 'POST', wishUrl(owners[10], 'steam', '/claim'))).status, 200)
 })
 
+test('sent with no body (old phone) still works', async () => {
+  const a = app()
+  const A = await makeUser(a, 'Ann'); const B = await makeUser(a, 'Bob')
+  await befriend(a, A, B)
+  await shareWishlist(a, B, ['steam'])
+  await call(a, A, 'POST', wishUrl(B, 'steam', '/claim'))
+  const sent = await call(a, A, 'POST', wishUrl(B, 'steam', '/sent')) // no body
+  assert.equal(sent.status, 200)
+  const me = await call(a, B, 'GET', '/v1/me')
+  assert.deepEqual(me.body.gifts, [{ brandKey: 'steam', from: { id: A.id, name: 'Ann', seed: A.id }, thanked: false }])
+  assert.ok(!('message' in me.body.gifts[0]) && !('banner' in me.body.gifts[0]))
+})
+
+test('sent with a message and a banner: stored, shown only to the owner', async () => {
+  const a = app()
+  const A = await makeUser(a, 'Ann'); const B = await makeUser(a, 'Bob'); const C = await makeUser(a, 'Cy')
+  await befriend(a, A, B); await befriend(a, C, B)
+  await shareWishlist(a, B, ['steam'])
+  await call(a, A, 'POST', wishUrl(B, 'steam', '/claim'))
+  const sent = await call(a, A, 'POST', wishUrl(B, 'steam', '/sent'), { message: 'Happy birthday Bob', banner: 'birthday' })
+  assert.equal(sent.status, 200)
+  // The owner sees the message and banner on their own /v1/me only.
+  const me = await call(a, B, 'GET', '/v1/me')
+  assert.deepEqual(me.body.gifts, [{ brandKey: 'steam', from: { id: A.id, name: 'Ann', seed: A.id }, thanked: false, message: 'Happy birthday Bob', banner: 'birthday' }])
+  // Not in the giver's view, not in the other friend's view, not in the owner's as-friend view.
+  assert.deepEqual((await call(a, A, 'GET', `/v1/users/${B.id}`)).body.wishes.steam, { status: 'mine_sent' })
+  assert.deepEqual((await call(a, C, 'GET', `/v1/users/${B.id}`)).body.wishes.steam, { status: 'gifted' })
+  assert.ok(!('gifts' in (await call(a, B, 'GET', '/v1/me/as-friend')).body))
+})
+
+test('sent: a 141-char message, a link, and an unknown banner are each refused', async () => {
+  const a = app()
+  const A = await makeUser(a, 'Ann'); const B = await makeUser(a, 'Bob')
+  await befriend(a, A, B)
+  await shareWishlist(a, B, ['steam'])
+  await call(a, A, 'POST', wishUrl(B, 'steam', '/claim'))
+  const tooLong = await call(a, A, 'POST', wishUrl(B, 'steam', '/sent'), { message: 'x'.repeat(141) })
+  assert.equal(tooLong.status, 400); assert.deepEqual(tooLong.body, { error: 'BAD_MESSAGE' })
+  const link = await call(a, A, 'POST', wishUrl(B, 'steam', '/sent'), { message: 'go to shop.com/deal' })
+  assert.equal(link.status, 400); assert.deepEqual(link.body, { error: 'BAD_MESSAGE' })
+  const badBanner = await call(a, A, 'POST', wishUrl(B, 'steam', '/sent'), { message: 'hi', banner: 'party' })
+  assert.equal(badBanner.status, 400); assert.deepEqual(badBanner.body, { error: 'BAD_BANNER' })
+  // None of the refusals moved the claim to sent, nor stored anything.
+  assert.deepEqual((await call(a, A, 'GET', `/v1/users/${B.id}`)).body.wishes.steam, { status: 'mine' })
+})
+
+test('the message and banner never appear in wishesFor, as-friend, a friend view or the leaderboard', async () => {
+  const a = app()
+  const A = await makeUser(a, 'Ann'); const B = await makeUser(a, 'Bob'); const C = await makeUser(a, 'Cy')
+  await befriend(a, A, B); await befriend(a, C, B)
+  await shareWishlist(a, B, ['steam'])
+  await call(a, A, 'POST', wishUrl(B, 'steam', '/claim'))
+  await call(a, A, 'POST', wishUrl(B, 'steam', '/sent'), { message: 'secret words only Bob sees', banner: 'thanks' })
+  // Everyone on the global board; its rows must never carry the message or banner.
+  for (const u of [A, B, C]) await call(a, u, 'PUT', '/v1/me/boards', { global: true })
+  const blobs = [
+    (await call(a, A, 'GET', `/v1/users/${B.id}`)).body, // giver's friend view (wishesFor)
+    (await call(a, C, 'GET', `/v1/users/${B.id}`)).body, // another friend's view
+    (await call(a, B, 'GET', '/v1/me/as-friend')).body,
+    (await call(a, B, 'GET', '/v1/boards/global')).body,
+    (await call(a, B, 'GET', '/v1/boards/friends')).body,
+  ].map((b) => JSON.stringify(b)).join(' ')
+  assert.ok(!/secret words/.test(blobs), 'the message text leaked')
+  for (const bad of ['message', 'banner']) assert.ok(!new RegExp(`"${bad}"\\s*:`).test(blobs), `a "${bad}" field leaked`)
+})
+
+test('removing a wish strips the message and banner but keeps the sent gift', async () => {
+  const a = app()
+  const A = await makeUser(a, 'Ann'); const B = await makeUser(a, 'Bob')
+  await befriend(a, A, B)
+  await shareWishlist(a, B, ['steam', 'netflix'])
+  await call(a, A, 'POST', wishUrl(B, 'steam', '/claim'))
+  await call(a, A, 'POST', wishUrl(B, 'steam', '/sent'), { message: 'enjoy it', banner: 'congrats' })
+  // B removes steam from the shared wishlist (keeps netflix).
+  await call(a, B, 'PUT', '/v1/me/shared', { wishlist: ['netflix'] })
+  const me = await call(a, B, 'GET', '/v1/me')
+  const gift = me.body.gifts.find((g) => g.brandKey === 'steam')
+  assert.ok(gift, 'the sent gift still shows')
+  assert.ok(!('message' in gift) && !('banner' in gift), 'the message and banner were stripped')
+})
+
+test('deleting the account removes the gift, message and banner with it', async () => {
+  const a = app()
+  const A = await makeUser(a, 'Ann'); const B = await makeUser(a, 'Bob')
+  await befriend(a, A, B)
+  await shareWishlist(a, B, ['steam'])
+  await call(a, A, 'POST', wishUrl(B, 'steam', '/claim'))
+  await call(a, A, 'POST', wishUrl(B, 'steam', '/sent'), { message: 'bye', banner: 'because' })
+  await call(a, A, 'DELETE', '/v1/me')
+  const me = await call(a, B, 'GET', '/v1/me')
+  assert.deepEqual(me.body.gifts, [])
+})
+
 test('no gift response ever carries a value, an amount or a code field', async () => {
   const a = app()
   const A = await makeUser(a, 'Ann'); const B = await makeUser(a, 'Bob')

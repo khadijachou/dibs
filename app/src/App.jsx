@@ -57,7 +57,7 @@ import { addSharedId, getDailyDays, getQuestsDone, levelOf, rankOf, recordVisit,
 import { checkDaily, checkQuest, weeklyXp } from './lib/quests.js'
 import { shareBadge as sharePoster, shareMonth as sharePosterMonth } from './lib/poster.js'
 import { getName } from './lib/name.js'
-import { bigSheetFor, catchUp14, releaseOf } from './lib/bigUpdate.js'
+import { bigSheetFor, catchUp14 } from './lib/bigUpdate.js'
 import { NEWS } from './lib/news.js'
 import { version as appVersion } from '../package.json'
 import WhatsNewSheet from './components/WhatsNewSheet.jsx'
@@ -180,7 +180,7 @@ export default function App() {
   const endIntro = useCallback(() => { setIntro(null); window.scrollTo(0, 0) }, [])
   const finishOnboarding = useCallback(() => {
     try { localStorage.setItem('dibs.onboarded', '1') } catch { /* private mode */ }
-    try { localStorage.setItem('dibs.bigSeen', releaseOf(appVersion)) } catch { /* private mode */ } // a fresh arrival has seen this release
+    try { localStorage.setItem('dibs.bigSeen', appVersion) } catch { /* private mode */ } // a fresh arrival has seen this version
     try { localStorage.setItem('dibs.bigSeen14b', '1') } catch { /* private mode */ } // a new user does not need the 1.4 catch-up
     markNewsSeen() // someone who just arrived has nothing unread: no dot on More
     let seen = false
@@ -437,7 +437,7 @@ export default function App() {
   const endBig = useCallback((after) => {
     setBigSheet((s) => {
       if (s) {
-        try { localStorage.setItem('dibs.bigSeen', s.release) } catch { /* private mode */ }
+        try { localStorage.setItem('dibs.bigSeen', s.version) } catch { /* private mode */ }
         try { localStorage.setItem('dibs.bigSeen14b', '1') } catch { /* private mode */ } // the 1.4 catch-up is done
       }
       return null

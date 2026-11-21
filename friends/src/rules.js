@@ -27,6 +27,33 @@ const validAvatar = (s) => {
   return b64.length > 0 && b64.length % 4 === 0 && B64_RE.test(b64)
 }
 
+// A gift message the giver types at "mark as sent" (v1.7.1). Only the message and the banner choice ever reach the
+// server: never the code, the PIN, the link, a value or an amount. Line breaks become spaces, then it is trimmed; 0 to
+// 140 code points. Returns the cleaned string ('' = no message), or null when it must be refused (too long, or a link).
+const GIFT_LINK_PATH = /[a-z0-9]+\.[a-z]{2,24}\//i // a word.tld/ pattern: alphanumerics, a dot, 2 to 24 letters, a slash
+function giftTextHasLink(s) {
+  const low = s.toLowerCase()
+  if (low.includes('http') || low.includes('www.')) return true
+  return GIFT_LINK_PATH.test(s)
+}
+export function cleanGiftMessage(raw) {
+  if (raw === undefined || raw === null) return ''
+  if (typeof raw !== 'string') return null
+  const text = raw.replace(/[\r\n\t]+/g, ' ').trim()
+  if (text === '') return ''
+  if ([...text].length > 140) return null
+  if (giftTextHasLink(text)) return null
+  return text
+}
+
+// A gift banner choice. One of the four designs, or '' for none (absent, null or the string "none"). Anything else
+// must be refused.
+export const GIFT_BANNERS = ['birthday', 'thanks', 'congrats', 'because']
+export function cleanGiftBanner(raw) {
+  if (raw === undefined || raw === null || raw === 'none') return ''
+  return GIFT_BANNERS.includes(raw) ? raw : null
+}
+
 // Name: 1 to 24 characters after trimming, control characters and line breaks removed, no "<" or ">".
 export function cleanName(raw) {
   if (typeof raw !== 'string') return null

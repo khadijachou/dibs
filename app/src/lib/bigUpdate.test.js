@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { releaseOf, cmpRelease, seenOf, bigSheetFor, catchUp14 } from './bigUpdate.js'
+import { releaseOf, cmpRelease, seenOf, bigSheetFor, catchUp14, verParts, cmpVer, seenVer } from './bigUpdate.js'
 import { NEWS as REAL_NEWS } from './news.js'
 
 test('releaseOf keeps the first two numbers as a string', () => {
@@ -130,12 +130,12 @@ test('never throws on junk input', () => {
 // It never showed for 1.5 or 1.6 (those NEWS entries carried no sheet), so this release puts it on the 1.6 entry and the
 // app at 1.6.2 reaches it. The entry chosen is the 1.6 one, not 1.6.1 or 1.6.2 (which have no sheet).
 
-test('v1.6.2: a phone that last saw 1.4 sees the 1.6 sheet, with "since 1.5"', () => {
+test('v1.6.2: a phone that last saw 1.4 sees the 1.6 sheet (1.5 had no sheet, so no "since")', () => {
   const r = bigSheetFor({ version: '1.6.2', stored: '1.4', onboarded: true, news: REAL_NEWS })
   assert.equal(r?.release, '1.6')
   assert.equal(r?.entry.v, '1.6')
   assert.ok(Array.isArray(r?.entry.sheet) && r.entry.sheet.length === 3)
-  assert.equal(r?.since, '1.5')
+  assert.equal(r?.since, null) // only sheet-carrying entries count for "since", and 1.5 carries none
 })
 
 test('v1.6.2: a phone that last saw 1.5 sees the 1.6 sheet, no "since"', () => {
@@ -191,4 +191,51 @@ test('catchUp14 does not show when not onboarded', () => {
 test('catchUp14 never throws on junk input', () => {
   assert.doesNotThrow(() => catchUp14())
   assert.equal(catchUp14({ stored: '1.4', friendsEnabled: true, onboarded: true, news: 'nope' }), null)
+})
+
+// ---- v1.7.1: the sheet is chosen by FULL version, and dibs.bigSeen stores a full version -----------------------------
+
+test('verParts keeps three numbers, a missing patch counting as 0', () => {
+  assert.deepEqual(verParts('1.7.1'), [1, 7, 1])
+  assert.deepEqual(verParts('1.7'), [1, 7, 0])
+  assert.deepEqual(verParts('1.10.4'), [1, 10, 4])
+  for (const bad of ['1', '', 'x.y', 'v1.2', null, undefined, 1.2, {}, '1.x.0']) assert.equal(verParts(bad), null, String(bad))
+})
+
+test('cmpVer compares full versions numerically; "1.7" equals "1.7.0"', () => {
+  assert.ok(cmpVer('1.7.1', '1.7') > 0)
+  assert.ok(cmpVer('1.7', '1.7.0') === 0)
+  assert.ok(cmpVer('1.10.0', '1.9.9') > 0)
+  assert.ok(cmpVer('1.7.1', '1.7.2') < 0)
+})
+
+test('seenVer: a valid stored version wins, missing/invalid on an onboarded phone counts as 1.2.0', () => {
+  assert.equal(seenVer('1.7.1', true), '1.7.1')
+  assert.equal(seenVer('1.7', true), '1.7') // counts as 1.7.0 via cmpVer
+  assert.equal(seenVer(null, true), '1.2.0')
+  assert.equal(seenVer('junk', true), '1.2.0')
+  assert.equal(seenVer('1.7.1', false), null)
+})
+
+test('saw 1.7 then runs 1.7.1 with a sheet: it shows', () => {
+  const r = bigSheetFor({ version: '1.7.1', stored: '1.7', onboarded: true, news: REAL_NEWS })
+  assert.equal(r?.version, '1.7.1')
+  assert.equal(r?.entry.v, '1.7.1')
+  assert.equal(r?.since, null)
+})
+
+test('saw 1.7.1 then runs 1.7.2 without a sheet: nothing', () => {
+  assert.equal(bigSheetFor({ version: '1.7.2', stored: '1.7.1', onboarded: true, news: REAL_NEWS }), null)
+})
+
+test('saw 1.6 then runs 1.7.1: shows 1.7.1 with "since 1.7"', () => {
+  const r = bigSheetFor({ version: '1.7.1', stored: '1.6', onboarded: true, news: REAL_NEWS })
+  assert.equal(r?.version, '1.7.1')
+  assert.equal(r?.entry.v, '1.7.1')
+  assert.equal(r?.since, '1.7')
+})
+
+test('a new user (onboarding stored the current full version) sees nothing', () => {
+  assert.equal(bigSheetFor({ version: '1.7.1', stored: '1.7.1', onboarded: true, news: REAL_NEWS }), null)
+  assert.equal(bigSheetFor({ version: '1.7.1', stored: null, onboarded: false, news: REAL_NEWS }), null)
 })

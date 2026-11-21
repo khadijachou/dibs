@@ -2,10 +2,13 @@
 // Works with Friends off and with no Friends server. Shared to friends only through the existing sync.
 // v1.4.3: gifts received. A friend who called dibs on a wish and marked it sent shows here as "Gifted, from {name}"
 // with a "Say thanks" button. No amounts, no code: the code arrived by the giver's own message, outside Dibs.
+// v1.7.1: a gift that carries a message or a banner becomes a card at the top (banner, message, brand row, Say thanks),
+// with a privacy note under the list. A gift with neither stays the plain inline row, exactly as before.
 import { useEffect, useState } from 'react'
 import { useApp } from '../App.jsx'
 import { Header, Icon, BrandLogo } from '../components/ui.jsx'
 import BrandSheet from '../components/BrandSheet.jsx'
+import GiftBanner from '../components/GiftBanner.jsx'
 import { brandByKey, useWishlist } from '../components/FriendsParts.jsx'
 import { toggle as toggleWish } from '../lib/wishlist.js'
 import { enabled as friendsEnabled, isOn as friendsIsOn, getVis as friendsVis, syncQuiet, me as loadMe } from '../lib/friends.js'
@@ -34,6 +37,35 @@ function ReceivedGift({ gift }) {
   )
 }
 
+// A received gift that carries a message or a banner (v1.7.1): a card with the banner, the message, a brand row
+// ("From {name}" and the "Gifted" pill) and "Say thanks to {name}". Message with banner None: no banner strip. Banner
+// without message: just the banner and the brand row.
+function ReceivedGiftCard({ gift }) {
+  const { t } = useApp()
+  const name = gift.from?.name || ''
+  const b = brandByKey(gift.brandKey)
+  const [thanked, setThanked] = useState(Boolean(gift.thanked))
+  const [busy, setBusy] = useState(false)
+  const say = async () => {
+    setBusy(true)
+    try { await sayThanks(gift.brandKey); setThanked(true) } catch { /* leave as is: the user can try again */ } finally { setBusy(false) }
+  }
+  return (
+    <section className="card gift-card">
+      {gift.banner && <GiftBanner banner={gift.banner} />}
+      {gift.message && <p className="gift-card-msg">{gift.message}</p>}
+      <div className="gift-card-row">
+        {b && <BrandLogo brand={b} className="frd-brand-logo" />}
+        <span className="frd-row-mid"><b>{b?.name || gift.brandKey}</b><small>{t('frd_gift_from', { name })}</small></span>
+        <span className="frd-pill frd-pill-mint">{t('frd_gift_gifted')}</span>
+      </div>
+      {thanked
+        ? <span className="frd-gift-thx-done gift-card-thx">{t('frd_gift_thanks_sent')}</span>
+        : <button type="button" className="btn ghost gift-card-thx" disabled={busy} onClick={say}>{t('frd_gift_say_thanks', { name })}</button>}
+    </section>
+  )
+}
+
 export default function Wishlist() {
   const { t, go, back, address } = useApp()
   const keys = useWishlist()
@@ -50,7 +82,12 @@ export default function Wishlist() {
     return () => { live = false }
   }, [])
   const giftByBrand = Object.fromEntries(gifts.map((g) => [g.brandKey, g]))
-  const extraGifts = gifts.filter((g) => !keys.includes(g.brandKey)) // gifts whose brand is no longer on my list
+  // A gift with a message or a banner becomes a card at the top; its wish is pulled out of the normal list.
+  const richGifts = gifts.filter((g) => g.message || g.banner)
+  const richBrands = new Set(richGifts.map((g) => g.brandKey))
+  const listBrands = brands.filter((b) => !richBrands.has(b.key)) // the plain list (hearted brands minus the card ones)
+  const extraGifts = gifts.filter((g) => !keys.includes(g.brandKey) && !richBrands.has(g.brandKey)) // plain gifts off my list
+  const giftNoteName = richGifts.find((g) => g.message)?.from?.name || ''
 
   const openBrand = (b) => { markDailyOpen({ k: 'brand', chip: b.chip }, listGoals(address)); setOpen(b.key) }
   const sheetBrand = brandByKey(open)
@@ -70,7 +107,7 @@ export default function Wishlist() {
     </p>
   )
 
-  const giftsOnly = brands.length === 0 && extraGifts.length > 0
+  const isEmpty = listBrands.length === 0 && richGifts.length === 0 && extraGifts.length === 0
 
   return (
     <>
@@ -78,7 +115,7 @@ export default function Wishlist() {
       <main className="screen">
         <h2 className="title">{t('frd_item_wishlist')}</h2>
 
-        {brands.length === 0 && !giftsOnly ? (
+        {isEmpty ? (
           <>
             <section className="frd-empty">
               <span className="frd-empty-ic" aria-hidden="true"><Icon name="heart" size={28} /></span>
@@ -90,9 +127,10 @@ export default function Wishlist() {
           </>
         ) : (
           <>
-            {brands.length > 0 && (
+            {richGifts.map((g) => <ReceivedGiftCard key={g.brandKey} gift={g} />)}
+            {listBrands.length > 0 && (
               <section className="frd-sec">
-                {brands.map((b) => {
+                {listBrands.map((b) => {
                   const gift = giftByBrand[b.key]
                   return (
                     <div className="frd-row" key={b.key}>
@@ -125,6 +163,7 @@ export default function Wishlist() {
                 })}
               </section>
             )}
+            {richGifts.some((g) => g.message) && <p className="frd-private frd-wl-foot gift-note-line">{t('frd_gift_msg_note', { name: giftNoteName })}</p>}
             {footer}
           </>
         )}

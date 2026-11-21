@@ -1221,6 +1221,12 @@ button.tl-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: -2
 .lvl-bar i { display: block; height: 100%; border-radius: 4px; background: var(--gold); transition: width .5s ease; }
 .lvl-foot { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: var(--fs-meta); line-height: var(--lh-meta); color: var(--muted); }
 .lvl-foot span:last-child { text-align: right; }
+/* Identity card (Profile layout B): the avatar, name and level in one tappable card, built on .lvl-card. */
+.prof-id-top { display: flex; align-items: center; gap: 12px; }
+.prof-id-top .chev { color: var(--muted); font-size: 22px; flex-shrink: 0; }
+.prof-id .prof-av { flex: none; }
+.prof-id-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.prof-id-lvl { font-size: var(--fs-label); line-height: var(--lh-label); color: var(--muted); }
 
 .ranks-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 .ranks-list li { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; border: 1px solid #2b2834; border-radius: 14px; padding: 11px 14px; background: var(--card); font-size: var(--fs-strong); line-height: var(--lh-strong); }
@@ -1920,6 +1926,29 @@ html.is-fullscreen .bstamp-live { top: calc(58px + var(--fs-top)); }
 .gift-pre-card { color: var(--muted); font-size: var(--fs-label); }
 .gift-pre-code { font-weight: 700; letter-spacing: .05em; color: var(--cream); }
 .gift-sent-ok { color: var(--teal); font-weight: 600; margin-top: 8px; }
+/* The banner picker and the message counter on the Send card. */
+.gift-row-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-top: 12px; }
+.gift-head-hint, .gift-count { color: var(--muted); font-size: var(--fs-meta); white-space: nowrap; }
+.gift-pick { display: flex; gap: 8px; margin-top: 8px; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
+.gift-pick-tile { flex: none; width: 96px; min-height: 44px; padding: 3px; border: 2px solid transparent; border-radius: 14px; background: var(--card-2); cursor: pointer; }
+.gift-pick-tile.on { border-color: #E8482A; }
+.gift-pick-tile:disabled { cursor: default; }
+.gift-pick-none { display: flex; align-items: center; justify-content: center; color: var(--cream); font-size: var(--fs-label); font-weight: 600; }
+.gift-pre-label { margin: 12px 0 0; }
+.gift-link-err { color: var(--red); }
+/* Gift banners (components/GiftBanner.jsx): a 7:3 picture, radius 16, the title bottom left (cream, ink on congrats). */
+.gift-banner { position: relative; width: 100%; aspect-ratio: 7 / 3; border-radius: 16px; overflow: hidden; }
+.gift-banner svg { display: block; width: 100%; height: 100%; }
+.gift-banner.thumb { border-radius: 11px; }
+.gb-title { position: absolute; left: 16px; bottom: 11px; margin: 0; font-family: 'Poppins', system-ui, sans-serif; font-weight: 700; font-size: var(--fs-title); color: #FFF6EC; }
+.gb-congrats .gb-title { color: #23212B; }
+/* A received gift card at the top of the Wishlist (v1.7.1): the banner, the message, a brand row, Say thanks. */
+.gift-card { display: flex; flex-direction: column; gap: 12px; }
+.gift-card-msg { margin: 0; color: var(--cream); font-size: var(--fs-body); line-height: 1.4; }
+.gift-card-row { display: flex; align-items: center; gap: 10px; }
+.gift-card-row .frd-row-mid { flex: 1; min-width: 0; }
+.gift-card-thx { align-self: flex-start; }
+.gift-note-line { margin-top: 12px; }
 /* A received gift on my Wishlist: mint pill, "Got it, from {name}", and Say thanks -> Thanks sent. */
 .frd-pill-mint { background: var(--teal-soft); color: var(--teal); border-color: var(--teal-deep); }
 .frd-gift-got { margin-left: auto; flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
@@ -1935,9 +1964,14 @@ html.is-fullscreen .bstamp-live { top: calc(58px + var(--fs-top)); }
 .frd-private { color: var(--muted); font-size: var(--fs-meta); margin: 14px 2px 0; }
 .btn.danger { background: #b42318; color: #fff; box-shadow: none; }
 
-/* Profile Friends section: a title and up to two rows (Friends, Wishlist). */
-.prof-friends .sec-head-h { margin: 2px 0 8px; }
-.prof-friends .frd-prof-row + .frd-prof-row { margin-top: 8px; }
+/* Profile grouped cards (layout B): the Friends card and the Settings card, each a title over one card holding the rows,
+   the rows borderless with a thin divider between them (the card clips the corners). */
+.prof-friends, .prof-settings { margin: 0 0 14px; }
+.prof-settings { margin-top: 16px; }
+.prof-friends .sec-head-h, .prof-settings .sec-head-h { margin: 2px 0 8px; }
+.prof-group { background: var(--card); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+.prof-group .frd-prof-row { background: none; border: 0; border-radius: 0; }
+.prof-group .frd-prof-row + .frd-prof-row { margin-top: 0; border-top: 1px solid var(--line); }
 .frd-prof-ic.heart { color: var(--gold); }
 
 /* Wishlist screen rows: the brand opens the sheet, the filled heart removes it. */
@@ -1982,11 +2016,13 @@ html.is-fullscreen .bstamp-live { top: calc(58px + var(--fs-top)); }
    rule here, so every screen stays pixel-identical to before.
    ============================================================================ */
 
-/* The avatar frame: a ring drawn just outside the avatar, never over the picture. The SVG box is grown 10% past the
-   avatar on every side (inset is negative, no width/height so the four insets size it), so the hexagon sits around the
-   avatar with a small gap at any avatar size. It never changes the avatar's own size or the layout (absolute), and is
-   absent for 'none', so the default avatar is unchanged. */
-.lk-frame { position: absolute; inset: -10%; pointer-events: none; overflow: visible; }
+/* The avatar frame: a ring drawn just outside the avatar, never over the picture. The SVG box is 120% of the avatar
+   (grown 10% past it on every side) and centred on the avatar's centre with a translate, so the hexagon sits around the
+   avatar with a small gap at any avatar size. Centring this way (not a negative all-sides inset) is what keeps it right
+   in WebKit: an SVG with a viewBox but no intrinsic size is not stretched to an inset box there, it anchors top-left and
+   drifts up and to the left; an explicit width/height plus a centred translate grows it around the centre everywhere.
+   It never changes the avatar's own size or the layout (absolute), and is absent for 'none', so the default is unchanged. */
+.lk-frame { position: absolute; left: 50%; top: 50%; width: 120%; height: 120%; transform: translate(-50%, -50%); pointer-events: none; overflow: visible; }
 
 /* The glow goal ring: a soft coral glow on the painted arc. The pulse stops under reduced motion (the glow stays). */
 .lk-ring-glow { filter: drop-shadow(0 0 3px rgba(232, 72, 42, .6)); animation: lk-glow 1.9s ease-in-out infinite; }

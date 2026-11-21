@@ -16,11 +16,14 @@ import { fmtFiatValue } from '../lib/fiatValue.js'
 import { brandGrad } from '../lib/brands.js'
 import { playPop, playGoalDone, playTing, playClink } from '../lib/sound.js'
 import DidYouKnow from '../components/DidYouKnow.jsx'
-import { giftOf, markSent as markGiftSent, sendSent } from '../lib/gifts.js'
+import { giftOf, markSent as markGiftSent, sendSent, giftMessageError } from '../lib/gifts.js'
 import { getState as friendsState } from '../lib/friends.js'
+import GiftBanner from '../components/GiftBanner.jsx'
 
 // Bitrefill invoice statuses, in order. Anything else shows as "waiting".
 const STEPS = ['created', 'payment_detected', 'payment_confirmed', 'complete']
+// The four gift banner designs, shown as a horizontal picker with None (components/GiftBanner.jsx).
+const GIFT_BANNERS = ['birthday', 'thanks', 'congrats', 'because']
 
 // Days from calling dibs to paying, at least 1.
 const daysToYours = (goal) => Math.max(1, Math.ceil((Date.parse(goal.payment?.at || Date.now()) - Date.parse(goal.createdAt)) / 864e5))
@@ -73,9 +76,11 @@ export default function Done({ goalId }) {
   // call. {me} is my Friends display name, for the prefilled note (kept on the phone only).
   const giftTag = giftOf(goalId)
   const meName = friendsState()?.name || ''
-  const [note, setNote] = useState(() => (giftTag ? t('frd_gift_note_default', { me: meName }) : ''))
+  const [note, setNote] = useState(() => (giftTag ? (giftTag.message ?? t('frd_gift_note_default', { me: meName })) : ''))
+  const [banner, setBanner] = useState(() => giftTag?.banner || 'none')
   const [sentState, setSentState] = useState(giftTag?.state === 'sent')
   const [sentErr, setSentErr] = useState(false)
+  const [linkErr, setLinkErr] = useState(false)
   const [sending, setSending] = useState(false)
 
   // Polls our server until the shop delivers, then saves the redemption on the goal.
@@ -166,8 +171,10 @@ export default function Done({ goalId }) {
     if (await copyText(giftShareText)) { toast(t('done_copied')); playClink() }
   }
   const doMarkSent = async () => {
-    setSending(true); setSentErr(false)
-    try { await sendSent(giftTag.friendId, giftTag.brandKey); markGiftSent(goalId); setSentState(true) }
+    const msg = note.trim()
+    if (giftMessageError(msg)) { setLinkErr(true); return } // a link in the message: send nothing, say why
+    setLinkErr(false); setSending(true); setSentErr(false)
+    try { await sendSent(giftTag.friendId, giftTag.brandKey, { message: msg, banner }); markGiftSent(goalId, { message: msg, banner }); setSentState(true) }
     catch { setSentErr(true) } finally { setSending(false) }
   }
 
@@ -253,8 +260,33 @@ export default function Done({ goalId }) {
         {giftTag && final && (
           <section className="card gift-send">
             <h3>{t('frd_gift_send_title', { name: giftTag.name })}</h3>
-            <label className="small" htmlFor="gift-note">{t('frd_gift_note_label')}</label>
-            <textarea id="gift-note" className="gift-note" maxLength={140} rows={2} value={note} onChange={(e) => setNote(e.target.value)} />
+
+            <div className="gift-row-head">
+              <span className="small">{t('frd_gift_banner_label')}</span>
+              <span className="gift-head-hint">{t('frd_gift_banner_hint', { name: giftTag.name })}</span>
+            </div>
+            <div className="gift-pick" role="radiogroup" aria-label={t('frd_gift_banner_label')}>
+              {GIFT_BANNERS.map((b) => (
+                <button type="button" key={b} role="radio" aria-checked={banner === b} aria-label={t(`frd_banner_${b}`)}
+                  className={`gift-pick-tile${banner === b ? ' on' : ''}`} disabled={sentState} onClick={() => setBanner(b)}>
+                  <GiftBanner banner={b} thumb />
+                </button>
+              ))}
+              <button type="button" role="radio" aria-checked={banner === 'none'}
+                className={`gift-pick-tile gift-pick-none${banner === 'none' ? ' on' : ''}`} disabled={sentState} onClick={() => setBanner('none')}>
+                {t('frd_gift_banner_none')}
+              </button>
+            </div>
+
+            <div className="gift-row-head">
+              <label className="small" htmlFor="gift-note">{t('frd_gift_msg_label')}</label>
+              <span className="gift-count">{t('frd_gift_msg_count', { n: [...note].length })}</span>
+            </div>
+            <textarea id="gift-note" className="gift-note" maxLength={140} rows={2} value={note} readOnly={sentState}
+              onChange={(e) => { setNote(e.target.value); setLinkErr(false) }} />
+            <p className="frd-note">{t('frd_gift_msg_help', { name: giftTag.name })}</p>
+
+            <p className="small gift-pre-label">{t('frd_gift_code_hint')}</p>
             <div className="gift-preview">
               {note && <p className="gift-pre-note">{note}</p>}
               <p className="gift-pre-card">{giftValue}</p>
@@ -265,6 +297,7 @@ export default function Done({ goalId }) {
             {sentState
               ? <p className="gift-sent-ok">{t('frd_gift_marked_sent')}{giftTag.thanked ? ` · ${t('frd_gift_thanks', { name: giftTag.name })}` : ''}</p>
               : <button type="button" className="btn ghost" disabled={sending} onClick={doMarkSent}>{t('frd_gift_mark_sent')}</button>}
+            {linkErr && <p className="frd-quiet gift-link-err">{t('frd_gift_link_refused')}</p>}
             {sentErr && <p className="frd-quiet">{t('frd_save_fail')}</p>}
           </section>
         )}

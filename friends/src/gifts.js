@@ -1,7 +1,9 @@
 // Gift claims: who called dibs on which brand of whose wishlist, whether it was marked as sent, whether thanks
 // were said. A claim is keyed by (owner id, brand key) and holds { by: giver id, state: 'claimed' | 'sent',
-// thanked: boolean }. NOTHING else is stored here: never a code, a PIN, a link, a card value, a NIM amount,
-// a goal id, an email or a wallet address. The server learns three things only, and only those three live here.
+// thanked: boolean }, plus (only once sent, both optional) message: a short text the giver typed, and banner: one of
+// four banner names. NOTHING else is stored here: never a code, a PIN, a link, a card value, a NIM amount, a goal id,
+// an email or a wallet address. The message and the banner are shown only to the owner who received the gift
+// (giftsReceived on GET /v1/me); no other route ever carries them.
 //
 // The surprise rule: the owner of a wish must never learn, from any response, that someone called dibs on it while
 // the claim is still in state 'claimed'. So the owner's own views (GET /v1/me, /v1/me/as-friend) carry nothing about
@@ -61,16 +63,38 @@ export async function release(store, owner, brand, giver) {
   return 'released'
 }
 
+// Writes the optional gift message and banner onto a record (only non-empty values; the first write wins).
+function applyGiftExtra(rec, extra) {
+  if (extra?.message) rec.message = extra.message
+  if (extra?.banner) rec.banner = extra.banner
+}
+
 // The giver marks a claim as sent (only from state 'claimed'). Idempotent: already sent by the same giver is 'sent'.
+// `extra` is the optional { message, banner } the giver typed; it is stored when the call moves the claim to sent, or on
+// the idempotent repeat by the same giver while nothing is stored yet (so a retry that carries the text still lands).
 // Returns 'sent' or 'not_found'.
-export async function markSent(store, owner, brand, giver) {
+export async function markSent(store, owner, brand, giver, extra = {}) {
   const rec = await store.get(claimKey(owner, brand))
   if (!rec || rec.by !== giver) return 'not_found'
-  if (rec.state === 'sent') return 'sent'
+  if (rec.state === 'sent') {
+    if (!rec.message && !rec.banner && (extra.message || extra.banner)) { applyGiftExtra(rec, extra); await store.set(claimKey(owner, brand), rec) }
+    return 'sent'
+  }
   if (rec.state !== 'claimed') return 'not_found'
   rec.state = 'sent'
+  applyGiftExtra(rec, extra)
   await store.set(claimKey(owner, brand), rec)
   return 'sent'
+}
+
+// The owner removed a wish (a brand left shared.wishlist): drop the message and banner from its sent claim, keeping the
+// claim itself (the gift is still on its way). Quiet no-op when there is nothing to drop.
+export async function stripGiftExtra(store, owner, brand) {
+  const rec = await store.get(claimKey(owner, brand))
+  if (!rec || (rec.message === undefined && rec.banner === undefined)) return
+  delete rec.message
+  delete rec.banner
+  await store.set(claimKey(owner, brand), rec)
 }
 
 // The owner says thanks (only when the gift is in state 'sent'). Idempotent. Returns 'ok' or 'not_found'.
@@ -91,11 +115,15 @@ export async function ownerClaims(store, owner) {
   return out
 }
 
-// The owner's received gifts (state 'sent' only): [{ brandKey, by, thanked }]. The giver's name/seed is added by
-// the route (it loads the user). Never any claim in state 'claimed'.
+// The owner's received gifts (state 'sent' only): [{ brandKey, by, thanked, message?, banner? }]. The giver's name/seed
+// is added by the route (it loads the user). Never any claim in state 'claimed'.
 export async function sentGifts(store, owner) {
   const claims = await ownerClaims(store, owner)
-  return Object.entries(claims).filter(([, r]) => r.state === 'sent').map(([brandKey, r]) => ({ brandKey, by: r.by, thanked: Boolean(r.thanked) }))
+  return Object.entries(claims).filter(([, r]) => r.state === 'sent').map(([brandKey, r]) => ({
+    brandKey, by: r.by, thanked: Boolean(r.thanked),
+    ...(r.message ? { message: r.message } : {}),
+    ...(r.banner ? { banner: r.banner } : {}),
+  }))
 }
 
 // Unfriend: drop the claims in state 'claimed' between the two users, both directions. Sent gifts stay.

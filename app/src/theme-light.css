@@ -249,6 +249,9 @@ html.is-fullscreen:where([data-theme="light"]) body::before { background: linear
 :where(:root[data-theme="light"]) .stats-card .sc-icon { background: var(--teal-soft); }
 :where(:root[data-theme="light"]) .pstats { border: 1px solid var(--line); background-image: radial-gradient(110% 120% at 100% 0%, rgba(232, 72, 42, .08), transparent 60%); }
 :where(:root[data-theme="light"]) .lvl-card { border: 1px solid var(--line); background-image: radial-gradient(90% 120% at 0% 0%, rgba(232, 72, 42, .07), transparent 60%); }
+/* Grouped cards (layout B): white with the warm #E6DCCF border, dividers in the same tone; titles stay ink by default. */
+:where(:root[data-theme="light"]) .prof-group { background: #fff; border-color: #E6DCCF; }
+:where(:root[data-theme="light"]) .prof-group .frd-prof-row + .frd-prof-row { border-top-color: #E6DCCF; }
 :where(:root[data-theme="light"]) .lvl-streak { border-top: 1px solid rgba(35, 33, 43, .08); }
 :where(:root[data-theme="light"]) .lvl-bars i { background: var(--line); }
 /* Butter fades on the white card: lit bars take the yellow shade of the quest bar and the Savings unlock segment. */

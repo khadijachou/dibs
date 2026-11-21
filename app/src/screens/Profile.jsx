@@ -3,7 +3,7 @@ import { useApp } from '../App.jsx'
 import { Header, Icon, Sheet, useFiat } from '../components/ui.jsx'
 import QuestCard from '../components/QuestCard.jsx'
 import { Avatar } from '../components/Avatar.jsx'
-import { HEX, Medal } from '../components/Badge.jsx'
+import { Medal } from '../components/Badge.jsx'
 import { listGoals } from '../lib/goals.js'
 import { markDailyOpen } from '../lib/quests.js'
 import { profileStats } from '../lib/profileStats.js'
@@ -14,7 +14,7 @@ import { BADGES, GROUPS, getBadges } from '../lib/badges.js'
 import { CLAIM_EMAIL, PROGRAM_END, REWARDS, REWARD_IDS, active as rewardsActive, claimDetails, state as rewardState } from '../lib/rewards.js'
 import { itemLabel } from '../lib/itemName.js'
 import { copyText } from '../lib/clipboard.js'
-import { STREAK_BARS, claimable, streakView } from './profileView.js'
+import { STREAK_BARS, streakView } from './profileView.js'
 import { RANKS, XP } from '../lib/xp.js'
 import { useXp } from '../lib/useXp.js'
 import { levelToPlay, markBadges, newBadges, setLevelSeen } from '../lib/seen.js'
@@ -45,9 +45,9 @@ function useBadges() {
   return badges
 }
 
-// Profile: the name, a banner per reward ready to claim, one compact stats card, the level, the badges and the Rewards
-// card, all from data the app already has (goal ledger, dibs.name, dibs.badges). badge/badgeAt: open that badge's sheet.
-// section 'quests' (Home's Quests strip, with sectionAt): scroll to the Quests section.
+// Profile (layout B): the identity card (avatar, name, level and XP), one compact stats card, a grouped Friends card, the
+// Quests, the badges, the Rewards card and a grouped Settings card, all from data the app already has (goal ledger,
+// dibs.name, dibs.badges). badge/badgeAt: open that badge's sheet. section 'quests'/'badges' (with sectionAt): scroll there.
 export default function Profile({ badge: askedBadge, badgeAt, section, sectionAt }) {
   const { t, lang, address, walletAddress, reset, go } = useApp()
   const name = getName() // changed only in More > Settings
@@ -91,7 +91,6 @@ export default function Profile({ badge: askedBadge, badgeAt, section, sectionAt
   }, [earnedKey]) // eslint-disable-line react-hooks/exhaustive-deps
   const popOf = (id) => { const i = fresh.indexOf(id); return i < 0 ? null : i }
   const showRewards = rewardsActive()
-  const toClaim = claimable({ badges, goals })
   const xp = useXp(address)
   const look = useLook(xp.level) // the user's accent and frame (lib/looks.js), default = unchanged
   const [xpSheet, setXpSheet] = useState(null) // 'ranks' | 'xp'
@@ -130,68 +129,9 @@ export default function Profile({ badge: askedBadge, badgeAt, section, sectionAt
     <>
       <Header />
       <main className="screen">
-        <section className="prof-head">
-          <h2 className="title">{t('tab_profile')}</h2>
-          <div className="prof-who">
-            <Avatar address={walletAddress} size={56} className="prof-av" frame={look.frame}
-              fallback={name ? <span className="prof-avatar" aria-hidden="true">{name.charAt(0).toUpperCase()}</span> : null} />
-            {name && <span className={`prof-name ${accentClass(accentChoice(xp.level))}`}>{name}</span>}
-          </div>
-        </section>
+        <h2 className="title">{t('tab_profile')}</h2>
 
-        <section className="prof-friends">
-          <h3 className="sec-head-h">{friendsEnabled() ? t('frd_title') : t('frd_item_wishlist')}</h3>
-          {friendsEnabled() && (
-            <button type="button" className="frd-prof-row" onClick={() => (friendsOn ? go('friends') : setTurnOnOpen(true))}>
-              <span className="frd-prof-ic" aria-hidden="true"><Icon name="users" size={20} /></span>
-              <span className="frd-row-mid"><b>{t('frd_title')}</b><small>{t('frd_row_sub')}</small></span>
-              {friendsOn
-                ? <span className="frd-prof-right">{friendCount != null && <span className="frd-count">{friendCount}</span>}<span className="chev" aria-hidden="true">›</span></span>
-                : <span className="frd-pill">{t('frd_off')}</span>}
-            </button>
-          )}
-          <button type="button" className="frd-prof-row" onClick={() => go('wishlist')}>
-            <span className="frd-prof-ic heart" aria-hidden="true"><Icon name="heartFilled" size={18} /></span>
-            <span className="frd-row-mid"><b>{t('frd_item_wishlist')}</b><small>{wlSub}</small></span>
-            <span className="chev" aria-hidden="true">›</span>
-          </button>
-          {friendsOn && (
-            <button type="button" className="frd-prof-row" onClick={() => go('friendProfile', { me: true })}>
-              <span className="frd-prof-ic" aria-hidden="true"><Icon name="eye" size={20} /></span>
-              <span className="frd-row-mid"><b>{t('frd_who')}</b><small>{whoSub}</small></span>
-              <span className="chev" aria-hidden="true">›</span>
-            </button>
-          )}
-          {showBoards && (
-            <button type="button" className="frd-prof-row" onClick={() => go('boards')}>
-              <span className="frd-prof-ic" aria-hidden="true"><Icon name="chart" size={20} /></span>
-              <span className="frd-row-mid"><b>{t('board_prof_row')}</b><small>{t('board_prof_sub')}</small></span>
-              <span className="chev" aria-hidden="true">›</span>
-            </button>
-          )}
-        </section>
-
-        {showBoardsCard && (
-          <section className="card brd-card">
-            <b>{t('board_card_title')}</b>
-            <p className="small">{t('board_card_body')}</p>
-            <div className="brd-card-btns">
-              <button type="button" className="btn" onClick={() => setJoinOpen(true)}>{t('board_card_join')}</button>
-              <button type="button" className="btn ghost" onClick={() => hideBoardsCard()}>{t('board_card_not')}</button>
-            </div>
-          </section>
-        )}
-
-        {toClaim.map((id) => (
-          <button type="button" className="claim-banner" key={id} onClick={() => setSheet(id)}>
-            <Medal id={id} earned size={40} />
-            <span className="cb-text">
-              <b>{t('rw_banner', { amount: fmtNim(REWARDS[id].nim, lang) })}</b>
-              <small>{t('rw_banner_sub', { badge: t(`badge_${id}`) })}</small>
-            </span>
-            <span className="cb-pill">{t('rw_claim_pill')}</span>
-          </button>
-        ))}
+        <IdentityCard x={xp} name={name} walletAddress={walletAddress} look={look} accent={accentChoice(xp.level)} onRanks={() => setXpSheet('ranks')} />
 
         <section className="pstats">
           <div className="pstats-top">
@@ -215,15 +155,43 @@ export default function Profile({ badge: askedBadge, badgeAt, section, sectionAt
           </section>
         )}
 
-        <LevelCard x={xp} onRanks={() => setXpSheet('ranks')} onHow={() => setXpSheet('xp')} />
-
-        <section className="prof-look">
-          <button type="button" className="frd-prof-row lk-row" onClick={() => go('myLook')}>
-            <span className="frd-prof-ic" aria-hidden="true"><Icon name="sparkle" size={20} /></span>
-            <span className="frd-row-mid"><b>{t('look_title')}</b><small>{t('look_row_sub')}</small></span>
-            <span className="chev" aria-hidden="true">›</span>
-          </button>
+        <section className="prof-friends">
+          <h3 className="sec-head-h">{friendsEnabled() ? t('frd_title') : t('frd_item_wishlist')}</h3>
+          <div className="prof-group">
+            {friendsEnabled() && (
+              <button type="button" className="frd-prof-row" onClick={() => (friendsOn ? go('friends') : setTurnOnOpen(true))}>
+                <span className="frd-prof-ic" aria-hidden="true"><Icon name="users" size={20} /></span>
+                <span className="frd-row-mid"><b>{t('frd_title')}</b><small>{t('frd_row_sub')}</small></span>
+                {friendsOn
+                  ? <span className="frd-prof-right">{friendCount != null && <span className="frd-count">{friendCount}</span>}<span className="chev" aria-hidden="true">›</span></span>
+                  : <span className="frd-pill">{t('frd_off')}</span>}
+              </button>
+            )}
+            <button type="button" className="frd-prof-row" onClick={() => go('wishlist')}>
+              <span className="frd-prof-ic heart" aria-hidden="true"><Icon name="heartFilled" size={18} /></span>
+              <span className="frd-row-mid"><b>{t('frd_item_wishlist')}</b><small>{wlSub}</small></span>
+              <span className="chev" aria-hidden="true">›</span>
+            </button>
+            {showBoards && (
+              <button type="button" className="frd-prof-row" onClick={() => go('boards')}>
+                <span className="frd-prof-ic" aria-hidden="true"><Icon name="chart" size={20} /></span>
+                <span className="frd-row-mid"><b>{t('board_prof_row')}</b><small>{t('board_prof_sub')}</small></span>
+                <span className="chev" aria-hidden="true">›</span>
+              </button>
+            )}
+          </div>
         </section>
+
+        {showBoardsCard && (
+          <section className="card brd-card">
+            <b>{t('board_card_title')}</b>
+            <p className="small">{t('board_card_body')}</p>
+            <div className="brd-card-btns">
+              <button type="button" className="btn" onClick={() => setJoinOpen(true)}>{t('board_card_join')}</button>
+              <button type="button" className="btn ghost" onClick={() => hideBoardsCard()}>{t('board_card_not')}</button>
+            </div>
+          </section>
+        )}
 
         <QuestCard title={t('quests_title')} id="quests" />
 
@@ -247,6 +215,29 @@ export default function Profile({ badge: askedBadge, badgeAt, section, sectionAt
         </section>
 
         {showRewards && <RewardsCard badges={badges} goals={goals} onOpen={setSheet} />}
+
+        <section className="prof-settings">
+          <h3 className="sec-head-h">{t('prof_settings')}</h3>
+          <div className="prof-group">
+            {friendsOn && (
+              <button type="button" className="frd-prof-row" onClick={() => go('friendProfile', { me: true })}>
+                <span className="frd-prof-ic" aria-hidden="true"><Icon name="eye" size={20} /></span>
+                <span className="frd-row-mid"><b>{t('frd_who')}</b><small>{whoSub}</small></span>
+                <span className="chev" aria-hidden="true">›</span>
+              </button>
+            )}
+            <button type="button" className="frd-prof-row lk-row" onClick={() => go('myLook')}>
+              <span className="frd-prof-ic" aria-hidden="true"><Icon name="sparkle" size={20} /></span>
+              <span className="frd-row-mid"><b>{t('look_title')}</b><small>{t('look_row_sub')}</small></span>
+              <span className="chev" aria-hidden="true">›</span>
+            </button>
+            <button type="button" className="frd-prof-row" onClick={() => setXpSheet('xp')}>
+              <span className="frd-prof-ic" aria-hidden="true"><Icon name="bulb" size={20} /></span>
+              <span className="frd-row-mid"><b>{t('xp_how')}</b><small>{t('prof_xp_row_sub')}</small></span>
+              <span className="chev" aria-hidden="true">›</span>
+            </button>
+          </div>
+        </section>
       </main>
       {xpSheet === 'ranks' && <RanksSheet x={xp} onHow={() => setXpSheet('xp')} onClose={() => setXpSheet(null)} />}
       {xpSheet === 'xp' && <XpSheet x={xp} onClose={() => setXpSheet(null)} />}
@@ -428,8 +419,10 @@ function useLevelUp(x) {
   return plan ? view || startView(plan) : null
 }
 
-// Level card: the level in a coral hexagon, the rank, the XP bar and the next rank. Opens the Ranks sheet.
-function LevelCard({ x, onRanks, onHow }) {
+// Identity card (Profile layout B): the avatar in its rank frame, the name in its accent, "Level {n} · {rank}", the XP
+// bar with "{xp} / {need} XP" and the next rank, then the streak. Tapping it opens the Ranks sheet. It keeps the level-up
+// animation (useLevelUp): the bar fills and the level counts up. The old coral hexagon is gone; the avatar leads now.
+function IdentityCard({ x, name, walletAddress, look, accent, onRanks }) {
   const { t } = useApp()
   const v = useLevelUp(x)
   const level = v ? v.level : x.level
@@ -437,17 +430,15 @@ function LevelCard({ x, onRanks, onHow }) {
   const need = v ? v.need : x.need
   const pct = v ? v.pct : x.need ? Math.min(100, Math.round((x.into / x.need) * 100)) : 0
   return (
-    <section className="lvl">
+    <section className="lvl prof-id">
       <div className="lvl-card">
         <button type="button" className="lvl-main" onClick={onRanks}>
-          <span className="lvl-top">
-            <span className={`lvl-hex${v?.flip ? ' flip' : ''}`} aria-hidden="true">
-              <svg viewBox="-1 -1 29 26"><path d={HEX} fill="#E8482A" /></svg>
-              <b>{level}</b>
-            </span>
-            <span className="lvl-mid">
-              <small>{t('level_rank_small', { n: level })}</small>
-              <b>{t(`rank_${x.rank.id}`)}</b>
+          <span className="prof-id-top">
+            <Avatar address={walletAddress} size={60} className="prof-av" frame={look.frame}
+              fallback={name ? <span className="prof-avatar" aria-hidden="true">{name.charAt(0).toUpperCase()}</span> : null} />
+            <span className="prof-id-info">
+              {name && <span className={`prof-name ${accentClass(accent)}`}>{name}</span>}
+              <span className="prof-id-lvl">{t('level_n', { n: level })} · {t(`rank_${x.rank.id}`)}</span>
             </span>
             <span className="chev" aria-hidden="true">›</span>
           </span>
@@ -458,10 +449,6 @@ function LevelCard({ x, onRanks, onHow }) {
           </span>
         </button>
         <StreakRow rhythm={x.rhythm} />
-        <button type="button" className="lvl-how" onClick={onHow}>
-          <span>{t('xp_how')}</span>
-          <span className="chev" aria-hidden="true">›</span>
-        </button>
       </div>
     </section>
   )

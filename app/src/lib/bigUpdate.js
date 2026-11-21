@@ -1,8 +1,10 @@
-// The "big update" sheet decision (display only, pure). App.jsx shows WhatsNewSheet once per launch when the app has
-// moved to a newer release than the one the phone last saw, and that release's NEWS entry carries a `sheet` (lib/news.js).
-// The only saved pointer is dibs.bigSeen, the release ("1.2", "1.3"): set when onboarding finishes and every time the
-// sheet is closed. The `big` flag in news.js is unrelated (it lights the dot on More); the sheet is driven by `sheet`.
-// Everything here is pure and never throws, so a strange stored value or version can never break the launch.
+// The "big update" sheet decision (display only, pure). App.jsx shows WhatsNewSheet once per launch when the app has moved
+// past the version the phone last saw to a NEWS entry that carries a `sheet` (lib/news.js). The only saved pointer is
+// dibs.bigSeen, the FULL version of the last sheet seen ("1.7.1"): set when onboarding finishes (to the current version, so
+// a new user never sees one) and every time the sheet is closed (to the shown entry's version). An old stored value that is
+// only a release ("1.7") counts as its ".0" ("1.7.0"), so a phone that saw the 1.7.0 sheet still gets 1.7.1. The `big` flag
+// in news.js is unrelated (it lights the dot on More); the sheet is driven by `sheet`. Everything here is pure and never
+// throws, so a strange stored value or version can never break the launch.
 
 // The first two numbers of a version, as a release string. "1.3.0" -> "1.3", "1.2.7" -> "1.2", "1.3" -> "1.3",
 // "2.0.1" -> "2.0". Anything that is not two numbers (or more) -> null.
@@ -22,6 +24,31 @@ export function cmpRelease(a, b) {
   const am = pa[0] || 0; const bm = pb[0] || 0
   if (am !== bm) return am - bm
   return (pa[1] || 0) - (pb[1] || 0)
+}
+
+// A full version parsed to [major, minor, patch], a missing patch counting as 0 (so "1.7" == "1.7.0"). null on bad input.
+export function verParts(version) {
+  if (typeof version !== 'string') return null
+  const parts = version.split('.')
+  if (parts.length < 2) return null
+  const [a, b, c = '0'] = parts
+  if (![a, b, c].every((x) => /^\d+$/.test(x))) return null
+  return [Number(a), Number(b), Number(c)]
+}
+
+// Numeric compare of two full versions: >0 when a is newer. Bad input counts as [0,0,0]. "1.7" and "1.7.0" compare equal.
+export function cmpVer(a, b) {
+  const pa = verParts(a) || [0, 0, 0]
+  const pb = verParts(b) || [0, 0, 0]
+  for (let i = 0; i < 3; i++) if (pa[i] !== pb[i]) return pa[i] - pb[i]
+  return 0
+}
+
+// The full version the phone last saw: a valid stored version wins (a release like "1.7" counts as "1.7.0" via cmpVer);
+// missing or invalid on an onboarded phone counts as "1.2.0" (the release this mechanism shipped in); not onboarded: null.
+export function seenVer(stored, onboarded) {
+  if (!onboarded) return null
+  return verParts(stored) ? stored : '1.2.0'
 }
 
 // The release the phone last saw: the stored value when it is a valid release; when it is missing or invalid on a phone
@@ -51,27 +78,31 @@ export function catchUp14({ stored, seen14b, friendsEnabled, friendsState, onboa
     if (releaseOf(stored) !== '1.4') return null
     const entry = (Array.isArray(news) ? news : []).find((e) => e?.v === '1.4')
     if (!entry) return null
-    return { release: '1.4', entry, since: null }
+    return { version: entry.v, release: '1.4', entry, since: null }
   } catch {
     return null
   }
 }
 
+// The sheet to show at launch, or null. { version, release, entry, since }:
+//   entry   = the NEWEST NEWS entry that carries a non-empty `sheet`, whose version is newer than the one the phone last saw
+//             and not newer than the running app. No such entry -> null (App.jsx saves nothing, so it is retried next launch).
+//   version = entry.v, the full version to store as dibs.bigSeen when the sheet is closed.
+//   release = releaseOf(entry.v), for the sheet's version pill and title.
+//   since   = when other sheet-carrying entries sit strictly between the seen version and the shown one, the OLDEST of them
+//             as a release string ("And more since {since}"); otherwise null.
 export function bigSheetFor({ version, stored, onboarded, news } = {}) {
   try {
-    if (!onboarded) return null
-    const release = releaseOf(version)
-    if (!release) return null
-    const seen = seenOf(stored, onboarded)
-    if (cmpRelease(release, seen) <= 0) return null
+    if (!onboarded || !verParts(version)) return null
+    const seen = seenVer(stored, onboarded)
     const list = Array.isArray(news) ? news : []
-    const entry = list.find((e) => releaseOf(e?.v) === release && Array.isArray(e?.sheet) && e.sheet.length > 0)
-    if (!entry) return null
-    const between = list
-      .map((e) => releaseOf(e?.v))
-      .filter((r) => r && cmpRelease(r, seen) > 0 && cmpRelease(r, release) < 0)
-    const since = between.length ? between.slice().sort(cmpRelease)[0] : null
-    return { release, entry, since }
+    const candidates = list.filter((e) => Array.isArray(e?.sheet) && e.sheet.length > 0 && verParts(e?.v)
+      && cmpVer(e.v, seen) > 0 && cmpVer(e.v, version) <= 0)
+    if (!candidates.length) return null
+    const entry = candidates.slice().sort((a, b) => cmpVer(b.v, a.v))[0] // the newest one is shown
+    const between = candidates.filter((e) => cmpVer(e.v, entry.v) < 0) // other sheet entries between seen and shown
+    const since = between.length ? releaseOf(between.slice().sort((a, b) => cmpVer(a.v, b.v))[0].v) : null
+    return { version: entry.v, release: releaseOf(entry.v), entry, since }
   } catch {
     return null
   }
