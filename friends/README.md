@@ -47,6 +47,44 @@ Codes are data for the app to translate, never user-facing sentences.
 | `DELETE /v1/invites/:id` | device | receiver declines or sender cancels (silent) |
 | `DELETE /v1/friends/:id` | device | remove a friendship (silent on both sides) |
 | `GET /v1/users/:id` | device | that user's profile as I may see it (self / friend / stranger) |
+| `POST /v1/users/:id/wishes/:brandKey/claim` | device | call dibs on a friend's wish; `409 TAKEN`, `429 LIMIT`, else `404` |
+| `DELETE /v1/users/:id/wishes/:brandKey/claim` | device (giver) | release a claim in state claimed; `409 SENT` on a sent gift |
+| `POST /v1/users/:id/wishes/:brandKey/sent` | device (giver) | mark a claim as sent (from state claimed) |
+| `POST /v1/me/gifts/:brandKey/thanks` | device (owner) | say thanks for a gift in state sent (idempotent) |
+
+### Gifts: call dibs on a friend's wish (v1.4.3)
+
+A giver can call dibs on a brand on a friend's wishlist. They then save for that card **in their own account**, buy it
+exactly as any other card, and send the code to their friend with their phone's share sheet. The server never touches
+the money path and **never receives or stores a code, a PIN, a redemption link, a card value, a NIM amount, a goal id,
+an email or a wallet address**. It holds three facts only: **who called dibs on which brand of whose wishlist**, whether
+it was **marked as sent**, and whether **thanks** were said.
+
+A claim is keyed by `(owner id, brand key)` and holds `{ by: giver id, state: 'claimed' | 'sent', thanked }`.
+
+- **Claim** is allowed only when the caller and the owner are friends, the owner shares the wishlist (friends or
+  everyone), and the brand is on it. Any of the three failing gives the same `404 NOT_FOUND`, so nothing leaks. The
+  claim is atomic ("set if absent"): a wish already claimed by someone else is `409 TAKEN`; by the caller again it is
+  `200`. A giver may hold at most **10 open (state claimed) claims**; beyond that it is `429 LIMIT`.
+- **Release** (DELETE) lets the giver free a claim in state claimed. A sent gift cannot be released (`409 SENT`).
+- **Sent** moves a claim from claimed to sent (giver only).
+- **Thanks** sets `thanked` true on a gift in state sent (owner only); idempotent.
+
+**What each viewer receives:**
+
+- A **friend** viewing the owner (`GET /v1/users/:id`) gets, next to the unchanged `wishlist` array (old phones keep
+  working), a `wishes: { [brandKey]: { status, thanked? } }` object for the brands on the **visible** wishlist that have
+  a claim. `status` is from that viewer's own side: `mine` (I called dibs), `mine_sent` (I marked it sent, with
+  `thanked: true` once the owner thanked), `taken` (another friend called dibs) or `gifted` (another friend marked it
+  sent). It never says who the other giver is. A brand with no claim has no entry.
+- The **owner** (`GET /v1/me`, `GET /v1/me/as-friend`) gets **nothing about claims in state claimed** — so the surprise
+  holds. `GET /v1/me` gains `gifts: [{ brandKey, from: { id, name, seed }, thanked }]` for claims in **state sent only**.
+- A **stranger** gets nothing new.
+
+**Cleanup:** removing a friendship drops the claims in state claimed between the two (both directions); sent gifts stay.
+Deleting an account drops every claim and gift where the user is giver or owner. If the owner removes the brand from the
+wishlist or turns the wishlist off, the claim is kept but hidden (`wishes` lists visible brands only); a sent gift still
+shows in the owner's `gifts`.
 
 ### Request and response shapes
 
@@ -144,7 +182,8 @@ X-Dibs-Sig= 7e13e7b804b8adaf6dc02cb3b59dba573d3929c86414d59a3f56c6fe279561e85cd4
 Stored (keys prefixed `fr:`): the user record (`id`, `code`, `name`, device public keys, visibility map, `look`,
 and `walletKey`), the shared data for on items (which from v1.4.2 may include an avatar image the user shared, their
 saved/earned NIM totals, and the face value of goals and cards), friendships with a `since`, invites, the code→id
-and walletKey→id links, and short-lived nonces. **Never stored, whatever the settings:** a wallet address in clear,
+and walletKey→id links, short-lived nonces, and (v1.4.3) gift claims — `(owner id, brand key) -> { by, state, thanked }`
+and nothing else. **Never stored, whatever the settings:** a wallet address in clear,
 a wallet balance, a wallet public key, a gift card code, a PIN, an email, a transaction hash, a deposit, or an IP
 address. NIM amounts are stored only when the user turns on totals, goals or cards; before v1.4.2 they were never
 stored at all.

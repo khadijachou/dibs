@@ -20,6 +20,7 @@ import { duplicateMessage, duplicateText, needsChainRead } from '../lib/duplicat
 import { useDuplicateText } from '../components/useDuplicateText.js'
 import { readyTimeText } from '../components/ReleaseClock.jsx'
 import { fmtCompact, minsSince, pickPlanItem, planWeeks, timelineDots, walletPct } from './planView.js'
+import { claim as claimWish, setGift } from '../lib/gifts.js'
 
 // The two rows of the facts card (v1.0.9): a rising line with an arrow (earning) and a clock (the wait).
 const GrowIcon = () => (
@@ -71,9 +72,13 @@ function PlanTimeline({ days, left, right }) {
 // or the old { itemId }. The value is not picked here any more: Back goes to the sheet's catalogue.
 // changeFor: swap this goal's card instead of creating a goal (its card is no longer available). The goal keeps its
 // deposits, saved NIM, deadline and history; only the card and the target (today's price) change. No transaction.
-export default function Plan({ brandKey, region = null, itemId, moveFrom = null, changeFor = null }) {
-  const { t, lang, address, balance, prices, back, reset, toast } = useApp()
+export default function Plan({ brandKey, region = null, itemId, moveFrom = null, changeFor = null, giftFor = null }) {
+  const { t, lang, address, balance, prices, back, reset, toast, go } = useApp()
   const fiat = useFiat()
+  const [claiming, setClaiming] = useState(false) // waiting on the gift claim before the goal is made
+  const [giftErr, setGiftErr] = useState(null) // 'taken' | 'fail'
+  const [giftNotice, setGiftNotice] = useState(null) // the gift notice element, scrolled into view when it appears
+  useEffect(() => { if (giftErr && giftNotice) giftNotice.scrollIntoView({ behavior: 'smooth', block: 'center' }) }, [giftErr, giftNotice])
   const changing = changeFor ? getGoal(address, changeFor) : null
   const fromItem = itemId ? findItem(itemId) : null
   const key = brandKey || brandOf(fromItem)?.key
@@ -117,8 +122,19 @@ export default function Plan({ brandKey, region = null, itemId, moveFrom = null,
     reset('goal', { goalId: g.id })
   }
 
+  // Make the goal exactly as today, then (for a gift) remember who it is for. This block is byte-for-byte the normal
+  // create path; the gift claim is the one guarded step added before it.
+  const makeGoal = () => {
+    playPop() // the Dibs! stamp, from this tap
+    const goal = createGoal(address, { item, targetNim, deadline, brand: b, nimUsd: prices.nimUsd })
+    track('goal_created', { goalId: goal.id, brand: b?.key || undefined, itemId: item.id, usd: item.usd, weeks })
+    if (giftFor) setGift(goal.id, { friendId: giftFor.id, name: giftFor.name, brandKey: key, state: 'claimed' })
+    reset('goal', { goalId: goal.id, created: true, moveFrom })
+  }
+
   const create = () => {
     // One open goal per card (10 Nov: a goal created again after a reinstall sat next to the recovered one at 0 %).
+    // Runs before any claim: if a goal for this card is already open, today's behaviour runs and no claim is made.
     const existing = openGoalFor(listGoals(address), item.id)
     if (existing) {
       reset('goal', { goalId: existing.id })
@@ -127,10 +143,14 @@ export default function Plan({ brandKey, region = null, itemId, moveFrom = null,
       if (needsChainRead(existing)) getUnlockState(existing, address).then(say, () => say(null)); else say(null)
       return
     }
-    playPop() // the Dibs! stamp, from this tap
-    const goal = createGoal(address, { item, targetNim, deadline, brand: b, nimUsd: prices.nimUsd })
-    track('goal_created', { goalId: goal.id, brand: b?.key || undefined, itemId: item.id, usd: item.usd, weeks })
-    reset('goal', { goalId: goal.id, created: true, moveFrom })
+    if (giftFor) {
+      // Call dibs on the server first: only a 200 creates the goal. 409 TAKEN or any failure creates nothing.
+      setClaiming(true); setGiftErr(null)
+      claimWish(giftFor.id, key).then(() => { setClaiming(false); makeGoal() })
+        .catch((e) => { setClaiming(false); setGiftErr(e?.friendsError === 'TAKEN' ? 'taken' : 'fail') })
+      return
+    }
+    makeGoal()
   }
 
   const tipVars = { amount: fmtNim(weekly, lang), date: fmtDate(deadline, lang) }
@@ -147,6 +167,7 @@ export default function Plan({ brandKey, region = null, itemId, moveFrom = null,
             <h2 className="title">{itemLabel(t, item)}</h2>
           </div>
         </div>
+        {!changing && giftFor && !giftErr && <p className="plan-gift-line">{t('frd_gift_for_line', { name: giftFor.name })}</p>}
         <div className="plan-meta">
           <div><span>{t('about_region')}</span><b>{regionKey ? t(`region_${regionKey}`) : '-'}</b></div>
           <div><span>{t('about_delivered')}</span><b>{b?.delivers ? t(`delivers_${b.delivers}`) : '-'}</b></div>
@@ -188,6 +209,14 @@ export default function Plan({ brandKey, region = null, itemId, moveFrom = null,
             <div className="hint"><Bold text={tip} /></div>
           </section>
         )}
+        {(giftErr === 'taken' || giftErr === 'fail') && (
+          <div ref={setGiftNotice} className="plan-gift-notice">
+            {giftErr === 'taken' && (
+              <Notice tone="info" title={t('frd_gift_taken_now')} actions={[{ label: t('frd_gift_back', { name: giftFor.name }), onClick: () => go('friendProfile', { id: giftFor.id }) }]} />
+            )}
+            {giftErr === 'fail' && <Notice tone="info" title={t('frd_gift_unreachable')} />}
+          </div>
+        )}
         {/* v1.0.9: one card, two rows (earning, then the wait). Own class names: .facts/.fact stay as they are on Done. */}
         <div className="plan-facts">
           <div className="pf-row">
@@ -205,7 +234,7 @@ export default function Plan({ brandKey, region = null, itemId, moveFrom = null,
           )}
           {changing
             ? <button type="button" className="btn tall" disabled={Boolean(taken)} onClick={switchCard}>{t('change_cta')}<small>{t('change_cta_sub')}</small></button>
-            : <button type="button" className="btn" onClick={create}>{t('plan_create')}</button>}
+            : <button type="button" className="btn" disabled={claiming || giftErr === 'taken'} onClick={create}>{claiming ? t('splash_loading') : t('plan_create')}</button>}
         </div>
       </main>
     </>

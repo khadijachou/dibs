@@ -9,23 +9,42 @@ import { badgeById } from '../lib/badges.js'
 import { NAME_MAX } from '../lib/name.js'
 import { fmtNim } from '../lib/format.js'
 import { useXp } from '../lib/useXp.js'
+import BrandSheet from '../components/BrandSheet.jsx'
 import {
-  ThreeWay, ConfirmSheet, AmountConsentSheet, PrivateLine, Skeleton, FriendNotice, brandByKey,
+  ThreeWay, ConfirmSheet, AmountConsentSheet, PrivateLine, Skeleton, FriendNotice, brandByKey, WishPill,
 } from '../components/FriendsParts.jsx'
 import { getState, getVis, patchMe, syncQuiet, turnOff, loadProfile, loadAsFriend, removeFriend } from '../lib/friends.js'
+import { giftGoalIds, giftOf, setThanked } from '../lib/gifts.js'
+import { listGoals } from '../lib/goals.js'
 
 const fmtSince = (iso, lang) => { try { return new Intl.DateTimeFormat(lang, { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(iso)) } catch { return '' } }
 
+// The still-existing gift goal I created for this friend and brand, if any (so a "You called dibs" row can open it).
+function findGiftGoal(address, friendId, brandKey) {
+  const ids = new Set(listGoals(address).map((g) => g.id))
+  for (const id of giftGoalIds()) {
+    const tag = giftOf(id)
+    if (tag && tag.friendId === friendId && tag.brandKey === brandKey && ids.has(id)) return id
+  }
+  return null
+}
+
 // The cards a friend profile shows, in order: Saved and earned, Active goals, Badges, Cards bought, Wishlist.
 // Only the items present in the response. Unknown brand keys are skipped. Amounts are in the viewer's language, NIM only.
-function ProfileCards({ profile }) {
-  const { t, lang } = useApp()
+// friend = { id, name } when this is a real friend's profile: then each wish row gets a gift pill from profile.wishes.
+// The "see it as a friend" preview and my own Wishlist pass no friend, so they never show a pill.
+function ProfileCards({ profile, friend = null }) {
+  const { t, lang, go, address } = useApp()
+  const [giftBrand, setGiftBrand] = useState(null) // the brand whose BrandSheet is open for a new gift
   const totals = profile.totals && Number.isFinite(profile.totals.saved) ? profile.totals : null
   const badges = (profile.badges || []).filter((id) => badgeById(id))
   const wishlist = (profile.wishlist || []).map(brandByKey).filter(Boolean)
   const cards = (profile.cards || []).map((c) => ({ b: brandByKey(c?.brandKey), value: c?.value })).filter((c) => c.b)
   const goals = (profile.goals || []).filter((g) => brandByKey(g.brandKey))
   const hasEarned = totals && Number.isFinite(totals.earned)
+  const wishes = (friend && profile.wishes) || {}
+  // Call dibs: pick a version and value on the brand sheet, then open Plan as a gift (nothing is sent to the server yet).
+  const pickGift = (region, itemId) => { const brandKey = giftBrand.key; setGiftBrand(null); go('plan', { brandKey, region, itemId, giftFor: { id: friend.id, name: profile.name } }) }
   return (
     <>
       {totals && (
@@ -71,11 +90,24 @@ function ProfileCards({ profile }) {
       {wishlist.length > 0 && (
         <section className="card frd-card">
           <div className="sec-head"><h3>{t('frd_item_wishlist')} · {wishlist.length}</h3></div>
-          {wishlist.map((b) => (
-            <div className="frd-brand-row" key={b.key}><BrandLogo brand={b} className="frd-brand-logo" /><span className="frd-row-mid"><b>{b.name}</b><small>{t('ob_gift')}</small></span></div>
-          ))}
+          {wishlist.map((b) => {
+            const w = wishes[b.key]
+            const status = w?.status
+            const mineGoalId = friend && status === 'mine' ? findGiftGoal(address, friend.id, b.key) : null
+            const inner = (
+              <>
+                <BrandLogo brand={b} className="frd-brand-logo" />
+                <span className="frd-row-mid"><b>{b.name}</b><small>{t('ob_gift')}</small></span>
+                {friend && <WishPill status={status} thanked={w?.thanked} name={profile.name} onCall={() => setGiftBrand(b)} />}
+              </>
+            )
+            return mineGoalId
+              ? <button type="button" className="frd-brand-row frd-wish-open" key={b.key} onClick={() => go('goal', { goalId: mineGoalId })}>{inner}</button>
+              : <div className="frd-brand-row" key={b.key}>{inner}</div>
+          })}
         </section>
       )}
+      {giftBrand && <BrandSheet brand={giftBrand} onClose={() => setGiftBrand(null)} onPick={pickGift} />}
     </>
   )
 }
@@ -99,13 +131,22 @@ function ProfileHead({ profile, since, banner }) {
 
 // ---- a friend's profile -------------------------------------------------------------------------------------
 function FriendProfileView({ id, since }) {
-  const { t, back } = useApp()
+  const { t, back, address } = useApp()
   const [profile, setProfile] = useState(null)
   const [err, setErr] = useState(false)
   const [loading, setLoading] = useState(true)
   const [confirm, setConfirm] = useState(false)
 
-  const load = () => { setErr(false); setLoading(true); loadProfile(id).then((p) => { setProfile(p); setLoading(false) }).catch(() => { setErr(true); setLoading(false) }) }
+  const load = () => {
+    setErr(false); setLoading(true)
+    loadProfile(id).then((p) => {
+      setProfile(p); setLoading(false)
+      // Persist a friend's thanks onto the local gift tag, so the code screen can show "{name} says thanks" too.
+      for (const [brandKey, v] of Object.entries(p.wishes || {})) {
+        if (v?.status === 'mine_sent' && v.thanked) { const gid = findGiftGoal(address, id, brandKey); if (gid) setThanked(gid) }
+      }
+    }).catch(() => { setErr(true); setLoading(false) })
+  }
   useEffect(load, [id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
@@ -117,7 +158,7 @@ function FriendProfileView({ id, since }) {
         {profile && (
           <>
             <ProfileHead profile={profile} since={since} />
-            <ProfileCards profile={profile} />
+            <ProfileCards profile={profile} friend={{ id, name: profile.name }} />
             <PrivateLine name={profile.name} hidden={profile.hidden} />
             <button type="button" className="frd-muted-link" onClick={() => setConfirm(true)}>{t('frd_remove')}</button>
           </>

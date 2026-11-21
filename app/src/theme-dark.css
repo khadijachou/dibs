@@ -1842,6 +1842,35 @@ html.is-fullscreen .bstamp-live { top: calc(58px + var(--fs-top)); }
 .frd-brand-row, .frd-goal-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; }
 .frd-brand-row + .frd-brand-row, .frd-goal-row + .frd-goal-row { border-top: 1px solid var(--line); }
 .frd-brand-row .blogo, .frd-goal-row .blogo, .frd-logo-wrap .blogo { width: 40px; height: 40px; border-radius: 10px; }
+/* Gift (v1.4.3): the wish-row right slot. Coral call-to-action, grey pill for a taken/gifted wish, quiet lines. */
+.frd-wish-open { width: 100%; background: none; border: 0; cursor: pointer; font: inherit; color: inherit; text-align: left; padding: 8px 0; }
+.frd-wish-open + .frd-brand-row, .frd-brand-row + .frd-wish-open, .frd-wish-open + .frd-wish-open { border-top: 1px solid var(--line); }
+.frd-gift-cta { margin-left: auto; flex-shrink: 0; background: #E8482A; color: #fff; border: 0; border-radius: 999px; padding: 6px 12px; font-size: var(--fs-label); font-weight: 600; white-space: nowrap; cursor: pointer; }
+.frd-gift-mine { margin-left: auto; flex-shrink: 0; color: var(--muted); font-size: var(--fs-label); white-space: nowrap; }
+.frd-brand-row .frd-pill { margin-left: auto; flex-shrink: 0; }
+.frd-gift-sent { margin-left: auto; flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.frd-gift-sent .frd-pill { margin-left: 0; }
+.frd-gift-thanks { color: var(--teal); font-size: var(--fs-meta); white-space: nowrap; }
+/* The "For {name}" pill at the start of a goal's date line (Home hero, Home wallet cards, Goal details). Butter. */
+.gift-pill { display: inline-block; background: #FFC94D; color: #23212B; border-radius: 999px; padding: 0 7px; margin-right: 6px; font-size: var(--fs-meta); font-weight: 700; line-height: 1.6; white-space: nowrap; vertical-align: baseline; }
+/* The gift note under the plan title (v1.4.3): a butter-tinted line in the page flow (not the sticky bottom), so it
+   never draws over the content scrolling behind it. Wraps cleanly. */
+.plan-gift-line { margin: 2px 0 0; padding: 8px 12px; border-radius: 12px; background: var(--gold-soft); color: var(--cream); font-size: var(--fs-label); line-height: 1.4; }
+.plan-gift-notice { margin-bottom: 12px; }
+/* The Send card on the code screen (Done): note field, the share preview, the marked-sent line. */
+.gift-send .gift-note { width: 100%; box-sizing: border-box; resize: none; margin-top: 4px; border: 1px solid var(--line); border-radius: 12px; background: var(--card-2); color: var(--cream); padding: 10px 12px; font: inherit; }
+.gift-preview { margin: 10px 0; padding: 10px 12px; border-radius: 12px; background: var(--card-2); border: 1px solid var(--line); display: flex; flex-direction: column; gap: 4px; word-break: break-word; }
+.gift-preview p { margin: 0; }
+.gift-pre-note { color: var(--cream); }
+.gift-pre-card { color: var(--muted); font-size: var(--fs-label); }
+.gift-pre-code { font-weight: 700; letter-spacing: .05em; color: var(--cream); }
+.gift-sent-ok { color: var(--teal); font-weight: 600; margin-top: 8px; }
+/* A received gift on my Wishlist: mint pill, "Got it, from {name}", and Say thanks -> Thanks sent. */
+.frd-pill-mint { background: var(--teal-soft); color: var(--teal); border-color: var(--teal-deep); }
+.frd-gift-got { margin-left: auto; flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+.frd-gift-got-line { color: var(--muted); font-size: var(--fs-meta); white-space: nowrap; }
+.frd-gift-thx { background: none; border: 0; color: #E8482A; font: inherit; font-weight: 600; font-size: var(--fs-label); cursor: pointer; padding: 0; }
+.frd-gift-thx-done { color: var(--teal); font-size: var(--fs-label); font-weight: 600; }
 .frd-logo-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
 .frd-goalbar { display: block; height: 6px; border-radius: 999px; background: var(--line); overflow: hidden; margin-top: 6px; }
 .frd-goalbar i { display: block; height: 100%; background: var(--gold); border-radius: 999px; }

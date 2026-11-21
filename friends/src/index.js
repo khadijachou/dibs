@@ -10,10 +10,13 @@ import {
   verifyWalletSignature, verifyDeviceSignature, addressOf, walletKey, randomId, friendCode, sha256hex, isHex64, CODE_RE,
 } from './crypto.js'
 import {
-  cleanName, cleanVisibility, cleanLook, fullVisibility, applyShared, pruneShared, visibleProfile, sharesNothing, sharedHasError,
+  cleanName, cleanVisibility, cleanLook, fullVisibility, applyShared, pruneShared, visibleProfile, sharesNothing, sharedHasError, wishesFor,
 } from './rules.js'
+import {
+  MAX_OPEN_CLAIMS, claim, release, markSent, thank, ownerClaims, sentGifts, dropClaimedBetween, dropAllFor, openClaimCount,
+} from './gifts.js'
 
-export const VERSION = '1.4.2'
+export const VERSION = '1.4.3'
 const AVATAR_ROW_CAP = 50 // avatars travel on at most the first 50 friend rows (size guard)
 
 const MINUTE = 60_000
@@ -203,11 +206,22 @@ export function makeApp(store, env = process.env) {
 
   // ---- me -----------------------------------------------------------------------------------------------------
 
+  // The gifts the owner has received: state 'sent' only (never a claim in state 'claimed', so the surprise holds),
+  // each with the giver's identity. [{ brandKey, from: { id, name, seed }, thanked }].
+  async function giftsReceived(ownerId) {
+    const out = []
+    for (const g of await sentGifts(store, ownerId)) {
+      const from = await loadUser(g.by)
+      if (from) out.push({ brandKey: g.brandKey, from: { id: from.id, name: from.name, seed: from.id }, thanked: g.thanked })
+    }
+    return out
+  }
+
   app.get('/v1/me', async (c) => {
     const u = c.get('user')
     const shared = await loadShared(u.id)
     const prof = visibleProfile({ id: u.id, name: u.name, visibility: u.visibility, shared, look: u.look }, 'self')
-    return c.json({ ...prof, code: u.code })
+    return c.json({ ...prof, code: u.code, gifts: await giftsReceived(u.id) })
   })
 
   app.get('/v1/me/as-friend', async (c) => {
@@ -249,6 +263,7 @@ export function makeApp(store, env = process.env) {
     for (const f of await store.smembers(friendsKey(id))) { await store.srem(friendsKey(f), id); await store.del(sinceKey(f, id), sinceKey(id, f)) }
     for (const iid of await store.smembers(inboxKey(id))) { const inv = await store.get(invKey(iid)); if (inv) { await store.srem(sentKey(inv.from), iid); await store.del(pairKey(inv.from, inv.to)) } await store.del(invKey(iid)) }
     for (const iid of await store.smembers(sentKey(id))) { const inv = await store.get(invKey(iid)); if (inv) { await store.srem(inboxKey(inv.to), iid); await store.del(pairKey(inv.from, inv.to)) } await store.del(invKey(iid)) }
+    await dropAllFor(store, id) // every claim and gift where this user is giver or owner
     await store.del(friendsKey(id), inboxKey(id), sentKey(id), wkKey(u.wk), codeKey(u.code), sharedKey(id), uKey(id))
     return c.json({ ok: true })
   })
@@ -372,6 +387,7 @@ export function makeApp(store, env = process.env) {
     await store.srem(friendsKey(me), fid)
     await store.srem(friendsKey(fid), me)
     await store.del(sinceKey(me, fid), sinceKey(fid, me))
+    await dropClaimedBetween(store, me, fid) // claims in state 'claimed' between the two go; sent gifts stay
     return c.json({ ok: true })
   })
 
@@ -384,7 +400,66 @@ export function makeApp(store, env = process.env) {
     if (!u) return c.json({ error: 'NOT_FOUND' }, 404)
     const rel = id === me ? 'self' : (await store.sismember(friendsKey(me), id)) ? 'friend' : 'stranger'
     const shared = await loadShared(id)
-    return c.json(visibleProfile({ id: u.id, name: u.name, visibility: u.visibility, shared, look: u.look }, rel))
+    const prof = visibleProfile({ id: u.id, name: u.name, visibility: u.visibility, shared, look: u.look }, rel)
+    // A friend viewing the owner also learns the status of each wish on the owner's visible wishlist, from their own
+    // side only. Never on the owner's own views (self) or a stranger's: the surprise holds. visibleProfile only
+    // exposes `wishlist` when its visibility is friends/everyone, so `prof.wishlist` is the visible list.
+    if (rel === 'friend' && Array.isArray(prof.wishlist) && prof.wishlist.length) {
+      prof.wishes = wishesFor(prof.wishlist, await ownerClaims(store, id), me)
+    }
+    return c.json(prof)
+  })
+
+  // ---- gifts: call dibs on a friend's wish --------------------------------------------------------------------
+  // A claim = (owner id, brand key) -> { by: giver id, state: 'claimed' | 'sent', thanked }. The giver saves for the
+  // card in their OWN account and sends the code themselves; the server never sees a code, a value or an amount.
+
+  const BRAND_RE = /^[a-z0-9_-]{1,32}$/
+
+  // Can `me` call dibs on `owner`'s wish for `brand`? Allowed only when they are friends, the owner shares the
+  // wishlist (friends or everyone) and the brand is on it. Any failure is the same 404, so nothing leaks.
+  async function canClaim(me, owner, brand) {
+    if (!BRAND_RE.test(brand) || owner === me) return false
+    const u = await loadUser(owner)
+    if (!u) return false
+    if (!(await store.sismember(friendsKey(me), owner))) return false
+    if (fullVisibility(u.visibility).wishlist === 'off') return false
+    const shared = await loadShared(owner)
+    return Array.isArray(shared.wishlist) && shared.wishlist.includes(brand)
+  }
+
+  app.post('/v1/users/:id/wishes/:brandKey/claim', async (c) => {
+    const me = c.get('me')
+    const owner = c.req.param('id')
+    const brand = c.req.param('brandKey')
+    if (!(await canClaim(me, owner, brand))) return c.json({ error: 'NOT_FOUND' }, 404)
+    const r = await claim(store, owner, brand, me)
+    if (r === 'taken') return c.json({ error: 'TAKEN' }, 409)
+    if (r === 'again') return c.json({ ok: true, state: 'claimed' }) // idempotent for the same giver
+    if ((await openClaimCount(store, me)) > MAX_OPEN_CLAIMS) { await release(store, owner, brand, me); return c.json({ error: 'LIMIT' }, 429) }
+    return c.json({ ok: true, state: 'claimed' })
+  })
+
+  app.delete('/v1/users/:id/wishes/:brandKey/claim', async (c) => {
+    const me = c.get('me')
+    const r = await release(store, c.req.param('id'), c.req.param('brandKey'), me)
+    if (r === 'not_found') return c.json({ error: 'NOT_FOUND' }, 404)
+    if (r === 'sent') return c.json({ error: 'SENT' }, 409) // a sent gift cannot be released
+    return c.json({ ok: true })
+  })
+
+  app.post('/v1/users/:id/wishes/:brandKey/sent', async (c) => {
+    const me = c.get('me')
+    const r = await markSent(store, c.req.param('id'), c.req.param('brandKey'), me)
+    if (r === 'not_found') return c.json({ error: 'NOT_FOUND' }, 404)
+    return c.json({ ok: true, state: 'sent' })
+  })
+
+  app.post('/v1/me/gifts/:brandKey/thanks', async (c) => {
+    const me = c.get('me')
+    const r = await thank(store, me, c.req.param('brandKey'))
+    if (r === 'not_found') return c.json({ error: 'NOT_FOUND' }, 404)
+    return c.json({ ok: true, thanked: true })
   })
 
   app.notFound((c) => c.json({ error: 'NOT_FOUND' }, 404))

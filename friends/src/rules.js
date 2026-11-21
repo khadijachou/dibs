@@ -182,3 +182,29 @@ export function visibleProfile(owner, viewerRelation) {
 
 // True when the owner shares none of the seven items with a friend (all off).
 export const sharesNothing = (visibility) => ITEMS.every((k) => fullVisibility(visibility)[k] === 'off')
+
+// The wishes map a GIVEN viewer sees of an owner: for each brand on the owner's VISIBLE wishlist that has a claim,
+// its status from that viewer's own side. Never who the other giver is. Brands with no claim are left out (the app
+// then shows "Call dibs on it"). This is only ever computed for a real friend viewing the owner (GET /v1/users/:id):
+// it is deliberately NOT part of visibleProfile, so the owner's own views (GET /v1/me, /v1/me/as-friend) stay free
+// of any sign of a claim and the surprise holds.
+//   wishlist: the brand keys on the owner's visible wishlist (shared.wishlist).
+//   claims:   { [brandKey]: { by, state, thanked } } for that owner.
+//   viewerId: the giver looking.
+// Each value is an object { status } (plus thanked: true on a thanked 'mine_sent'):
+//   'mine'       I called dibs (state claimed)      'mine_sent'  I marked it sent
+//   'taken'      another friend called dibs          'gifted'     another friend marked it sent
+export function wishesFor(wishlist, claims, viewerId) {
+  const out = {}
+  if (!Array.isArray(wishlist)) return out
+  for (const brand of wishlist) {
+    const rec = claims?.[brand]
+    if (!rec) continue
+    if (rec.by === viewerId) {
+      out[brand] = rec.state === 'sent' ? { status: 'mine_sent', ...(rec.thanked ? { thanked: true } : {}) } : { status: 'mine' }
+    } else {
+      out[brand] = { status: rec.state === 'sent' ? 'gifted' : 'taken' }
+    }
+  }
+  return out
+}

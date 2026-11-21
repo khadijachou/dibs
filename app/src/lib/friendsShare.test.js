@@ -104,3 +104,18 @@ test('no payload field contains the wallet address', () => {
   const s = JSON.stringify(body)
   assert.ok(!s.includes('NQ'))
 })
+
+test('gift goals are excluded from both goals and cards (they stay a surprise)', () => {
+  const body = sharedPayload({
+    visibility: { cards: 'friends', goals: 'friends' },
+    giftGoalIds: ['gift-saving', 'gift-bought'],
+    goals: [
+      goal({ id: 'mine', status: 'saving', brandKey: 'steam', targetNim: 100, deposits: [{ nim: 30 }] }),
+      goal({ id: 'gift-saving', status: 'saving', brandKey: 'netflix', targetNim: 100, deposits: [{ nim: 60 }] }), // hidden
+      goal({ id: 'own-card', status: 'redeemed', brandKey: 'amazon' }),
+      goal({ id: 'gift-bought', status: 'redeemed', brandKey: 'apple' }), // hidden
+    ],
+  })
+  assert.deepEqual(body.goals, [{ brandKey: 'steam', pct: 30 }])
+  assert.deepEqual(body.cards, [{ brandKey: 'amazon' }])
+})

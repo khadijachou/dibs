@@ -13,6 +13,7 @@ import { BADGES, getBadges } from './badges.js'
 import { listGoals } from './goals.js'
 import { profileStats } from './profileStats.js'
 import { sharedPayload } from './friendsShare.js'
+import { giftGoalIds, reconcile, clearAll as clearGifts } from './gifts.js'
 
 const TIMEOUT_MS = 6000 // most calls
 export const REGISTER_TIMEOUT_MS = 45000 // the server can take up to ~50 s to answer the first request after idle
@@ -170,6 +171,7 @@ export async function turnOn(name) {
 export async function turnOff({ deleteProfile } = {}) {
   if (deleteProfile) await request('DELETE', '/v1/me')
   clearAll()
+  clearGifts() // the local gift tags go too (the server dropped the claims on delete)
   notify()
 }
 
@@ -229,6 +231,7 @@ async function gatherAvatar(walletAddress) {
 
 export async function syncShared(address, walletAddress) {
   if (!isOn() || !config.friendsUrl) return null
+  await reconcile(listGoals(address)) // drop and release claims whose gift goal is gone, withdrawn or changed card
   const vis = getVis()
   const on = (k) => vis[k] === 'friends' || vis[k] === 'everyone'
   const s = xpSummary({ goals: listGoals(address), badges: getBadges() })
@@ -237,7 +240,7 @@ export async function syncShared(address, walletAddress) {
   const avatar = on('avatar') ? await gatherAvatar(walletAddress) : undefined
   const body = sharedPayload({
     visibility: vis, xp: { level: s.level, rank: s.rank.id }, badges: earnedBadges,
-    goals: listGoals(address), wishlist: getWishlist(), saved, earned, avatar,
+    goals: listGoals(address), wishlist: getWishlist(), saved, earned, avatar, giftGoalIds: giftGoalIds(),
   })
   return request('PUT', '/v1/me/shared', body)
 }

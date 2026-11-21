@@ -5,6 +5,7 @@ import { detailText, itemLabel } from '../lib/itemName.js'
 import { BrandLogo, CREAM, Header, DibsMark, useFiat } from '../components/ui.jsx'
 import { fmtFiatValue } from '../lib/fiatValue.js'
 import { listGoals, progress, savedNim } from '../lib/goals.js'
+import { giftOf } from '../lib/gifts.js'
 import { BRANDS, catalogBrands, brandOf } from '../lib/brands.js'
 import { findItem } from '../lib/catalog.js'
 import { planOf } from '../lib/pace.js'
@@ -393,6 +394,7 @@ function useReleaseDue(goal) {
 // Checked before paint and again when the card's width changes. Screen readers always get the date and the days
 // left (hidden visually in form 2); the label is aria-hidden, the dot's aria-label says it in full.
 function DateLine({ goal, date, days }) {
+  const { t } = useApp()
   const ref = useRef(null)
   const pace = goalPace(goal)
   const tone = pace ? `${pace.tone}${pace.lagWeeks}` : ''
@@ -421,7 +423,8 @@ function DateLine({ goal, date, days }) {
     ro.observe(row)
     return () => ro.disconnect()
   }, [date, days, tone])
-  return <div ref={ref} className="t2 dl">{date}<span className="dl-days"> · {days}</span><GoalDotLabel goal={goal} /></div>
+  const gift = giftOf(goal.id)
+  return <div ref={ref} className="t2 dl">{gift && <span className="gift-pill">{t('frd_gift_for', { name: gift.name })}</span>}{date}<span className="dl-days"> · {days}</span><GoalDotLabel goal={goal} /></div>
 }
 
 // The goal card's Add button with its small caption (v1.0.8, display only). The caption shows only when it fits on one

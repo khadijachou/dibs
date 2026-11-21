@@ -20,9 +20,12 @@ const withValue = (brandKey, value) => (value ? { brandKey, value } : { brandKey
 
 // visibility: the owner's map. xp: { level, rank }. badges: earned ids. goals: the ledger. wishlist: brand keys.
 // saved/earned: whole-NIM numbers for totals (earned may be null = unknown, then it is omitted). avatar: a data URL.
-export function sharedPayload({ visibility = {}, xp = null, badges = [], goals = [], wishlist = [], saved = null, earned = null, avatar = null } = {}) {
+// giftGoalIds: ids of goals a friend called dibs on; they are a surprise for someone else, so they never appear in my
+// shared active goals or bought cards (the friend must not see "Steam 20 USD" turn up in my profile).
+export function sharedPayload({ visibility = {}, xp = null, badges = [], goals = [], wishlist = [], saved = null, earned = null, avatar = null, giftGoalIds = [] } = {}) {
   const on = (k) => visibility[k] === 'friends' || visibility[k] === 'everyone'
-  const list = Array.isArray(goals) ? goals : []
+  const gift = new Set(Array.isArray(giftGoalIds) ? giftGoalIds : [])
+  const list = (Array.isArray(goals) ? goals : []).filter((g) => !gift.has(g?.id)) // gift goals stay a surprise
   const body = {}
 
   if (on('avatar') && typeof avatar === 'string' && avatar.startsWith('data:image/')) body.avatar = avatar

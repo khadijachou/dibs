@@ -85,6 +85,29 @@ export function PersonRow({ avatar, name, sub, right, onClick }) {
     : <div className="frd-row">{inner}</div>
 }
 
+// The right-slot of a wish row on a friend's profile. status comes from the server's wishes map (from my own side):
+//   undefined  a coral "Call dibs on it" button (opens the brand sheet to start a gift)
+//   'mine'     a quiet "You called dibs" line (the row itself opens the goal, handled by the parent)
+//   'taken'    a grey "Someone's on it" pill (another friend called dibs; not tappable, never who)
+//   'mine_sent' "Gifted", plus "{name} says thanks" once the friend thanked
+//   'gifted'   a grey "Gifted" pill (another friend marked it sent)
+export function WishPill({ status, thanked, name, onCall }) {
+  const { t } = useApp()
+  if (!status) return <button type="button" className="frd-gift-cta" onClick={onCall}>{t('frd_gift_call')}</button>
+  if (status === 'mine') return <span className="frd-gift-mine">{t('frd_gift_mine')}</span>
+  if (status === 'taken') return <span className="frd-pill">{t('frd_gift_taken')}</span>
+  if (status === 'gifted') return <span className="frd-pill">{t('frd_gift_gifted')}</span>
+  if (status === 'mine_sent') {
+    return (
+      <span className="frd-gift-sent">
+        <span className="frd-pill">{t('frd_gift_gifted')}</span>
+        {thanked && <small className="frd-gift-thanks">{t('frd_gift_thanks', { name })}</small>}
+      </span>
+    )
+  }
+  return null
+}
+
 // The muted line naming what a friend keeps private (names only, never data).
 export function PrivateLine({ name, hidden }) {
   const { t } = useApp()

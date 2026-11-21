@@ -16,6 +16,8 @@ import { fmtFiatValue } from '../lib/fiatValue.js'
 import { brandGrad } from '../lib/brands.js'
 import { playPop, playGoalDone, playTing, playClink } from '../lib/sound.js'
 import DidYouKnow from '../components/DidYouKnow.jsx'
+import { giftOf, markSent as markGiftSent, sendSent } from '../lib/gifts.js'
+import { getState as friendsState } from '../lib/friends.js'
 
 // Bitrefill invoice statuses, in order. Anything else shows as "waiting".
 const STEPS = ['created', 'payment_detected', 'payment_confirmed', 'complete']
@@ -67,6 +69,14 @@ export default function Done({ goalId }) {
   const [red, setRed] = useState(() => goal?.payment?.redemption || null)
   const [status, setStatus] = useState(null)
   const [show, setShow] = useState(false)
+  // Gift (v1.4.3): a goal called dibs on for a friend. The tag is local; the code is never part of the "mark as sent"
+  // call. {me} is my Friends display name, for the prefilled note (kept on the phone only).
+  const giftTag = giftOf(goalId)
+  const meName = friendsState()?.name || ''
+  const [note, setNote] = useState(() => (giftTag ? t('frd_gift_note_default', { me: meName }) : ''))
+  const [sentState, setSentState] = useState(giftTag?.state === 'sent')
+  const [sentErr, setSentErr] = useState(false)
+  const [sending, setSending] = useState(false)
 
   // Polls our server until the shop delivers, then saves the redemption on the goal.
   useEffect(() => {
@@ -147,6 +157,20 @@ export default function Done({ goalId }) {
   const copy = async (text, toastKey) => { if (text && (await copyText(text))) { toast(t(toastKey)); playClink() } }
   const toggleShow = () => { const next = !show; setShow(next); if (next) { setRevealN((n) => n + 1); playTing() } }
 
+  // Gift: what the giver shares with the friend (note, the card, then the code). Share text only, with the app's copy
+  // fallback. The code never reaches the Friends server; "Mark as sent" sends only the brand key and ids.
+  const giftValue = `${brandName} ${detailText(t, goal, { short: true })}`.trim()
+  const giftShareText = [note, giftValue, copyValue].filter(Boolean).join('\n')
+  const sendGift = async () => {
+    try { if (navigator.share) { await navigator.share({ text: giftShareText }); return } } catch { /* cancelled or unavailable */ }
+    if (await copyText(giftShareText)) { toast(t('done_copied')); playClink() }
+  }
+  const doMarkSent = async () => {
+    setSending(true); setSentErr(false)
+    try { await sendSent(giftTag.friendId, giftTag.brandKey); markGiftSent(goalId); setSentState(true) }
+    catch { setSentErr(true) } finally { setSending(false) }
+  }
+
   const hash = goal.payment?.hash || null
   const swapId = goal.payment?.swapId || null
 
@@ -223,6 +247,25 @@ export default function Done({ goalId }) {
             )}
           </div>
         </section>
+
+        {giftTag && final && (
+          <section className="card gift-send">
+            <h3>{t('frd_gift_send_title', { name: giftTag.name })}</h3>
+            <label className="small" htmlFor="gift-note">{t('frd_gift_note_label')}</label>
+            <textarea id="gift-note" className="gift-note" maxLength={140} rows={2} value={note} onChange={(e) => setNote(e.target.value)} />
+            <div className="gift-preview">
+              {note && <p className="gift-pre-note">{note}</p>}
+              <p className="gift-pre-card">{giftValue}</p>
+              {(hasCode || link) && <p className="gift-pre-code">{show ? copyValue : '•••• •••• ••••'}</p>}
+            </div>
+            <button type="button" className="btn gold" onClick={sendGift}>{t('frd_gift_share')}</button>
+            <p className="frd-note">{t('frd_gift_share_note')}</p>
+            {sentState
+              ? <p className="gift-sent-ok">{t('frd_gift_marked_sent')}{giftTag.thanked ? ` · ${t('frd_gift_thanks', { name: giftTag.name })}` : ''}</p>
+              : <button type="button" className="btn ghost" disabled={sending} onClick={doMarkSent}>{t('frd_gift_mark_sent')}</button>}
+            {sentErr && <p className="frd-quiet">{t('frd_save_fail')}</p>}
+          </section>
+        )}
 
         {red && (
           <div className="done-stats">

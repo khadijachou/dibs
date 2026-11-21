@@ -418,3 +418,8 @@ html.is-fullscreen:where([data-theme="light"]) body::before { background: linear
 :where(:root[data-theme="light"]) .frd-goalbar { background: #f1e9df; }
 :where(:root[data-theme="light"]) .frd-card-chip { background: #ffffff; border-color: #e6dcce; }
 :where(:root[data-theme="light"]) .frd-amt-notice { background: #f7f1ea; }
+/* Gift (v1.4.3): the "For {name}" pill reads as dark butter text on a pale butter tint in light mode; the thanks line
+   takes the readable mint. The coral call-to-action keeps the brand coral. */
+:where(:root[data-theme="light"]) .gift-pill { background: rgba(217, 154, 11, .14); color: #A87400; }
+:where(:root[data-theme="light"]) .plan-gift-line { background: rgba(217, 154, 11, .12); color: #906607; }
+:where(:root[data-theme="light"]) .frd-gift-thanks { color: #15896a; }
