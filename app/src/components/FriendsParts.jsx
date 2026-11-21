@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useApp, useBlockBack } from '../App.jsx'
 import { Sheet, Notice } from './ui.jsx'
 import { Avatar, FriendAvatar } from './Avatar.jsx'
+import { accentClass } from './LookParts.jsx'
 import { getName } from '../lib/name.js'
 import { NAME_MAX } from '../lib/name.js'
 import { copyText } from '../lib/clipboard.js'
@@ -71,12 +72,13 @@ export function FriendNotice({ onRetry }) {
 }
 
 // A person row: their shared Nimiq avatar when they share it, otherwise a Dibs letter avatar (never an identicon
-// drawn from someone else's seed), a name, an optional sub-line, and a right slot.
-export function PersonRow({ avatar, name, sub, right, onClick }) {
+// drawn from someone else's seed), a name, an optional sub-line, and a right slot. look (a friend's shared look, if any)
+// colours their name in their accent and rings their avatar in their frame; unknown values are ignored.
+export function PersonRow({ avatar, name, sub, right, onClick, look = null }) {
   const inner = (
     <>
-      <FriendAvatar avatar={avatar} name={name} size={40} className="frd-av" />
-      <span className="frd-row-mid"><b>{name}</b>{sub && <small>{sub}</small>}</span>
+      <FriendAvatar avatar={avatar} name={name} size={40} className="frd-av" frame={look?.frame} />
+      <span className="frd-row-mid"><b className={accentClass(look?.accent)}>{name}</b>{sub && <small>{sub}</small>}</span>
       {right}
     </>
   )

@@ -86,7 +86,7 @@ export default function Friends({ addCode }) {
                 <h3 className="sec-head-h">{t('frd_friends_n', { n: friends.length })}</h3>
                 {friends.map((f) => {
                   const sub = f.level != null ? t('frd_level_rank', { n: f.level, rank: t(`rank_${f.rank}`) }) : f.sharesNothing ? t('frd_shares_nothing') : null
-                  return <PersonRow key={f.id} avatar={f.avatar} name={f.name} sub={sub} onClick={() => go('friendProfile', { id: f.id, since: f.since })} right={<span className="chev" aria-hidden="true">›</span>} />
+                  return <PersonRow key={f.id} avatar={f.avatar} name={f.name} sub={sub} look={f.look} onClick={() => go('friendProfile', { id: f.id, since: f.since })} right={<span className="chev" aria-hidden="true">›</span>} />
                 })}
               </section>
             )}

@@ -20,6 +20,7 @@ import { useXp } from '../lib/useXp.js'
 import { levelToPlay, markBadges, newBadges, setLevelSeen } from '../lib/seen.js'
 import { enabled as friendsEnabled, getFriends, getVis as friendsVis, visSummary } from '../lib/friends.js'
 import { useFriends, useWishlist, TurnOnSheet } from '../components/FriendsParts.jsx'
+import { useLook, accentClass } from '../components/LookParts.jsx'
 
 const TOTAL = BADGES.length
 const longDate = (d, lang) => new Intl.DateTimeFormat(lang, { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(d)).replace(/ /g, ' ')
@@ -90,6 +91,7 @@ export default function Profile({ badge: askedBadge, badgeAt, section, sectionAt
   const showRewards = rewardsActive()
   const toClaim = claimable({ badges, goals })
   const xp = useXp(address)
+  const look = useLook(xp.level) // the user's accent and frame (lib/looks.js), default = unchanged
   const [xpSheet, setXpSheet] = useState(null) // 'ranks' | 'xp'
   // Friends row (hidden when config.friendsUrl is empty). The friend count loads only when Friends is on.
   const friendsState = useFriends()
@@ -119,9 +121,9 @@ export default function Profile({ badge: askedBadge, badgeAt, section, sectionAt
         <section className="prof-head">
           <h2 className="title">{t('tab_profile')}</h2>
           <div className="prof-who">
-            <Avatar address={walletAddress} size={56} className="prof-av"
+            <Avatar address={walletAddress} size={56} className="prof-av" frame={look.frame}
               fallback={name ? <span className="prof-avatar" aria-hidden="true">{name.charAt(0).toUpperCase()}</span> : null} />
-            {name && <span className="prof-name">{name}</span>}
+            {name && <span className={`prof-name ${accentClass(look.accent)}`}>{name}</span>}
           </div>
         </section>
 
@@ -184,6 +186,14 @@ export default function Profile({ badge: askedBadge, badgeAt, section, sectionAt
         )}
 
         <LevelCard x={xp} onRanks={() => setXpSheet('ranks')} onHow={() => setXpSheet('xp')} />
+
+        <section className="prof-look">
+          <button type="button" className="frd-prof-row lk-row" onClick={() => go('myLook')}>
+            <span className="frd-prof-ic" aria-hidden="true"><Icon name="sparkle" size={20} /></span>
+            <span className="frd-row-mid"><b>{t('look_title')}</b><small>{t('look_row_sub')}</small></span>
+            <span className="chev" aria-hidden="true">›</span>
+          </button>
+        </section>
 
         <QuestCard title={t('quests_title')} id="quests" />
 

@@ -9,6 +9,7 @@
 import { config } from './config.js'
 import { describeError, isDemo, signMessage, readStaker, listAccountsWithBalance } from './nimiq.js'
 import { xpSummary } from './xp.js'
+import { getLook } from './looks.js'
 import { BADGES, getBadges } from './badges.js'
 import { listGoals } from './goals.js'
 import { profileStats } from './profileStats.js'
@@ -28,6 +29,7 @@ const K = {
   demo: 'dibs.friends.demoWallet', // the demo wallet secret key, hex (demo mode only)
   backSeen: 'dibs.friends.backSeen', // '1' once the "profile is back" sheet was shown
   pending: 'dibs.friends.pending', // a friend code from a ?friend link, kept until Friends is on
+  lookSent: 'dibs.friends.lookSent', // the last look (accent, frame) sent to the server, so a sync re-sends only on a change
 }
 
 // ---- storage ------------------------------------------------------------------------------------------------
@@ -229,8 +231,29 @@ async function gatherAvatar(walletAddress) {
   } catch { return undefined }
 }
 
+// R1 (privacy): a frame or an accent tells others your rank, so the look is sent only while "Level and rank" is set to
+// Friends or Everyone. When it is Off, {} is sent and friends see the default. Only accent and frame leave the phone;
+// the goal-ring style is never sent (friends do not see your goal rings). ring/unknown ids are dropped by the server.
+function lookToSend(address) {
+  const vis = getVis()
+  if (vis.level !== 'friends' && vis.level !== 'everyone') return {}
+  try { const l = getLook(xpSummary({ goals: listGoals(address), badges: getBadges() }).level); return { accent: l.accent, frame: l.frame } } catch { return {} }
+}
+// PATCH the look only when it differs from what was last sent (on an equip change, a visibility change, or the
+// once-per-launch sync). Throws on a failed call; callers that must stay quiet use syncLookQuiet.
+async function pushLookIfChanged(address) {
+  if (!isOn() || !config.friendsUrl) return
+  const look = lookToSend(address)
+  const last = readJSON(K.lookSent, null)
+  if (last && JSON.stringify(last) === JSON.stringify(look)) return
+  await patchMe({ look })
+  writeJSON(K.lookSent, look)
+}
+export const syncLookQuiet = (address) => { pushLookIfChanged(address).catch(() => { /* silent outside Friends screens */ }) }
+
 export async function syncShared(address, walletAddress) {
   if (!isOn() || !config.friendsUrl) return null
+  syncLookQuiet(address) // keep the shared look (accent, frame) in step with the level-and-rank visibility (R1)
   await reconcile(listGoals(address)) // drop and release claims whose gift goal is gone, withdrawn or changed card
   const vis = getVis()
   const on = (k) => vis[k] === 'friends' || vis[k] === 'everyone'

@@ -14,6 +14,7 @@ import {
   ThreeWay, ConfirmSheet, AmountConsentSheet, PrivateLine, Skeleton, FriendNotice, brandByKey, WishPill,
 } from '../components/FriendsParts.jsx'
 import { getState, getVis, patchMe, syncQuiet, turnOff, loadProfile, loadAsFriend, removeFriend } from '../lib/friends.js'
+import { useLook, accentClass } from '../components/LookParts.jsx'
 import { giftGoalIds, giftOf, setThanked } from '../lib/gifts.js'
 import { listGoals } from '../lib/goals.js'
 
@@ -121,8 +122,8 @@ function ProfileHead({ profile, since, banner }) {
   if (since) parts.push(t('frd_since', { date: fmtSince(since, lang) }))
   return (
     <div className="frd-prof-head">
-      <FriendAvatar avatar={profile.avatar} name={profile.name} size={64} />
-      <h3>{profile.name}</h3>
+      <FriendAvatar avatar={profile.avatar} name={profile.name} size={64} frame={profile.look?.frame} />
+      <h3 className={accentClass(profile.look?.accent)}>{profile.name}</h3>
       {parts.length > 0 && <p className="frd-sub">{parts.join(' · ')}</p>}
       {banner && <p className="frd-asfriend-banner">{banner}</p>}
     </div>
@@ -210,6 +211,7 @@ function MyProfileView() {
   const { t, address, walletAddress, back } = useApp()
   const st = getState()
   const xp = useXp(address)
+  const look = useLook(xp.level) // my accent and frame (lib/looks.js)
   const [vis, setVis] = useState(() => getVis())
   const [saveErr, setSaveErr] = useState(false)
   const [editName, setEditName] = useState(false)
@@ -239,9 +241,9 @@ function MyProfileView() {
       <Header onBack={back} />
       <main className="screen">
         <div className="frd-prof-head">
-          <Avatar address={walletAddress} size={64}
+          <Avatar address={walletAddress} size={64} frame={look.frame}
             fallback={st?.name ? <span className="prof-avatar" aria-hidden="true">{st.name.charAt(0).toUpperCase()}</span> : null} />
-          <button type="button" className="frd-name-edit" onClick={() => setEditName(true)}>{st?.name}<span className="frd-pencil" aria-hidden="true">✎</span></button>
+          <button type="button" className={`frd-name-edit ${accentClass(look.accent)}`} onClick={() => setEditName(true)}>{st?.name}<span className="frd-pencil" aria-hidden="true">✎</span></button>
           <p className="frd-sub">{t('frd_level_rank', { n: xp.level, rank: t(`rank_${xp.rank.id}`) })} · {st?.code}</p>
         </div>
 

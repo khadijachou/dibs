@@ -423,3 +423,16 @@ html.is-fullscreen:where([data-theme="light"]) body::before { background: linear
 :where(:root[data-theme="light"]) .gift-pill { background: rgba(217, 154, 11, .14); color: #A87400; }
 :where(:root[data-theme="light"]) .plan-gift-line { background: rgba(217, 154, 11, .12); color: #906607; }
 :where(:root[data-theme="light"]) .frd-gift-thanks { color: #15896a; }
+
+/* Rank unlocks (v1.4.4): light-mode accent colours for the user's name. The dark accents are too light on white, so
+   mint, butter, cream, gold and sunset take readable shades (butter and gold -> #A87400, cream -> ink, mint -> #137b5f,
+   sunset -> a coral-to-gold gradient in darker ends). The frame and ring colours stay as they are (they sit on the
+   colourful avatar and the dark goal-ring track, not on white). :where() keeps zero added specificity. */
+:where(:root[data-theme="light"]) .lk-acc.lk-acc-mint { color: #137b5f; }
+:where(:root[data-theme="light"]) .lk-acc.lk-acc-butter { color: #A87400; }
+:where(:root[data-theme="light"]) .lk-acc.lk-acc-cream { color: #23212b; }
+:where(:root[data-theme="light"]) .lk-acc.lk-acc-gold { color: #A87400; }
+:where(:root[data-theme="light"]) .lk-acc.lk-acc-sunset { background: linear-gradient(90deg, #cc3316, #A87400); -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; }
+/* The My look tiles sit on --card-2; the frame swatch hexagon needs a visible muted fill on light. */
+:where(:root[data-theme="light"]) .lk-sw-frame .avatar-ph { background: #9c9284; }
+:where(:root[data-theme="light"]) .lk-sw-acc { border-color: rgba(0, 0, 0, .14); }

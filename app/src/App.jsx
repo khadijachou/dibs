@@ -38,7 +38,10 @@ import Preferences from './screens/Preferences.jsx'
 import Friends from './screens/Friends.jsx'
 import FriendProfile from './screens/FriendProfile.jsx'
 import Wishlist from './screens/Wishlist.jsx'
+import MyLook from './screens/MyLook.jsx'
 import { ProfileBackSheet } from './components/FriendsParts.jsx'
+import { RankSheet } from './components/LookParts.jsx'
+import { rankToAnnounce, markRankSeen } from './lib/looks.js'
 import { isOn as friendsIsOn, enabled as friendsEnabled, getState as friendsGetState, syncQuiet, setPendingCode } from './lib/friends.js'
 import { Icon, TabBar, TAB_ROUTES } from './components/ui.jsx'
 import { preloadAvatar } from './components/Avatar.jsx'
@@ -74,7 +77,7 @@ const hostLang = () => { try { const l = String(host.language() || '').slice(0, 
 const AppCtx = createContext(null)
 export const useApp = () => useContext(AppCtx)
 
-const SCREENS = { home: Home, catalog: Catalog, plan: Plan, goal: Goal, unlock: Unlock, redeem: Redeem, done: Done, stake: Stake, insights: Insights, history: History, profile: Profile, more: More, browse: Catalog, legal: Legal, faq: Faq, accounts: Accounts, prefAdd: AddPreference, prefs: Preferences, friends: Friends, friendProfile: FriendProfile, wishlist: Wishlist }
+const SCREENS = { home: Home, catalog: Catalog, plan: Plan, goal: Goal, unlock: Unlock, redeem: Redeem, done: Done, stake: Stake, insights: Insights, history: History, profile: Profile, more: More, browse: Catalog, legal: Legal, faq: Faq, accounts: Accounts, prefAdd: AddPreference, prefs: Preferences, friends: Friends, friendProfile: FriendProfile, wishlist: Wishlist, myLook: MyLook }
 
 // Back with nothing behind (after a reload, or a screen opened with reset): where each screen goes.
 // Goals (home) has no parent: back from there leaves the app.
@@ -91,6 +94,7 @@ function parentOf(route) {
   if (route.name === 'friends') return { name: 'profile', params: {} }
   if (route.name === 'friendProfile') return { name: 'friends', params: {} }
   if (route.name === 'wishlist') return { name: 'profile', params: {} }
+  if (route.name === 'myLook') return { name: 'profile', params: {} }
   if (route.name === 'plan') return { name: 'catalog', params: route.params?.changeFor ? { changeFor: route.params.changeFor } : {} }
   if ((route.name === 'unlock' || route.name === 'redeem') && goalId) return { name: 'goal', params: { goalId } }
   return HOME
@@ -402,6 +406,7 @@ export default function App() {
   // Big-update sheet (components/WhatsNewSheet.jsx, lib/bigUpdate.js): once per launch, the moment Welcome back has
   // closed and Home is showing. Closing it (any way) saves dibs.bigSeen so it never comes back for that release.
   const [bigSheet, setBigSheet] = useState(null)
+  const [rankSheet, setRankSheet] = useState(null) // { rank, level } when a new rank was reached, waiting to be shown
   const bigTried = useRef(false)
   const endBig = useCallback((after) => {
     setBigSheet((s) => {
@@ -433,6 +438,22 @@ export default function App() {
     const catchUp = catchUp14({ stored, seen14b, friendsEnabled: friendsEnabled(), friendsState: friendsGetState(), onboarded, news: NEWS })
     if (catchUp) setBigSheet(catchUp)
   }, [ready, splashGone, isLab, intro, howTo, welcome, route.name, shareAsk, stamps, onboarded])
+
+  // Rank reached sheet (lib/looks.js, components/LookParts.jsx): once when the user's rank goes up, AFTER any badge
+  // stamp and level-up band, never over a Nimiq Pay request, the intro, Welcome back or the big-update sheet, and only
+  // on a top-level screen (so it never covers a flow or the code screen). A first run on this build stores the current
+  // rank silently (rankToAnnounce), so nobody gets a sheet for ranks already reached. Closing it marks the rank seen.
+  useEffect(() => {
+    if (!ready || !splashGone || !address || isLab) return
+    if (intro || howTo || welcome || bigSheet || backSheet || shareAsk || rankSheet) return
+    if (stamps.length || payPending() || overlayOpen() || blocks.current > 0) return
+    if (!TAB_ROUTES.includes(route.name)) return
+    let summ
+    try { summ = xpSummary({ goals: listGoals(address), badges: getBadges() }) } catch { return }
+    const rk = rankToAnnounce(summ.rank.id) // first run stores silently and returns null
+    if (rk) setRankSheet({ rank: rk, level: summ.level })
+  }, [ready, splashGone, address, isLab, intro, howTo, welcome, bigSheet, backSheet, shareAsk, rankSheet, stamps, route])
+  const closeRank = useCallback(() => setRankSheet((s) => { if (s) markRankSeen(s.rank); return null }), [])
 
   // Android back button. The page keeps at most two browser entries: a base entry, plus a guard entry on top of it
   // whenever the app has somewhere to go back to. Back pops the guard; the app moves back one screen and puts the
@@ -509,6 +530,7 @@ export default function App() {
       <RestakeWatcher />
       {shareAsk && !isLab && <ShareConfirmSheet onYes={confirmShare} onClose={() => setShareAsk(null)} />}
       {backSheet && !isLab && <ProfileBackSheet onClose={() => setBackSheet(false)} />}
+      {rankSheet && !isLab && <RankSheet level={rankSheet.level} rank={rankSheet.rank} onChoose={() => { closeRank(); go('myLook') }} onClose={closeRank} />}
       {bigSheet && !isLab && route.name === 'home' && <WhatsNewSheet release={bigSheet.release} entry={bigSheet.entry} since={bigSheet.since} onClose={() => endBig()} onGo={(r) => endBig(() => go(r))} onSeeAll={() => endBig(() => go('legal', { page: 'news' }))} />}
     </AppCtx.Provider>
   )

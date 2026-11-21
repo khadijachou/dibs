@@ -47,6 +47,7 @@ const PATHS = {
   heartFilled: <path d="M12 20s-7-4.6-9.3-9A5 5 0 0 1 12 6a5 5 0 0 1 9.3 5c-2.3 4.4-9.3 9-9.3 9z" fill="currentColor" stroke="none" />, // hearted
   users: <><circle cx="9" cy="8.5" r="3.2" /><path d="M3.5 19c.7-3 3-4.6 5.5-4.6s4.8 1.6 5.5 4.6" /><path d="M16 5.6a3.2 3.2 0 0 1 0 6M17.8 19c-.3-1.6-1-2.9-2-3.8" /></>, // Friends (two people)
   eye: <><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" /><circle cx="12" cy="12" r="3" /></>, // who sees what
+  sparkle: <><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" /><path d="M18.5 15.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z" /></>, // My look (a sparkle)
 }
 
 // Bottom tab bar on the four top-level screens (App.jsx decides where it shows).

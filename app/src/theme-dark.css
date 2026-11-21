@@ -1920,3 +1920,73 @@ html.is-fullscreen .bstamp-live { top: calc(58px + var(--fs-top)); }
 .frd-amt-notice { display: flex; gap: 10px; background: var(--card-2); border-radius: 14px; padding: 12px 14px; margin-bottom: 14px; }
 .frd-amt-notice p { margin: 0; color: var(--cream); font-size: var(--fs-body); line-height: var(--lh-body); }
 .frd-amt-dot { flex: 0 0 auto; width: 10px; height: 10px; border-radius: 999px; background: var(--butter); margin-top: 5px; }
+
+/* ============================================================================
+   Rank unlocks (v1.4.4): accents, avatar frames, goal-ring styles and My look.
+   Cosmetic only. The default look (coral accent, no frame, solid ring) adds no
+   rule here, so every screen stays pixel-identical to before.
+   ============================================================================ */
+
+/* The avatar frame: an overlay just outside the avatar (SVG inside the square). It never changes the avatar's size and
+   is absent for 'none', so the default avatar is unchanged. */
+.lk-frame { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+
+/* The glow goal ring: a soft coral glow on the painted arc. The pulse stops under reduced motion (the glow stays). */
+.lk-ring-glow { filter: drop-shadow(0 0 3px rgba(232, 72, 42, .6)); animation: lk-glow 1.9s ease-in-out infinite; }
+@keyframes lk-glow { 0%, 100% { filter: drop-shadow(0 0 2px rgba(232, 72, 42, .45)); } 50% { filter: drop-shadow(0 0 6px rgba(232, 72, 42, .85)); } }
+
+/* My look row on Profile (its own section under the level card). */
+.prof-look { margin: 12px 0 0; }
+.prof-look .frd-prof-ic { color: var(--gold); }
+
+/* My look screen */
+.lk-preview { display: flex; align-items: center; gap: 12px; }
+.lk-preview-av { flex: none; }
+.lk-preview-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.lk-preview-name { font: 700 var(--fs-heading)/1.2 var(--font-display); color: var(--cream); overflow-wrap: anywhere; }
+.lk-preview-sub { font: 500 var(--fs-meta)/1.3 var(--font-body); color: var(--muted); }
+.lk-preview-ring { flex: none; }
+
+.lk-card { margin-top: 14px; }
+.lk-card h3 { margin: 0 0 12px; }
+.lk-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.lk-tile { display: flex; flex-direction: column; align-items: center; gap: 7px; padding: 12px 6px 10px; background: var(--card-2); border: 2px solid transparent; border-radius: 14px; cursor: pointer; color: inherit; }
+.lk-tile.on { border-color: var(--gold); }
+.lk-tile.locked { opacity: .45; cursor: default; }
+.lk-sw-wrap { position: relative; width: 46px; height: 46px; display: grid; place-items: center; }
+.lk-sw-acc { width: 46px; height: 46px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .22); }
+.lk-sw-frame { background: transparent; }
+.lk-sw-frame .avatar-ph { background: #3a3744; }
+.lk-check { position: absolute; right: -3px; bottom: -3px; width: 19px; height: 19px; border-radius: 50%; background: var(--gold); color: #fff; font-size: var(--fs-label); line-height: 1; display: grid; place-items: center; border: 2px solid var(--card-2); }
+.lk-tile-name { font: 600 var(--fs-meta)/1.1 var(--font-body); text-align: center; }
+.lk-tile-lock { display: inline-flex; align-items: center; gap: 3px; font: 500 var(--fs-label)/1 var(--font-body); color: var(--muted); }
+.lk-lock-ic { opacity: .9; }
+.lk-tile.shake { animation: lk-shake .42s; }
+@keyframes lk-shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-4px); } 40%, 80% { transform: translateX(4px); } }
+.lk-reset { margin-top: 14px; }
+.lk-only-note { text-align: center; margin-top: 10px; }
+
+/* Rank reached sheet */
+.lk-rank-head { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.lk-rank-kicker { margin-top: 10px; font: 700 var(--fs-label)/1 var(--font-body); letter-spacing: .09em; color: var(--muted); }
+.lk-rank-head h3 { margin: 3px 0 0; }
+.lk-rank-rows { list-style: none; margin: 14px 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.lk-rank-rows li { display: flex; align-items: center; gap: 12px; }
+.lk-rank-ic { flex: none; width: 40px; height: 40px; display: grid; place-items: center; }
+.lk-rank-tx { display: flex; flex-direction: column; min-width: 0; }
+.lk-rank-tx b { font: 600 var(--fs-strong)/1.2 var(--font-display); color: var(--cream); }
+.lk-rank-tx small { color: var(--muted); font: 400 var(--fs-meta)/1.3 var(--font-body); }
+.lk-rank-later { text-align: center; }
+
+/* Accents on the user's (or a friend's) name. Two classes = specificity 0,2,0 so they win over .prof-name,
+   .frd-row-mid b and .frd-name-edit; coral (default) adds no class, so the name keeps its normal colour. Dark values;
+   light fallbacks for contrast are in theme-light.css. */
+.lk-acc.lk-acc-mint { color: #2BC48F; }
+.lk-acc.lk-acc-butter { color: #FFC94D; }
+.lk-acc.lk-acc-cream { color: #FFF6EC; }
+.lk-acc.lk-acc-gold { color: #E9B213; }
+.lk-acc.lk-acc-sunset { background: linear-gradient(90deg, #E8482A, #FFC94D); -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; }
+@media (prefers-reduced-motion: reduce) {
+  .lk-ring-glow { animation: none; filter: drop-shadow(0 0 3px rgba(232, 72, 42, .6)); }
+  .lk-tile.shake { animation: none; }
+}
