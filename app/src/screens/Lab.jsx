@@ -3,11 +3,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useApp } from '../App.jsx'
 import { config, toLuna, toNim } from '../lib/config.js'
-import { listAccountsWithBalance, connect, describeError, getBalanceNim, getBlockNumber, getStaker, readStaker, host, isDemo, payInvoice, signMessage, unlock } from '../lib/nimiq.js'
+import { listAccountsWithBalance, connect, describeError, getBalanceNim, getBlockNumber, getStaker, readStaker, host, isDemo, payInvoice, signMessage, unlock, updateStaker } from '../lib/nimiq.js'
 import { parseInvoice } from '../lib/invoice.js'
 import { getPrices } from '../lib/price.js'
 import { api } from '../lib/api.js'
-import { releaseBlockOf } from '../lib/release.js'
+import { releaseAtMs, releaseBlockOf } from '../lib/release.js'
+import { CHECKED, checkedPool, sameAddress } from '../lib/pools.js'
 
 export default function Lab() {
   const { address, walletAddress } = useApp()
@@ -41,6 +42,33 @@ export default function Lab() {
   }, [address])
   useEffect(() => { readRel() }, [readRel])
 
+  // Section 5 status: the staker read for the switch-pool test, refreshed by its Read staker button and after every
+  // action. Returns the raw staker so the Read staker step logs it untouched; throws on a failed read so step() logs it.
+  const [poolSt, setPoolSt] = useState(null)
+  const [newPool, setNewPool] = useState(CHECKED[0].address)
+  const readPoolStaker = useCallback(async () => {
+    const [st, block] = await Promise.all([readStaker(address), getBlockNumber()])
+    const from = Number(st?.inactiveFrom)
+    const inactiveLuna = Number(st?.inactiveBalance ?? 0)
+    const deleg = st?.delegation ?? null
+    setPoolSt({
+      block: Number(block),
+      delegation: deleg,
+      poolName: checkedPool(deleg)?.name ?? null,
+      active: toNim(st?.balance ?? st?.activeBalance ?? 0),
+      inactive: toNim(inactiveLuna),
+      retired: toNim(st?.retiredBalance ?? 0),
+      inactiveFrom: from > 0 ? from : null,
+      // Same release block as section 3 (releaseBlockOf), and the local time it is expected (releaseAtMs).
+      releaseBlock: from > 0 && inactiveLuna > 0 ? releaseBlockOf(from) : null,
+      releaseAt: from > 0 && inactiveLuna > 0 ? releaseAtMs(from, Number(block)) : null,
+    })
+    // Default the select to the first checked pool that is not the current delegation; never clobber a different choice.
+    if (deleg) setNewPool((cur) => sameAddress(cur, deleg) ? (CHECKED.find((p) => !sameAddress(p.address, deleg)) || CHECKED[0]).address : cur)
+    return st
+  }, [address])
+  useEffect(() => { readPoolStaker().catch(() => { /* shown by the Read staker button when it is pressed */ }) }, [readPoolStaker])
+
   // Section 4 addresses, read when the section renders: the app address, the stable wallet address
   // if it differs, and every address listAccountsWithBalance() shares.
   const [signAddr, setSignAddr] = useState(null)
@@ -68,6 +96,9 @@ export default function Lab() {
       readRel()
     }
   }
+
+  // Section 5 actions refresh the status block after they settle (the handler is a step(), which already logged).
+  const afterAction = (handler) => async () => { await handler(); await readPoolStaker().catch(() => {}) }
 
   const amount = () => Number(nim)
 
@@ -153,6 +184,29 @@ export default function Lab() {
     signA: step('Sign text', () => runSign('Dibs Friends test 2026-11-21 A')),
     signB: step('Sign same text again', () => runSign('Dibs Friends test 2026-11-21 A')),
     signC: step('Sign hex', () => runSign({ message: signCHex, isHex: true })),
+    poolRead: step('Switch pool: read staker', () => readPoolStaker()),
+    poolSwitchKeep: step('Switch now (keep earning)', async () => {
+      const args = { newDelegation: newPool, reactivateAllStake: true }
+      write('updateStaker args', args)
+      return updateStaker(args)
+    }),
+    poolSwitchNoReact: step('Switch now (do not reactivate)', async () => {
+      const args = { newDelegation: newPool, reactivateAllStake: false }
+      write('updateStaker args', args)
+      return updateStaker(args)
+    }),
+    poolStopAll: step('Stop staking all (newActiveBalance 0)', async () => {
+      write('setActiveStake args', { newActiveBalanceLuna: 0 })
+      return unlock.deactivate(0)
+    }),
+    poolStakeAll: step('Stake all again (newActiveBalance active + inactive)', async () => {
+      const st = await getStaker(address)
+      if (!st) throw new Error('Need a staker read first (RPC) to know the balances')
+      const activeLuna = Number(st.balance ?? st.activeBalance ?? 0)
+      const inactiveLuna = Number(st.inactiveBalance ?? 0)
+      write('setActiveStake args', { newActiveBalanceLuna: activeLuna + inactiveLuna })
+      return unlock.deactivate(toNim(activeLuna + inactiveLuna))
+    }),
   }
 
   const copy = () => navigator.clipboard?.writeText(log.join('\n'))
@@ -263,6 +317,33 @@ export default function Lab() {
           <button type="button" className="btn small" disabled={busy} onClick={checks.signB}>Sign same text again</button>
           <button type="button" className="btn small" disabled={busy} onClick={checks.signC}>Sign hex</button>
         </div>
+      </section>
+
+      <section className="card">
+        <h2>5. Switch pool (update staker)</h2>
+        <p className="small">Change the staker's delegation to another checked pool. Reads the staker first; the switch sends sendUpdateStakerTransaction. Not available in demo mode.</p>
+        {poolSt && (
+          <p className="small">
+            Block {poolSt.block.toLocaleString('en')} · delegation {poolSt.delegation || '(none)'}{poolSt.poolName ? ` (${poolSt.poolName})` : ''}
+            {' '}· active {poolSt.active} NIM · inactive {poolSt.inactive} NIM · retired {poolSt.retired} NIM
+            {poolSt.inactiveFrom ? ` · inactiveFrom ${poolSt.inactiveFrom.toLocaleString('en')}` : ''}
+            {poolSt.releaseBlock != null && ` · release block ${poolSt.releaseBlock.toLocaleString('en')} · expected ${new Date(poolSt.releaseAt).toLocaleString()}`}
+          </p>
+        )}
+        <label className="small" htmlFor="newpool">New pool</label>
+        <select id="newpool" value={newPool} onChange={(e) => setNewPool(e.target.value)}>
+          {CHECKED.map((p) => <option key={p.address} value={p.address}>{p.name} — {p.address}</option>)}
+        </select>
+        <div className="btns" style={{ marginBottom: 8 }}>
+          <button type="button" className="btn small ghost" disabled={busy} onClick={checks.poolRead}>Read staker</button>
+        </div>
+        <div className="btns">
+          <button type="button" className="btn small" disabled={busy} onClick={afterAction(checks.poolSwitchKeep)}>Switch now (keep earning)</button>
+          <button type="button" className="btn small" disabled={busy} onClick={afterAction(checks.poolSwitchNoReact)}>Switch now (do not reactivate)</button>
+          <button type="button" className="btn small" disabled={busy} onClick={afterAction(checks.poolStopAll)}>Stop staking all</button>
+          <button type="button" className="btn small" disabled={busy} onClick={afterAction(checks.poolStakeAll)}>Stake all again</button>
+        </div>
+        <p className="small">Test account only. A refusal is a useful answer: copy the log.</p>
       </section>
 
       <section className="card">

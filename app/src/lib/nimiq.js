@@ -149,6 +149,14 @@ export const unlock = {
   remove: sim((nim) => provider.sendRemoveStakeTransaction({ value: toLuna(nim) })),
 }
 
+// Switches the staker's delegation to a new validator (Lab only, prep for v1.5.1). reactivateAllStake true keeps the
+// stake earning after the reporting window; false leaves it inactive until the user reactivates it. The demo wallet
+// has no such method, so say so plainly rather than pretend it worked.
+export async function updateStaker({ newDelegation, reactivateAllStake }) {
+  if (typeof provider?.sendUpdateStakerTransaction !== 'function') throw new Error('sendUpdateStakerTransaction is not available in demo mode')
+  return provider.sendUpdateStakerTransaction({ newDelegation, reactivateAllStake })
+}
+
 // A hash is not a success: a tx can be included and still fail (9 Nov: Retire before the release, fee 0).
 // Polls getTransactionByHash until the tx shows with its executionResult.
 // 'ok' | 'refused' (included, executionResult false) | 'unknown' (not seen within maxMs) | 'cancelled'.
