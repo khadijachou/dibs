@@ -15,6 +15,7 @@ import {
 } from '../components/FriendsParts.jsx'
 import { getState, getVis, patchMe, syncQuiet, turnOff, loadProfile, loadAsFriend, removeFriend } from '../lib/friends.js'
 import { useLook, accentClass } from '../components/LookParts.jsx'
+import { accentChoice } from '../lib/looks.js'
 import { giftGoalIds, giftOf, setThanked } from '../lib/gifts.js'
 import { listGoals } from '../lib/goals.js'
 
@@ -243,7 +244,7 @@ function MyProfileView() {
         <div className="frd-prof-head">
           <Avatar address={walletAddress} size={64} frame={look.frame}
             fallback={st?.name ? <span className="prof-avatar" aria-hidden="true">{st.name.charAt(0).toUpperCase()}</span> : null} />
-          <button type="button" className={`frd-name-edit ${accentClass(look.accent)}`} onClick={() => setEditName(true)}>{st?.name}<span className="frd-pencil" aria-hidden="true">✎</span></button>
+          <button type="button" className={`frd-name-edit ${accentClass(accentChoice(xp.level))}`} onClick={() => setEditName(true)}>{st?.name}<span className="frd-pencil" aria-hidden="true">✎</span></button>
           <p className="frd-sub">{t('frd_level_rank', { n: xp.level, rank: t(`rank_${xp.rank.id}`) })} · {st?.code}</p>
         </div>
 

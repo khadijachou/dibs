@@ -9,7 +9,7 @@ import { fmtFiatValue, pickFiat } from '../lib/fiatValue.js'
 import { CURRENCY_EVENT, effectiveCurrency, getCurrency } from '../lib/currency.js'
 import { host } from '../lib/nimiq.js'
 import { useUnreadNews } from '../lib/newsSeen.js'
-import { getTheme, setTheme, THEME_EVENT } from '../lib/theme.js'
+import { getTheme, THEME_EVENT } from '../lib/theme.js'
 import FullscreenSheet from './FullscreenSheet.jsx'
 
 const PATHS = {
@@ -291,21 +291,7 @@ export function useFiat() {
 const onTheme = (cb) => { window.addEventListener(THEME_EVENT, cb); return () => window.removeEventListener(THEME_EVENT, cb) }
 export const useThemeLook = () => useSyncExternalStore(onTheme, getTheme, () => 'dark')
 
-// More header: a round button that switches between dark and light at once. A sun in dark (tap for light), a moon in
-// light (tap for dark). From Auto it saves the explicit opposite of what is showing.
-function ThemeToggle() {
-  const { t } = useApp()
-  const look = useThemeLook()
-  const toLight = look === 'dark'
-  return (
-    <button type="button" className="theme-btn" aria-label={t(toLight ? 'theme_to_light' : 'theme_to_dark')}
-      onClick={() => setTheme(toLight ? 'light' : 'dark')}>
-      <Icon name={toLight ? 'sun' : 'moon'} size={18} stroke={2} />
-    </button>
-  )
-}
-
-export function Header({ onBack, onInk = false, langChip = false, themeBtn = false }) {
+export function Header({ onBack, onInk = false, langChip = false }) {
   const { t, balance, demo, lang, reset, isBlocked } = useApp()
   // The balance pill opens Savings from any screen that shows it; on Savings itself it does nothing visible.
   // While a Nimiq Pay request is open (a deposit, an unlock step, a payment) back is blocked, so the pill is too:
@@ -325,7 +311,7 @@ export function Header({ onBack, onInk = false, langChip = false, themeBtn = fal
   const choice = useCurrencyChoice()
   const fiat = useFiat()
   const finalValue = balance == null ? null : fmtFiatValue(balance, fiat, lang)
-  const fits = useValueFits(headerRef, finalValue, [lang, choice, demo, onBack ? 1 : 0, langChip, themeBtn, fs.supported && !fs.on])
+  const fits = useValueFits(headerRef, finalValue, [lang, choice, demo, onBack ? 1 : 0, langChip, fs.supported && !fs.on])
   const valueShown = finalValue && fits ? fmtFiatValue(Math.round(balanceShown), fiat, lang) : null
   return (
     <header ref={headerRef} className={`header${onInk ? ' on-ink' : ''}`}>
@@ -339,7 +325,6 @@ export function Header({ onBack, onInk = false, langChip = false, themeBtn = fal
       </div>
       {demo && <span className="badge-demo">{t('demo')}</span>}
       {langChip && <LangChip />}
-      {themeBtn && <ThemeToggle />}
       {balance == null
         ? <span className="chip sk" aria-label={t('goal_reading')}>000,000 NIM</span>
         : (

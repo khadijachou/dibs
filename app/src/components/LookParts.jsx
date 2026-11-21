@@ -7,9 +7,9 @@ import { Avatar, FrameRing } from './Avatar.jsx'
 import { StyleRing } from './GoalRing.jsx'
 import { KINDS, getLook, isUnlocked, levelFor, LOOK_EVENT } from '../lib/looks.js'
 
-// The class that colours a name in its accent. Coral (default) adds nothing, so the name keeps its normal colour and
-// the default look is pixel-identical. An unknown id adds nothing too.
-export const accentClass = (id) => (id && id !== 'coral' && ['mint', 'butter', 'cream', 'gold', 'sunset'].includes(id) ? `lk-acc lk-acc-${id}` : '')
+// accentClass lives in lib/accent.js (pure, so it is unit-tested without JSX); re-exported here so the screens keep
+// importing it from LookParts as before.
+export { accentClass } from '../lib/accent.js'
 
 // The live stored look at this level (lib/looks.js getLook): re-reads on a look change (equipping in My look) and
 // whenever the level changes (the caller re-renders). A locked or unknown choice already falls back to the default.

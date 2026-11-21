@@ -9,7 +9,7 @@
 import { config } from './config.js'
 import { describeError, isDemo, signMessage, readStaker, listAccountsWithBalance } from './nimiq.js'
 import { xpSummary } from './xp.js'
-import { getLook } from './looks.js'
+import { getLook, accentChoice } from './looks.js'
 import { BADGES, getBadges } from './badges.js'
 import { listGoals } from './goals.js'
 import { profileStats } from './profileStats.js'
@@ -237,7 +237,13 @@ async function gatherAvatar(walletAddress) {
 function lookToSend(address) {
   const vis = getVis()
   if (vis.level !== 'friends' && vis.level !== 'everyone') return {}
-  try { const l = getLook(xpSummary({ goals: listGoals(address), badges: getBadges() }).level); return { accent: l.accent, frame: l.frame } } catch { return {} }
+  // Only an accent the user actually chose is sent (accentChoice), so a never-chosen name stays normal on friends'
+  // phones too. A friend on an old build still sends 'coral', which reads as coral there: sensible, not wrong.
+  try {
+    const level = xpSummary({ goals: listGoals(address), badges: getBadges() }).level
+    const accent = accentChoice(level)
+    return accent ? { accent, frame: getLook(level).frame } : { frame: getLook(level).frame }
+  } catch { return {} }
 }
 // PATCH the look only when it differs from what was last sent (on an equip change, a visibility change, or the
 // once-per-launch sync). Throws on a failed call; callers that must stay quiet use syncLookQuiet.

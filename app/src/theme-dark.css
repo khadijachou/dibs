@@ -191,7 +191,8 @@ svg circle:first-child[stroke="#e6dccf"], svg circle:first-child[stroke="#35323f
 .splash-tag .last { color: #FFC94D; } /* "It's yours." in butter (dark butter in light mode) */
 .splash-line { position: absolute; left: 20px; right: 20px; bottom: calc(28px + env(safe-area-inset-bottom, 0px)); margin: 0; display: flex; align-items: center; justify-content: center; font-size: var(--fs-meta); line-height: var(--lh-meta); color: var(--muted); }
 .splash-nq { flex-shrink: 0; width: 14px; height: 14px; margin-right: 6px; }
-.splash-ver { margin-left: 6px; padding-left: 8px; border-left: 1px solid rgba(255, 255, 255, .18); color: #8F8A9C; } /* the app version, after a thin divider */
+.splash-dot { color: #8F8A9C; } /* the muted middle dot between "Built on Nimiq Pay" and the version */
+.splash-ver { color: #8F8A9C; } /* the app version */
 @keyframes splash-in { from { opacity: 0; transform: translateY(12px) scale(.97); } }
 /* Short screens: shrink each card in place (--s folds into the drift transform, so the rotation and drift are kept),
    then drop the two lower cards. In-place scaling keeps the cards anchored near the corners, clear of the centre. */
@@ -503,6 +504,9 @@ button.tl-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: -2
 .set-row.set-col > span small { display: block; color: var(--muted); font-size: var(--fs-meta); line-height: var(--lh-meta); margin-top: 2px; }
 .lang-seg.seg-full { display: flex; width: 100%; }
 .lang-seg.seg-full button { flex: 1 1 0; min-width: 0; padding: 7px 0; }
+/* Appearance: an icon before each label (sun / moon / half circle). Row-centred, a small gap, icon never shrinks. */
+.lang-seg.seg-icons button { display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
+.lang-seg.seg-icons .seg-ico { display: inline-flex; flex: none; }
 .switch { width: 50px; height: 30px; border-radius: 15px; border: 0; background: #3a3744; position: relative; cursor: pointer; flex-shrink: 0; transition: background .15s; }
 .switch i { position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: var(--cream); transition: transform .15s; }
 .switch.on { background: var(--teal-deep); }
@@ -1744,8 +1748,6 @@ html.is-fullscreen .bstamp-live { top: calc(58px + var(--fs-top)); }
 
 /* v1.3.1 small improvements (base + dark; light overrides live in theme-light.css) */
 /* More header: the round theme button, a sun in dark (tap for light). */
-.theme-btn { width: 34px; height: 34px; flex-shrink: 0; border-radius: 17px; display: grid; place-items: center; cursor: pointer; border: 1px solid #34303f; background: #24212c; color: #FFC94D; }
-.theme-btn:active { transform: scale(.94); }
 /* The balance pill is a button (opens Savings); it keeps the chip look (border from .chip), with a pressed state. */
 .chip.bal { font-family: inherit; -webkit-appearance: none; appearance: none; cursor: pointer; text-align: left; }
 .chip.bal:active { transform: scale(.97); }
@@ -1980,9 +1982,11 @@ html.is-fullscreen .bstamp-live { top: calc(58px + var(--fs-top)); }
    rule here, so every screen stays pixel-identical to before.
    ============================================================================ */
 
-/* The avatar frame: an overlay just outside the avatar (SVG inside the square). It never changes the avatar's size and
-   is absent for 'none', so the default avatar is unchanged. */
-.lk-frame { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+/* The avatar frame: a ring drawn just outside the avatar, never over the picture. The SVG box is grown 10% past the
+   avatar on every side (inset is negative, no width/height so the four insets size it), so the hexagon sits around the
+   avatar with a small gap at any avatar size. It never changes the avatar's own size or the layout (absolute), and is
+   absent for 'none', so the default avatar is unchanged. */
+.lk-frame { position: absolute; inset: -10%; pointer-events: none; overflow: visible; }
 
 /* The glow goal ring: a soft coral glow on the painted arc. The pulse stops under reduced motion (the glow stays). */
 .lk-ring-glow { filter: drop-shadow(0 0 3px rgba(232, 72, 42, .6)); animation: lk-glow 1.9s ease-in-out infinite; }
@@ -2034,6 +2038,7 @@ html.is-fullscreen .bstamp-live { top: calc(58px + var(--fs-top)); }
 /* Accents on the user's (or a friend's) name. Two classes = specificity 0,2,0 so they win over .prof-name,
    .frd-row-mid b and .frd-name-edit; coral (default) adds no class, so the name keeps its normal colour. Dark values;
    light fallbacks for contrast are in theme-light.css. */
+.lk-acc.lk-acc-coral { color: #E8482A; }
 .lk-acc.lk-acc-mint { color: #2BC48F; }
 .lk-acc.lk-acc-butter { color: #FFC94D; }
 .lk-acc.lk-acc-cream { color: #FFF6EC; }

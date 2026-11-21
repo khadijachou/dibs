@@ -7,7 +7,7 @@ import { StyleRing } from '../components/GoalRing.jsx'
 import { LookGrid, accentClass, useLook } from '../components/LookParts.jsx'
 import { useXp } from '../lib/useXp.js'
 import { getName } from '../lib/name.js'
-import { setLook, resetLook, isDefaultLook } from '../lib/looks.js'
+import { setLook, resetLook, isDefaultLook, accentChoice } from '../lib/looks.js'
 import { syncLookQuiet } from '../lib/friends.js'
 
 export default function MyLook() {
@@ -28,7 +28,7 @@ export default function MyLook() {
           <Avatar address={walletAddress} size={64} className="lk-preview-av" frame={look.frame}
             fallback={name ? <span className="prof-avatar" aria-hidden="true">{name.charAt(0).toUpperCase()}</span> : null} />
           <div className="lk-preview-txt">
-            {name && <span className={`lk-preview-name ${accentClass(look.accent)}`}>{name}</span>}
+            {name && <span className={`lk-preview-name ${accentClass(accentChoice(level))}`}>{name}</span>}
             <span className="lk-preview-sub">{t('frd_level_rank', { n: level, rank: t(`rank_${rank.id}`) })}</span>
           </div>
           <span className="lk-preview-ring" aria-hidden="true">
@@ -38,7 +38,8 @@ export default function MyLook() {
           </span>
         </section>
 
-        <LookGrid kind="accent" level={level} look={look} t={t} onPick={pick} />
+        {/* Accent: tick the tile the user actually chose (accentChoice), so nothing is ticked until one is picked. */}
+        <LookGrid kind="accent" level={level} look={{ ...look, accent: accentChoice(level) }} t={t} onPick={pick} />
         <LookGrid kind="frame" level={level} look={look} t={t} onPick={pick} />
         <LookGrid kind="ring" level={level} look={look} t={t} onPick={pick} />
 

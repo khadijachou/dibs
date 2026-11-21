@@ -94,7 +94,7 @@ export default function Splash({ done = false, onGone }) {
           {tag.map((l, i) => <span key={i} className={i === tag.length - 1 ? 'last' : i === 1 ? 'mid' : ''}>{l}</span>)}
         </p>
       </div>
-      <p className="splash-line"><NimiqHex />{t('splash_line')}<span className="splash-ver">v{version}</span></p>
+      <p className="splash-line"><NimiqHex />{t('splash_line')}<span className="splash-dot" aria-hidden="true"> · </span><span className="splash-ver">v{version}</span></p>
     </div>
   )
 }

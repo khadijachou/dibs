@@ -16,6 +16,7 @@ import { migratePrefs, prunePrefs } from './lib/prefs.js'
 import { catalogBrands } from './lib/brands.js'
 import { readSimulateParam } from './lib/errors.js'
 import { startThemeAuto } from './lib/theme.js'
+import { restoreY, withScroll } from './lib/scrollMemory.js'
 import Home from './screens/Home.jsx'
 import Catalog from './screens/Catalog.jsx'
 import Plan from './screens/Plan.jsx'
@@ -98,6 +99,21 @@ function parentOf(route) {
   if (route.name === 'plan') return { name: 'catalog', params: route.params?.changeFor ? { changeFor: route.params.changeFor } : {} }
   if ((route.name === 'unlock' || route.name === 'redeem') && goalId) return { name: 'goal', params: { goalId } }
   return HOME
+}
+
+// Back keeps your place: scroll the restored screen back to where the user was, once it has painted. Two rAF so the
+// page has laid out before we measure its height, then one retry for content that loads a moment later. Always an
+// instant jump (behavior: 'auto'), so reduced motion is honoured. y <= 0 means the top (handled by the caller).
+function restoreScroll(y) {
+  const jump = () => {
+    try {
+      const to = restoreY({ scrollY: y }, document.documentElement.scrollHeight, window.innerHeight)
+      window.scrollTo({ top: to, left: 0, behavior: 'auto' })
+    } catch { /* no window (tests): nothing to scroll */ }
+  }
+  try {
+    requestAnimationFrame(() => requestAnimationFrame(() => { jump(); setTimeout(jump, 180) }))
+  } catch { jump() }
 }
 
 // The screen in history.state survives a reload. One-shot params (the Dibs! stamp, a preset amount) are dropped,
@@ -328,7 +344,7 @@ export default function App() {
   }, [])
 
   const go = useCallback((name, params = {}) => {
-    setHistory((h) => [...h, route])
+    setHistory((h) => [...h, withScroll(route, window.scrollY)]) // stamp where we leave this screen, for back()
     setRoute({ name, params })
     window.scrollTo(0, 0)
   }, [route])
@@ -360,7 +376,9 @@ export default function App() {
     if (!target) return false
     if (prev) setHistory(history.slice(0, -1))
     setRoute(target)
-    window.scrollTo(0, 0)
+    // A screen we came from (prev) goes back to its saved scroll; a parentOf target has none, so it goes to the top.
+    if (prev && target.scrollY > 0) restoreScroll(target.scrollY)
+    else window.scrollTo(0, 0)
     return true
   }, [history, route])
   // A screen opened with reset sits on top of Goals: back from a tab, Done or a new goal goes to Goals.

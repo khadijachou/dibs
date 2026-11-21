@@ -11,7 +11,7 @@ globalThis.localStorage = {
 }
 const {
   ACCENTS, FRAMES, RINGS, KINDS, KIND_IDS, DEFAULTS, isUnlocked, unlocked, levelFor,
-  getLook, setLook, resetLook, isDefaultLook, getRankSeen, markRankSeen, rankToAnnounce,
+  getLook, setLook, resetLook, isDefaultLook, getRankSeen, markRankSeen, rankToAnnounce, accentChoice,
 } = await import('./looks.js')
 beforeEach(() => mem.clear())
 
@@ -125,4 +125,20 @@ test('rankToAnnounce: first run stores silently, then announces a higher rank on
   // A lower rank is never announced (rank never goes down).
   markRankSeen('legend')
   assert.equal(rankToAnnounce('treasurer'), null)
+})
+
+test('accentChoice tells "never chose" (null) from "chose Coral" ("coral"), so only a picked accent colours the name', () => {
+  // Never chose: nothing stored for accent, getLook still resolves the default coral for swatches.
+  assert.equal(accentChoice(50), null)
+  assert.equal(getLook(50).accent, 'coral')
+  // Chose Coral explicitly: accentChoice returns 'coral', so the name takes the coral colour.
+  setLook('accent', 'coral', 50)
+  assert.equal(accentChoice(50), 'coral')
+  // Chose a higher accent, but the level no longer unlocks it: treated as not chosen (normal colour), like getLook.
+  setLook('accent', 'gold', 50)
+  assert.equal(accentChoice(50), 'gold')
+  assert.equal(accentChoice(1), null) // gold is locked at level 1
+  // Reset goes back to never-chose.
+  resetLook()
+  assert.equal(accentChoice(50), null)
 })

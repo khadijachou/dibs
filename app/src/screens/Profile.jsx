@@ -21,6 +21,7 @@ import { levelToPlay, markBadges, newBadges, setLevelSeen } from '../lib/seen.js
 import { enabled as friendsEnabled, getFriends, getVis as friendsVis, visSummary } from '../lib/friends.js'
 import { useFriends, useWishlist, TurnOnSheet } from '../components/FriendsParts.jsx'
 import { useLook, accentClass } from '../components/LookParts.jsx'
+import { accentChoice } from '../lib/looks.js'
 
 const TOTAL = BADGES.length
 const longDate = (d, lang) => new Intl.DateTimeFormat(lang, { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(d)).replace(/ /g, ' ')
@@ -123,7 +124,7 @@ export default function Profile({ badge: askedBadge, badgeAt, section, sectionAt
           <div className="prof-who">
             <Avatar address={walletAddress} size={56} className="prof-av" frame={look.frame}
               fallback={name ? <span className="prof-avatar" aria-hidden="true">{name.charAt(0).toUpperCase()}</span> : null} />
-            {name && <span className={`prof-name ${accentClass(look.accent)}`}>{name}</span>}
+            {name && <span className={`prof-name ${accentClass(accentChoice(xp.level))}`}>{name}</span>}
           </div>
         </section>
 

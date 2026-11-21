@@ -24,6 +24,7 @@ import Num from '../components/Num.jsx'
 import { fmtDate, fmtEarned, fmtNim, fmtPct, fmtUsd, weeksUntil } from '../lib/format.js'
 import { addPreview, caretAfterDigits, cleanDigits, digitsBefore, formatAmount } from '../lib/addPreview.js'
 import { findItem } from '../lib/catalog.js'
+import { depositFieldFlags } from '../lib/depositField.js'
 import { DeleteSheet, ManageSheet, MoveSheet } from './GoalManage.jsx'
 import { useCountUp } from '../lib/useCountUp.js'
 import { useDuplicateText } from '../components/useDuplicateText.js'
@@ -218,10 +219,9 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
   const done100 = reached || goal.status !== 'saving'
   const pool = poolName()
   const tooMuch = balance != null && amountNim > balance
-  // BUG-12: no staker yet and the wallet can't cover the 100 NIM first deposit. One message, no pills, button off.
-  const cantOpen = !hasStaker && balance != null && balance < MIN_NEW_STAKER_NIM
-  const underMin = !cantOpen && !hasStaker && amountNim > 0 && amountNim < MIN_NEW_STAKER_NIM
-  const overBalance = !cantOpen && !underMin && tooMuch
+  // Which field message to show (lib/depositField.js, pure and tested). emptyWallet: a staker is open but the wallet
+  // is under 1 NIM, so "add 0 NIM now" makes no sense; the no-staker low-balance case stays cantOpen (needs 100 NIM).
+  const { cantOpen, underMin, emptyWallet, overBalance } = depositFieldFlags({ hasStaker, balance, amountNim, min: MIN_NEW_STAKER_NIM })
   const invalid = !amountNim || tooMuch || underMin || cantOpen
   // Quick picks scale with the goal: the weekly suggestion, a quarter of the target, everything left.
   // Manage (⋯): saving goals, ready goals (Change card, Get my NIM back), and any goal with 0 NIM and no unlock in
@@ -372,7 +372,7 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
 
           <section className="card">
             <label htmlFor="amt" className="sub">{t('goal_add_label')}</label>
-            <div className={`amount addf${cantOpen || underMin || tooMuch ? ' bad' : ''}`}>
+            <div className={`amount addf${cantOpen || underMin || emptyWallet || tooMuch ? ' bad' : ''}`}>
               <input id="amt" inputMode="numeric" value={amtDisplay} size={Math.max(1, amtDisplay.length)} onChange={(e) => {
                 // Keep the digits in state and format only for display: the caret is put back after the same digit
                 // once a separator shifts. The value sent to the deposit (amountNim) is these digits, as before.
@@ -411,6 +411,7 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
                   </div>
                 </div>
                 {underMin && <FieldError>{t('err_DEP_FIRST_UNDER_MIN_field', { min: MIN_NEW_STAKER_NIM })}</FieldError>}
+                {emptyWallet && <FieldError>{t('err_DEP_EMPTY_field')}</FieldError>}
                 {overBalance && <FieldError>{t('err_DEP_ABOVE_BALANCE_field', { nim: fmtNim(balance, lang) })}</FieldError>}
                 <div className="pills">
                   {underMin && <button type="button" className="pill fix" onClick={() => setAmount(String(MIN_NEW_STAKER_NIM))}>{MIN_NEW_STAKER_NIM} NIM</button>}

@@ -10,6 +10,16 @@ import { enabled as friendsEnabled, isOn as friendsIsOn, getVis as friendsVis, v
 // Sound is on unless the user turned it off: dibs.sound missing (a new user) = on, as in lib/sound.js.
 const soundOn = () => { try { return localStorage.getItem('dibs.sound') !== 'off' } catch { return true } }
 
+// A half-filled circle for Auto (the Icon set has no such glyph): a plain inline SVG, like the others in ui.jsx.
+const AutoThemeIcon = () => (
+  <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none">
+    <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" />
+    <path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" />
+  </svg>
+)
+// The same icons the old header toggle used: sun for Light, moon for Dark, the half circle for Auto.
+const THEME_ICON = { dark: <Icon name="moon" size={14} stroke={2} />, light: <Icon name="sun" size={14} stroke={2} />, auto: <AutoThemeIcon /> }
+
 // More > Preferences: language, appearance (dark or light, lib/theme.js), currency (lib/currency.js: the header value and
 // the card version a brand opens on; applies at once, the header above follows), sound (with a test sound button in its row),
 // and Share usage stats. Full screen is the header button only (components/ui.jsx Header).
@@ -34,10 +44,10 @@ export default function Preferences() {
           <div className="set-row"><span>{t('lang_label')}</span><LangSwitch /></div>
           <div className="set-row set-col">
             <span><b>{t('prefs_theme')}</b><small>{t('prefs_theme_sub')}</small></span>
-            <div className="lang-seg seg-full" role="group" aria-label={t('prefs_theme')}>
+            <div className="lang-seg seg-full seg-icons" role="group" aria-label={t('prefs_theme')}>
               {THEMES.map((th) => (
                 <button type="button" key={th} aria-pressed={th === theme} className={th === theme ? 'on' : ''}
-                  onClick={() => { setTheme(th); setThemeState(th) }}>{t(`theme_${th}`)}</button>
+                  onClick={() => { setTheme(th); setThemeState(th) }}><span className="seg-ico" aria-hidden="true">{THEME_ICON[th]}</span>{t(`theme_${th}`)}</button>
               ))}
             </div>
           </div>

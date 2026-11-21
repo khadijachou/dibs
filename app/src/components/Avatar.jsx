@@ -1,9 +1,11 @@
 import { useEffect, useId, useState } from 'react'
 import { letterFor, isImageDataUrl } from '../lib/friendAvatar.js'
 
-// A rank frame (lib/looks.js FRAMES) drawn as an overlay just outside the avatar: it never changes the avatar's size
-// and never shifts the layout (absolute, and nothing is rendered for 'none' or an unknown id, so the default avatar is
-// pixel-identical). shape 'hex' follows the Nimiq identicon hexagon; 'rect' follows a letter or image avatar.
+// A rank frame (lib/looks.js FRAMES) drawn as a ring around the avatar, never over it: the .lk-frame box is grown past
+// the avatar (CSS), and the hexagon/rect is drawn near that grown box's edge (small `base` inset), so it clears the
+// avatar picture at every size. The double ring's inner line (planner) is kept close enough to stay outside too. It
+// never changes the avatar's size and never shifts the layout (absolute, nothing rendered for 'none' or an unknown id,
+// so the default avatar is pixel-identical). shape 'hex' follows the Nimiq identicon hexagon; 'rect' a letter avatar.
 const HEX = [[0.25, 0.06], [0.75, 0.06], [1, 0.5], [0.75, 0.94], [0.25, 0.94], [0, 0.5]]
 const hexPoints = (inset) => HEX.map(([x, y]) => `${(inset + x * (100 - 2 * inset)).toFixed(1)},${(inset + y * (100 - 2 * inset)).toFixed(1)}`).join(' ')
 const FRAME = {
@@ -23,12 +25,12 @@ export function FrameRing({ frame, shape = 'hex' }) {
   const shapeEl = (inset, sw) => (shape === 'hex'
     ? <polygon points={hexPoints(inset)} fill="none" stroke={stroke} strokeWidth={sw} strokeLinejoin="round" strokeDasharray={cfg.dash || undefined} strokeLinecap={cfg.dash ? 'round' : undefined} />
     : <rect x={inset} y={inset} width={100 - 2 * inset} height={100 - 2 * inset} rx={18} fill="none" stroke={stroke} strokeWidth={sw} strokeDasharray={cfg.dash || undefined} strokeLinecap={cfg.dash ? 'round' : undefined} />)
-  const base = 3
+  const base = 2 // the grown box (CSS inset:-10%) already holds the gap; draw near its edge, inner double +4 stays outside
   return (
     <svg className="lk-frame" aria-hidden="true" viewBox="0 0 100 100">
       {cfg.grad && <defs><linearGradient id={gradId} x1="0" y1="100" x2="100" y2="0" gradientUnits="userSpaceOnUse"><stop offset="0" stopColor={cfg.grad[0]} /><stop offset="1" stopColor={cfg.grad[1]} /></linearGradient></defs>}
       {shapeEl(base, w)}
-      {cfg.double && shapeEl(base + 6, w * 0.8)}
+      {cfg.double && shapeEl(base + 4, w * 0.8)}
     </svg>
   )
 }

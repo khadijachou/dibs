@@ -153,7 +153,8 @@
 :where(:root[data-theme="light"]) .fc span { color: #6b6575; }
 :where(:root[data-theme="light"]) .fc-kind { color: #8a8594; }
 :where(:root[data-theme="light"]) .splash-tag .last { color: #a87400; } /* dark butter: readable on the light splash */
-:where(:root[data-theme="light"]) .splash-ver { border-left-color: rgba(35, 33, 43, .15); color: #8a8594; }
+:where(:root[data-theme="light"]) .splash-ver,
+:where(:root[data-theme="light"]) .splash-dot { color: #8a8594; }
 :where(:root[data-theme="light"]) .ob-dots i { background: #e0d7cb; }
 :where(:root[data-theme="light"]) .ob-trust { border: 1px solid var(--line); color: var(--cream); }
 :where(:root[data-theme="light"]) .cdots i { background: #d9d0c3; }
@@ -396,7 +397,6 @@ html.is-fullscreen:where([data-theme="light"]) body::before { background: linear
 /* The month image keeps its fixed dark colours in both themes; only the sheet chrome follows the theme. */
 
 /* v1.3.1 small improvements (light) */
-:where(:root[data-theme="light"]) .theme-btn { border-color: #e6ddd2; background: #fff; color: #4a4558; }
 :where(:root[data-theme="light"]) .acct-addr { color: var(--cream); }
 
 /* v1.3.2 Add NIM bar and preview, and the Unlock "What changes" icons: the readable light shades (A9). The track,
@@ -432,6 +432,7 @@ html.is-fullscreen:where([data-theme="light"]) body::before { background: linear
    mint, butter, cream, gold and sunset take readable shades (butter and gold -> #A87400, cream -> ink, mint -> #137b5f,
    sunset -> a coral-to-gold gradient in darker ends). The frame and ring colours stay as they are (they sit on the
    colourful avatar and the dark goal-ring track, not on white). :where() keeps zero added specificity. */
+:where(:root[data-theme="light"]) .lk-acc.lk-acc-coral { color: #cc3316; }
 :where(:root[data-theme="light"]) .lk-acc.lk-acc-mint { color: #137b5f; }
 :where(:root[data-theme="light"]) .lk-acc.lk-acc-butter { color: #A87400; }
 :where(:root[data-theme="light"]) .lk-acc.lk-acc-cream { color: #23212b; }

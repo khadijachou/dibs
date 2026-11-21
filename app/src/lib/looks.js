@@ -78,6 +78,13 @@ export function resetLook() {
   write(rest)
   notify()
 }
+// The accent the user explicitly equipped and can still use at this level, or null when they never chose one. getLook
+// resolves an unchosen accent to the default (coral) for swatches and sending; this keeps "never chose" apart from
+// "chose Coral", so a name only takes the coral colour once the user actually picks Coral.
+export function accentChoice(level = 1) {
+  const id = read().accent
+  return typeof id === 'string' && isUnlocked('accent', id, level) ? id : null
+}
 // True when the effective look at this level is the three defaults.
 export function isDefaultLook(level = 1) {
   const l = getLook(level)
