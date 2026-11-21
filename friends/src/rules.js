@@ -46,9 +46,13 @@ export function cleanGiftMessage(raw) {
   return text
 }
 
-// A gift banner choice. One of the four designs, or '' for none (absent, null or the string "none"). Anything else
-// must be refused.
-export const GIFT_BANNERS = ['birthday', 'thanks', 'congrats', 'because']
+// A gift banner choice. One of the designs, or '' for none (absent, null or the string "none"). Anything else must be
+// refused. The first four are chosen freely (v1.7.1); the seven after them the sender unlocks by level on their phone
+// (v1.7.2) - the server does not check the level (looks only), it only accepts the id so the gift can carry it.
+export const GIFT_BANNERS = [
+  'birthday', 'thanks', 'congrats', 'because',
+  'love', 'saver', 'planner', 'gamer', 'collector', 'treasurer', 'legend',
+]
 export function cleanGiftBanner(raw) {
   if (raw === undefined || raw === null || raw === 'none') return ''
   return GIFT_BANNERS.includes(raw) ? raw : null

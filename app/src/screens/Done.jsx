@@ -19,6 +19,8 @@ import DidYouKnow from '../components/DidYouKnow.jsx'
 import { giftOf, markSent as markGiftSent, sendSent, giftMessageError } from '../lib/gifts.js'
 import { getState as friendsState } from '../lib/friends.js'
 import GiftBanner from '../components/GiftBanner.jsx'
+import { useXp } from '../lib/useXp.js'
+import { LEVEL_BANNERS, isUnlocked as bannerUnlocked } from '../lib/giftBanners.js'
 
 // Bitrefill invoice statuses, in order. Anything else shows as "waiting".
 const STEPS = ['created', 'payment_detected', 'payment_confirmed', 'complete']
@@ -63,8 +65,16 @@ const EyeIcon = ({ off }) => (
   </svg>
 )
 
+// A small padlock for a locked level banner (decorative; the line next to it carries the words).
+const LockGlyph = () => (
+  <svg className="gift-lock-ic" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" />
+  </svg>
+)
+
 export default function Done({ goalId }) {
   const { t, lang, address, go, reset, toast } = useApp()
+  const { level } = useXp(address)
   const goal = getGoal(address, goalId)
   const orderId = goal?.payment?.orderId
   const orderToken = goal?.payment?.orderToken || null // orders made before the per-order token have none: stay in the waiting state
@@ -78,6 +88,8 @@ export default function Done({ goalId }) {
   const meName = friendsState()?.name || ''
   const [note, setNote] = useState(() => (giftTag ? (giftTag.message ?? t('frd_gift_note_default', { me: meName })) : ''))
   const [banner, setBanner] = useState(() => giftTag?.banner || 'none')
+  const [lockMsg, setLockMsg] = useState(null) // the level of a locked banner the user tapped, or null
+  const pickBanner = (b) => { setBanner(b); setLockMsg(null) } // picking any unlocked banner clears the locked line
   const [sentState, setSentState] = useState(giftTag?.state === 'sent')
   const [sentErr, setSentErr] = useState(false)
   const [linkErr, setLinkErr] = useState(false)
@@ -268,15 +280,38 @@ export default function Done({ goalId }) {
             <div className="gift-pick" role="radiogroup" aria-label={t('frd_gift_banner_label')}>
               {GIFT_BANNERS.map((b) => (
                 <button type="button" key={b} role="radio" aria-checked={banner === b} aria-label={t(`frd_banner_${b}`)}
-                  className={`gift-pick-tile${banner === b ? ' on' : ''}`} disabled={sentState} onClick={() => setBanner(b)}>
+                  className={`gift-pick-tile${banner === b ? ' on' : ''}`} disabled={sentState} onClick={() => pickBanner(b)}>
                   <GiftBanner banner={b} thumb />
                 </button>
               ))}
               <button type="button" role="radio" aria-checked={banner === 'none'}
-                className={`gift-pick-tile gift-pick-none${banner === 'none' ? ' on' : ''}`} disabled={sentState} onClick={() => setBanner('none')}>
+                className={`gift-pick-tile gift-pick-none${banner === 'none' ? ' on' : ''}`} disabled={sentState} onClick={() => pickBanner('none')}>
                 {t('frd_gift_banner_none')}
               </button>
             </div>
+
+            {/* Level banners (lib/giftBanners.js): seven the sender unlocks by level. Looks only. Picking one deselects
+                the free row (the single `banner` value). A locked tap shows one line and selects nothing. */}
+            <div className="gift-row-head">
+              <span className="small">{t('gb_by_level')}</span>
+              <span className="gift-head-hint">{t('gb_you_level', { n: level })}</span>
+            </div>
+            <div className="gift-pick gift-pick-lv" role="radiogroup" aria-label={t('gb_by_level')}>
+              {LEVEL_BANNERS.map((b) => {
+                const unlocked = bannerUnlocked(b.id, level)
+                return (
+                  <button type="button" key={b.id} role="radio" aria-checked={banner === b.id} aria-label={t(b.line)}
+                    aria-disabled={!unlocked || undefined} disabled={sentState}
+                    className={`gift-pick-tile gift-lv-tile${banner === b.id ? ' on' : ''}${unlocked ? '' : ' locked'}`}
+                    onClick={() => (unlocked ? pickBanner(b.id) : setLockMsg(b.level))}>
+                    <GiftBanner banner={b.id} thumb />
+                    {!unlocked && <span className="gift-lv-lock" aria-hidden="true"><LockGlyph /></span>}
+                    <span className="gift-lv-cap">{t('gb_lv', { n: b.level })}</span>
+                  </button>
+                )
+              })}
+            </div>
+            {lockMsg != null && <p className="gift-locked-line"><LockGlyph />{t('gb_locked_at', { n: lockMsg })}</p>}
 
             <div className="gift-row-head">
               <label className="small" htmlFor="gift-note">{t('frd_gift_msg_label')}</label>
@@ -288,6 +323,7 @@ export default function Done({ goalId }) {
 
             <p className="small gift-pre-label">{t('frd_gift_code_hint')}</p>
             <div className="gift-preview">
+              {banner !== 'none' && <GiftBanner banner={banner} />}
               {note && <p className="gift-pre-note">{note}</p>}
               <p className="gift-pre-card">{giftValue}</p>
               {(hasCode || link) && <p className="gift-pre-code">{show ? copyValue : '•••• •••• ••••'}</p>}

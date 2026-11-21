@@ -6,6 +6,8 @@ import { Sheet, Ring } from './ui.jsx'
 import { Avatar, FrameRing } from './Avatar.jsx'
 import { StyleRing } from './GoalRing.jsx'
 import { KINDS, getLook, isUnlocked, levelFor, LOOK_EVENT } from '../lib/looks.js'
+import { LEVEL_BANNERS, isUnlocked as bannerUnlocked, bannerForRank } from '../lib/giftBanners.js'
+import GiftBanner from './GiftBanner.jsx'
 
 // accentClass lives in lib/accent.js (pure, so it is unit-tested without JSX); re-exported here so the screens keep
 // importing it from LookParts as before.
@@ -88,6 +90,7 @@ export function LookGrid({ kind, level, look, t, onPick }) {
 export function RankSheet({ level, rank, onChoose, onClose }) {
   const { t, walletAddress } = useApp()
   const rows = [['accent', 'look_accent_sub'], ['frame', 'look_frame_sub'], ['ring', 'look_ring_sub']]
+  const gb = bannerForRank(rank) // the gift banner this rank unlocks (lib/giftBanners.js), or null for starter
   return (
     <Sheet label={t(`rank_${rank}`)} onClose={onClose}>
       <div className="lk-rank-head">
@@ -102,9 +105,38 @@ export function RankSheet({ level, rank, onChoose, onClose }) {
             <span className="lk-rank-tx"><b>{t(`look_${kind}`)}</b><small>{t(sub)}</small></span>
           </li>
         ))}
+        {gb && (
+          <li className="lk-rank-gb">
+            <span className="lk-rank-gb-ic"><GiftBanner banner={gb.id} thumb /></span>
+            <span className="lk-rank-tx"><b>{t('gb_new', { line: t(gb.line) })}</b><small>{t('gb_list_sub')}</small></span>
+          </li>
+        )}
       </ul>
       <button type="button" className="btn" onClick={onChoose}>{t('look_choose')}</button>
       <p className="frd-note lk-rank-later">{t('look_later')}</p>
+    </Sheet>
+  )
+}
+
+// The Gift banners list (My look row): the seven level banners, each with its line, unlock level and Locked/Unlocked.
+// Display only; nothing is equipped here (the banner is chosen when sending a gift, screens/Done.jsx).
+export function GiftBannerSheet({ level, onClose }) {
+  const { t } = useApp()
+  return (
+    <Sheet title={t('gb_list_title')} onClose={onClose}>
+      <p className="frd-note gb-sheet-sub">{t('gb_list_sub')}</p>
+      <ul className="gb-list">
+        {LEVEL_BANNERS.map((b) => {
+          const unlocked = bannerUnlocked(b.id, level)
+          return (
+            <li key={b.id} className={`gb-list-row${unlocked ? '' : ' locked'}`}>
+              <span className="gb-list-art"><GiftBanner banner={b.id} thumb /></span>
+              <span className="frd-row-mid"><b>{t(b.line)}</b><small>{t('gb_lv', { n: b.level })}</small></span>
+              <span className={`frd-pill ${unlocked ? 'gb-pill-ok' : 'gb-pill-lock'}`}>{t(unlocked ? 'gb_unlocked' : 'gb_locked')}</span>
+            </li>
+          )
+        })}
+      </ul>
     </Sheet>
   )
 }

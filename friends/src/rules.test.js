@@ -26,12 +26,15 @@ test('cleanGiftMessage: refuses anything that looks like a link', () => {
   assert.equal(cleanGiftMessage('5.0 stars for you'), '5.0 stars for you')
 })
 
-test('cleanGiftBanner: one of the four, or empty for none/absent, null otherwise', () => {
-  for (const ok of ['birthday', 'thanks', 'congrats', 'because']) assert.equal(cleanGiftBanner(ok), ok)
+test('cleanGiftBanner: one of the eleven, or empty for none/absent, null otherwise', () => {
+  const all = ['birthday', 'thanks', 'congrats', 'because', 'love', 'saver', 'planner', 'gamer', 'collector', 'treasurer', 'legend']
+  for (const ok of all) assert.equal(cleanGiftBanner(ok), ok)
+  assert.equal(all.length, 11)
   assert.equal(cleanGiftBanner('none'), '')
   assert.equal(cleanGiftBanner(undefined), '')
   assert.equal(cleanGiftBanner(null), '')
   assert.equal(cleanGiftBanner('party'), null)
+  assert.equal(cleanGiftBanner('hero'), null)
   assert.equal(cleanGiftBanner(42), null)
 })
 

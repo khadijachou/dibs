@@ -453,3 +453,15 @@ html.is-fullscreen:where([data-theme="light"]) body::before { background: linear
    and inner boxes (--card-2, #f6f0e8) come from the light tokens already. */
 :where(:root[data-theme="light"]) .idle-n { color: #15896a; }
 :where(:root[data-theme="light"]) .conv-spark polyline { stroke: #6b6575; }
+
+/* v1.7.2 Gift reveal and level banners: a light background, ink text, a white brand row, the butter line in readable
+   shades. The banner pictures keep their own colours in both themes (they are pictures, not UI). */
+:where(:root[data-theme="light"]) .rv-bg { background: radial-gradient(circle at 50% 34%, #fde3dc, #fbf6ef); }
+:where(:root[data-theme="light"]) .rv-over { color: #a87400; }
+:where(:root[data-theme="light"]) .rv-title, :where(:root[data-theme="light"]) .rv-msg { color: #23212b; }
+:where(:root[data-theme="light"]) .rv-x { background: rgba(0, 0, 0, 0.06); color: #23212b; }
+:where(:root[data-theme="light"]) .rv-brand { background: #fff; border: 1px solid var(--line); }
+:where(:root[data-theme="light"]) .rv-sealed, :where(:root[data-theme="light"]) .rv-banner-wrap { filter: drop-shadow(0 12px 24px rgba(31, 35, 72, 0.16)); }
+:where(:root[data-theme="light"]) .gift-locked-line { background: #fff3d6; color: #8a5f00; }
+:where(:root[data-theme="light"]) .frd-thanks-line { color: #15896a; }
+:where(:root[data-theme="light"]) .gb-pill-ok { background: rgba(21, 137, 106, 0.12); color: #137b5f; border-color: #15896a; }

@@ -44,7 +44,10 @@ import Boards from './screens/Boards.jsx'
 import { ProfileBackSheet } from './components/FriendsParts.jsx'
 import { RankSheet } from './components/LookParts.jsx'
 import { rankToAnnounce, markRankSeen } from './lib/looks.js'
-import { isOn as friendsIsOn, enabled as friendsEnabled, getState as friendsGetState, syncQuiet, setPendingCode } from './lib/friends.js'
+import { isOn as friendsIsOn, enabled as friendsEnabled, getState as friendsGetState, syncQuiet, setPendingCode, me as loadMe } from './lib/friends.js'
+import { nextReveal, markRevealSeen } from './lib/reveal.js'
+import { gbToAnnounce, lineKey } from './lib/giftBanners.js'
+import GiftReveal from './components/GiftReveal.jsx'
 import { refreshBoards, flushQueue as flushBoardsQueue } from './lib/boards.js'
 import { Icon, TabBar, TAB_ROUTES } from './components/ui.jsx'
 import { preloadAvatar } from './components/Avatar.jsx'
@@ -434,6 +437,34 @@ export default function App() {
   const [bigSheet, setBigSheet] = useState(null)
   const [rankSheet, setRankSheet] = useState(null) // { rank, level } when a new rank was reached, waiting to be shown
   const bigTried = useRef(false)
+  // Gift reveal (components/GiftReveal.jsx): a friend's gift opens full screen. It sits between Welcome back and the
+  // big-update sheet, so both the big-update and rank sheets wait while it is decided or open. Never delays launch: the
+  // gifts come from the one GET /v1/me the app makes at launch (Friends on only); if it is slow or fails, revealReady
+  // still settles (no reveal) and the rest proceeds, so the reveal simply waits for the next launch.
+  const [revealGift, setRevealGift] = useState(null)
+  const [revealReady, setRevealReady] = useState(false)
+  const giftsRef = useRef(null)
+  const revealTried = useRef(false)
+  const closeReveal = useCallback(() => setRevealGift((g) => { if (g) markRevealSeen(g); return null }), [])
+  useEffect(() => {
+    if (!ready || !address) return undefined
+    if (!(friendsEnabled() && friendsIsOn())) { setRevealReady(true); return undefined }
+    let live = true
+    loadMe()
+      .then((r) => { if (live) giftsRef.current = Array.isArray(r?.gifts) ? r.gifts : [] })
+      .catch(() => { if (live) giftsRef.current = [] })
+      .finally(() => { if (live) setRevealReady(true) })
+    return () => { live = false }
+  }, [ready, address])
+  // Decide the reveal once, the moment Welcome back has closed and Home is clear (same gating as the big-update sheet).
+  useEffect(() => {
+    if (revealTried.current || !revealReady || !ready || !splashGone || isLab) return
+    if (intro || howTo || welcome || route.name !== 'home') return
+    if (stamps.length || payPending() || overlayOpen() || blocks.current > 0) return
+    revealTried.current = true // decided once this launch
+    const g = nextReveal(giftsRef.current || [])
+    if (g) setRevealGift(g)
+  }, [revealReady, ready, splashGone, isLab, intro, howTo, welcome, route.name, stamps])
   const endBig = useCallback((after) => {
     setBigSheet((s) => {
       if (s) {
@@ -446,8 +477,10 @@ export default function App() {
   }, [])
   useEffect(() => {
     if (bigTried.current || !ready || !splashGone) return
-    // Order on launch: splash, then Welcome back, then this. Never over the Lab, the intro or How it works, and only on Home.
+    // Order on launch: splash, then Welcome back, then the gift reveal, then this. Never over the Lab, the intro or How
+    // it works, and only on Home. Wait while the reveal is still being decided or is open.
     if (isLab || intro || howTo || welcome || route.name !== 'home') return
+    if (!revealReady || revealGift) return
     bigTried.current = true // decided once this launch; a blocker now means it waits for the next launch
     if (shareAsk || stamps.length || payPending() || overlayOpen()) return
     let stored = null
@@ -463,7 +496,7 @@ export default function App() {
     try { seen14b = localStorage.getItem('dibs.bigSeen14b') } catch { /* private mode */ }
     const catchUp = catchUp14({ stored, seen14b, friendsEnabled: friendsEnabled(), friendsState: friendsGetState(), onboarded, news: NEWS })
     if (catchUp) setBigSheet(catchUp)
-  }, [ready, splashGone, isLab, intro, howTo, welcome, route.name, shareAsk, stamps, onboarded])
+  }, [ready, splashGone, isLab, intro, howTo, welcome, route.name, shareAsk, stamps, onboarded, revealReady, revealGift])
 
   // Rank reached sheet (lib/looks.js, components/LookParts.jsx): once when the user's rank goes up, AFTER any badge
   // stamp and level-up band, never over a Nimiq Pay request, the intro, Welcome back or the big-update sheet, and only
@@ -471,14 +504,30 @@ export default function App() {
   // rank silently (rankToAnnounce), so nobody gets a sheet for ranks already reached. Closing it marks the rank seen.
   useEffect(() => {
     if (!ready || !splashGone || !address || isLab) return
-    if (intro || howTo || welcome || bigSheet || backSheet || shareAsk || rankSheet) return
+    if (intro || howTo || welcome || bigSheet || backSheet || shareAsk || rankSheet || revealGift || !revealReady) return
     if (stamps.length || payPending() || overlayOpen() || blocks.current > 0) return
     if (!TAB_ROUTES.includes(route.name)) return
     let summ
     try { summ = xpSummary({ goals: listGoals(address), badges: getBadges() }) } catch { return }
     const rk = rankToAnnounce(summ.rank.id) // first run stores silently and returns null
     if (rk) setRankSheet({ rank: rk, level: summ.level })
-  }, [ready, splashGone, address, isLab, intro, howTo, welcome, bigSheet, backSheet, shareAsk, rankSheet, stamps, route])
+  }, [ready, splashGone, address, isLab, intro, howTo, welcome, bigSheet, backSheet, shareAsk, rankSheet, stamps, route, revealGift, revealReady])
+  // New gift banner at a between-rank level (lib/giftBanners.js): the two banners that are not ranks (love 3, gamer 15)
+  // have no rank sheet, so a one-time toast announces them on the next launch after the level is reached. First run of
+  // this build seeds dibs.gbSeen silently, so nothing is announced retroactively. Waits for the same clear state as the
+  // rank sheet, so it never lands behind the reveal or a sheet.
+  const gbTried = useRef(false)
+  useEffect(() => {
+    if (gbTried.current || !ready || !splashGone || !address || isLab) return
+    if (intro || howTo || welcome || bigSheet || backSheet || shareAsk || rankSheet || revealGift || !revealReady) return
+    if (stamps.length || payPending() || overlayOpen() || blocks.current > 0) return
+    if (!TAB_ROUTES.includes(route.name)) return
+    gbTried.current = true
+    let lvl
+    try { lvl = xpSummary({ goals: listGoals(address), badges: getBadges() }).level } catch { return }
+    const b = gbToAnnounce(lvl)
+    if (b) { toast(t('gb_new', { line: t(lineKey(b.id)) })); playTing() }
+  }, [ready, splashGone, address, isLab, intro, howTo, welcome, bigSheet, backSheet, shareAsk, rankSheet, stamps, route, revealGift, revealReady]) // eslint-disable-line react-hooks/exhaustive-deps
   const closeRank = useCallback(() => setRankSheet((s) => { if (s) markRankSeen(s.rank); return null }), [])
 
   // Android back button. The page keeps at most two browser entries: a base entry, plus a guard entry on top of it
@@ -556,6 +605,7 @@ export default function App() {
       <RestakeWatcher />
       {shareAsk && !isLab && <ShareConfirmSheet onYes={confirmShare} onClose={() => setShareAsk(null)} />}
       {backSheet && !isLab && <ProfileBackSheet onClose={() => setBackSheet(false)} />}
+      {revealGift && !isLab && <GiftReveal gift={revealGift} onClose={closeReveal} />}
       {rankSheet && !isLab && <RankSheet level={rankSheet.level} rank={rankSheet.rank} onChoose={() => { closeRank(); go('myLook') }} onClose={closeRank} />}
       {bigSheet && !isLab && route.name === 'home' && <WhatsNewSheet release={bigSheet.release} entry={bigSheet.entry} since={bigSheet.since} onClose={() => endBig()} onGo={(r) => endBig(() => go(r))} onSeeAll={() => endBig(() => go('legal', { page: 'news' }))} />}
     </AppCtx.Provider>

@@ -69,8 +69,8 @@ test('a two-digit patch is newer: 1.0.10 after 1.0.9', () => {
 
 test('1.1.3 (news_16) comes right after 1.1.4, then 1.1.2 (news_15), 1.1.1 (news_14), 1.1.0 (shown as 1.1, like 1.0.0 as 1.0), 1.0.10', () => {
   assert.ok(vNum('1.1.3') > vNum('1.1.2') && vNum('1.1.2') > vNum('1.1.1') && vNum('1.1.1') > vNum('1.1') && vNum('1.1') > vNum('1.0.10'))
-  assert.deepEqual(timeline.slice(41, 46).map((b) => b.v), ['1.1.3', '1.1.2', '1.1.1', '1.1', '1.0.10'])
-  assert.deepEqual(timeline.slice(41, 45).map((b) => b.key), ['news_16', 'news_15', 'news_14', 'news_13'])
+  assert.deepEqual(timeline.slice(42, 47).map((b) => b.v), ['1.1.3', '1.1.2', '1.1.1', '1.1', '1.0.10'])
+  assert.deepEqual(timeline.slice(42, 46).map((b) => b.key), ['news_16', 'news_15', 'news_14', 'news_13'])
   for (const l of ['en', 'fr', 'es']) assert.equal(items(T[l]('news_16')).length, 2, `news_16 ${l}`)
   for (const l of ['en', 'fr', 'es']) assert.equal(items(T[l]('news_14')).length, 1, `news_14 ${l}`)
   for (const l of ['en', 'fr', 'es']) assert.equal(items(T[l]('news_15')).length, 2, `news_15 ${l}`)
@@ -101,20 +101,20 @@ test('1.0.10 (news_12) has three items in en, fr and es', () => {
 })
 
 test('v1.1.4 (news_17) comes right after 1.1.5 and before 1.1.3, not big, two items in en, fr and es', () => {
-  assert.equal(NEWS[40].v, '1.1.4')
-  assert.equal(NEWS[40].key, 'news_17')
-  assert.equal(NEWS[41].v, '1.1.3')
-  assert.ok(!NEWS[40].big)
+  assert.equal(NEWS[41].v, '1.1.4')
+  assert.equal(NEWS[41].key, 'news_17')
+  assert.equal(NEWS[42].v, '1.1.3')
+  assert.ok(!NEWS[41].big)
   for (const l of ['en', 'fr', 'es']) assert.equal(items(T[l]('news_17')).length, 2, `news_17 ${l}`)
 })
 
 test('v1.1.5 (news_18) comes right after 1.1.6, then 1.1.4, dated 2026-11-13, not big, two items naming Profile in each language', () => {
   assert.ok(vNum('1.1.5') > vNum('1.1.4'))
-  assert.equal(NEWS[39].v, '1.1.5')
-  assert.equal(NEWS[39].key, 'news_18')
-  assert.equal(NEWS[39].date, '2026-11-13')
-  assert.ok(!NEWS[39].big)
-  assert.equal(timeline[40].v, '1.1.4')
+  assert.equal(NEWS[40].v, '1.1.5')
+  assert.equal(NEWS[40].key, 'news_18')
+  assert.equal(NEWS[40].date, '2026-11-13')
+  assert.ok(!NEWS[40].big)
+  assert.equal(timeline[41].v, '1.1.4')
   for (const l of ['en', 'fr', 'es']) {
     const list = items(T[l]('news_18'))
     assert.equal(list.length, 2, `news_18 ${l}`)
@@ -124,12 +124,12 @@ test('v1.1.5 (news_18) comes right after 1.1.6, then 1.1.4, dated 2026-11-13, no
 
 test('v1.1.6 (news_19) comes right after 1.1.7, then 1.1.5, dated 2026-11-13, not big, two items naming Profile and light mode', () => {
   assert.ok(vNum('1.1.6') > vNum('1.1.5'))
-  assert.equal(NEWS[38].v, '1.1.6')
-  assert.equal(NEWS[38].key, 'news_19')
-  assert.equal(NEWS[38].date, '2026-11-13')
-  assert.ok(!NEWS[38].big)
-  assert.equal(timeline[38].v, '1.1.6')
-  assert.equal(timeline[39].v, '1.1.5')
+  assert.equal(NEWS[39].v, '1.1.6')
+  assert.equal(NEWS[39].key, 'news_19')
+  assert.equal(NEWS[39].date, '2026-11-13')
+  assert.ok(!NEWS[39].big)
+  assert.equal(timeline[39].v, '1.1.6')
+  assert.equal(timeline[40].v, '1.1.5')
   const light = { en: 'light mode', fr: 'mode clair', es: 'modo claro' }
   for (const l of ['en', 'fr', 'es']) {
     const list = items(T[l]('news_19'))
@@ -141,12 +141,12 @@ test('v1.1.6 (news_19) comes right after 1.1.7, then 1.1.5, dated 2026-11-13, no
 
 test('v1.1.7 (news_20) comes right after 1.1.8, then 1.1.6, dated 2026-11-13, not big, one item naming the five brands, not Flightgift', () => {
   assert.ok(vNum('1.1.7') > vNum('1.1.6'))
-  assert.equal(NEWS[37].v, '1.1.7')
-  assert.equal(NEWS[37].key, 'news_20')
-  assert.equal(NEWS[37].date, '2026-11-13')
-  assert.ok(!NEWS[37].big)
-  assert.equal(timeline[37].v, '1.1.7')
-  assert.equal(timeline[38].v, '1.1.6')
+  assert.equal(NEWS[38].v, '1.1.7')
+  assert.equal(NEWS[38].key, 'news_20')
+  assert.equal(NEWS[38].date, '2026-11-13')
+  assert.ok(!NEWS[38].big)
+  assert.equal(timeline[38].v, '1.1.7')
+  assert.equal(timeline[39].v, '1.1.6')
   for (const l of ['en', 'fr', 'es']) {
     const list = items(T[l]('news_20'))
     assert.equal(list.length, 1, `news_20 ${l}`)
@@ -157,28 +157,28 @@ test('v1.1.7 (news_20) comes right after 1.1.8, then 1.1.6, dated 2026-11-13, no
 
 test('v1.1.8 (news_21) comes right after 1.1.9, then 1.1.7, dated 2026-11-13, not big, two items in en, fr and es', () => {
   assert.ok(vNum('1.1.8') > vNum('1.1.7'))
-  assert.equal(NEWS[36].v, '1.1.8')
-  assert.equal(NEWS[36].key, 'news_21')
-  assert.equal(NEWS[36].date, '2026-11-13')
-  assert.ok(!NEWS[36].big, 'not big: no news dot')
-  assert.equal(timeline[36].v, '1.1.8')
-  assert.equal(timeline[37].v, '1.1.7')
+  assert.equal(NEWS[37].v, '1.1.8')
+  assert.equal(NEWS[37].key, 'news_21')
+  assert.equal(NEWS[37].date, '2026-11-13')
+  assert.ok(!NEWS[37].big, 'not big: no news dot')
+  assert.equal(timeline[37].v, '1.1.8')
+  assert.equal(timeline[38].v, '1.1.7')
   for (const l of ['en', 'fr', 'es']) assert.equal(items(T[l]('news_21')).length, 2, `news_21 ${l}`)
 })
 
 test('v1.1.9 (news_22) comes right after 1.1.10, then 1.1.8, dated 2026-11-13, big with a summary, one item in en, fr and es', () => {
   assert.ok(vNum('1.1.9') > vNum('1.1.8'))
-  assert.equal(NEWS[35].v, '1.1.9')
-  assert.equal(NEWS[35].key, 'news_22')
-  assert.equal(NEWS[35].date, '2026-11-13')
-  assert.equal(NEWS[35].big, true, 'big: the news dot lights up')
-  assert.equal(NEWS[35].sum, 'news_sum_22')
-  assert.equal(timeline[35].v, '1.1.9')
-  assert.equal(timeline[36].v, '1.1.8')
+  assert.equal(NEWS[36].v, '1.1.9')
+  assert.equal(NEWS[36].key, 'news_22')
+  assert.equal(NEWS[36].date, '2026-11-13')
+  assert.equal(NEWS[36].big, true, 'big: the news dot lights up')
+  assert.equal(NEWS[36].sum, 'news_sum_22')
+  assert.equal(timeline[36].v, '1.1.9')
+  assert.equal(timeline[37].v, '1.1.8')
   const want = { en: 'An important fix for unlocking', fr: 'Un correctif important pour le déblocage', es: 'Una corrección importante para el desbloqueo' }
   const start = { en: 'Fixed: ', fr: 'Corrigé : ', es: 'Corregido: ' }
   for (const l of ['en', 'fr', 'es']) {
-    assert.equal(T[l](NEWS[35].sum, { n: NEWS[35].n }), want[l], l)
+    assert.equal(T[l](NEWS[36].sum, { n: NEWS[36].n }), want[l], l)
     const list = items(T[l]('news_22'))
     assert.equal(list.length, 1, `news_22 ${l}`)
     assert.ok(list[0].startsWith(start[l]), `news_22 ${l}`)
@@ -194,13 +194,13 @@ test('a two-digit patch is newer: 1.1.10 after 1.1.9 (numeric order, as 1.0.10 a
 })
 
 test('v1.1.10 (news_23) comes right after 1.1.11, then 1.1.9, dated 2026-11-13, not big, two items naming the Add NIM page in en, fr and es', () => {
-  assert.equal(NEWS[34].v, '1.1.10')
-  assert.equal(NEWS[34].key, 'news_23')
-  assert.equal(NEWS[34].date, '2026-11-13')
-  assert.ok(!NEWS[34].big, 'not big: no news dot')
-  assert.ok(!NEWS[34].sum)
-  assert.equal(timeline[34].v, '1.1.10')
-  assert.equal(timeline[35].v, '1.1.9')
+  assert.equal(NEWS[35].v, '1.1.10')
+  assert.equal(NEWS[35].key, 'news_23')
+  assert.equal(NEWS[35].date, '2026-11-13')
+  assert.ok(!NEWS[35].big, 'not big: no news dot')
+  assert.ok(!NEWS[35].sum)
+  assert.equal(timeline[35].v, '1.1.10')
+  assert.equal(timeline[36].v, '1.1.9')
   for (const l of ['en', 'fr', 'es']) {
     const list = items(T[l]('news_23'))
     assert.equal(list.length, 2, `news_23 ${l}`)
@@ -211,13 +211,13 @@ test('v1.1.10 (news_23) comes right after 1.1.11, then 1.1.9, dated 2026-11-13, 
 
 test('v1.1.11 (news_24) comes right after 1.1.12, then 1.1.10, dated 2026-11-13, not big, one item naming Dibs in numbers in en, fr and es', () => {
   assert.ok(vNum('1.1.11') > vNum('1.1.10'))
-  assert.equal(NEWS[33].v, '1.1.11')
-  assert.equal(NEWS[33].key, 'news_24')
-  assert.equal(NEWS[33].date, '2026-11-13')
-  assert.ok(!NEWS[33].big, 'not big: no news dot')
-  assert.ok(!NEWS[33].sum)
-  assert.equal(timeline[33].v, '1.1.11')
-  assert.equal(timeline[34].v, '1.1.10')
+  assert.equal(NEWS[34].v, '1.1.11')
+  assert.equal(NEWS[34].key, 'news_24')
+  assert.equal(NEWS[34].date, '2026-11-13')
+  assert.ok(!NEWS[34].big, 'not big: no news dot')
+  assert.ok(!NEWS[34].sum)
+  assert.equal(timeline[34].v, '1.1.11')
+  assert.equal(timeline[35].v, '1.1.10')
   for (const l of ['en', 'fr', 'es']) {
     const list = items(T[l]('news_24'))
     assert.equal(list.length, 1, `news_24 ${l}`)
@@ -228,13 +228,13 @@ test('v1.1.11 (news_24) comes right after 1.1.12, then 1.1.10, dated 2026-11-13,
 
 test('v1.1.12 (news_25) comes right after 1.1.13, then 1.1.11, dated 2026-11-13, not big, three items naming the steps, Profile, More and Rewards in en, fr and es', () => {
   assert.ok(vNum('1.1.12') > vNum('1.1.11'))
-  assert.equal(NEWS[32].v, '1.1.12')
-  assert.equal(NEWS[32].key, 'news_25')
-  assert.equal(NEWS[32].date, '2026-11-13')
-  assert.ok(!NEWS[32].big, 'not big: no news dot')
-  assert.ok(!NEWS[32].sum)
-  assert.equal(timeline[32].v, '1.1.12')
-  assert.equal(timeline[33].v, '1.1.11')
+  assert.equal(NEWS[33].v, '1.1.12')
+  assert.equal(NEWS[33].key, 'news_25')
+  assert.equal(NEWS[33].date, '2026-11-13')
+  assert.ok(!NEWS[33].big, 'not big: no news dot')
+  assert.ok(!NEWS[33].sum)
+  assert.equal(timeline[33].v, '1.1.12')
+  assert.equal(timeline[34].v, '1.1.11')
   for (const l of ['en', 'fr', 'es']) {
     const list = items(T[l]('news_25'))
     assert.equal(list.length, 3, `news_25 ${l}`)
@@ -247,13 +247,13 @@ test('v1.1.12 (news_25) comes right after 1.1.13, then 1.1.11, dated 2026-11-13,
 
 test('v1.1.13 (news_26) comes right after 1.2, then 1.1.12, dated 2026-11-13, not big, two items naming More in en, fr and es', () => {
   assert.ok(vNum('1.1.13') > vNum('1.1.12'))
-  assert.equal(NEWS[31].v, '1.1.13')
-  assert.equal(NEWS[31].key, 'news_26')
-  assert.equal(NEWS[31].date, '2026-11-13')
-  assert.ok(!NEWS[31].big, 'not big: no news dot')
-  assert.ok(!NEWS[31].sum)
-  assert.equal(timeline[31].v, '1.1.13')
-  assert.equal(timeline[32].v, '1.1.12')
+  assert.equal(NEWS[32].v, '1.1.13')
+  assert.equal(NEWS[32].key, 'news_26')
+  assert.equal(NEWS[32].date, '2026-11-13')
+  assert.ok(!NEWS[32].big, 'not big: no news dot')
+  assert.ok(!NEWS[32].sum)
+  assert.equal(timeline[32].v, '1.1.13')
+  assert.equal(timeline[33].v, '1.1.12')
   for (const l of ['en', 'fr', 'es']) {
     const list = items(T[l]('news_26'))
     assert.equal(list.length, 2, `news_26 ${l}`)
@@ -264,16 +264,16 @@ test('v1.1.13 (news_26) comes right after 1.2, then 1.1.12, dated 2026-11-13, no
 
 test('v1.2 (news_27) comes right after 1.2.1, then 1.1.13, big with a summary, three items in en, fr and es', () => {
   assert.ok(vNum('1.2') > vNum('1.1.13'))
-  assert.equal(NEWS[30].v, '1.2')
-  assert.equal(NEWS[30].key, 'news_27')
-  assert.equal(NEWS[30].date, '2026-11-14')
-  assert.equal(NEWS[30].big, true, 'big: the news dot lights up')
-  assert.equal(NEWS[30].sum, 'news_sum_27')
-  assert.equal(timeline[30].v, '1.2')
-  assert.equal(timeline[31].v, '1.1.13')
+  assert.equal(NEWS[31].v, '1.2')
+  assert.equal(NEWS[31].key, 'news_27')
+  assert.equal(NEWS[31].date, '2026-11-14')
+  assert.equal(NEWS[31].big, true, 'big: the news dot lights up')
+  assert.equal(NEWS[31].sum, 'news_sum_27')
+  assert.equal(timeline[31].v, '1.2')
+  assert.equal(timeline[32].v, '1.1.13')
   const want = { en: 'Daily quests are here', fr: 'Les quêtes du jour sont là', es: 'Llegan las misiones diarias' }
   for (const l of ['en', 'fr', 'es']) {
-    assert.equal(T[l](NEWS[30].sum, { n: NEWS[30].n }), want[l], l)
+    assert.equal(T[l](NEWS[31].sum, { n: NEWS[31].n }), want[l], l)
     const list = items(T[l]('news_27'))
     assert.equal(list.length, 3, `news_27 ${l}`)
     assert.ok(list[0].includes(T[l]('quests_title')), `news_27 ${l} names Quests`)
@@ -283,13 +283,13 @@ test('v1.2 (news_27) comes right after 1.2.1, then 1.1.13, big with a summary, t
 
 test('v1.2.1 (news_28) comes right after 1.2.2, then 1.2, dated 2026-11-14, not big, two items in en, fr and es', () => {
   assert.ok(vNum('1.2.1') > vNum('1.2'))
-  assert.equal(NEWS[29].v, '1.2.1')
-  assert.equal(NEWS[29].key, 'news_28')
-  assert.equal(NEWS[29].date, '2026-11-14')
-  assert.ok(!NEWS[29].big, 'not big: no news dot')
-  assert.ok(!NEWS[29].sum)
-  assert.equal(timeline[29].v, '1.2.1')
-  assert.equal(timeline[30].v, '1.2')
+  assert.equal(NEWS[30].v, '1.2.1')
+  assert.equal(NEWS[30].key, 'news_28')
+  assert.equal(NEWS[30].date, '2026-11-14')
+  assert.ok(!NEWS[30].big, 'not big: no news dot')
+  assert.ok(!NEWS[30].sum)
+  assert.equal(timeline[30].v, '1.2.1')
+  assert.equal(timeline[31].v, '1.2')
   for (const l of ['en', 'fr', 'es']) {
     const list = items(T[l]('news_28'))
     assert.equal(list.length, 2, `news_28 ${l}`)
@@ -300,13 +300,13 @@ test('v1.2.1 (news_28) comes right after 1.2.2, then 1.2, dated 2026-11-14, not 
 
 test('v1.2.2 (news_29) comes right after 1.2.3, then 1.2.1, dated 2026-11-14, not big, two items in en, fr and es', () => {
   assert.ok(vNum('1.2.2') > vNum('1.2.1'))
-  assert.equal(NEWS[28].v, '1.2.2')
-  assert.equal(NEWS[28].key, 'news_29')
-  assert.equal(NEWS[28].date, '2026-11-14')
-  assert.ok(!NEWS[28].big, 'not big: someone who saw 1.2 gets no dot')
-  assert.ok(!NEWS[28].sum)
-  assert.equal(timeline[28].v, '1.2.2')
-  assert.equal(timeline[29].v, '1.2.1')
+  assert.equal(NEWS[29].v, '1.2.2')
+  assert.equal(NEWS[29].key, 'news_29')
+  assert.equal(NEWS[29].date, '2026-11-14')
+  assert.ok(!NEWS[29].big, 'not big: someone who saw 1.2 gets no dot')
+  assert.ok(!NEWS[29].sum)
+  assert.equal(timeline[29].v, '1.2.2')
+  assert.equal(timeline[30].v, '1.2.1')
   for (const l of ['en', 'fr', 'es']) {
     const list = items(T[l]('news_29'))
     assert.equal(list.length, 2, `news_29 ${l}`)
@@ -317,12 +317,12 @@ test('v1.2.2 (news_29) comes right after 1.2.3, then 1.2.1, dated 2026-11-14, no
 
 test('v1.2.3 (news_30) comes right after 1.2.4, then 1.2.2, dated 2026-11-14, not big, two items in en, fr and es', () => {
   assert.ok(vNum('1.2.3') > vNum('1.2.2'))
-  assert.equal(NEWS[27].v, '1.2.3')
-  assert.equal(NEWS[27].key, 'news_30')
-  assert.equal(NEWS[27].date, '2026-11-14')
-  assert.ok(!NEWS[27].big, 'not big: someone who saw 1.2 gets no dot')
-  assert.ok(!NEWS[27].sum)
-  assert.equal(timeline[27].v, '1.2.3')
+  assert.equal(NEWS[28].v, '1.2.3')
+  assert.equal(NEWS[28].key, 'news_30')
+  assert.equal(NEWS[28].date, '2026-11-14')
+  assert.ok(!NEWS[28].big, 'not big: someone who saw 1.2 gets no dot')
+  assert.ok(!NEWS[28].sum)
+  assert.equal(timeline[28].v, '1.2.3')
   for (const l of ['en', 'fr', 'es']) {
     const list = items(T[l]('news_30'))
     assert.equal(list.length, 2, `news_30 ${l}`)
@@ -333,13 +333,13 @@ test('v1.2.3 (news_30) comes right after 1.2.4, then 1.2.2, dated 2026-11-14, no
 
 test('v1.2.4 (news_31) comes right after 1.2.5, then 1.2.3, dated 2026-11-14, not big, three items in en, fr and es', () => {
   assert.ok(vNum('1.2.4') > vNum('1.2.3'))
-  assert.equal(NEWS[26].v, '1.2.4')
-  assert.equal(NEWS[26].key, 'news_31')
-  assert.equal(NEWS[26].date, '2026-11-14')
-  assert.ok(!NEWS[26].big, 'not big: no news dot')
-  assert.ok(!NEWS[26].sum)
-  assert.equal(timeline[26].v, '1.2.4')
-  assert.equal(timeline[27].v, '1.2.3')
+  assert.equal(NEWS[27].v, '1.2.4')
+  assert.equal(NEWS[27].key, 'news_31')
+  assert.equal(NEWS[27].date, '2026-11-14')
+  assert.ok(!NEWS[27].big, 'not big: no news dot')
+  assert.ok(!NEWS[27].sum)
+  assert.equal(timeline[27].v, '1.2.4')
+  assert.equal(timeline[28].v, '1.2.3')
   for (const l of ['en', 'fr', 'es']) {
     const list = items(T[l]('news_31'))
     assert.equal(list.length, 3, 'news_31 ' + l)
@@ -349,13 +349,13 @@ test('v1.2.4 (news_31) comes right after 1.2.5, then 1.2.3, dated 2026-11-14, no
 
 test('v1.2.5 (news_32) comes right after 1.2.6, then 1.2.4, dated 2026-11-15, not big, two items in en, fr and es', () => {
   assert.ok(vNum('1.2.5') > vNum('1.2.4'))
-  assert.equal(NEWS[25].v, '1.2.5')
-  assert.equal(NEWS[25].key, 'news_32')
-  assert.equal(NEWS[25].date, '2026-11-15')
-  assert.ok(!NEWS[25].big, 'not big: no news dot')
-  assert.ok(!NEWS[25].sum)
-  assert.equal(timeline[25].v, '1.2.5')
-  assert.equal(timeline[26].v, '1.2.4')
+  assert.equal(NEWS[26].v, '1.2.5')
+  assert.equal(NEWS[26].key, 'news_32')
+  assert.equal(NEWS[26].date, '2026-11-15')
+  assert.ok(!NEWS[26].big, 'not big: no news dot')
+  assert.ok(!NEWS[26].sum)
+  assert.equal(timeline[26].v, '1.2.5')
+  assert.equal(timeline[27].v, '1.2.4')
   for (const l of ['en', 'fr', 'es']) {
     const list = items(T[l]('news_32'))
     assert.equal(list.length, 2, 'news_32 ' + l)
@@ -365,13 +365,13 @@ test('v1.2.5 (news_32) comes right after 1.2.6, then 1.2.4, dated 2026-11-15, no
 
 test('v1.2.6 (news_33) comes right after 1.2.7, then 1.2.5, dated 2026-11-15, not big, two items in en, fr and es', () => {
   assert.ok(vNum('1.2.6') > vNum('1.2.5'))
-  assert.equal(NEWS[24].v, '1.2.6')
-  assert.equal(NEWS[24].key, 'news_33')
-  assert.equal(NEWS[24].date, '2026-11-15')
-  assert.ok(!NEWS[24].big, 'not big: no news dot')
-  assert.ok(!NEWS[24].sum)
-  assert.equal(timeline[24].v, '1.2.6')
-  assert.equal(timeline[25].v, '1.2.5')
+  assert.equal(NEWS[25].v, '1.2.6')
+  assert.equal(NEWS[25].key, 'news_33')
+  assert.equal(NEWS[25].date, '2026-11-15')
+  assert.ok(!NEWS[25].big, 'not big: no news dot')
+  assert.ok(!NEWS[25].sum)
+  assert.equal(timeline[25].v, '1.2.6')
+  assert.equal(timeline[26].v, '1.2.5')
   for (const l of ['en', 'fr', 'es']) {
     const list = items(T[l]('news_33'))
     assert.equal(list.length, 2, 'news_33 ' + l)
@@ -382,13 +382,13 @@ test('v1.2.6 (news_33) comes right after 1.2.7, then 1.2.5, dated 2026-11-15, no
 
 test('v1.2.7 (news_34) comes right after 1.2.8, then 1.2.6, dated 2026-11-15, not big, one item in en, fr and es', () => {
   assert.ok(vNum('1.2.7') > vNum('1.2.6'))
-  assert.equal(NEWS[23].v, '1.2.7')
-  assert.equal(NEWS[23].key, 'news_34')
-  assert.equal(NEWS[23].date, '2026-11-15')
-  assert.ok(!NEWS[23].big, 'not big: no news dot')
-  assert.ok(!NEWS[23].sum)
-  assert.equal(timeline[23].v, '1.2.7')
-  assert.equal(timeline[24].v, '1.2.6')
+  assert.equal(NEWS[24].v, '1.2.7')
+  assert.equal(NEWS[24].key, 'news_34')
+  assert.equal(NEWS[24].date, '2026-11-15')
+  assert.ok(!NEWS[24].big, 'not big: no news dot')
+  assert.ok(!NEWS[24].sum)
+  assert.equal(timeline[24].v, '1.2.7')
+  assert.equal(timeline[25].v, '1.2.6')
   for (const l of ['en', 'fr', 'es']) {
     const list = items(T[l]('news_34'))
     assert.equal(list.length, 1, 'news_34 ' + l)
@@ -398,13 +398,13 @@ test('v1.2.7 (news_34) comes right after 1.2.8, then 1.2.6, dated 2026-11-15, no
 
 test('v1.2.8 (news_35) comes right after 1.2.9, then 1.2.7, dated 2026-11-15, not big, one item in en, fr and es', () => {
   assert.ok(vNum('1.2.8') > vNum('1.2.7'))
-  assert.equal(NEWS[22].v, '1.2.8')
-  assert.equal(NEWS[22].key, 'news_35')
-  assert.equal(NEWS[22].date, '2026-11-15')
-  assert.ok(!NEWS[22].big, 'not big: no news dot')
-  assert.ok(!NEWS[22].sum)
-  assert.equal(timeline[22].v, '1.2.8')
-  assert.equal(timeline[23].v, '1.2.7')
+  assert.equal(NEWS[23].v, '1.2.8')
+  assert.equal(NEWS[23].key, 'news_35')
+  assert.equal(NEWS[23].date, '2026-11-15')
+  assert.ok(!NEWS[23].big, 'not big: no news dot')
+  assert.ok(!NEWS[23].sum)
+  assert.equal(timeline[23].v, '1.2.8')
+  assert.equal(timeline[24].v, '1.2.7')
   for (const l of ['en', 'fr', 'es']) {
     const list = items(T[l]('news_35'))
     assert.equal(list.length, 1, 'news_35 ' + l)
@@ -414,13 +414,13 @@ test('v1.2.8 (news_35) comes right after 1.2.9, then 1.2.7, dated 2026-11-15, no
 
 test('v1.2.9 (news_36) comes right after 1.2.10, then 1.2.8, dated 2026-11-15, not big, two items in en, fr and es', () => {
   assert.ok(vNum('1.2.9') > vNum('1.2.8'))
-  assert.equal(NEWS[21].v, '1.2.9')
-  assert.equal(NEWS[21].key, 'news_36')
-  assert.equal(NEWS[21].date, '2026-11-15')
-  assert.ok(!NEWS[21].big, 'not big: no news dot')
-  assert.ok(!NEWS[21].sum)
-  assert.equal(timeline[21].v, '1.2.9')
-  assert.equal(timeline[22].v, '1.2.8')
+  assert.equal(NEWS[22].v, '1.2.9')
+  assert.equal(NEWS[22].key, 'news_36')
+  assert.equal(NEWS[22].date, '2026-11-15')
+  assert.ok(!NEWS[22].big, 'not big: no news dot')
+  assert.ok(!NEWS[22].sum)
+  assert.equal(timeline[22].v, '1.2.9')
+  assert.equal(timeline[23].v, '1.2.8')
   for (const l of ['en', 'fr', 'es']) {
     const list = items(T[l]('news_36'))
     assert.equal(list.length, 2, 'news_36 ' + l)
@@ -430,13 +430,13 @@ test('v1.2.9 (news_36) comes right after 1.2.10, then 1.2.8, dated 2026-11-15, n
 
 test('v1.2.10 (news_37) comes right after 1.2.11, then 1.2.9, dated 2026-11-15, not big, one item in en, fr and es', () => {
   assert.ok(vNum('1.2.10') > vNum('1.2.9'))
-  assert.equal(NEWS[20].v, '1.2.10')
-  assert.equal(NEWS[20].key, 'news_37')
-  assert.equal(NEWS[20].date, '2026-11-15')
-  assert.ok(!NEWS[20].big, 'not big: no news dot')
-  assert.ok(!NEWS[20].sum)
-  assert.equal(timeline[20].v, '1.2.10')
-  assert.equal(timeline[21].v, '1.2.9')
+  assert.equal(NEWS[21].v, '1.2.10')
+  assert.equal(NEWS[21].key, 'news_37')
+  assert.equal(NEWS[21].date, '2026-11-15')
+  assert.ok(!NEWS[21].big, 'not big: no news dot')
+  assert.ok(!NEWS[21].sum)
+  assert.equal(timeline[21].v, '1.2.10')
+  assert.equal(timeline[22].v, '1.2.9')
   for (const l of ['en', 'fr', 'es']) {
     const list = items(T[l]('news_37'))
     assert.equal(list.length, 1, 'news_37 ' + l)
@@ -446,13 +446,13 @@ test('v1.2.10 (news_37) comes right after 1.2.11, then 1.2.9, dated 2026-11-15, 
 
 test('v1.2.11 (news_38) comes right after 1.3, then 1.2.10, dated 2026-11-15, not big, one item in en, fr and es', () => {
   assert.ok(vNum('1.2.11') > vNum('1.2.10'))
-  assert.equal(NEWS[19].v, '1.2.11')
-  assert.equal(NEWS[19].key, 'news_38')
-  assert.equal(NEWS[19].date, '2026-11-15')
-  assert.ok(!NEWS[19].big, 'not big: no news dot')
-  assert.ok(!NEWS[19].sum)
-  assert.equal(timeline[19].v, '1.2.11')
-  assert.equal(timeline[20].v, '1.2.10')
+  assert.equal(NEWS[20].v, '1.2.11')
+  assert.equal(NEWS[20].key, 'news_38')
+  assert.equal(NEWS[20].date, '2026-11-15')
+  assert.ok(!NEWS[20].big, 'not big: no news dot')
+  assert.ok(!NEWS[20].sum)
+  assert.equal(timeline[20].v, '1.2.11')
+  assert.equal(timeline[21].v, '1.2.10')
   for (const l of ['en', 'fr', 'es']) {
     const list = items(T[l]('news_38'))
     assert.equal(list.length, 1, 'news_38 ' + l)
@@ -462,18 +462,36 @@ test('v1.2.11 (news_38) comes right after 1.3, then 1.2.10, dated 2026-11-15, no
   }
 })
 
-test('v1.7.1 (news_57) is the newest block, index 0, dated 2026-11-21, the app version, not big, no sum, carries a two-row sheet (gift, profile), two items in en, fr and es', () => {
-  assert.ok(vNum('1.7.1') > vNum('1.7'))
-  assert.equal(NEWS[0].v, '1.7.1')
-  assert.equal(NEWS[0].key, 'news_57')
+test('v1.7.2 (news_58) is the newest block, index 0, dated 2026-11-21, the app version, not big, no sum, carries a two-row sheet (gift, sparkle), two items in en, fr and es', () => {
+  assert.ok(vNum('1.7.2') > vNum('1.7.1'))
+  assert.equal(NEWS[0].v, '1.7.2')
+  assert.equal(NEWS[0].key, 'news_58')
   assert.equal(NEWS[0].date, '2026-11-21')
-  assert.ok(!NEWS[0].big, 'not big: the gift message and profile update lights no More dot of its own')
+  assert.ok(!NEWS[0].big, 'not big: the gift reveal and level banners light no More dot of their own')
   assert.ok(!NEWS[0].sum)
-  assert.ok(Array.isArray(NEWS[0].sheet) && NEWS[0].sheet.length === 2, 'the 1.7.1 big-update sheet, two rows')
-  assert.deepEqual(NEWS[0].sheet.map((r) => r.icon), ['gift', 'tabProfile'])
+  assert.ok(Array.isArray(NEWS[0].sheet) && NEWS[0].sheet.length === 2, 'the 1.7.2 big-update sheet, two rows')
+  assert.deepEqual(NEWS[0].sheet.map((r) => r.icon), ['gift', 'sparkle'])
   assert.deepEqual(NEWS[0].sheet.map((r) => r.go || null), [null, 'profile'])
-  assert.equal(timeline[0].v, '1.7.1')
-  assert.equal(pkg.version, '1.7.1')
+  assert.equal(timeline[0].v, '1.7.2')
+  assert.equal(pkg.version, '1.7.2')
+  for (const l of ['en', 'fr', 'es']) {
+    const list = items(T[l]('news_58'))
+    assert.equal(list.length, 2, `news_58 ${l}`)
+    for (const it of list) assert.ok(!it.replace(/Dibs!/g, '').includes('!') && !it.includes('—'), `news_58 ${l}`)
+  }
+})
+
+test('v1.7.1 (news_57) is now index 1, dated 2026-11-21, not big, no sum, carries a two-row sheet (gift, profile), two items in en, fr and es', () => {
+  assert.ok(vNum('1.7.1') > vNum('1.7'))
+  assert.equal(NEWS[1].v, '1.7.1')
+  assert.equal(NEWS[1].key, 'news_57')
+  assert.equal(NEWS[1].date, '2026-11-21')
+  assert.ok(!NEWS[1].big, 'not big: the gift message and profile update lights no More dot of its own')
+  assert.ok(!NEWS[1].sum)
+  assert.ok(Array.isArray(NEWS[1].sheet) && NEWS[1].sheet.length === 2, 'the 1.7.1 big-update sheet, two rows')
+  assert.deepEqual(NEWS[1].sheet.map((r) => r.icon), ['gift', 'tabProfile'])
+  assert.deepEqual(NEWS[1].sheet.map((r) => r.go || null), [null, 'profile'])
+  assert.equal(timeline[1].v, '1.7.1')
   for (const l of ['en', 'fr', 'es']) {
     const list = items(T[l]('news_57'))
     assert.equal(list.length, 2, `news_57 ${l}`)
@@ -481,17 +499,17 @@ test('v1.7.1 (news_57) is the newest block, index 0, dated 2026-11-21, the app v
   }
 })
 
-test('v1.7 (news_56) is now index 1, dated 2026-11-21, not big, no sum, carries a one-row sheet, one item in en, fr and es', () => {
+test('v1.7 (news_56) is now index 2, dated 2026-11-21, not big, no sum, carries a one-row sheet, one item in en, fr and es', () => {
   assert.ok(vNum('1.7') > vNum('1.6.3'))
-  assert.equal(NEWS[1].v, '1.7')
-  assert.equal(NEWS[1].key, 'news_56')
-  assert.equal(NEWS[1].date, '2026-11-21')
-  assert.ok(!NEWS[1].big, 'not big: the leaderboards update lights no More dot of its own')
-  assert.ok(!NEWS[1].sum)
-  assert.ok(Array.isArray(NEWS[1].sheet) && NEWS[1].sheet.length === 1, 'the 1.7 big-update sheet, one row')
-  assert.deepEqual(NEWS[1].sheet.map((r) => r.icon), ['chart'])
-  assert.deepEqual(NEWS[1].sheet.map((r) => r.go || null), ['profile'])
-  assert.equal(timeline[1].v, '1.7')
+  assert.equal(NEWS[2].v, '1.7')
+  assert.equal(NEWS[2].key, 'news_56')
+  assert.equal(NEWS[2].date, '2026-11-21')
+  assert.ok(!NEWS[2].big, 'not big: the leaderboards update lights no More dot of its own')
+  assert.ok(!NEWS[2].sum)
+  assert.ok(Array.isArray(NEWS[2].sheet) && NEWS[2].sheet.length === 1, 'the 1.7 big-update sheet, one row')
+  assert.deepEqual(NEWS[2].sheet.map((r) => r.icon), ['chart'])
+  assert.deepEqual(NEWS[2].sheet.map((r) => r.go || null), ['profile'])
+  assert.equal(timeline[2].v, '1.7')
   for (const l of ['en', 'fr', 'es']) {
     const list = items(T[l]('news_56'))
     assert.equal(list.length, 1, `news_56 ${l}`)
@@ -502,13 +520,13 @@ test('v1.7 (news_56) is now index 1, dated 2026-11-21, not big, no sum, carries 
 
 test('v1.6.3 (news_55) is now index 1, dated 2026-11-21, not big, no sum, no sheet, four items in en, fr and es', () => {
   assert.ok(vNum('1.6.3') > vNum('1.6.2'))
-  assert.equal(NEWS[2].v, '1.6.3')
-  assert.equal(NEWS[2].key, 'news_55')
-  assert.equal(NEWS[2].date, '2026-11-21')
-  assert.ok(!NEWS[2].big, 'not big: the small fixes get no dot of their own')
-  assert.ok(!NEWS[2].sum)
-  assert.ok(!('sheet' in NEWS[2]), 'no big-update sheet for 1.6.3')
-  assert.equal(timeline[2].v, '1.6.3')
+  assert.equal(NEWS[3].v, '1.6.3')
+  assert.equal(NEWS[3].key, 'news_55')
+  assert.equal(NEWS[3].date, '2026-11-21')
+  assert.ok(!NEWS[3].big, 'not big: the small fixes get no dot of their own')
+  assert.ok(!NEWS[3].sum)
+  assert.ok(!('sheet' in NEWS[3]), 'no big-update sheet for 1.6.3')
+  assert.equal(timeline[3].v, '1.6.3')
   for (const l of ['en', 'fr', 'es']) {
     const list = items(T[l]('news_55'))
     assert.equal(list.length, 4, `news_55 ${l}`)
@@ -518,13 +536,13 @@ test('v1.6.3 (news_55) is now index 1, dated 2026-11-21, not big, no sum, no she
 
 test('v1.6.2 (news_54) is now index 1, dated 2026-11-21, not big, no sum, no sheet, three items in en, fr and es', () => {
   assert.ok(vNum('1.6.2') > vNum('1.6.1'))
-  assert.equal(NEWS[3].v, '1.6.2')
-  assert.equal(NEWS[3].key, 'news_54')
-  assert.equal(NEWS[3].date, '2026-11-21')
-  assert.ok(!NEWS[3].big, 'not big: the release notes get no dot of their own')
-  assert.ok(!NEWS[3].sum)
-  assert.ok(!('sheet' in NEWS[3]), 'no big-update sheet of its own for 1.6.2')
-  assert.equal(timeline[3].v, '1.6.2')
+  assert.equal(NEWS[4].v, '1.6.2')
+  assert.equal(NEWS[4].key, 'news_54')
+  assert.equal(NEWS[4].date, '2026-11-21')
+  assert.ok(!NEWS[4].big, 'not big: the release notes get no dot of their own')
+  assert.ok(!NEWS[4].sum)
+  assert.ok(!('sheet' in NEWS[4]), 'no big-update sheet of its own for 1.6.2')
+  assert.equal(timeline[4].v, '1.6.2')
   for (const l of ['en', 'fr', 'es']) {
     const list = items(T[l]('news_54'))
     assert.equal(list.length, 3, `news_54 ${l}`)
@@ -534,13 +552,13 @@ test('v1.6.2 (news_54) is now index 1, dated 2026-11-21, not big, no sum, no she
 
 test('v1.6.1 (news_53) is now index 1, dated 2026-11-21, not big, no sum, no sheet, one item naming the Electronics brands and Bolt in en, fr and es', () => {
   assert.ok(vNum('1.6.1') > vNum('1.6'))
-  assert.equal(NEWS[4].v, '1.6.1')
-  assert.equal(NEWS[4].key, 'news_53')
-  assert.equal(NEWS[4].date, '2026-11-21')
-  assert.ok(!NEWS[4].big, 'not big: new Home pictures get no dot')
-  assert.ok(!NEWS[4].sum)
-  assert.ok(!('sheet' in NEWS[4]), 'no big-update sheet for 1.6.1')
-  assert.equal(timeline[4].v, '1.6.1')
+  assert.equal(NEWS[5].v, '1.6.1')
+  assert.equal(NEWS[5].key, 'news_53')
+  assert.equal(NEWS[5].date, '2026-11-21')
+  assert.ok(!NEWS[5].big, 'not big: new Home pictures get no dot')
+  assert.ok(!NEWS[5].sum)
+  assert.ok(!('sheet' in NEWS[5]), 'no big-update sheet for 1.6.1')
+  assert.equal(timeline[5].v, '1.6.1')
   const names = { en: 'Electronics', fr: 'électronique', es: 'electrónica' }
   for (const l of ['en', 'fr', 'es']) {
     const list = items(T[l]('news_53'))
@@ -553,16 +571,16 @@ test('v1.6.1 (news_53) is now index 1, dated 2026-11-21, not big, no sum, no she
 
 test('v1.6 (news_52) is now index 2, dated 2026-11-21, carries the big-update sheet (v1.6.2), one item naming Electronics in en, fr and es', () => {
   assert.ok(vNum('1.6') > vNum('1.5.2'))
-  assert.equal(NEWS[5].v, '1.6')
-  assert.equal(NEWS[5].key, 'news_52')
-  assert.equal(NEWS[5].date, '2026-11-21')
+  assert.equal(NEWS[6].v, '1.6')
+  assert.equal(NEWS[6].key, 'news_52')
+  assert.equal(NEWS[6].date, '2026-11-21')
   // v1.6.2: the sheet that never showed for 1.5 or 1.6 is put here, so the More dot (big) and the summary come with it.
-  assert.equal(NEWS[5].big, true, 'big: the news dot lights up')
-  assert.equal(NEWS[5].sum, 'news_sum_52')
-  assert.ok(Array.isArray(NEWS[5].sheet) && NEWS[5].sheet.length === 3, 'the 1.6 big-update sheet, three rows')
-  assert.equal(timeline[5].v, '1.6')
+  assert.equal(NEWS[6].big, true, 'big: the news dot lights up')
+  assert.equal(NEWS[6].sum, 'news_sum_52')
+  assert.ok(Array.isArray(NEWS[6].sheet) && NEWS[6].sheet.length === 3, 'the 1.6 big-update sheet, three rows')
+  assert.equal(timeline[6].v, '1.6')
   const summ = { en: 'Electronics, numbers about NIM and your choice of pool.', fr: 'Électronique, chiffres du NIM et choix du pool.', es: 'Electrónica, números sobre NIM y elección de pool.' }
-  for (const l of ['en', 'fr', 'es']) assert.equal(T[l](NEWS[5].sum), summ[l], `news_sum_52 ${l}`)
+  for (const l of ['en', 'fr', 'es']) assert.equal(T[l](NEWS[6].sum), summ[l], `news_sum_52 ${l}`)
   const names = { en: 'Electronics', fr: 'Électronique', es: 'Electrónica' }
   for (const l of ['en', 'fr', 'es']) {
     const list = items(T[l]('news_52'))
@@ -574,13 +592,13 @@ test('v1.6 (news_52) is now index 2, dated 2026-11-21, carries the big-update sh
 
 test('v1.5.2 (news_51) is now index 1, dated 2026-11-21, not big, no sum, no sheet, three items in en, fr and es', () => {
   assert.ok(vNum('1.5.2') > vNum('1.5.1'))
-  assert.equal(NEWS[6].v, '1.5.2')
-  assert.equal(NEWS[6].key, 'news_51')
-  assert.equal(NEWS[6].date, '2026-11-21')
-  assert.ok(!NEWS[6].big, 'not big: small display fixes get no dot')
-  assert.ok(!NEWS[6].sum)
-  assert.ok(!('sheet' in NEWS[6]), 'no big-update sheet for 1.5.2')
-  assert.equal(timeline[6].v, '1.5.2')
+  assert.equal(NEWS[7].v, '1.5.2')
+  assert.equal(NEWS[7].key, 'news_51')
+  assert.equal(NEWS[7].date, '2026-11-21')
+  assert.ok(!NEWS[7].big, 'not big: small display fixes get no dot')
+  assert.ok(!NEWS[7].sum)
+  assert.ok(!('sheet' in NEWS[7]), 'no big-update sheet for 1.5.2')
+  assert.equal(timeline[7].v, '1.5.2')
   for (const l of ['en', 'fr', 'es']) {
     const list = items(T[l]('news_51'))
     assert.equal(list.length, 3, `news_51 ${l}`)
@@ -590,13 +608,13 @@ test('v1.5.2 (news_51) is now index 1, dated 2026-11-21, not big, no sum, no she
 
 test('v1.5.1 (news_50) is now index 1, dated 2026-11-21, not big, no sum, no sheet, one item in en, fr and es', () => {
   assert.ok(vNum('1.5.1') > vNum('1.5'))
-  assert.equal(NEWS[7].v, '1.5.1')
-  assert.equal(NEWS[7].key, 'news_50')
-  assert.equal(NEWS[7].date, '2026-11-21')
-  assert.ok(!NEWS[7].big, 'not big: a display-only tweak gets no dot')
-  assert.ok(!NEWS[7].sum)
-  assert.ok(!('sheet' in NEWS[7]), 'no big-update sheet for 1.5.1')
-  assert.equal(timeline[7].v, '1.5.1')
+  assert.equal(NEWS[8].v, '1.5.1')
+  assert.equal(NEWS[8].key, 'news_50')
+  assert.equal(NEWS[8].date, '2026-11-21')
+  assert.ok(!NEWS[8].big, 'not big: a display-only tweak gets no dot')
+  assert.ok(!NEWS[8].sum)
+  assert.ok(!('sheet' in NEWS[8]), 'no big-update sheet for 1.5.1')
+  assert.equal(timeline[8].v, '1.5.1')
   for (const l of ['en', 'fr', 'es']) {
     const list = items(T[l]('news_50'))
     assert.equal(list.length, 1, `news_50 ${l}`)
@@ -606,13 +624,13 @@ test('v1.5.1 (news_50) is now index 1, dated 2026-11-21, not big, no sum, no she
 
 test('v1.5 (news_49) is now index 1, dated 2026-11-21, not big, no sum, no sheet, three items in en, fr and es', () => {
   assert.ok(vNum('1.5') > vNum('1.4.4'))
-  assert.equal(NEWS[8].v, '1.5')
-  assert.equal(NEWS[8].key, 'news_49')
-  assert.equal(NEWS[8].date, '2026-11-21')
-  assert.ok(!NEWS[8].big, 'not big: only new users see the picker, people who already stake get nothing to tap')
-  assert.ok(!NEWS[8].sum)
-  assert.ok(!('sheet' in NEWS[8]), 'no big-update sheet for 1.5')
-  assert.equal(timeline[8].v, '1.5')
+  assert.equal(NEWS[9].v, '1.5')
+  assert.equal(NEWS[9].key, 'news_49')
+  assert.equal(NEWS[9].date, '2026-11-21')
+  assert.ok(!NEWS[9].big, 'not big: only new users see the picker, people who already stake get nothing to tap')
+  assert.ok(!NEWS[9].sum)
+  assert.ok(!('sheet' in NEWS[9]), 'no big-update sheet for 1.5')
+  assert.equal(timeline[9].v, '1.5')
   for (const l of ['en', 'fr', 'es']) {
     const list = items(T[l]('news_49'))
     assert.equal(list.length, 3, `news_49 ${l}`)
@@ -622,13 +640,13 @@ test('v1.5 (news_49) is now index 1, dated 2026-11-21, not big, no sum, no sheet
 
 test('v1.4.4 (news_48) is now index 1, dated 2026-11-21, not big, no sum, no sheet, three items in en, fr and es', () => {
   assert.ok(vNum('1.4.4') > vNum('1.4.3'))
-  assert.equal(NEWS[9].v, '1.4.4')
-  assert.equal(NEWS[9].key, 'news_48')
-  assert.equal(NEWS[9].date, '2026-11-21')
-  assert.ok(!NEWS[9].big, 'not big: a small release gets no dot')
-  assert.ok(!NEWS[9].sum)
-  assert.ok(!('sheet' in NEWS[9]), 'no big-update sheet for 1.4.4')
-  assert.equal(timeline[9].v, '1.4.4')
+  assert.equal(NEWS[10].v, '1.4.4')
+  assert.equal(NEWS[10].key, 'news_48')
+  assert.equal(NEWS[10].date, '2026-11-21')
+  assert.ok(!NEWS[10].big, 'not big: a small release gets no dot')
+  assert.ok(!NEWS[10].sum)
+  assert.ok(!('sheet' in NEWS[10]), 'no big-update sheet for 1.4.4')
+  assert.equal(timeline[10].v, '1.4.4')
   for (const l of ['en', 'fr', 'es']) {
     const list = items(T[l]('news_48'))
     assert.equal(list.length, 3, `news_48 ${l}`)
@@ -638,13 +656,13 @@ test('v1.4.4 (news_48) is now index 1, dated 2026-11-21, not big, no sum, no she
 
 test('v1.4.3 (news_47) is now index 1, dated 2026-11-21, not big, no sum, no sheet, three items in en, fr and es', () => {
   assert.ok(vNum('1.4.3') > vNum('1.4.2'))
-  assert.equal(NEWS[10].v, '1.4.3')
-  assert.equal(NEWS[10].key, 'news_47')
-  assert.equal(NEWS[10].date, '2026-11-21')
-  assert.ok(!NEWS[10].big, 'not big: a small release gets no dot')
-  assert.ok(!NEWS[10].sum)
-  assert.ok(!('sheet' in NEWS[10]), 'no big-update sheet for 1.4.3')
-  assert.equal(timeline[10].v, '1.4.3')
+  assert.equal(NEWS[11].v, '1.4.3')
+  assert.equal(NEWS[11].key, 'news_47')
+  assert.equal(NEWS[11].date, '2026-11-21')
+  assert.ok(!NEWS[11].big, 'not big: a small release gets no dot')
+  assert.ok(!NEWS[11].sum)
+  assert.ok(!('sheet' in NEWS[11]), 'no big-update sheet for 1.4.3')
+  assert.equal(timeline[11].v, '1.4.3')
   for (const l of ['en', 'fr', 'es']) {
     const list = items(T[l]('news_47'))
     assert.equal(list.length, 3, `news_47 ${l}`)
@@ -654,13 +672,13 @@ test('v1.4.3 (news_47) is now index 1, dated 2026-11-21, not big, no sum, no she
 
 test('v1.4.2 (news_46) is now index 2, dated 2026-11-21, not big, no sum, no sheet, three items in en, fr and es', () => {
   assert.ok(vNum('1.4.2') > vNum('1.4.1'))
-  assert.equal(NEWS[11].v, '1.4.2')
-  assert.equal(NEWS[11].key, 'news_46')
-  assert.equal(NEWS[11].date, '2026-11-21')
-  assert.ok(!NEWS[11].big, 'not big: someone who already saw 1.4 gets no dot')
-  assert.ok(!NEWS[11].sum)
-  assert.ok(!('sheet' in NEWS[11]), 'no big-update sheet for 1.4.2')
-  assert.equal(timeline[11].v, '1.4.2')
+  assert.equal(NEWS[12].v, '1.4.2')
+  assert.equal(NEWS[12].key, 'news_46')
+  assert.equal(NEWS[12].date, '2026-11-21')
+  assert.ok(!NEWS[12].big, 'not big: someone who already saw 1.4 gets no dot')
+  assert.ok(!NEWS[12].sum)
+  assert.ok(!('sheet' in NEWS[12]), 'no big-update sheet for 1.4.2')
+  assert.equal(timeline[12].v, '1.4.2')
   for (const l of ['en', 'fr', 'es']) {
     const list = items(T[l]('news_46'))
     assert.equal(list.length, 3, `news_46 ${l}`)
@@ -670,13 +688,13 @@ test('v1.4.2 (news_46) is now index 2, dated 2026-11-21, not big, no sum, no she
 
 test('v1.4.1 (news_45) comes right after 1.4.2, index 3, dated 2026-11-21, not big, no sum, no sheet, four items in en, fr and es', () => {
   assert.ok(vNum('1.4.1') > vNum('1.4'))
-  assert.equal(NEWS[12].v, '1.4.1')
-  assert.equal(NEWS[12].key, 'news_45')
-  assert.equal(NEWS[12].date, '2026-11-21')
-  assert.ok(!NEWS[12].big, 'not big: someone who already saw 1.4 gets no dot')
-  assert.ok(!NEWS[12].sum)
-  assert.ok(!('sheet' in NEWS[12]), 'no big-update sheet for 1.4.1')
-  assert.equal(timeline[12].v, '1.4.1')
+  assert.equal(NEWS[13].v, '1.4.1')
+  assert.equal(NEWS[13].key, 'news_45')
+  assert.equal(NEWS[13].date, '2026-11-21')
+  assert.ok(!NEWS[13].big, 'not big: someone who already saw 1.4 gets no dot')
+  assert.ok(!NEWS[13].sum)
+  assert.ok(!('sheet' in NEWS[13]), 'no big-update sheet for 1.4.1')
+  assert.equal(timeline[13].v, '1.4.1')
   for (const l of ['en', 'fr', 'es']) {
     const list = items(T[l]('news_45'))
     assert.equal(list.length, 4, `news_45 ${l}`)
@@ -686,15 +704,15 @@ test('v1.4.1 (news_45) comes right after 1.4.2, index 3, dated 2026-11-21, not b
 
 test('v1.4 (news_44) comes right after 1.4.1, index 4, dated 2026-11-20, big with a summary and a sheet, four items in en, fr and es', () => {
   assert.ok(vNum('1.4') > vNum('1.3.4'))
-  assert.equal(NEWS[13].v, '1.4')
-  assert.equal(NEWS[13].key, 'news_44')
-  assert.equal(NEWS[13].date, '2026-11-20')
-  assert.equal(NEWS[13].big, true, 'big: the news dot lights up')
-  assert.equal(NEWS[13].sum, 'news_sum_44')
-  assert.equal(timeline[13].v, '1.4')
+  assert.equal(NEWS[14].v, '1.4')
+  assert.equal(NEWS[14].key, 'news_44')
+  assert.equal(NEWS[14].date, '2026-11-20')
+  assert.equal(NEWS[14].big, true, 'big: the news dot lights up')
+  assert.equal(NEWS[14].sum, 'news_sum_44')
+  assert.equal(timeline[14].v, '1.4')
   const want = { en: 'Friends, a wishlist, and you choose what they see.', fr: 'Les amis, une liste de souhaits, et vous choisissez ce qu’ils voient.', es: 'Amigos, una lista de deseos, y tú eliges lo que ven.' }
   for (const l of ['en', 'fr', 'es']) {
-    assert.equal(T[l](NEWS[13].sum, { n: NEWS[13].n }), want[l], l)
+    assert.equal(T[l](NEWS[14].sum, { n: NEWS[14].n }), want[l], l)
     const list = items(T[l]('news_44'))
     assert.equal(list.length, 4, `news_44 ${l}`)
     for (const it of list) assert.ok(!it.replace(/Dibs!/g, '').includes('!') && !it.includes('—'), `news_44 ${l}`)
@@ -703,14 +721,14 @@ test('v1.4 (news_44) comes right after 1.4.1, index 4, dated 2026-11-20, big wit
 
 test('v1.3.4 (news_43) comes right after 1.4, index 5, dated 2026-11-20, not big, no sum, no sheet, one item in en, fr and es', () => {
   assert.ok(vNum('1.3.4') > vNum('1.3.3'))
-  assert.equal(NEWS[14].v, '1.3.4')
-  assert.equal(NEWS[14].key, 'news_43')
-  assert.equal(NEWS[14].date, '2026-11-20')
-  assert.ok(!NEWS[14].big, 'not big: someone who already saw 1.3 gets no dot')
-  assert.ok(!NEWS[14].sum)
-  assert.ok(!('sheet' in NEWS[14]), 'no big-update sheet for 1.3.4')
-  assert.equal(timeline[14].v, '1.3.4')
-  assert.equal(timeline[15].v, '1.3.3')
+  assert.equal(NEWS[15].v, '1.3.4')
+  assert.equal(NEWS[15].key, 'news_43')
+  assert.equal(NEWS[15].date, '2026-11-20')
+  assert.ok(!NEWS[15].big, 'not big: someone who already saw 1.3 gets no dot')
+  assert.ok(!NEWS[15].sum)
+  assert.ok(!('sheet' in NEWS[15]), 'no big-update sheet for 1.3.4')
+  assert.equal(timeline[15].v, '1.3.4')
+  assert.equal(timeline[16].v, '1.3.3')
   for (const l of ['en', 'fr', 'es']) {
     const list = items(T[l]('news_43'))
     assert.equal(list.length, 1, `news_43 ${l}`)
@@ -720,14 +738,14 @@ test('v1.3.4 (news_43) comes right after 1.4, index 5, dated 2026-11-20, not big
 
 test('v1.3.3 (news_42) comes right after 1.3.4, index 1, dated 2026-11-20, not big, no sum, no sheet, one item in en, fr and es', () => {
   assert.ok(vNum('1.3.3') > vNum('1.3.2'))
-  assert.equal(NEWS[15].v, '1.3.3')
-  assert.equal(NEWS[15].key, 'news_42')
-  assert.equal(NEWS[15].date, '2026-11-20')
-  assert.ok(!NEWS[15].big, 'not big: someone who already saw 1.3 gets no dot')
-  assert.ok(!NEWS[15].sum)
-  assert.ok(!('sheet' in NEWS[15]), 'no big-update sheet for 1.3.3')
-  assert.equal(timeline[15].v, '1.3.3')
-  assert.equal(timeline[16].v, '1.3.2')
+  assert.equal(NEWS[16].v, '1.3.3')
+  assert.equal(NEWS[16].key, 'news_42')
+  assert.equal(NEWS[16].date, '2026-11-20')
+  assert.ok(!NEWS[16].big, 'not big: someone who already saw 1.3 gets no dot')
+  assert.ok(!NEWS[16].sum)
+  assert.ok(!('sheet' in NEWS[16]), 'no big-update sheet for 1.3.3')
+  assert.equal(timeline[16].v, '1.3.3')
+  assert.equal(timeline[17].v, '1.3.2')
   for (const l of ['en', 'fr', 'es']) {
     const list = items(T[l]('news_42'))
     assert.equal(list.length, 1, `news_42 ${l}`)
@@ -737,14 +755,14 @@ test('v1.3.3 (news_42) comes right after 1.3.4, index 1, dated 2026-11-20, not b
 
 test('v1.3.2 (news_41) comes right after 1.3.3, then 1.3.1, dated 2026-11-20, not big, no sum, no sheet, two items in en, fr and es', () => {
   assert.ok(vNum('1.3.2') > vNum('1.3.1'))
-  assert.equal(NEWS[16].v, '1.3.2')
-  assert.equal(NEWS[16].key, 'news_41')
-  assert.equal(NEWS[16].date, '2026-11-20')
-  assert.ok(!NEWS[16].big, 'not big: someone who already saw 1.3 gets no dot')
-  assert.ok(!NEWS[16].sum)
-  assert.ok(!('sheet' in NEWS[16]), 'no big-update sheet for 1.3.2')
-  assert.equal(timeline[16].v, '1.3.2')
-  assert.equal(timeline[17].v, '1.3.1')
+  assert.equal(NEWS[17].v, '1.3.2')
+  assert.equal(NEWS[17].key, 'news_41')
+  assert.equal(NEWS[17].date, '2026-11-20')
+  assert.ok(!NEWS[17].big, 'not big: someone who already saw 1.3 gets no dot')
+  assert.ok(!NEWS[17].sum)
+  assert.ok(!('sheet' in NEWS[17]), 'no big-update sheet for 1.3.2')
+  assert.equal(timeline[17].v, '1.3.2')
+  assert.equal(timeline[18].v, '1.3.1')
   for (const l of ['en', 'fr', 'es']) {
     const list = items(T[l]('news_41'))
     assert.equal(list.length, 2, `news_41 ${l}`)
@@ -754,14 +772,14 @@ test('v1.3.2 (news_41) comes right after 1.3.3, then 1.3.1, dated 2026-11-20, no
 
 test('v1.3.1 (news_40) comes right after 1.3.2, then 1.3, dated 2026-11-20, not big, no sum, no sheet, four items in en, fr and es', () => {
   assert.ok(vNum('1.3.1') > vNum('1.3'))
-  assert.equal(NEWS[17].v, '1.3.1')
-  assert.equal(NEWS[17].key, 'news_40')
-  assert.equal(NEWS[17].date, '2026-11-20')
-  assert.ok(!NEWS[17].big, 'not big: someone who already saw 1.3 gets no dot')
-  assert.ok(!NEWS[17].sum)
-  assert.ok(!('sheet' in NEWS[17]), 'no big-update sheet for 1.3.1')
-  assert.equal(timeline[17].v, '1.3.1')
-  assert.equal(timeline[18].v, '1.3')
+  assert.equal(NEWS[18].v, '1.3.1')
+  assert.equal(NEWS[18].key, 'news_40')
+  assert.equal(NEWS[18].date, '2026-11-20')
+  assert.ok(!NEWS[18].big, 'not big: someone who already saw 1.3 gets no dot')
+  assert.ok(!NEWS[18].sum)
+  assert.ok(!('sheet' in NEWS[18]), 'no big-update sheet for 1.3.1')
+  assert.equal(timeline[18].v, '1.3.1')
+  assert.equal(timeline[19].v, '1.3')
   // Names Appearance, More and Savings in each language, four items, no "!" and no em dash.
   const names = { en: ['Appearance', 'More', 'Savings'], fr: ['Apparence', 'Plus', 'Épargne'], es: ['Apariencia', 'Más', 'Ahorros'] }
   for (const l of ['en', 'fr', 'es']) {
@@ -774,16 +792,16 @@ test('v1.3.1 (news_40) comes right after 1.3.2, then 1.3, dated 2026-11-20, not 
 
 test('v1.3 (news_39) comes right after 1.3.1, then 1.2.11, dated 2026-11-20, big with a summary, five items in en, fr and es', () => {
   assert.ok(vNum('1.3') > vNum('1.2.11'))
-  assert.equal(NEWS[18].v, '1.3')
-  assert.equal(NEWS[18].key, 'news_39')
-  assert.equal(NEWS[18].date, '2026-11-20')
-  assert.equal(NEWS[18].big, true, 'big: the news dot lights up')
-  assert.equal(NEWS[18].sum, 'news_sum_39')
-  assert.equal(timeline[18].v, '1.3')
-  assert.equal(timeline[19].v, '1.2.11')
+  assert.equal(NEWS[19].v, '1.3')
+  assert.equal(NEWS[19].key, 'news_39')
+  assert.equal(NEWS[19].date, '2026-11-20')
+  assert.equal(NEWS[19].big, true, 'big: the news dot lights up')
+  assert.equal(NEWS[19].sum, 'news_sum_39')
+  assert.equal(timeline[19].v, '1.3')
+  assert.equal(timeline[20].v, '1.2.11')
   const want = { en: 'See your saving: Insights, a weekly recap and your month to share.', fr: 'Votre épargne en un coup d’œil : Statistiques, un bilan chaque semaine et votre mois à partager.', es: 'Tu ahorro de un vistazo: Estadísticas, un resumen cada semana y tu mes para compartir.' }
   for (const l of ['en', 'fr', 'es']) {
-    assert.equal(T[l](NEWS[18].sum, { n: NEWS[18].n }), want[l], l)
+    assert.equal(T[l](NEWS[19].sum, { n: NEWS[19].n }), want[l], l)
     const list = items(T[l]('news_39'))
     assert.equal(list.length, 5, `news_39 ${l}`)
     for (const it of list) assert.ok(!it.replace(/Dibs!/g, '').includes('!') && !it.includes('—'), `news_39 ${l}`)
@@ -791,10 +809,14 @@ test('v1.3 (news_39) comes right after 1.3.1, then 1.2.11, dated 2026-11-20, big
 })
 
 // The big-update sheet (components/WhatsNewSheet.jsx) is driven by a release's optional `sheet` field (lib/news.js).
-// Five releases carry content: 1.7.1 (two rows), 1.7 (one row), 1.6 (v1.6.2 catch-up), 1.4 and 1.3 (three rows each).
-test('exactly five releases carry a sheet: 1.7.1, 1.7, 1.6, 1.4 and 1.3', () => {
+// Six releases carry content: 1.7.2 (two rows), 1.7.1 (two rows), 1.7 (one row), 1.6 (v1.6.2 catch-up), 1.4 and 1.3.
+test('exactly six releases carry a sheet: 1.7.2, 1.7.1, 1.7, 1.6, 1.4 and 1.3', () => {
   const withSheet = NEWS.filter((b) => 'sheet' in b)
-  assert.deepEqual(withSheet.map((b) => b.v), ['1.7.1', '1.7', '1.6', '1.4', '1.3'])
+  assert.deepEqual(withSheet.map((b) => b.v), ['1.7.2', '1.7.1', '1.7', '1.6', '1.4', '1.3'])
+  const s172 = withSheet.find((b) => b.v === '1.7.2')
+  assert.equal(s172.sheet.length, 2)
+  assert.deepEqual(s172.sheet.map((r) => r.icon), ['gift', 'sparkle'])
+  assert.deepEqual(s172.sheet.map((r) => r.go || null), [null, 'profile'])
   const s171 = withSheet.find((b) => b.v === '1.7.1')
   assert.equal(s171.sheet.length, 2)
   assert.deepEqual(s171.sheet.map((r) => r.icon), ['gift', 'tabProfile'])
@@ -803,7 +825,7 @@ test('exactly five releases carry a sheet: 1.7.1, 1.7, 1.6, 1.4 and 1.3', () => 
   assert.equal(s17.sheet.length, 1)
   assert.deepEqual(s17.sheet.map((r) => r.icon), ['chart'])
   assert.deepEqual(s17.sheet.map((r) => r.go || null), ['profile'])
-  for (const b of withSheet.filter((x) => x.v !== '1.7' && x.v !== '1.7.1')) assert.equal(b.sheet.length, 3)
+  for (const b of withSheet.filter((x) => x.v !== '1.7' && x.v !== '1.7.1' && x.v !== '1.7.2')) assert.equal(b.sheet.length, 3)
   const s16 = withSheet.find((b) => b.v === '1.6')
   assert.deepEqual(s16.sheet.map((r) => r.icon), ['bag', 'bulb', 'shield'])
   assert.deepEqual(s16.sheet.map((r) => r.go || null), ['catalog', 'stake', null])

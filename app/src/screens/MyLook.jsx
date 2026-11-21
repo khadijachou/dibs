@@ -1,10 +1,11 @@
 // My look (route myLook, back to Profile): a preview at the top, then three cards of tiles (Accent, Avatar frame, Goal
 // ring). A tap equips at once and saves (lib/looks.js). Looks only: no XP, nothing else changes.
+import { useState } from 'react'
 import { useApp } from '../App.jsx'
-import { Header, Ring } from '../components/ui.jsx'
+import { Header, Ring, Icon } from '../components/ui.jsx'
 import { Avatar } from '../components/Avatar.jsx'
 import { StyleRing } from '../components/GoalRing.jsx'
-import { LookGrid, accentClass, useLook } from '../components/LookParts.jsx'
+import { LookGrid, accentClass, useLook, GiftBannerSheet } from '../components/LookParts.jsx'
 import { useXp } from '../lib/useXp.js'
 import { getName } from '../lib/name.js'
 import { setLook, resetLook, isDefaultLook, accentChoice } from '../lib/looks.js'
@@ -15,6 +16,7 @@ export default function MyLook() {
   const { level, rank } = useXp(address)
   const look = useLook(level)
   const name = getName()
+  const [gbOpen, setGbOpen] = useState(false)
   // Equip and save at once; if Friends is on and the accent or frame is shared (R1), send the change too.
   const pick = (kind, id) => { setLook(kind, id, level); if (kind !== 'ring') syncLookQuiet(address) }
 
@@ -43,9 +45,16 @@ export default function MyLook() {
         <LookGrid kind="frame" level={level} look={look} t={t} onPick={pick} />
         <LookGrid kind="ring" level={level} look={look} t={t} onPick={pick} />
 
+        <button type="button" className="frd-prof-row lk-gb-row" onClick={() => setGbOpen(true)}>
+          <span className="frd-prof-ic" aria-hidden="true"><Icon name="gift" size={20} /></span>
+          <span className="frd-row-mid"><b>{t('gb_list_title')}</b><small>{t('gb_list_sub')}</small></span>
+          <span className="chev" aria-hidden="true">›</span>
+        </button>
+
         {!isDefaultLook(level) && <button type="button" className="btn ghost lk-reset" onClick={() => { resetLook(); syncLookQuiet(address) }}>{t('look_reset')}</button>}
         <p className="frd-note lk-only-note">{t('look_only')}</p>
       </main>
+      {gbOpen && <GiftBannerSheet level={level} onClose={() => setGbOpen(false)} />}
     </>
   )
 }

@@ -1941,7 +1941,7 @@ html.is-fullscreen .bstamp-live { top: calc(58px + var(--fs-top)); }
 .gift-banner svg { display: block; width: 100%; height: 100%; }
 .gift-banner.thumb { border-radius: 11px; }
 .gb-title { position: absolute; left: 16px; bottom: 11px; margin: 0; font-family: 'Poppins', system-ui, sans-serif; font-weight: 700; font-size: var(--fs-title); color: #FFF6EC; }
-.gb-congrats .gb-title { color: #23212B; }
+.gb-congrats .gb-title, .gb-collector .gb-title, .gb-treasurer .gb-title { color: #23212B; }
 /* A received gift card at the top of the Wishlist (v1.7.1): the banner, the message, a brand row, Say thanks. */
 .gift-card { display: flex; flex-direction: column; gap: 12px; }
 .gift-card-msg { margin: 0; color: var(--cream); font-size: var(--fs-body); line-height: 1.4; }
@@ -1949,6 +1949,64 @@ html.is-fullscreen .bstamp-live { top: calc(58px + var(--fs-top)); }
 .gift-card-row .frd-row-mid { flex: 1; min-width: 0; }
 .gift-card-thx { align-self: flex-start; }
 .gift-note-line { margin-top: 12px; }
+/* Send card: the level-banner picker (screens/Done.jsx), seven tiles wrapping to two rows, locked ones dimmed. */
+.gift-pick-lv { flex-wrap: wrap; overflow: visible; }
+.gift-lv-tile { position: relative; width: 84px; }
+.gift-lv-tile.locked { filter: saturate(0.3) brightness(0.6); }
+.gift-lv-lock { position: absolute; top: 6px; right: 6px; width: 20px; height: 20px; display: grid; place-items: center; background: rgba(0, 0, 0, 0.5); color: var(--cream); border-radius: 999px; }
+.gift-lv-cap { display: block; text-align: center; font-size: var(--fs-label); line-height: var(--lh-label); color: var(--muted); margin-top: 3px; }
+.gift-locked-line { display: flex; align-items: center; gap: 6px; margin: 8px 0 0; padding: 8px 12px; border-radius: 12px; background: rgba(255, 201, 77, 0.12); color: #FFC94D; font-size: var(--fs-meta); line-height: var(--lh-meta); }
+.gift-lock-ic { flex: none; }
+/* My look > Gift banners list (components/LookParts.jsx GiftBannerSheet). */
+.gb-sheet-sub { margin: 0 0 12px; }
+.gb-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.gb-list-row { display: flex; align-items: center; gap: 12px; }
+.gb-list-row.locked .gb-list-art { filter: saturate(0.3) brightness(0.6); }
+.gb-list-art { flex: none; width: 92px; }
+.gb-list-row .frd-row-mid { flex: 1; min-width: 0; }
+.gb-list-row .frd-pill { margin-left: auto; }
+.gb-pill-ok { background: var(--teal-soft); color: var(--teal); border-color: var(--teal-deep); }
+.gb-pill-lock { background: var(--card-2); color: var(--muted); }
+/* The rank-reached sheet's gift-banner row (components/LookParts.jsx). */
+.lk-rank-gb-ic { flex: none; width: 60px; }
+/* The sender's Friends page: a thanks line under a friend's row. */
+.frd-thanks-line { margin: 2px 0 8px; padding-left: 52px; font-size: var(--fs-meta); line-height: var(--lh-meta); color: var(--teal); }
+/* Gift reveal (components/GiftReveal.jsx): a full-screen overlay above Home and the nav. */
+.rv-bg { position: fixed; inset: 0; z-index: 70; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 28px 22px calc(28px + env(safe-area-inset-bottom)); background: radial-gradient(circle at 50% 34%, #3a1f22, #15141a); animation: rv-fade 0.3s ease both; overflow-y: auto; }
+@keyframes rv-fade { from { opacity: 0; } to { opacity: 1; } }
+.rv-x { position: absolute; top: calc(14px + env(safe-area-inset-top)); right: 16px; width: 40px; height: 40px; display: grid; place-items: center; border: 0; background: rgba(255, 255, 255, 0.08); color: var(--cream); border-radius: 999px; cursor: pointer; z-index: 2; }
+.rv-stage { width: 100%; max-width: 420px; display: flex; flex-direction: column; align-items: center; text-align: center; position: relative; }
+.rv-over { font-size: var(--fs-label); line-height: var(--lh-label); font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #FFC94D; margin-bottom: 16px; }
+.rv-sealed { width: 64%; max-width: 240px; transform: rotate(-4deg); filter: drop-shadow(0 16px 30px rgba(0, 0, 0, 0.4)); }
+.rv-sealed svg { width: 100%; height: auto; display: block; }
+.rv-title { margin: 22px 0 6px; font-family: var(--font-display); font-size: var(--fs-display); line-height: var(--lh-display); font-weight: 700; color: var(--cream); }
+.rv-sub { margin: 0; font-size: var(--fs-body); line-height: var(--lh-body); color: var(--muted); }
+.rv-acts { display: flex; flex-direction: column; gap: 10px; width: 100%; margin-top: 26px; }
+.rv-acts .btn { width: 100%; }
+.rv-banner-wrap { width: 100%; margin: 8px 0; transform: rotate(-2deg) scale(0.98); filter: drop-shadow(0 14px 26px rgba(0, 0, 0, 0.4)); }
+.rv-opening .rv-banner-wrap { animation: rv-pop 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+.rv-open .rv-banner-wrap { transform: rotate(0) scale(1); transition: transform 0.4s ease; }
+.rv-reduced .rv-banner-wrap { animation: none; transform: rotate(0) scale(1); }
+@keyframes rv-pop { from { transform: rotate(-8deg) scale(0.6); opacity: 0; } to { transform: rotate(-2deg) scale(0.98); opacity: 1; } }
+.rv-msg { margin: 16px 2px 0; font-family: var(--font-display); font-size: var(--fs-title); line-height: var(--lh-title); font-weight: 700; color: var(--cream); }
+.rv-brand { display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 16px; text-align: left; background: rgba(255, 255, 255, 0.06); border-radius: 14px; padding: 10px 12px; }
+.rv-brand .frd-row-mid { flex: 1; min-width: 0; }
+.rv-code { margin: 12px 0 0; font-size: var(--fs-meta); line-height: var(--lh-meta); color: var(--muted); }
+.rv-confetti { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
+.rvc { position: absolute; left: 50%; top: 42%; width: 12px; height: 12px; opacity: 0; animation: rv-conf 0.95s ease-out both; }
+@keyframes rv-conf { 0% { opacity: 0; transform: translate(-50%, -50%) scale(0.4) rotate(0); } 15% { opacity: 1; } 100% { opacity: 0; transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) rotate(var(--rot)); } }
+.rvc.f0 { --tx: -150px; --ty: -120px; --rot: 220deg; background: #FFC94D; border-radius: 50%; }
+.rvc.f1 { --tx: 160px; --ty: -100px; --rot: -200deg; background: #FFF6EC; }
+.rvc.f2 { --tx: -120px; --ty: 120px; --rot: 180deg; width: 18px; height: 6px; background: #2BC48F; border-radius: 3px; }
+.rvc.f3 { --tx: 130px; --ty: 130px; --rot: -160deg; background: #E8482A; clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); }
+.rvc.f4 { --tx: -200px; --ty: 20px; --rot: 140deg; background: #FFC94D; border-radius: 50%; }
+.rvc.f5 { --tx: 200px; --ty: 10px; --rot: -240deg; width: 18px; height: 6px; background: #FFF6EC; border-radius: 3px; }
+.rvc.f6 { --tx: -60px; --ty: -170px; --rot: 300deg; background: #2BC48F; clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); }
+.rvc.f7 { --tx: 70px; --ty: -160px; --rot: -120deg; background: #E8482A; border-radius: 50%; }
+.rvc.f8 { --tx: -230px; --ty: -40px; --rot: 200deg; width: 16px; height: 6px; background: #FFC94D; border-radius: 3px; }
+.rvc.f9 { --tx: 230px; --ty: -50px; --rot: -180deg; background: #FFF6EC; clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); }
+.rvc.f10 { --tx: -90px; --ty: 170px; --rot: 160deg; background: #FFC94D; border-radius: 50%; }
+.rvc.f11 { --tx: 100px; --ty: 160px; --rot: -220deg; background: #2BC48F; }
 /* A received gift on my Wishlist: mint pill, "Got it, from {name}", and Say thanks -> Thanks sent. */
 .frd-pill-mint { background: var(--teal-soft); color: var(--teal); border-color: var(--teal-deep); }
 .frd-gift-got { margin-left: auto; flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }

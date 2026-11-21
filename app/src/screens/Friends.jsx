@@ -1,12 +1,28 @@
 // Friends: the invite card (code + share), invites to accept, and the friends list. Reached from Profile when
 // Friends is on. Any server failure shows the notice here only (never a toast or banner on other screens).
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useApp } from '../App.jsx'
 import { Header, Icon } from '../components/ui.jsx'
 import {
-  useFriends, PersonRow, Skeleton, FriendNotice, AddByCodeSheet, shareInvite, copyCode,
+  useFriends, PersonRow, Skeleton, FriendNotice, AddByCodeSheet, shareInvite, copyCode, brandByKey,
 } from '../components/FriendsParts.jsx'
 import { loadFriends, acceptInvite, declineInvite, getPendingCode, setPendingCode, getVis, visSummary } from '../lib/friends.js'
+import { giftGoalIds, giftOf } from '../lib/gifts.js'
+
+// The thanks a friend has sent me, from my own gift tags on this phone (lib/gifts.js): for each friend id, the brand
+// keys of gifts I sent that they thanked. The tags' `thanked` flag is set when I open the friend's profile, so this
+// needs no extra server read (the Friends list has no thanks of its own). Duplicates are dropped.
+function thanksByFriend() {
+  const map = {}
+  for (const id of giftGoalIds()) {
+    const tag = giftOf(id)
+    if (tag && tag.state === 'sent' && tag.thanked && tag.friendId && tag.brandKey) {
+      const set = (map[tag.friendId] ||= new Set())
+      set.add(tag.brandKey)
+    }
+  }
+  return map
+}
 
 export default function Friends({ addCode }) {
   const { t, go, back, toast } = useApp()
@@ -21,6 +37,7 @@ export default function Friends({ addCode }) {
   const [addOpen, setAddOpen] = useState(Boolean(prefill))
   useEffect(() => { if (prefill) setPendingCode(null) }, [prefill]) // consume it once
   const [acting, setActing] = useState(null) // invite id being accepted/declined
+  const thanks4friend = useMemo(() => thanksByFriend(), [data]) // the thanks lines, from local gift tags
 
   const load = useCallback(() => {
     setErr(false)
@@ -86,7 +103,16 @@ export default function Friends({ addCode }) {
                 <h3 className="sec-head-h">{t('frd_friends_n', { n: friends.length })}</h3>
                 {friends.map((f) => {
                   const sub = f.level != null ? t('frd_level_rank', { n: f.level, rank: t(`rank_${f.rank}`) }) : f.sharesNothing ? t('frd_shares_nothing') : null
-                  return <PersonRow key={f.id} avatar={f.avatar} name={f.name} sub={sub} look={f.look} onClick={() => go('friendProfile', { id: f.id, since: f.since })} right={<span className="chev" aria-hidden="true">›</span>} />
+                  const thanks = [...(thanks4friend[f.id] || [])]
+                  return (
+                    <div key={f.id}>
+                      <PersonRow avatar={f.avatar} name={f.name} sub={sub} look={f.look} onClick={() => go('friendProfile', { id: f.id, since: f.since })} right={<span className="chev" aria-hidden="true">›</span>} />
+                      {thanks.map((bk) => {
+                        const b = brandByKey(bk)
+                        return <p key={bk} className="frd-thanks-line">{t('frd_thanks_line', { name: f.name, brand: b?.name || bk })}</p>
+                      })}
+                    </div>
+                  )
                 })}
               </section>
             )}

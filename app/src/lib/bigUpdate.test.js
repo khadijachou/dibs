@@ -224,8 +224,11 @@ test('saw 1.7 then runs 1.7.1 with a sheet: it shows', () => {
   assert.equal(r?.since, null)
 })
 
-test('saw 1.7.1 then runs 1.7.2 without a sheet: nothing', () => {
-  assert.equal(bigSheetFor({ version: '1.7.2', stored: '1.7.1', onboarded: true, news: REAL_NEWS }), null)
+test('saw 1.7.1 then runs 1.7.2: shows the 1.7.2 sheet', () => {
+  const r = bigSheetFor({ version: '1.7.2', stored: '1.7.1', onboarded: true, news: REAL_NEWS })
+  assert.equal(r?.version, '1.7.2')
+  assert.equal(r?.entry.v, '1.7.2')
+  assert.equal(r?.since, null)
 })
 
 test('saw 1.6 then runs 1.7.1: shows 1.7.1 with "since 1.7"', () => {
