@@ -18,10 +18,14 @@ import {
   deliverBoxes, openGift,
 } from './gifts.js'
 import {
+  GIFT_ID_RE, getDirectGift, createDirectGift, deliverDirectBoxes, openDirectGift, thankDirect,
+  directGiftsReceived, directSentTo, dropDirectGiftsFor, stripDirectBoxesBetween,
+} from './directGifts.js'
+import {
   BOARDS, boardsChoice, boardMembers, setBoards, xpOf, dropBoardsFor, makeChecker, monthOf,
 } from './boards.js'
 
-export const VERSION = '1.7.3'
+export const VERSION = '1.7.4'
 const AVATAR_ROW_CAP = 50 // avatars travel on at most the first 50 friend rows (size guard)
 
 const MINUTE = 60_000
@@ -226,19 +230,35 @@ export function makeApp(store, env = process.env, opts = {}) {
   // with the giver's identity and, when the giver added them, the message and banner. This is the ONLY route that carries
   // the message and banner. v1.7.3: for a gift delivered in Dibs, `delivered: true` and the ONE sealed box addressed to
   // the calling device's encryption key (`encPub`) - never another device's box, never after the owner opens it.
-  // [{ brandKey, from: { id, name, seed }, thanked, message?, banner?, delivered?, box? }].
+  // v1.7.4: direct gifts (a friend gifting from their own goal, directGifts.js) join the same list with kind 'direct' and
+  // a giftId; wishlist gifts carry kind 'wish'. Sorted by sentAt (wishlist claims have none: they sort first, oldest).
+  // [{ kind, brandKey, from: { id, name, seed }, thanked, message?, banner?, delivered?, box?, giftId? }].
   async function giftsReceived(ownerId, encPub) {
     const out = []
     for (const g of await receivedGifts(store, ownerId, encPub)) {
       const from = await loadUser(g.by)
       if (from) out.push({
-        brandKey: g.brandKey, from: { id: from.id, name: from.name, seed: from.id }, thanked: g.thanked,
+        kind: 'wish', brandKey: g.brandKey, from: { id: from.id, name: from.name, seed: from.id }, thanked: g.thanked,
         ...(g.message ? { message: g.message } : {}),
         ...(g.banner ? { banner: g.banner } : {}),
         ...(g.delivered ? { delivered: true } : {}),
         ...(g.box ? { box: g.box } : {}),
+        __sort: '',
       })
     }
+    for (const g of await directGiftsReceived(store, ownerId, encPub)) {
+      const from = await loadUser(g.by)
+      if (from) out.push({
+        kind: 'direct', giftId: g.giftId, brandKey: g.brandKey, from: { id: from.id, name: from.name, seed: from.id }, thanked: g.thanked,
+        ...(g.message ? { message: g.message } : {}),
+        ...(g.banner ? { banner: g.banner } : {}),
+        ...(g.delivered ? { delivered: true } : {}),
+        ...(g.box ? { box: g.box } : {}),
+        __sort: g.sentAt,
+      })
+    }
+    out.sort((a, b) => (a.__sort < b.__sort ? -1 : a.__sort > b.__sort ? 1 : 0))
+    for (const g of out) delete g.__sort
     return out
   }
 
@@ -311,6 +331,7 @@ export function makeApp(store, env = process.env, opts = {}) {
     for (const iid of await store.smembers(inboxKey(id))) { const inv = await store.get(invKey(iid)); if (inv) { await store.srem(sentKey(inv.from), iid); await store.del(pairKey(inv.from, inv.to)) } await store.del(invKey(iid)) }
     for (const iid of await store.smembers(sentKey(id))) { const inv = await store.get(invKey(iid)); if (inv) { await store.srem(inboxKey(inv.to), iid); await store.del(pairKey(inv.from, inv.to)) } await store.del(invKey(iid)) }
     await dropAllFor(store, id) // every claim and gift where this user is giver or owner
+    await dropDirectGiftsFor(store, id) // every direct gift where this user is giver or receiver (v1.7.4)
     await dropBoardsFor(store, id) // off every board, and every monthly XP record gone
     invalidateGlobal()
     await store.del(friendsKey(id), inboxKey(id), sentKey(id), wkKey(u.wk), codeKey(u.code), sharedKey(id), uKey(id))
@@ -535,6 +556,7 @@ export function makeApp(store, env = process.env, opts = {}) {
     await store.srem(friendsKey(fid), me)
     await store.del(sinceKey(me, fid), sinceKey(fid, me))
     await dropClaimedBetween(store, me, fid) // claims in state 'claimed' between the two go; sent gifts stay
+    await stripDirectBoxesBetween(store, me, fid) // direct gift records stay; their sealed boxes are stripped (v1.7.4)
     return c.json({ ok: true })
   })
 
@@ -553,6 +575,12 @@ export function makeApp(store, env = process.env, opts = {}) {
     // exposes `wishlist` when its visibility is friends/everyone, so `prof.wishlist` is the visible list.
     if (rel === 'friend' && Array.isArray(prof.wishlist) && prof.wishlist.length) {
       prof.wishes = wishesFor(prof.wishlist, await ownerClaims(store, id), me)
+    }
+    // The direct gifts THIS caller sent to this user (v1.7.4), giver-only delivered/opened/thanked flags, field by field.
+    // Nobody else ever sees them; a caller who sent none (any stranger) gets no field at all, so other views are unchanged.
+    if (id !== me) {
+      const directSent = await directSentTo(store, me, id)
+      if (directSent.length) prof.directSent = directSent
     }
     return c.json(prof)
   })
@@ -628,16 +656,21 @@ export function makeApp(store, env = process.env, opts = {}) {
     return c.json({ ok: true, opened: true })
   })
 
-  // A giver who holds a claim (claimed or sent) on one of the owner's wishes may read the owner's gift-encryption public
-  // keys, so they can seal a box for each of the owner's devices. Anyone else: an indistinguishable 404.
+  // A friend of the owner (v1.7.4) may read the owner's gift-encryption public keys, so they can seal a box for each of
+  // the owner's devices. Encryption public keys are public by nature; a direct giver is a friend but not a wish claimer,
+  // so v1.7.3's claim-only rule is widened to any friend. A giver who still holds a claim but is no longer a friend (a
+  // sent wishlist gift survives unfriend) keeps access, so a resend still works. Anyone else: an indistinguishable 404.
   app.get('/v1/users/:id/enc-keys', async (c) => {
     const me = c.get('me')
     const owner = c.req.param('id')
-    const claims = await ownerClaims(store, owner)
-    const holds = Object.values(claims).some((r) => r.by === me && (r.state === 'claimed' || r.state === 'sent'))
-    if (!holds) return c.json({ error: 'NOT_FOUND' }, 404)
     const u = await loadUser(owner)
     if (!u) return c.json({ error: 'NOT_FOUND' }, 404)
+    let allowed = await store.sismember(friendsKey(me), owner)
+    if (!allowed) {
+      const claims = await ownerClaims(store, owner)
+      allowed = Object.values(claims).some((r) => r.by === me && (r.state === 'claimed' || r.state === 'sent'))
+    }
+    if (!allowed) return c.json({ error: 'NOT_FOUND' }, 404)
     return c.json({ encKeys: [...new Set(Object.values(u.encKeys || {}))] })
   })
 
@@ -660,6 +693,62 @@ export function makeApp(store, env = process.env, opts = {}) {
     if (r === 'not_sent') return c.json({ error: 'NOT_SENT' }, 409)
     if (r === 'opened') return c.json({ error: 'OPENED' }, 409)
     return c.json({ ok: true })
+  })
+
+  // ---- direct gifts: a gift from the caller's OWN goal to a friend (v1.7.4) -----------------------------------
+  // Not tied to any wish. The record is keyed by a client-generated giftId so a retried send is idempotent. The caller
+  // and the receiver must be friends; the message and banner are validated exactly like the wishlist "sent" route.
+
+  app.post('/v1/users/:id/gifts', async (c) => {
+    const me = c.get('me')
+    const receiver = c.req.param('id')
+    if (receiver === me || !(await store.sismember(friendsKey(me), receiver))) return c.json({ error: 'NOT_FOUND' }, 404)
+    if (!(await loadUser(receiver))) return c.json({ error: 'NOT_FOUND' }, 404)
+    const body = parseJson(c.get('rawBody'))
+    const giftId = typeof body?.giftId === 'string' ? body.giftId.toLowerCase() : ''
+    if (!GIFT_ID_RE.test(giftId)) return c.json({ error: 'BAD_REQUEST' }, 400)
+    if (typeof body?.brandKey !== 'string' || !BRAND_RE.test(body.brandKey)) return c.json({ error: 'BAD_REQUEST' }, 400)
+    const message = cleanGiftMessage(body.message)
+    if (message === null) return c.json({ error: 'BAD_MESSAGE' }, 400)
+    const banner = cleanGiftBanner(body.banner)
+    if (banner === null) return c.json({ error: 'BAD_BANNER' }, 400)
+    const r = await createDirectGift(store, { giftId, giver: me, receiver, brandKey: body.brandKey, message, banner })
+    if (r === 'conflict') return c.json({ error: 'CONFLICT' }, 409)
+    if (r === 'limit') return c.json({ error: 'LIMIT' }, 429)
+    return c.json({ ok: true }) // 'created' and 'again' (idempotent) both answer ok
+  })
+
+  // The giver delivers the sealed boxes on their own direct gift (same rules as the wishlist deliver route: at most 5
+  // boxes, each `to` one of the receiver's current keys, the 4 KB body limit, replace on resend, refused after opened).
+  app.post('/v1/users/:id/gifts/:giftId/deliver', async (c) => {
+    const me = c.get('me')
+    const receiver = c.req.param('id')
+    const giftId = c.req.param('giftId')
+    const body = parseJson(c.get('rawBody'))
+    const boxes = body?.boxes
+    if (!Array.isArray(boxes) || boxes.length < 1 || boxes.length > 5 || !boxes.every(validBox)) return c.json({ error: 'BAD_REQUEST' }, 400)
+    const rec = await getDirectGift(store, giftId)
+    if (!rec || rec.giver !== me || rec.receiver !== receiver) return c.json({ error: 'NOT_FOUND' }, 404)
+    const u = await loadUser(receiver)
+    if (!u) return c.json({ error: 'NOT_FOUND' }, 404)
+    const encPubs = new Set(Object.values(u.encKeys || {}))
+    if (!boxes.every((b) => encPubs.has(b.to))) return c.json({ error: 'BAD_REQUEST' }, 400)
+    const r = await deliverDirectBoxes(store, giftId, me, boxes)
+    if (r === 'not_found') return c.json({ error: 'NOT_FOUND' }, 404)
+    if (r === 'opened') return c.json({ error: 'OPENED' }, 409)
+    return c.json({ ok: true })
+  })
+
+  // The receiver thanks a direct gift / marks it opened (deletes the boxes, sets openedAt). Receiver only, idempotent.
+  app.post('/v1/me/gifts/direct/:giftId/thanks', async (c) => {
+    const r = await thankDirect(store, c.req.param('giftId'), c.get('me'))
+    if (r === 'not_found') return c.json({ error: 'NOT_FOUND' }, 404)
+    return c.json({ ok: true, thanked: true })
+  })
+  app.post('/v1/me/gifts/direct/:giftId/opened', async (c) => {
+    const r = await openDirectGift(store, c.req.param('giftId'), c.get('me'))
+    if (r === 'not_found') return c.json({ error: 'NOT_FOUND' }, 404)
+    return c.json({ ok: true, opened: true })
   })
 
   app.notFound((c) => c.json({ error: 'NOT_FOUND' }, 404))

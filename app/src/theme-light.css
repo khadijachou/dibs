@@ -331,6 +331,10 @@ html.is-fullscreen:where([data-theme="light"]) body::before { background: linear
 :where(:root[data-theme="light"]) .rwp-tile { border-color: #eadfc8; }
 :where(:root[data-theme="light"]) .rwp-steps li { border-color: var(--line); }
 :where(:root[data-theme="light"]) .sheet-row .si.qs-ic, :where(:root[data-theme="light"]) .sheet-row.rw-special .si { background: #FFC94D; color: #23212B; }
+/* Gift this card (v1.7.4): keep the butter gift icon butter in light, and give the version box faint butter with dark text. */
+:where(:root[data-theme="light"]) .sheet-row .si.gift { background: #FFC94D; color: #23212B; }
+:where(:root[data-theme="light"]) .og-version { background: #fff6e6; border-color: rgba(217, 154, 11, .3); }
+:where(:root[data-theme="light"]) .og-version b, :where(:root[data-theme="light"]) .og-version small, :where(:root[data-theme="light"]) .og-version-check { color: #5c4300; }
 :where(:root[data-theme="light"]) .ct-missing, :where(:root[data-theme="light"]) .ct-link { color: #906607; }
 :where(:root[data-theme="light"]) .ct-add { border-color: #d99a0b; }
 :where(:root[data-theme="light"]) .ct-band { border-color: rgba(217, 154, 11, .55); background: rgba(217, 154, 11, .06); }

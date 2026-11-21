@@ -8,21 +8,25 @@ const KEY = 'dibs.revealSeen'
 const read = () => { try { const v = JSON.parse(localStorage.getItem(KEY)); return Array.isArray(v) ? v : [] } catch { return [] } }
 const write = (l) => { try { localStorage.setItem(KEY, JSON.stringify(l.slice(-300))) } catch { /* private mode */ } }
 
-// The per-gift key: the giver id and the brand (the same pair the server keys a claim by). Never a code or an address.
-export const revealKey = (g) => `${g?.from?.id || ''}:${g?.brandKey || ''}`
+// The per-gift key: for a wishlist gift the giver id and the brand (the pair the server keys a claim by); for a direct
+// gift (v1.7.4) "d:<giftId>", so two direct gifts of the same brand both reveal. Never a code or an address.
+export const revealKey = (g) => (g?.kind === 'direct' ? (g.giftId ? `d:${g.giftId}` : '') : `${g?.from?.id || ''}:${g?.brandKey || ''}`)
 export const revealSeen = () => read()
 
+// A gift that can be revealed: a giver id, and its identity (a giftId for a direct gift, a brand for a wishlist gift).
+const revealable = (g) => Boolean(g && g.from?.id && (g.kind === 'direct' ? g.giftId : g.brandKey))
+
 // The next gift to reveal: the first in the list (server order, oldest first) that is not yet seen on this phone, or null.
-// A malformed entry (no giver id or brand) is skipped, never shown.
+// A malformed entry is skipped, never shown.
 export function nextReveal(gifts, seen = read()) {
   if (!Array.isArray(gifts)) return null
   const s = new Set(seen)
-  return gifts.find((g) => g && g.from?.id && g.brandKey && !s.has(revealKey(g))) || null
+  return gifts.find((g) => revealable(g) && !s.has(revealKey(g))) || null
 }
 
 // Mark one gift revealed on this phone (idempotent). A malformed gift is ignored.
 export function markRevealSeen(g) {
-  if (!g?.from?.id || !g?.brandKey) return
+  if (!revealable(g)) return
   const k = revealKey(g)
   const l = read()
   if (!l.includes(k)) write([...l, k])

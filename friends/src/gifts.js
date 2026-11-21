@@ -103,7 +103,29 @@ export async function stripGiftExtra(store, owner, brand) {
 // which the server relays but cannot read. A box is { to, eph, iv, ct } base64url; the plaintext is only ever the
 // owner's to open. Stored on the sent claim as `boxes`, with `deliveredAt`; `openedAt` once the owner opens it.
 export const BOX_TTL_MS = 30 * 24 * 60 * 60 * 1000 // boxes are relayed, not kept: dropped 30 days after delivery
-const boxesExpired = (rec) => Boolean(rec.deliveredAt) && (Date.now() - Date.parse(rec.deliveredAt) > BOX_TTL_MS)
+export const boxesExpired = (rec) => Boolean(rec.deliveredAt) && (Date.now() - Date.parse(rec.deliveredAt) > BOX_TTL_MS)
+
+// Pure record mutators, shared by wishlist claims and direct gifts (v1.7.4 directGifts.js) so the relay rules live once.
+// applyDeliver: set/replace the boxes and deliveredAt; refused once opened. Returns 'ok' | 'opened'. The caller persists.
+export function applyDeliver(rec, boxes) {
+  if (rec.openedAt) return 'opened'
+  rec.boxes = boxes
+  rec.deliveredAt = new Date().toISOString()
+  return 'ok'
+}
+// applyOpen: delete every box (the relay is done) and set openedAt once. The caller persists.
+export function applyOpen(rec) {
+  if (rec.boxes !== undefined) delete rec.boxes
+  if (!rec.openedAt) rec.openedAt = new Date().toISOString()
+}
+// boxFor: the single box addressed to `encPub`, honouring the 30-day TTL. Pure: returns { box, expired }; the caller
+// deletes and persists the boxes when `expired`.
+export function boxFor(rec, encPub) {
+  if (!rec?.boxes || !rec.deliveredAt) return { box: undefined, expired: false }
+  if (boxesExpired(rec)) return { box: undefined, expired: true }
+  if (!encPub) return { box: undefined, expired: false }
+  return { box: (rec.boxes || []).find((b) => b && b.to === encPub) || undefined, expired: false }
+}
 
 // The giver delivers (or resends) the sealed boxes on their own sent claim. Replaces any previous boxes (a resend) and
 // updates deliveredAt. Refused once the owner has opened it. Returns 'ok' | 'not_found' | 'not_sent' | 'opened'.
@@ -111,9 +133,8 @@ export async function deliverBoxes(store, owner, brand, giver, boxes) {
   const rec = await store.get(claimKey(owner, brand))
   if (!rec || rec.by !== giver) return 'not_found'
   if (rec.state !== 'sent') return 'not_sent'
-  if (rec.openedAt) return 'opened'
-  rec.boxes = boxes
-  rec.deliveredAt = new Date().toISOString()
+  const r = applyDeliver(rec, boxes)
+  if (r !== 'ok') return r
   await store.set(claimKey(owner, brand), rec)
   return 'ok'
 }
@@ -123,8 +144,7 @@ export async function deliverBoxes(store, owner, brand, giver, boxes) {
 export async function openGift(store, owner, brand) {
   const rec = await store.get(claimKey(owner, brand))
   if (!rec || rec.state !== 'sent') return 'not_found'
-  if (rec.boxes !== undefined) delete rec.boxes
-  if (!rec.openedAt) rec.openedAt = new Date().toISOString()
+  applyOpen(rec)
   await store.set(claimKey(owner, brand), rec)
   return 'ok'
 }
@@ -132,10 +152,9 @@ export async function openGift(store, owner, brand) {
 // The single box addressed to this device's encryption key on a sent claim, honouring the 30-day TTL (an expired set is
 // deleted and persisted, then none is returned). `rec` is the claim record. Returns the box or undefined.
 export async function ownerBox(store, owner, brand, rec, encPub) {
-  if (!rec?.boxes || !rec.deliveredAt) return undefined
-  if (boxesExpired(rec)) { delete rec.boxes; await store.set(claimKey(owner, brand), rec); return undefined }
-  if (!encPub) return undefined
-  return (rec.boxes || []).find((b) => b && b.to === encPub) || undefined
+  const { box, expired } = boxFor(rec, encPub)
+  if (expired) { delete rec.boxes; await store.set(claimKey(owner, brand), rec); return undefined }
+  return box
 }
 
 // The owner's received gifts (state 'sent' only), with delivery for this device: [{ brandKey, by, thanked, message?,

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useApp } from '../App.jsx'
 import { detailText, itemLabel } from '../lib/itemName.js'
 import { Header, BrandLogo, Icon, useFiat } from '../components/ui.jsx'
@@ -16,10 +16,11 @@ import { fmtFiatValue } from '../lib/fiatValue.js'
 import { brandGrad } from '../lib/brands.js'
 import { playPop, playGoalDone, playTing, playClink } from '../lib/sound.js'
 import DidYouKnow from '../components/DidYouKnow.jsx'
-import { giftOf, markSent as markGiftSent, sendSent, giftMessageError, getEncKeys, deliverGift, markDelivered } from '../lib/gifts.js'
+import { giftOf, markSent as markGiftSent, sendSent, giftMessageError, getEncKeys, deliverGift, markDelivered, sendDirectGift, deliverDirectGift, newGiftId, setGift, clearGift } from '../lib/gifts.js'
 import { getState as friendsState, userProfile } from '../lib/friends.js'
 import { seal } from '../lib/giftBox.js'
 import GiftBanner from '../components/GiftBanner.jsx'
+import { GiftPickerSheet } from './GoalManage.jsx'
 import { useXp } from '../lib/useXp.js'
 import { LEVEL_BANNERS, isUnlocked as bannerUnlocked } from '../lib/giftBanners.js'
 
@@ -66,6 +67,13 @@ const EyeIcon = ({ off }) => (
   </svg>
 )
 
+// A gift box glyph for the "Gift this card" offer row (decorative; the row text carries the words).
+const GiftGlyph = () => (
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect x="3" y="8" width="18" height="4" rx="1" /><path d="M5 12v8h14v-8M12 8v12M12 8S10.5 3 8 3a2 2 0 0 0 0 5h4M12 8s1.5-5 4-5a2 2 0 0 1 0 5h-4" />
+  </svg>
+)
+
 // A small padlock for a locked level banner (decorative; the line next to it carries the words).
 const LockGlyph = () => (
   <svg className="gift-lock-ic" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -73,7 +81,7 @@ const LockGlyph = () => (
   </svg>
 )
 
-export default function Done({ goalId }) {
+export default function Done({ goalId, mode }) {
   const { t, lang, address, go, reset, toast } = useApp()
   const { level } = useXp(address)
   const goal = getGoal(address, goalId)
@@ -84,8 +92,13 @@ export default function Done({ goalId }) {
   const [status, setStatus] = useState(null)
   const [show, setShow] = useState(false)
   // Gift (v1.4.3): a goal called dibs on for a friend. The tag is local; the code is never part of the "mark as sent"
-  // call. {me} is my Friends display name, for the prefilled note (kept on the phone only).
-  const giftTag = giftOf(goalId)
+  // call. {me} is my Friends display name, for the prefilled note (kept on the phone only). v1.7.4: a direct gift (a card
+  // you saved for, gifted from the goal's menu) uses the direct routes; `tagTick` re-reads the tag after tagging here.
+  const [tagTick, setTagTick] = useState(0)
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const sendRef = useRef(null)
+  const giftTag = useMemo(() => giftOf(goalId), [goalId, tagTick])
+  const isDirect = Boolean(giftTag?.direct)
   const meName = friendsState()?.name || ''
   const [note, setNote] = useState(() => (giftTag ? (giftTag.message ?? t('frd_gift_note_default', { me: meName })) : ''))
   const [banner, setBanner] = useState(() => giftTag?.banner || 'none')
@@ -167,7 +180,13 @@ export default function Done({ goalId }) {
       .catch(() => { if (live) setRecipientKeys([]) })
     if (giftTag.delivered) {
       userProfile(giftTag.friendId)
-        .then((p) => { const w = p?.wishes?.[giftTag.brandKey]; if (live && w?.openedAt) setOpenedAt(w.openedAt) })
+        .then((p) => {
+          // A direct gift's opened time is on the giver's directSent list (by giftId); a wishlist gift's is on wishes.
+          const openedAt = isDirect
+            ? p?.directSent?.find((g) => g.giftId === giftTag.giftId)?.openedAt
+            : p?.wishes?.[giftTag.brandKey]?.openedAt
+          if (live && openedAt) setOpenedAt(openedAt)
+        })
         .catch(() => { /* quiet: the waiting line stays */ })
     }
     return () => { live = false }
@@ -204,11 +223,20 @@ export default function Done({ goalId }) {
     try { if (navigator.share) { await navigator.share({ text: giftShareText }); return } } catch { /* cancelled or unavailable */ }
     if (await copyText(giftShareText)) { toast(t('done_copied')); playClink() }
   }
+  // A direct gift keeps one giftId on its tag, so a retried send is idempotent (the server keys the record by it).
+  const ensureGiftId = () => { const g = giftOf(goalId); if (g?.giftId) return g.giftId; const id = newGiftId(); setGift(goalId, { giftId: id }); return id }
+  // Create the server record for the gift (direct: a new record keyed by giftId; wishlist: the claim's "sent" route).
+  const recordSent = async (msg) => {
+    if (isDirect) await sendDirectGift(giftTag.friendId, { giftId: ensureGiftId(), brandKey: giftTag.brandKey, message: msg, banner })
+    else await sendSent(giftTag.friendId, giftTag.brandKey, { message: msg, banner })
+    markGiftSent(goalId, { message: msg, banner })
+  }
+
   const doMarkSent = async () => {
     const msg = note.trim()
     if (giftMessageError(msg)) { setLinkErr(true); return } // a link in the message: send nothing, say why
     setLinkErr(false); setSending(true); setSentErr(false)
-    try { await sendSent(giftTag.friendId, giftTag.brandKey, { message: msg, banner }); markGiftSent(goalId, { message: msg, banner }); setSentState(true) }
+    try { await recordSent(msg); setSentState(true) }
     catch { setSentErr(true) } finally { setSending(false) }
   }
 
@@ -223,13 +251,24 @@ export default function Done({ goalId }) {
     if (!keys.length) return // the button is disabled in this case; guard anyway
     setLinkErr(false); setSending(true)
     try {
-      if (!sentState) { await sendSent(giftTag.friendId, giftTag.brandKey, { message: msg, banner }); markGiftSent(goalId, { message: msg, banner }); setSentState(true) }
+      if (!sentState) { await recordSent(msg); setSentState(true) }
       const aad = `${giftTag.friendId}:${giftTag.brandKey}:${meId}`
       const boxes = []
       for (const k of keys) boxes.push(await seal(red, k, aad))
-      await deliverGift(giftTag.friendId, giftTag.brandKey, boxes)
+      if (isDirect) await deliverDirectGift(giftTag.friendId, ensureGiftId(), boxes)
+      else await deliverGift(giftTag.friendId, giftTag.brandKey, boxes)
       markDelivered(goalId); setDelivered(true)
     } catch { toast(t('frd_save_fail')) } finally { setSending(false) }
+  }
+
+  // Keep it for me (v1.7.4): drop the direct tag before it is sent, so the Send card goes away. No server call.
+  const keepIt = () => { clearGift(goalId); toast(t('og_kept')); setTagTick((n) => n + 1) }
+  // The picker tagged this bought card: show the Send card with its defaults and scroll to it.
+  const onPickerTagged = () => {
+    setPickerOpen(false)
+    setNote(t('frd_gift_note_default', { me: meName })); setBanner('none'); setSentState(false); setDelivered(false)
+    setTagTick((n) => n + 1)
+    setTimeout(() => sendRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60)
   }
 
   const hash = goal.payment?.hash || null
@@ -311,9 +350,23 @@ export default function Done({ goalId }) {
           </div>
         </section>
 
+        {/* Already bought, not a gift yet (v1.7.4): offer to gift the card, from History details, when Friends is on. */}
+        {!giftTag && final && red && mode === 'details' && friendsState()?.on && (
+          <button type="button" className="card og-offer" onClick={() => setPickerOpen(true)}>
+            <span className="si gift og-offer-ic" aria-hidden="true"><GiftGlyph /></span>
+            <span className="og-offer-mid"><b>{t('og_entry')}</b><small>{t('og_entry_sub')}</small></span>
+            <span className="chev" aria-hidden="true">›</span>
+          </button>
+        )}
+
         {giftTag && final && (
-          <section className="card gift-send">
-            <h3>{t('frd_gift_send_title', { name: giftTag.name })}</h3>
+          <section className="card gift-send" ref={sendRef}>
+            <div className="gift-send-head">
+              <h3>{t('frd_gift_send_title', { name: giftTag.name })}</h3>
+              {isDirect && !sentState && (
+                <button type="button" className="txt-link gift-keep-link" onClick={keepIt}>{t('og_keep')}</button>
+              )}
+            </div>
 
             <div className="gift-row-head">
               <span className="small">{t('frd_gift_banner_label')}</span>
@@ -436,6 +489,7 @@ export default function Done({ goalId }) {
           </button>
         </div>
       </main>
+      {pickerOpen && <GiftPickerSheet goal={goal} onClose={() => setPickerOpen(false)} onTagged={onPickerTagged} />}
     </>
   )
 }

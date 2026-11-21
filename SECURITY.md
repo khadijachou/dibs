@@ -36,6 +36,8 @@ The design, in five lines:
 
 Accepted limit: the Friends server hands out the public keys, so a server that was fully compromised could serve an attacker's key in place of the receiver's and read a code delivered afterwards. There is no out-of-band key verification; we accept this because we run the server, and because the fallback share sheet carries the same trust. A compromised server still cannot read any code already delivered, and never sees a code sent outside Dibs.
 
+Direct gifts (v1.7.4): a gift you send from your own goal. The Friends server keeps who sent it to whom, the card's brand, your message and banner, and the locked code if you send it in Dibs (deleted once opened or after 30 days). Never the code in readable form. The same end-to-end encryption and the same limits apply as above.
+
 ## Open items before submission
 
 - [ ] Login challenge (signed nonce) once goals move to the server

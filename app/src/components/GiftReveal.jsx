@@ -4,7 +4,7 @@ import { useApp } from '../App.jsx'
 import { Icon, BrandLogo } from './ui.jsx'
 import GiftBanner, { PlainGiftCard } from './GiftBanner.jsx'
 import { brandByKey } from './FriendsParts.jsx'
-import { sayThanks, markGiftOpened, setGiftIn } from '../lib/gifts.js'
+import { sayThanks, markGiftOpened, sayThanksDirect, markGiftOpenedDirect, setGiftIn } from '../lib/gifts.js'
 import { getState as friendsState } from '../lib/friends.js'
 import { open as openBox } from '../lib/giftBox.js'
 import { playGoalDone, playClink } from '../lib/sound.js'
@@ -53,6 +53,7 @@ export default function GiftReveal({ gift, onClose }) {
   const brandName = (brand?.name || gift?.brandKey || '').replace(/ gift card$/i, '')
   const hasBanner = gift?.banner && gift.banner !== 'none'
   const hasBox = Boolean(gift?.box)
+  const isDirect = gift?.kind === 'direct' // a direct gift (v1.7.4): no "From your wishlist." line, keyed by giftId
   const pinLabel = t('done_pin')
 
   // State 2 runs for about a second, then opens. Reduced motion skips straight to state 3 (a plain fade). The sound
@@ -79,8 +80,8 @@ export default function GiftReveal({ gift, onClose }) {
       .then((r) => {
         if (!live) return
         setRed(r)
-        setGiftIn(gift.from?.id, gift.brandKey, r) // keep this gift card on the phone (Wishlist "Show code")
-        markGiftOpened(gift.brandKey).catch(() => { /* quiet: it will be reported again next time */ })
+        setGiftIn(gift, r) // keep this gift card on the phone (Wishlist "Show code")
+        ;(isDirect ? markGiftOpenedDirect(gift.giftId) : markGiftOpened(gift.brandKey)).catch(() => { /* quiet: it will be reported again next time */ })
       })
       .catch(() => { if (live) setOpenErr(true) })
     return () => { live = false }
@@ -90,7 +91,7 @@ export default function GiftReveal({ gift, onClose }) {
 
   const say = async () => {
     setBusy(true)
-    try { await sayThanks(gift.brandKey); setThanked(true); setTimeout(onClose, 600) }
+    try { await (isDirect ? sayThanksDirect(gift.giftId) : sayThanks(gift.brandKey)); setThanked(true); setTimeout(onClose, 600) }
     catch { toast(t('frd_save_fail')); setBusy(false) } // the overlay stays; the user can try again or tap Later
   }
 
@@ -103,7 +104,7 @@ export default function GiftReveal({ gift, onClose }) {
           <span className="rv-over">{t('rv_over')}</span>
           <SealedCard />
           <h2 className="rv-title">{t('rv_title', { name })}</h2>
-          <p className="rv-sub">{t('rv_sub')}</p>
+          {!isDirect && <p className="rv-sub">{t('rv_sub')}</p>}
           <div className="rv-acts">
             <button type="button" className="btn rv-open-btn" onClick={open}>{t('rv_open')}</button>
             <button type="button" className="btn ghost" onClick={onClose}>{t('rv_later')}</button>

@@ -1,6 +1,6 @@
 import { test, beforeEach } from 'node:test'
 import assert from 'node:assert/strict'
-import { giftOf, giftGoalIds, setGift, markSent, setThanked, clearGift, clearAll, reconcile } from './gifts.js'
+import { giftOf, giftGoalIds, setGift, markSent, setThanked, clearGift, clearAll, reconcile, newGiftId, giftInKeyOf } from './gifts.js'
 
 function fakeStorage() {
   const m = new Map()
@@ -82,4 +82,19 @@ test('reconcile: a sent tag whose goal still exists is kept', async () => {
   await reconcile([{ id: 'g1', status: 'redeemed', brandKey: 'steam' }], () => { throw new Error('should not call') })
   assert.equal(giftOf('g1').state, 'sent')
   assert.equal(giftOf('g1').thanked, true)
+})
+
+test('reconcile: a direct tag survives a card change, is dropped only when the goal is gone, never a server call', async () => {
+  setGift('g1', { friendId: 'f1', name: 'Bob', brandKey: 'steam', state: 'claimed', direct: true })
+  setGift('g2', { friendId: 'f2', name: 'Cy', brandKey: 'netflix', state: 'claimed', direct: true })
+  // g1's card changed away from steam, g2's goal is gone.
+  await reconcile([{ id: 'g1', status: 'saving', brandKey: 'apple' }], () => { throw new Error('should not call') })
+  assert.ok(giftOf('g1'), 'the direct tag survives a card change')
+  assert.equal(giftOf('g2'), null, 'the direct tag whose goal is gone is dropped')
+})
+
+test('newGiftId is 32 hex; giftInKeyOf keys direct by giftId, wishlist by giver and brand', () => {
+  assert.match(newGiftId(), /^[0-9a-f]{32}$/)
+  assert.equal(giftInKeyOf({ kind: 'direct', giftId: 'abc', brandKey: 'steam', from: { id: 'x' } }), 'd:abc')
+  assert.equal(giftInKeyOf({ brandKey: 'steam', from: { id: 'x' } }), 'x:steam')
 })

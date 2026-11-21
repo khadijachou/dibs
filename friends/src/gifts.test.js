@@ -131,7 +131,7 @@ test('sent + thanks: the giver marks sent, the owner thanks; views update', asyn
 
   // owner now sees the gift (from A), not thanked yet
   let me = await call(a, B, 'GET', '/v1/me')
-  assert.deepEqual(me.body.gifts, [{ brandKey: 'steam', from: { id: A.id, name: 'Ann', seed: A.id }, thanked: false }])
+  assert.deepEqual(me.body.gifts, [{ kind: 'wish', brandKey: 'steam', from: { id: A.id, name: 'Ann', seed: A.id }, thanked: false }])
 
   // A sees mine_sent; C sees gifted (never who the giver is)
   assert.deepEqual((await call(a, A, 'GET', `/v1/users/${B.id}`)).body.wishes.steam, { status: 'mine_sent' })
@@ -249,7 +249,7 @@ test('sent with no body (old phone) still works', async () => {
   const sent = await call(a, A, 'POST', wishUrl(B, 'steam', '/sent')) // no body
   assert.equal(sent.status, 200)
   const me = await call(a, B, 'GET', '/v1/me')
-  assert.deepEqual(me.body.gifts, [{ brandKey: 'steam', from: { id: A.id, name: 'Ann', seed: A.id }, thanked: false }])
+  assert.deepEqual(me.body.gifts, [{ kind: 'wish', brandKey: 'steam', from: { id: A.id, name: 'Ann', seed: A.id }, thanked: false }])
   assert.ok(!('message' in me.body.gifts[0]) && !('banner' in me.body.gifts[0]))
 })
 
@@ -263,7 +263,7 @@ test('sent with a message and a banner: stored, shown only to the owner', async 
   assert.equal(sent.status, 200)
   // The owner sees the message and banner on their own /v1/me only.
   const me = await call(a, B, 'GET', '/v1/me')
-  assert.deepEqual(me.body.gifts, [{ brandKey: 'steam', from: { id: A.id, name: 'Ann', seed: A.id }, thanked: false, message: 'Happy birthday Bob', banner: 'birthday' }])
+  assert.deepEqual(me.body.gifts, [{ kind: 'wish', brandKey: 'steam', from: { id: A.id, name: 'Ann', seed: A.id }, thanked: false, message: 'Happy birthday Bob', banner: 'birthday' }])
   // Not in the giver's view, not in the other friend's view, not in the owner's as-friend view.
   assert.deepEqual((await call(a, A, 'GET', `/v1/users/${B.id}`)).body.wishes.steam, { status: 'mine_sent' })
   assert.deepEqual((await call(a, C, 'GET', `/v1/users/${B.id}`)).body.wishes.steam, { status: 'gifted' })

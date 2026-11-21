@@ -54,3 +54,16 @@ test('malformed gifts in the list are skipped, not shown', () => {
   assert.equal(nextReveal([]), null)
   assert.equal(nextReveal(null), null)
 })
+
+test('direct gifts (v1.7.4) are keyed by giftId: two of the same brand both reveal', () => {
+  const d1 = gift('ann', 'spotify', { kind: 'direct', giftId: 'aa11' })
+  const d2 = gift('ann', 'spotify', { kind: 'direct', giftId: 'bb22' })
+  assert.equal(revealKey(d1), 'd:aa11')
+  assert.equal(nextReveal([d1, d2]), d1)
+  markRevealSeen(d1)
+  assert.equal(nextReveal([d1, d2]), d2) // same brand, different giftId: still shown
+  markRevealSeen(d2)
+  assert.equal(nextReveal([d1, d2]), null)
+  // A direct gift with no giftId is malformed and skipped.
+  assert.equal(nextReveal([gift('ann', 'spotify', { kind: 'direct' })]), null)
+})

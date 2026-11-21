@@ -71,15 +71,20 @@ async function setup() {
   return { store, a, A, B, bEnc }
 }
 
-test('enc-key: stored against the signing device, returned to a giver with a claim only', async () => {
+test('enc-key: stored against the signing device, returned to any friend (v1.7.4), 404 to a non-friend', async () => {
   const { a, A, B, bEnc } = await setup()
   const keys = await call(a, A, 'GET', `/v1/users/${B.id}/enc-keys`)
   assert.equal(keys.status, 200)
   assert.deepEqual(keys.body.encKeys, [bEnc.pub])
-  // A stranger with no claim gets an indistinguishable 404.
+  // v1.7.4: a friend with no claim (a direct giver) may now read the keys too.
   const C = await user(a, 'Cal')
   await befriend(a, C, B)
-  const strangerView = await call(a, C, 'GET', `/v1/users/${B.id}/enc-keys`)
+  const friendView = await call(a, C, 'GET', `/v1/users/${B.id}/enc-keys`)
+  assert.equal(friendView.status, 200)
+  assert.deepEqual(friendView.body.encKeys, [bEnc.pub])
+  // A non-friend gets an indistinguishable 404.
+  const D = await user(a, 'Dee')
+  const strangerView = await call(a, D, 'GET', `/v1/users/${B.id}/enc-keys`)
   assert.equal(strangerView.status, 404)
 })
 

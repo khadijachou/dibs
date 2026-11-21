@@ -5,7 +5,11 @@
 // giver typed: a code, a PIN, a link, a value, an amount, the goal id and the goal's money path never reach it.
 import { request } from './friends.js'
 
-const KEY = 'dibs.friends.gifts' // { [goalId]: { friendId, name, brandKey, state: 'claimed' | 'sent', thanked?, message?, banner? } }
+const KEY = 'dibs.friends.gifts' // { [goalId]: { friendId, name, brandKey, state: 'claimed' | 'sent', thanked?, message?, banner?, direct?, giftId? } }
+
+// A direct gift id: 32 hex chars from the device's CSPRNG, generated on the phone so a retried send never makes two
+// records (the server keys the record by it and treats a repeat as idempotent). Kept on the tag once generated.
+export const newGiftId = () => { const a = new Uint8Array(16); globalThis.crypto.getRandomValues(a); return Array.from(a, (b) => b.toString(16).padStart(2, '0')).join('') }
 
 const read = () => { try { return JSON.parse(localStorage.getItem(KEY)) || {} } catch { return {} } }
 const write = (m) => { try { localStorage.setItem(KEY, JSON.stringify(m)) } catch { /* private mode */ } }
@@ -38,18 +42,20 @@ export function clearAll() { try { localStorage.removeItem(KEY) } catch { /* pri
 
 // ---- received gift codes opened on this phone (v1.7.3) ------------------------------------------------------------
 // When a receiver opens a gift delivered in Dibs, the redemption ({ code, pin, link }) is decrypted on the phone and
-// kept here, keyed "<from id>:<brandKey>", so the Wishlist card can show it again with "Show code" after the server has
-// deleted the box. This is the receiver's own gift card, like a goal's saved redemption: it is NOT cleared by Friends
-// off (that would lose a gift the server no longer holds). Never sent anywhere.
+// kept here, so the Wishlist card can show it again with "Show code" after the server has deleted the box. A wishlist
+// gift is keyed "<from id>:<brandKey>"; a direct gift (v1.7.4) by "d:<giftId>", so two direct gifts of the same brand
+// each keep their own code. This is the receiver's own gift card, like a goal's saved redemption: it is NOT cleared by
+// Friends off (that would lose a gift the server no longer holds). Never sent anywhere.
 const IN_KEY = 'dibs.giftsIn'
 const readIn = () => { try { return JSON.parse(localStorage.getItem(IN_KEY)) || {} } catch { return {} } }
 const writeIn = (m) => { try { localStorage.setItem(IN_KEY, JSON.stringify(m)) } catch { /* private mode */ } }
-export const giftInKey = (fromId, brandKey) => `${fromId}:${brandKey}`
-export const getGiftIn = (fromId, brandKey) => readIn()[giftInKey(fromId, brandKey)] || null
-export function setGiftIn(fromId, brandKey, redemption) {
+// The storage key for a received gift: per giftId for a direct gift, per (giver, brand) for a wishlist gift.
+export const giftInKeyOf = (gift) => (gift?.kind === 'direct' ? `d:${gift.giftId || ''}` : `${gift?.from?.id || ''}:${gift?.brandKey || ''}`)
+export const getGiftIn = (gift) => readIn()[giftInKeyOf(gift)] || null
+export function setGiftIn(gift, redemption) {
   if (!redemption) return
   const m = readIn()
-  m[giftInKey(fromId, brandKey)] = redemption
+  m[giftInKeyOf(gift)] = redemption
   writeIn(m)
 }
 
@@ -64,6 +70,13 @@ export const sayThanks = (brandKey) => request('POST', `/v1/me/gifts/${encodeURI
 export const getEncKeys = (friendId) => request('GET', `/v1/users/${encodeURIComponent(friendId)}/enc-keys`)
 export const deliverGift = (friendId, brandKey, boxes) => request('POST', wish(friendId, brandKey, '/deliver'), { boxes })
 export const markGiftOpened = (brandKey) => request('POST', `/v1/me/gifts/${encodeURIComponent(brandKey)}/opened`)
+
+// ---- direct gifts (v1.7.4): a gift from the giver's OWN goal to a friend, not tied to any wish --------------------
+const giftsBase = (friendId) => `/v1/users/${encodeURIComponent(friendId)}/gifts`
+export const sendDirectGift = (friendId, { giftId, brandKey, message = '', banner = 'none' }) => request('POST', giftsBase(friendId), { giftId, brandKey, message, banner })
+export const deliverDirectGift = (friendId, giftId, boxes) => request('POST', `${giftsBase(friendId)}/${encodeURIComponent(giftId)}/deliver`, { boxes })
+export const sayThanksDirect = (giftId) => request('POST', `/v1/me/gifts/direct/${encodeURIComponent(giftId)}/thanks`)
+export const markGiftOpenedDirect = (giftId) => request('POST', `/v1/me/gifts/direct/${encodeURIComponent(giftId)}/opened`)
 
 // The same refusal rules as the Friends server (friends/src/rules.js cleanGiftMessage), run on the phone before sending
 // so the giver sees why nothing was sent. Line breaks count as spaces. Returns an error reason ('link' | 'long') or null
@@ -87,6 +100,12 @@ export async function reconcile(goals, release = releaseClaim) {
   let changed = false
   for (const [goalId, tag] of Object.entries(m)) {
     const g = byId.get(goalId)
+    // A direct gift (v1.7.4) is not tied to a wish: there is no server claim to release, it survives a card change, and
+    // it is dropped only when its goal is gone (deleting the goal drops the tag). No server call either way.
+    if (tag.direct) {
+      if (!g) { delete m[goalId]; changed = true }
+      continue
+    }
     if (tag.state === 'sent') {
       if (!g) { delete m[goalId]; changed = true } // deleted sent gift: drop locally, never a server call
       continue

@@ -12,7 +12,7 @@ import GiftBanner from '../components/GiftBanner.jsx'
 import { brandByKey, useWishlist } from '../components/FriendsParts.jsx'
 import { toggle as toggleWish } from '../lib/wishlist.js'
 import { enabled as friendsEnabled, isOn as friendsIsOn, getVis as friendsVis, syncQuiet, me as loadMe } from '../lib/friends.js'
-import { sayThanks, getGiftIn } from '../lib/gifts.js'
+import { sayThanks, sayThanksDirect, getGiftIn } from '../lib/gifts.js'
 import { copyText } from '../lib/clipboard.js'
 import { listGoals } from '../lib/goals.js'
 import { markDailyOpen } from '../lib/quests.js'
@@ -21,7 +21,7 @@ import { markDailyOpen } from '../lib/quests.js'
 // dibs.giftsIn). A quiet "Show code" link reveals it again (the server has deleted its copy). No link: nothing shows.
 function GiftCodeLink({ gift }) {
   const { t, toast } = useApp()
-  const red = getGiftIn(gift.from?.id, gift.brandKey)
+  const red = getGiftIn(gift)
   const [show, setShow] = useState(false)
   if (!red) return null
   const copy = async (text, key) => { if (text && (await copyText(text))) toast(t(key)) }
@@ -47,7 +47,7 @@ function ReceivedGift({ gift }) {
   const [busy, setBusy] = useState(false)
   const say = async () => {
     setBusy(true)
-    try { await sayThanks(gift.brandKey); setThanked(true) } catch { /* leave as is: the user can try again */ } finally { setBusy(false) }
+    try { await (gift.kind === 'direct' ? sayThanksDirect(gift.giftId) : sayThanks(gift.brandKey)); setThanked(true) } catch { /* leave as is: the user can try again */ } finally { setBusy(false) }
   }
   return (
     <div className="frd-gift-got">
@@ -72,7 +72,7 @@ function ReceivedGiftCard({ gift }) {
   const [busy, setBusy] = useState(false)
   const say = async () => {
     setBusy(true)
-    try { await sayThanks(gift.brandKey); setThanked(true) } catch { /* leave as is: the user can try again */ } finally { setBusy(false) }
+    try { await (gift.kind === 'direct' ? sayThanksDirect(gift.giftId) : sayThanks(gift.brandKey)); setThanked(true) } catch { /* leave as is: the user can try again */ } finally { setBusy(false) }
   }
   return (
     <section className="card gift-card">
@@ -106,13 +106,16 @@ export default function Wishlist() {
     loadMe().then((r) => { if (live) setGifts(Array.isArray(r?.gifts) ? r.gifts : []) }).catch(() => { /* server unreachable: as today */ })
     return () => { live = false }
   }, [])
-  const giftByBrand = Object.fromEntries(gifts.map((g) => [g.brandKey, g]))
-  // A gift with a message or a banner becomes a card at the top; its wish is pulled out of the normal list.
-  const richGifts = gifts.filter((g) => g.message || g.banner)
-  const richBrands = new Set(richGifts.map((g) => g.brandKey))
+  // Direct gifts (v1.7.4) always show as cards at the top (they are not tied to my wishlist). Wishlist gifts with a
+  // message or a banner also become cards; a plain wishlist gift stays an inline row on its hearted brand.
+  const wishGifts = gifts.filter((g) => g.kind !== 'direct')
+  const directGifts = gifts.filter((g) => g.kind === 'direct')
+  const giftByBrand = Object.fromEntries(wishGifts.map((g) => [g.brandKey, g]))
+  const richWish = wishGifts.filter((g) => g.message || g.banner)
+  const richBrands = new Set(richWish.map((g) => g.brandKey))
   const listBrands = brands.filter((b) => !richBrands.has(b.key)) // the plain list (hearted brands minus the card ones)
-  const extraGifts = gifts.filter((g) => !keys.includes(g.brandKey) && !richBrands.has(g.brandKey)) // plain gifts off my list
-  const giftNoteName = richGifts.find((g) => g.message)?.from?.name || ''
+  const extraGifts = wishGifts.filter((g) => !keys.includes(g.brandKey) && !richBrands.has(g.brandKey)) // plain gifts off my list
+  const giftNoteName = richWish.find((g) => g.message)?.from?.name || ''
 
   const openBrand = (b) => { markDailyOpen({ k: 'brand', chip: b.chip }, listGoals(address)); setOpen(b.key) }
   const sheetBrand = brandByKey(open)
@@ -132,7 +135,7 @@ export default function Wishlist() {
     </p>
   )
 
-  const isEmpty = listBrands.length === 0 && richGifts.length === 0 && extraGifts.length === 0
+  const isEmpty = listBrands.length === 0 && richWish.length === 0 && extraGifts.length === 0 && directGifts.length === 0
 
   return (
     <>
@@ -152,7 +155,8 @@ export default function Wishlist() {
           </>
         ) : (
           <>
-            {richGifts.map((g) => <ReceivedGiftCard key={g.brandKey} gift={g} />)}
+            {directGifts.map((g) => <ReceivedGiftCard key={g.giftId} gift={g} />)}
+            {richWish.map((g) => <ReceivedGiftCard key={g.brandKey} gift={g} />)}
             {listBrands.length > 0 && (
               <section className="frd-sec">
                 {listBrands.map((b) => {
@@ -188,7 +192,7 @@ export default function Wishlist() {
                 })}
               </section>
             )}
-            {richGifts.some((g) => g.message) && <p className="frd-private frd-wl-foot gift-note-line">{t('frd_gift_msg_note', { name: giftNoteName })}</p>}
+            {richWish.some((g) => g.message) && <p className="frd-private frd-wl-foot gift-note-line">{t('frd_gift_msg_note', { name: giftNoteName })}</p>}
             {footer}
           </>
         )}

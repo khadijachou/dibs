@@ -6,7 +6,7 @@ import { fmtFiatValue } from '../lib/fiatValue.js'
 import { classify, lastLogText } from '../lib/errors.js'
 import { canManageGoal } from '../lib/manage.js'
 import { getGoal, listGoals, openGoalFor, progress, savedNim, stakerFlag, unlockRunning, updateGoal } from '../lib/goals.js'
-import { giftOf } from '../lib/gifts.js'
+import { giftOf, clearGift } from '../lib/gifts.js'
 import { markDailyOpen } from '../lib/quests.js'
 import { planOf, poolName, shortAddress } from '../lib/pace.js'
 import { goalBrand, PaceLine } from './Home.jsx'
@@ -25,7 +25,7 @@ import { fmtDate, fmtEarned, fmtNim, fmtPct, fmtUsd, weeksUntil } from '../lib/f
 import { addPreview, caretAfterDigits, cleanDigits, digitsBefore, formatAmount } from '../lib/addPreview.js'
 import { findItem } from '../lib/catalog.js'
 import { depositFieldFlags } from '../lib/depositField.js'
-import { DeleteSheet, ManageSheet, MoveSheet } from './GoalManage.jsx'
+import { DeleteSheet, GiftPickerSheet, ManageSheet, MoveSheet } from './GoalManage.jsx'
 import { useCountUp } from '../lib/useCountUp.js'
 import { useDuplicateText } from '../components/useDuplicateText.js'
 import { CardFlip, GiftFace, useCardFlip } from '../components/CardFlip.jsx'
@@ -332,9 +332,12 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
         <ManageSheet goal={goal} onClose={closeSheet}
           onChange={() => { setSheet(null); go('catalog', { changeFor: goal.id }) }}
           onMove={() => setSheet('move')}
+          onGift={() => setSheet('gift')}
+          onKeep={() => { clearGift(goal.id); toast(t('og_kept')); setSheet(null) }}
           onWithdraw={goal.status === 'ready' ? returnReady : withdraw}
           onDelete={() => setSheet('delete')} />
       )}
+      {sheet === 'gift' && <GiftPickerSheet goal={goal} onClose={closeSheet} onTagged={() => setSheet(null)} />}
       {sheet === 'move' && <MoveSheet goal={goal} onClose={closeSheet} onMoved={(r) => { setGoal(r.from); setSheet(null) }} />}
       {sheet === 'delete' && <DeleteSheet goal={goal} onClose={closeSheet} />}
       {moveSrc && <MoveSheet goal={moveSrc} preselect={goal.id} onClose={closeMoveSrc} onMoved={(r) => { setGoal(r.to); setMoveSrc(null) }} />}
