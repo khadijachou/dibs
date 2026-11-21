@@ -17,10 +17,12 @@ const pics = readdirSync(promoDir).filter((f) => /\.(jpe?g|webp)$/i.test(f))
 const picKeys = new Set(pics.map((f) => f.replace(/\.(jpe?g|webp)$/i, '')))
 const brandKeys = new Set(BRANDS.map((b) => b.key))
 
-test('LINES has 26 keys, no duplicates and no bolt', () => {
-  assert.equal(LINES.length, 26, 'LINES has 26 keys')
-  assert.equal(new Set(LINES).size, 26, 'no duplicate key in LINES')
-  assert.ok(!LINES.includes('bolt'), 'no bolt slide')
+test('LINES has 33 keys, no duplicates, and includes the Electronics brands and bolt', () => {
+  assert.equal(LINES.length, 33, 'LINES has 33 keys')
+  assert.equal(new Set(LINES).size, 33, 'no duplicate key in LINES')
+  for (const key of ['currys', 'mediamarkt', 'fnacdarty', 'electrodepot', 'slot', 'samsung', 'bolt']) {
+    assert.ok(LINES.includes(key), `${key} slide is wired into LINES`)
+  }
 })
 
 test('every LINES key has a picture, a promo line in en/fr/es, and a brand', () => {
