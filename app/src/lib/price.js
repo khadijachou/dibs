@@ -12,6 +12,21 @@ let cache = null
 const TTL = 5 * 60 * 1000
 const VS = ['usd', 'eur', 'gbp', 'ngn']
 
+// The last live "nimiq-2" rates kept on the phone (dibs.lastRates = { at, rates }). The NIM converter on Savings uses
+// them when there is no live rate (offline, CoinGecko down), with "as of {time}". Written only after a live read.
+const LAST_RATES_KEY = 'dibs.lastRates'
+const saveLastRates = (rates) => {
+  if (!rates || typeof rates !== 'object') return
+  try { localStorage.setItem(LAST_RATES_KEY, JSON.stringify({ at: Date.now(), rates })) } catch { /* storage blocked */ }
+}
+// { at, rates } or null. Never throws.
+export function getLastRates() {
+  try {
+    const v = JSON.parse(localStorage.getItem(LAST_RATES_KEY) || 'null')
+    return v && typeof v === 'object' && v.rates && typeof v.rates === 'object' ? v : null
+  } catch { return null }
+}
+
 export async function getPrices() {
   if (cache && Date.now() - cache.at < TTL) return cache
   const vs = [...new Set([...VS, fiatCode(host.fiat()).toLowerCase()])].join(',')
@@ -21,6 +36,7 @@ export async function getPrices() {
     const j = await r.json()
     cache = { nimUsd: j['nimiq-2']?.usd ?? config.fallbackNimUsd, btcUsd: j.bitcoin?.usd ?? null, live: true, at: Date.now() }
     cache.rates = j['nimiq-2'] || null
+    saveLastRates(cache.rates)
   } catch {
     cache = { nimUsd: config.fallbackNimUsd, btcUsd: null, live: false, at: Date.now(), rates: null }
   }

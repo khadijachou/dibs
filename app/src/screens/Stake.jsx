@@ -21,9 +21,10 @@ import { RestakeButton } from '../components/Restake.jsx'
 import { KeepLink } from '../components/KeepInWallet.jsx'
 import { pending } from '../lib/deposit.js'
 import { isRestake, wholeGap } from '../lib/restake.js'
+import { ConverterCard, IdleCard } from '../components/NimNumbers.jsx'
 
 export default function Stake() {
-  const { t, lang, address } = useApp()
+  const { t, lang, address, balance } = useApp()
   const [state, setState] = useState({ status: 'loading' }) // loading | down | ok
 
   const load = useCallback(async () => {
@@ -59,10 +60,15 @@ export default function Stake() {
     body = <Notice tone="wait" title={t('stake_reading')} />
   } else {
     const st = state.staker
+    const sum = stakeSummary(st, address)
     body = (
       <>
         {/* No staker at all: no top card, only the "Nothing staked yet" line. A stake that is only unlocking keeps it. */}
-        {st && <StakeHero st={st} sum={stakeSummary(st, address)} block={state.block} />}
+        {st && <StakeHero st={st} sum={sum} block={state.block} />}
+        {/* Numbers about NIM (v1.6.2): idle NIM that could earn, and a live converter. Each hides itself when it has
+            nothing to show (no idle NIM, no rate). */}
+        <IdleCard sum={sum} balance={balance} hasStaker={!!st} goals={goals} />
+        <ConverterCard />
         {unlocking.map((g) => <UnstakingCard key={g.id} goal={g} chainAt={state.releaseAt} retired={stageOf(st, savedNim(g)).current === 'remove'} />)}
         {!st && <p className="small">{t('stake_none')}</p>}
         {active.length > 0 && <WeekCard goals={active} />}

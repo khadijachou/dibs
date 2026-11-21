@@ -160,6 +160,9 @@ input.email { width: 100%; height: 48px; border-radius: 12px; border: 1.5px soli
 .blogo.si > svg.blogo-glyph { width: 64%; height: 64%; }
 /* Sizes are % of the tile's own track (padding % would follow the parent's width, so none is used). */
 .blogo.img > img.blogo-glyph { width: 84%; height: 84%; object-fit: contain; border-radius: 0; }
+/* logoFit 'wide' (lib/brands.js): a wide wordmark trimmed to its mark takes the full plate width, so it reads as large
+   as Amazon's. Height auto keeps its ratio; max-height 100 % (above) still guards a tall one. */
+.blogo.img > img.blogo-glyph.wide { width: 96%; height: auto; }
 .blogo.letter { display: grid; place-items: center; background: var(--navy); color: var(--ground); font: 700 17px var(--font-display); }
 
 /* Welcome */

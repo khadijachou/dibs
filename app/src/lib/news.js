@@ -11,8 +11,13 @@
 //     go    optional route name ('catalog', 'stake', ...) that adds a "Show me" link opening that screen
 //   Write only things that are in the same release's What's new block. No `sheet` on a release = no sheet for it.
 export const NEWS = [
+  { date: '2026-11-21', key: 'news_54', v: '1.6.2' },
   { date: '2026-11-21', key: 'news_53', v: '1.6.1' },
-  { date: '2026-11-21', key: 'news_52', v: '1.6' },
+  { date: '2026-11-21', key: 'news_52', v: '1.6', big: true, sum: 'news_sum_52', sheet: [
+    { icon: 'bag', title: 'bigup_16_1', line: 'bigup_16_1b', go: 'catalog' },
+    { icon: 'bulb', title: 'bigup_16_2', line: 'bigup_16_2b', go: 'stake' },
+    { icon: 'shield', title: 'bigup_16_3', line: 'bigup_16_3b' },
+  ] },
   { date: '2026-11-21', key: 'news_51', v: '1.5.2' },
   { date: '2026-11-21', key: 'news_50', v: '1.5.1' },
   { date: '2026-11-21', key: 'news_49', v: '1.5' },

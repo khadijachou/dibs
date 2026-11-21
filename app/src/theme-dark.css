@@ -418,6 +418,28 @@ a.sheet-row { text-decoration: none; -webkit-tap-highlight-color: transparent; }
 .goal-status.partly::before { background: var(--butter); animation: none; }
 /* The hero is positioned (its glow and shadow): what follows it on Savings paints above it, never dimmed by it. */
 .stake-hero ~ * { position: relative; z-index: 1; }
+
+/* Numbers about NIM on Savings (v1.6.2): the idle-NIM card and the live NIM converter. Base/dark styles; theme-light.css
+   softens the mint number and the sparkline to the light shades. Both sit on the .card surface. */
+.card.idle-card, .card.conv-card { gap: 10px; }
+.idle-amt { font: 600 var(--fs-title)/var(--lh-title) var(--font-display); font-variant-numeric: tabular-nums; }
+.idle-est { margin: 0; font-size: var(--fs-body); line-height: var(--lh-body); }
+.idle-n { color: var(--teal); font-weight: 700; }
+.idle-note { margin: 0; font-size: var(--fs-meta); line-height: var(--lh-meta); color: var(--muted); }
+.idle-link { align-self: flex-start; background: none; border: 0; padding: 0; font-family: inherit; font-size: var(--fs-strong); line-height: var(--lh-strong); font-weight: 600; color: var(--gold); cursor: pointer; }
+.conv-fields { display: flex; align-items: center; gap: 8px; }
+.conv-field { flex: 1 1 0; min-width: 0; display: flex; align-items: center; gap: 8px; background: var(--card-2); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+.conv-in { flex: 1 1 0; min-width: 0; width: 100%; background: none; border: 0; outline: none; color: inherit; font-weight: 600; font-variant-numeric: tabular-nums; }
+.conv-unit { flex: none; font-size: var(--fs-label); line-height: var(--lh-label); font-weight: 600; color: var(--muted); white-space: nowrap; }
+.conv-eq { flex: none; color: var(--muted); }
+.conv-segs { display: flex; gap: 6px; }
+.conv-seg { flex: 1 1 0; min-width: 0; height: 38px; border-radius: 10px; border: 1px solid var(--line); background: var(--card-2); color: var(--muted); font-family: inherit; font-size: var(--fs-label); line-height: var(--lh-label); font-weight: 700; cursor: pointer; }
+.conv-seg.on { background: var(--gold); border-color: var(--gold); color: #fff; }
+.conv-trend { display: flex; align-items: center; gap: 10px; }
+.conv-spark { flex: 1 1 0; min-width: 0; height: 28px; display: block; }
+.conv-spark polyline { fill: none; stroke: var(--muted); stroke-width: 1.5; vector-effect: non-scaling-stroke; stroke-linejoin: round; stroke-linecap: round; }
+.conv-pct { flex: none; font-size: var(--fs-meta); line-height: var(--lh-meta); color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.conv-asof { margin: 0; font-size: var(--fs-label); line-height: var(--lh-label); color: var(--muted); }
 .stake-line { margin-top: auto; display: flex; align-items: flex-start; gap: 8px; text-align: left; }
 .stake-line-ic { flex-shrink: 0; display: grid; color: var(--teal); padding-top: 1px; }
 .unstake-top { display: flex; align-items: center; gap: 12px; }

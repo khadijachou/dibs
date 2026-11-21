@@ -17,6 +17,9 @@ import { getCurrency, regionForCurrency } from './currency.js'
 // logoPlate (logo files only): absent = white plate, logo contained at 84 % (Amazon); '#rrggbb' = that plate colour
 // (a light logo on a transparent background, or a wide logo with its own solid background: plate and picture blend);
 // 'fill' = the picture fills the tile, no plate, no padding (a square picture with its own background).
+// logoFit (logo files only): 'wide' draws the picture at the full plate width (96 %, height auto, centred) instead of the
+// 84 % contain box, so a wide wordmark (MediaMarkt, FNAC, Electro Dépôt, Samsung) reads as large as Amazon's. The files
+// are trimmed to the mark first, so 96 % is the mark itself, not its margins.
 // store (delivers: 'instore' only): the shop name in "In store only: {store} stores" and "Show the code at a {store} store".
 export const BRANDS = [
   { key: 'steam',       name: 'Steam',             color: ['#2a475e', '#121a24'], chip: 'games',     logo: '/logos/steam.png',       slugs: ['steam-usa', 'steam-eur-international'], popular: true, delivers: 'code', region: ['USA', 'Europe'], about: 'brand_about_steam' },
@@ -45,12 +48,12 @@ export const BRANDS = [
   // single-country EUR cards. delivers from the shop's instructions (Currys: "gift card number and pin"); SLOT and
   // Samsung (MGS stores) are used in store only.
   { key: 'currys',       name: 'Currys',            color: ['#4c12a1', '#1e0740'], chip: 'electronics', logo: '/logos/currys.png',      tile: { bg: '#4C12A1', fg: '#fff', letter: 'C' }, slugs: ['currys-pc-world-uk'], delivers: 'pin', region: ['UK'], about: 'brand_about_currys' },
-  { key: 'mediamarkt',   name: 'MediaMarkt',        color: ['#e71d2a', '#5c0c11'], chip: 'electronics', logo: '/logos/mediamarkt.png',  tile: { bg: '#E71D2A', fg: '#fff', letter: 'M' }, slugs: ['media-markt-germany'], delivers: 'pin', region: ['Germany'], about: 'brand_about_mediamarkt' },
-  { key: 'fnacdarty',    name: 'FNAC Darty',        color: ['#23212b', '#000000'], chip: 'electronics', logo: '/logos/fnac-darty.png',  tile: { bg: '#23212B', fg: '#fff', letter: 'F' }, slugs: ['fnac-darty-france'], delivers: 'pin', region: ['France'], about: 'brand_about_fnacdarty' },
-  { key: 'electrodepot', name: 'Electro Dépôt',     color: ['#fab31e', '#64480c'], chip: 'electronics', logo: '/logos/electro-depot.png', tile: { bg: '#FAB31E', fg: '#23212B', letter: 'E' }, slugs: ['electro-depot-france'], delivers: 'code', region: ['France'], about: 'brand_about_electrodepot' },
+  { key: 'mediamarkt',   name: 'MediaMarkt',        color: ['#e71d2a', '#5c0c11'], chip: 'electronics', logo: '/logos/mediamarkt.png', logoFit: 'wide', tile: { bg: '#E71D2A', fg: '#fff', letter: 'M' }, slugs: ['media-markt-germany'], delivers: 'pin', region: ['Germany'], about: 'brand_about_mediamarkt' },
+  { key: 'fnacdarty',    name: 'FNAC Darty',        color: ['#23212b', '#000000'], chip: 'electronics', logo: '/logos/fnac-darty.png', logoFit: 'wide', logoPlate: '#23212b', tile: { bg: '#23212B', fg: '#fff', letter: 'F' }, slugs: ['fnac-darty-france'], delivers: 'pin', region: ['France'], about: 'brand_about_fnacdarty' },
+  { key: 'electrodepot', name: 'Electro Dépôt',     color: ['#fab31e', '#64480c'], chip: 'electronics', logo: '/logos/electro-depot.png', logoFit: 'wide', tile: { bg: '#FAB31E', fg: '#23212B', letter: 'E' }, slugs: ['electro-depot-france'], delivers: 'code', region: ['France'], about: 'brand_about_electrodepot' },
   { key: 'slot',         name: 'SLOT',              color: ['#ff0000', '#660000'], chip: 'electronics', logo: '/logos/slot.png',        tile: { bg: '#FF0000', fg: '#fff', letter: 'S' }, slugs: ['slot-nigeria'], delivers: 'instore', store: 'SLOT', region: ['Nigeria'], about: 'brand_about_slot' },
   // Samsung: simple-icons glyph (lib/brandIcons.js siSamsung, #1428A0); the second stop is #1428A0 darkened, as Best Buy.
-  { key: 'samsung',      name: 'Samsung',           color: ['#1428a0', '#081044'], chip: 'electronics', logo: null, tile: { bg: '#1428A0', fg: '#fff', letter: 'S' }, slugs: ['samsung-nigeria'], delivers: 'instore', store: 'Samsung MGS', region: ['Nigeria'], about: 'brand_about_samsung' },
+  { key: 'samsung',      name: 'Samsung',           color: ['#1428a0', '#081044'], chip: 'electronics', logo: '/logos/samsung.png', logoFit: 'wide', tile: { bg: '#1428A0', fg: '#fff', letter: 'S' }, slugs: ['samsung-nigeria'], delivers: 'instore', store: 'Samsung MGS', region: ['Nigeria'], about: 'brand_about_samsung' },
   { key: 'handm',       name: 'H&M',               color: ['#cf000f', '#4a0006'], chip: 'shopping',  logo: null, tile: { bg: '#E50010', fg: '#fff', letter: 'H' }, slugs: ['handm-usa', 'handm-uk'], delivers: 'pin', region: ['USA', 'UK'], about: 'brand_about_handm' },
   { key: 'nike',        name: 'Nike',              color: ['#3a3a3c', '#0b0b0c'], chip: 'shopping',  logo: null, tile: { bg: '#111111', fg: '#fff', letter: 'N' }, slugs: ['nike-usa', 'nike-uk'], delivers: 'pin', region: ['USA', 'UK'], about: 'brand_about_nike' },
   { key: 'disney',      name: 'Disney',            color: ['#1b4fe0', '#08185c'], chip: 'streaming', logo: '/logos/DGC-Logo.png', tile: { bg: '#113CCF', fg: '#fff', letter: 'D' }, slugs: ['disney-usa'], delivers: 'code', region: ['USA'], about: 'brand_about_disney' },              // confirm

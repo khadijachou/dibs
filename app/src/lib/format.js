@@ -21,6 +21,13 @@ export const fmtEarned = (n, lang = 'en') => {
   return '+' + fmtInt(v, lang)
 }
 
+// Two significant figures, grouped ("1,200", "45", "8.7"): the Savings idle-NIM estimate ("about {n} NIM a month").
+export const fmtSig2 = (n, lang = 'en') => num(lang, { maximumSignificantDigits: 2 }, Number(n) || 0)
+
+// A signed one-decimal number ("+1.2", "-0.8"): the NIM converter's "7 days: {x}%". Never coloured red or green.
+export const fmtSigned1 = (n, lang = 'en') =>
+  (Number(n) >= 0 ? '+' : '-') + num(lang, { minimumFractionDigits: 1, maximumFractionDigits: 1 }, Math.abs(Number(n) || 0))
+
 // USD: 2 decimals from 1 USD up (10.50); below 1 (the NIM rate) 3 significant digits (0.000270).
 export const fmtUsd = (n, lang = 'en') =>
   num(lang, n >= 1 || n === 0

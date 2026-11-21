@@ -192,9 +192,11 @@ export function BrandLogo({ brand, className = '' }) {
   }
   if (brand?.logo) {
     const plate = brand.logoPlate
+    // logoFit 'wide' draws a wide wordmark at the full plate width (styles.css) instead of the 84 % contain box.
+    const wide = brand.logoFit === 'wide'
     return (
       <div className={`blogo img${plate === 'fill' ? ' fill' : ''} ${className}`} style={plate && plate !== 'fill' ? { background: plate } : undefined} aria-hidden="true">
-        <img className="blogo-glyph" src={brand.logo} alt="" />
+        <img className={`blogo-glyph${wide ? ' wide' : ''}`} src={brand.logo} alt="" />
       </div>
     )
   }

@@ -1,6 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { releaseOf, cmpRelease, seenOf, bigSheetFor, catchUp14 } from './bigUpdate.js'
+import { NEWS as REAL_NEWS } from './news.js'
 
 test('releaseOf keeps the first two numbers as a string', () => {
   assert.equal(releaseOf('1.3.0'), '1.3')
@@ -123,6 +124,34 @@ test('never throws on junk input', () => {
   assert.doesNotThrow(() => bigSheetFor({}))
   assert.doesNotThrow(() => bigSheetFor({ version: '1.3.0', stored: {}, onboarded: true, news: 'nope' }))
   assert.equal(bigSheetFor({ version: '1.3.0', stored: '1.2', onboarded: true, news: null }), null)
+})
+
+// ---- v1.6.2: the 1.6 sheet (news_52) comes back for phones that missed it since 1.5 ----------------------------------
+// It never showed for 1.5 or 1.6 (those NEWS entries carried no sheet), so this release puts it on the 1.6 entry and the
+// app at 1.6.2 reaches it. The entry chosen is the 1.6 one, not 1.6.1 or 1.6.2 (which have no sheet).
+
+test('v1.6.2: a phone that last saw 1.4 sees the 1.6 sheet, with "since 1.5"', () => {
+  const r = bigSheetFor({ version: '1.6.2', stored: '1.4', onboarded: true, news: REAL_NEWS })
+  assert.equal(r?.release, '1.6')
+  assert.equal(r?.entry.v, '1.6')
+  assert.ok(Array.isArray(r?.entry.sheet) && r.entry.sheet.length === 3)
+  assert.equal(r?.since, '1.5')
+})
+
+test('v1.6.2: a phone that last saw 1.5 sees the 1.6 sheet, no "since"', () => {
+  const r = bigSheetFor({ version: '1.6.2', stored: '1.5', onboarded: true, news: REAL_NEWS })
+  assert.equal(r?.release, '1.6')
+  assert.equal(r?.entry.v, '1.6')
+  assert.equal(r?.since, null)
+})
+
+test('v1.6.2: a fresh phone (saw 1.6) and a phone that saw 1.6.1 never see it', () => {
+  assert.equal(bigSheetFor({ version: '1.6.2', stored: '1.6', onboarded: true, news: REAL_NEWS }), null)
+  assert.equal(bigSheetFor({ version: '1.6.2', stored: '1.6.1', onboarded: true, news: REAL_NEWS }), null)
+})
+
+test('v1.6.2: a brand-new (not onboarded) user never sees it', () => {
+  assert.equal(bigSheetFor({ version: '1.6.2', stored: null, onboarded: false, news: REAL_NEWS }), null)
 })
 
 // ---- catchUp14 (v1.4.1): show the 1.4 sheet once to phones that missed it --------------------------------------

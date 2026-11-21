@@ -444,3 +444,8 @@ html.is-fullscreen:where([data-theme="light"]) body::before { background: linear
 /* v1.6.0 Electronics: butter as text and the new dot take the readable light shades (as .goal-status.partly). */
 :where(:root[data-theme="light"]) .cat-new { background: #d99a0b; }
 :where(:root[data-theme="light"]) .bs-box-note.instore, :where(:root[data-theme="light"]) .tk-instore { color: #a86a00; }
+
+/* v1.6.2 Numbers about NIM: on white the estimate uses the brand mint and the sparkline a soft grey. The cards (#fff)
+   and inner boxes (--card-2, #f6f0e8) come from the light tokens already. */
+:where(:root[data-theme="light"]) .idle-n { color: #15896a; }
+:where(:root[data-theme="light"]) .conv-spark polyline { stroke: #6b6575; }
