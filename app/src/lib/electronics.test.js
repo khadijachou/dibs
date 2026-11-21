@@ -47,7 +47,7 @@ test('six Electronics brands below Best Buy, with their slugs, version, delivery
   const keys = BRANDS.map((x) => x.key)
   const at = keys.indexOf('bestbuy')
   assert.deepEqual(keys.slice(at + 1, at + 7), Object.keys(SIX))
-  assert.equal(BRANDS.find((x) => x.key === 'bestbuy').chip, 'shopping', 'Best Buy moves in part 2')
+  assert.equal(BRANDS.find((x) => x.key === 'bestbuy').chip, 'electronics', 'Best Buy moved to Electronics in part 2')
   for (const [key, want] of Object.entries(SIX)) {
     const b = BRANDS.find((x) => x.key === key)
     assert.equal(b.chip, 'electronics', key)
