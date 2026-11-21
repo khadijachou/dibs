@@ -98,7 +98,7 @@ test('a server error code is passed through', async () => {
 
 test('getVis defaults every item to off; pending code round-trips', () => {
   seedOn()
-  assert.deepEqual(getVis(), { level: 'off', badges: 'off', cards: 'off', goals: 'off', wishlist: 'off' })
+  assert.deepEqual(getVis(), { avatar: 'off', level: 'off', badges: 'off', totals: 'off', goals: 'off', cards: 'off', wishlist: 'off' })
   setPendingCode('DIBS-ABCD')
   assert.equal(getPendingCode(), 'DIBS-ABCD')
   setPendingCode(null)

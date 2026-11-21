@@ -410,3 +410,11 @@ html.is-fullscreen:where([data-theme="light"]) body::before { background: linear
 /* ---- Friends (v1.4.0): the selected 3-way tile is the light coral tint, not a coral fill. Everything else uses
    the theme variables already set above (card #fff, inner tiles, muted, lines), so it follows light mode. ---- */
 :where(:root[data-theme="light"]) .frd-seg button.on { background: #fdece6; color: #cc3316; }
+
+/* ---- v1.4.2 light: totals tiles, earned mint, goal-bar track, card chips white with a cream border ---- */
+:where(:root[data-theme="light"]) .frd-total-tile { background: #f7f1ea; }
+:where(:root[data-theme="light"]) .frd-total-tile b { color: #23212b; }
+:where(:root[data-theme="light"]) .frd-total-tile.earned b { color: #15896a; }
+:where(:root[data-theme="light"]) .frd-goalbar { background: #f1e9df; }
+:where(:root[data-theme="light"]) .frd-card-chip { background: #ffffff; border-color: #e6dcce; }
+:where(:root[data-theme="light"]) .frd-amt-notice { background: #f7f1ea; }

@@ -7,17 +7,18 @@
 // @noble is loaded only when a crypto function runs (dynamic import), so a phone with Friends off never downloads it
 // and the first paint does not pay for it. With config.friendsUrl empty, every call is a no-op.
 import { config } from './config.js'
-import { describeError, isDemo, signMessage } from './nimiq.js'
+import { describeError, isDemo, signMessage, readStaker, listAccountsWithBalance } from './nimiq.js'
 import { xpSummary } from './xp.js'
 import { BADGES, getBadges } from './badges.js'
 import { listGoals } from './goals.js'
+import { profileStats } from './profileStats.js'
 import { sharedPayload } from './friendsShare.js'
 
 const TIMEOUT_MS = 6000 // most calls
 export const REGISTER_TIMEOUT_MS = 45000 // the server can take up to ~50 s to answer the first request after idle
 export const SEQ_TIMEOUTS = [6000, 15000, 25000] // loading a screen or a profile: retry quietly before giving up
 export const FRIENDS_EVENT = 'dibs:friends'
-const DEFAULT_VIS = { level: 'off', badges: 'off', cards: 'off', goals: 'off', wishlist: 'off' }
+const DEFAULT_VIS = { avatar: 'off', level: 'off', badges: 'off', totals: 'off', goals: 'off', cards: 'off', wishlist: 'off' }
 
 const K = {
   main: 'dibs.friends', // { on, id, code, name, devicePub, since } (no secret here)
@@ -49,8 +50,8 @@ export const setPendingCode = (code) => { if (code) writeStr(K.pending, String(c
 // Pure, so shareInvite and its test share it. Keeps the {code} placeholder in frd_share_text.
 export const inviteText = (t, code) => t('frd_share_text', { code })
 
-// How many of the five shared items are on (not 'off'). Unknown keys are ignored. Used by the "Who sees what" rows.
-const VIS_KEYS = ['level', 'badges', 'cards', 'goals', 'wishlist']
+// How many of the seven shared items are on (not 'off'). Unknown keys are ignored. Used by the "Who sees what" rows.
+const VIS_KEYS = ['avatar', 'level', 'badges', 'totals', 'goals', 'cards', 'wishlist']
 export const visSummary = (vis) => ({ n: VIS_KEYS.filter((k) => vis && vis[k] && vis[k] !== 'off').length })
 const clearAll = () => { for (const k of Object.values(K)) del(k) }
 
@@ -198,13 +199,47 @@ export async function patchMe(patch) {
 }
 
 // Upload the shared data for the items that are on. Silent on failure (callers outside Friends screens ignore it).
+// walletAddress is the stable listAccounts()[0] (the one the Nimiq identicon is drawn from); it is resolved here when
+// not passed (App.jsx's launch sync passes only `address`). The address itself is never part of any request.
 const getWishlist = () => { const v = readJSON('dibs.wishlist', []); return Array.isArray(v) ? v : [] }
-export async function syncShared(address) {
+
+// The totals (saved, earned) from the same source Savings uses; earned is null when the chain cannot give it reliably.
+async function gatherTotals(address) {
+  const saved = Math.floor(profileStats(listGoals(address)).totalSaved)
+  let earned = null
+  try {
+    const { stakeSummary } = await import('./earned.js') // heavy (chain, React deps): loaded only when totals are shared
+    const st = await readStaker(address).catch(() => null)
+    const e = stakeSummary(st, address).earned
+    if (typeof e === 'number' && Number.isFinite(e)) earned = Math.floor(e)
+  } catch { /* chain unreadable or earning on hold: omit earned, never guess */ }
+  return { saved, earned }
+}
+
+// My Nimiq avatar as a data URL: the identicon library draws it from walletAddress on the phone; the address is
+// never sent. Avatar.jsx keeps the SVG small, else a 64 px PNG. Loaded lazily (it is a .jsx with the identicon lib).
+async function gatherAvatar(walletAddress) {
+  try {
+    const wa = walletAddress || (await listAccountsWithBalance())[0]?.address
+    if (!wa) return undefined
+    const { myAvatarUrl } = await import('../components/Avatar.jsx')
+    return await myAvatarUrl(wa)
+  } catch { return undefined }
+}
+
+export async function syncShared(address, walletAddress) {
   if (!isOn() || !config.friendsUrl) return null
+  const vis = getVis()
+  const on = (k) => vis[k] === 'friends' || vis[k] === 'everyone'
   const s = xpSummary({ goals: listGoals(address), badges: getBadges() })
-  const earned = Object.keys(getBadges()).filter((id) => BADGES.some((b) => b.id === id))
-  const body = sharedPayload({ visibility: getVis(), xp: { level: s.level, rank: s.rank.id }, badges: earned, goals: listGoals(address), wishlist: getWishlist() })
+  const earnedBadges = Object.keys(getBadges()).filter((id) => BADGES.some((b) => b.id === id))
+  const { saved, earned } = on('totals') ? await gatherTotals(address) : {}
+  const avatar = on('avatar') ? await gatherAvatar(walletAddress) : undefined
+  const body = sharedPayload({
+    visibility: vis, xp: { level: s.level, rank: s.rank.id }, badges: earnedBadges,
+    goals: listGoals(address), wishlist: getWishlist(), saved, earned, avatar,
+  })
   return request('PUT', '/v1/me/shared', body)
 }
 // Fire-and-forget sync (after turn-on, after a visibility change, once per launch). Never throws to the caller.
-export const syncQuiet = (address) => { syncShared(address).catch(() => { /* silent outside Friends screens */ }) }
+export const syncQuiet = (address, walletAddress) => { syncShared(address, walletAddress).catch(() => { /* silent outside Friends screens */ }) }

@@ -70,7 +70,7 @@ export default function Friends({ addCode }) {
               <section className="frd-sec">
                 <h3 className="sec-head-h">{t('frd_invites')}</h3>
                 {invites.map((inv) => (
-                  <PersonRow key={inv.id} seed={inv.from.seed} name={inv.from.name} sub={t('frd_wants')}
+                  <PersonRow key={inv.id} name={inv.from.name} sub={t('frd_wants')}
                     right={(
                       <span className="frd-inv-acts">
                         <button type="button" className="frd-accept" disabled={acting === inv.id} onClick={() => act(acceptInvite, inv.id)}>{t('frd_accept')}</button>
@@ -86,7 +86,7 @@ export default function Friends({ addCode }) {
                 <h3 className="sec-head-h">{t('frd_friends_n', { n: friends.length })}</h3>
                 {friends.map((f) => {
                   const sub = f.level != null ? t('frd_level_rank', { n: f.level, rank: t(`rank_${f.rank}`) }) : f.sharesNothing ? t('frd_shares_nothing') : null
-                  return <PersonRow key={f.id} seed={f.seed} name={f.name} sub={sub} onClick={() => go('friendProfile', { id: f.id, since: f.since })} right={<span className="chev" aria-hidden="true">›</span>} />
+                  return <PersonRow key={f.id} avatar={f.avatar} name={f.name} sub={sub} onClick={() => go('friendProfile', { id: f.id, since: f.since })} right={<span className="chev" aria-hidden="true">›</span>} />
                 })}
               </section>
             )}

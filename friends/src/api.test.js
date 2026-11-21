@@ -66,7 +66,7 @@ test('register: creates a user with a DIBS code and all visibility off', async (
   assert.equal(r.body.restored, false)
   assert.equal(r.body.name, 'Aziz')
   assert.match(r.body.code, /^DIBS-[23456789ABCDEFGHJKLMNPQRSTUVWXYZ]{4,5}$/)
-  assert.deepEqual(r.body.visibility, { level: 'off', badges: 'off', cards: 'off', goals: 'off', wishlist: 'off' })
+  assert.deepEqual(r.body.visibility, { avatar: 'off', level: 'off', badges: 'off', totals: 'off', goals: 'off', cards: 'off', wishlist: 'off' })
 })
 
 test('register restore: a second device on the same wallet keeps id, code and name', async () => {
@@ -408,6 +408,131 @@ test('no response ever contains the wallet address, public key or walletKey', as
     assert.ok(!s.includes(me.wallet.pub), 'wallet public key leaked')
     assert.ok(!s.includes(wk), 'walletKey leaked')
   }
+})
+
+// ---- v1.4.2: avatar, totals, card/goal values -----------------------------------------------------------------
+const SVG = 'data:image/svg+xml;base64,' + Buffer.from('<svg>x</svg>').toString('base64')
+
+// Register two users and make them friends; returns both.
+async function pair(a) {
+  const me = await makeUser(a, 'Me')
+  const other = await makeUser(a, 'Other')
+  const inv = await call(a, me, 'POST', '/v1/invites', { code: other.code })
+  await call(a, other, 'POST', `/v1/invites/${inv.body.invite.id}/accept`)
+  return { me, other }
+}
+
+test('avatar and totals: shared to a friend only when on; off for a stranger and lookup', async () => {
+  const a = app()
+  const { me, other } = await pair(a)
+  // other turns on avatar + totals and uploads them
+  await call(a, other, 'PATCH', '/v1/me', { visibility: { avatar: 'friends', totals: 'friends' } })
+  const put = await call(a, other, 'PUT', '/v1/me/shared', { avatar: SVG, totals: { saved: 1234, earned: 56 } })
+  assert.equal(put.status, 200)
+  assert.equal(put.body.avatar, SVG)
+  assert.deepEqual(put.body.totals, { saved: 1234, earned: 56 })
+  // a friend sees both
+  const asFriend = await call(a, me, 'GET', `/v1/users/${other.id}`)
+  assert.equal(asFriend.body.avatar, SVG)
+  assert.deepEqual(asFriend.body.totals, { saved: 1234, earned: 56 })
+  assert.ok(!asFriend.body.hidden.includes('avatar')) // avatar never a hidden line
+  // the friend row carries the avatar
+  const row = (await call(a, me, 'GET', '/v1/friends')).body.friends.find((f) => f.id === other.id)
+  assert.equal(row.avatar, SVG)
+  // a stranger (C) looking other up by code gets no avatar, no totals
+  const c = await makeUser(a, 'C')
+  const look = await call(a, c, 'GET', `/v1/lookup?code=${other.code}`)
+  assert.equal('avatar' in look.body, false)
+  assert.equal('totals' in look.body, false)
+  const asStranger = await call(a, c, 'GET', `/v1/users/${other.id}`)
+  assert.deepEqual(asStranger.body, { id: other.id, name: 'Other', seed: other.id })
+})
+
+test('turning avatar/totals off deletes them at once', async () => {
+  const a = app()
+  const { me, other } = await pair(a)
+  await call(a, other, 'PATCH', '/v1/me', { visibility: { avatar: 'friends', totals: 'friends' } })
+  await call(a, other, 'PUT', '/v1/me/shared', { avatar: SVG, totals: { saved: 10 } })
+  await call(a, other, 'PATCH', '/v1/me', { visibility: { avatar: 'off', totals: 'off' } })
+  const p = await call(a, me, 'GET', `/v1/users/${other.id}`)
+  assert.equal('avatar' in p.body, false)
+  assert.equal('totals' in p.body, false)
+  const row = (await call(a, me, 'GET', '/v1/friends')).body.friends.find((f) => f.id === other.id)
+  assert.equal('avatar' in row, false)
+})
+
+test('cards with values (objects) and old string shape are both accepted', async () => {
+  const a = app()
+  const { me, other } = await pair(a)
+  await call(a, other, 'PATCH', '/v1/me', { visibility: { cards: 'friends', goals: 'friends' } })
+  await call(a, other, 'PUT', '/v1/me/shared', {
+    cards: ['steam', { brandKey: 'netflix', value: '20 USD' }, { brandKey: 'netflix', value: '20 USD' }],
+    goals: [{ brandKey: 'steam', pct: 40, value: '25 EUR' }],
+  })
+  const p = await call(a, me, 'GET', `/v1/users/${other.id}`)
+  assert.deepEqual(p.body.cards, [{ brandKey: 'steam' }, { brandKey: 'netflix', value: '20 USD' }, { brandKey: 'netflix', value: '20 USD' }])
+  assert.deepEqual(p.body.goals, [{ brandKey: 'steam', pct: 40, value: '25 EUR' }])
+})
+
+test('malformed totals/avatar/value are 400 and store nothing', async () => {
+  const a = app()
+  const u = await makeUser(a, 'U')
+  await call(a, u, 'PATCH', '/v1/me', { visibility: { totals: 'friends', avatar: 'friends', badges: 'friends', cards: 'friends' } })
+  // a good upload first, so we can prove a later bad one changes nothing
+  await call(a, u, 'PUT', '/v1/me/shared', { badges: ['first'] })
+  const bad = [
+    { totals: { saved: -1 }, badges: ['second'] },
+    { avatar: 'data:image/gif;base64,AAAA' },
+    { totals: { earned: 5 } }, // saved missing
+    { cards: [{ brandKey: 'steam', value: 'bad<>' }] },
+  ]
+  for (const b of bad) {
+    const r = await call(a, u, 'PUT', '/v1/me/shared', b)
+    assert.equal(r.status, 400, JSON.stringify(b))
+  }
+  // badges from the first good upload is untouched; nothing from the bad ones stored
+  const self = await call(a, u, 'GET', '/v1/me')
+  assert.deepEqual(self.body.badges, ['first'])
+  assert.equal('totals' in self.body, false)
+  assert.equal('avatar' in self.body, false)
+})
+
+test('an old-shape upload (five keys, cards as strings) still works', async () => {
+  const a = app()
+  const u = await makeUser(a, 'U')
+  await call(a, u, 'PATCH', '/v1/me', { visibility: { level: 'friends', badges: 'friends', cards: 'friends', goals: 'friends', wishlist: 'friends' } })
+  const r = await call(a, u, 'PUT', '/v1/me/shared', { level: { level: 5, rank: 'saver' }, badges: ['first'], cards: ['steam', 'netflix'], goals: [{ brandKey: 'steam', pct: 30 }], wishlist: ['amazon'] })
+  assert.equal(r.status, 200)
+  assert.deepEqual(r.body.cards, [{ brandKey: 'steam' }, { brandKey: 'netflix' }]) // upgraded to objects
+})
+
+test('avatar rides on at most the first 50 friend rows', async () => {
+  const store = createMemoryStore()
+  const a = makeApp(store, {})
+  const me = await makeUser(a, 'Me')
+  const vis = { avatar: 'friends', level: 'off', badges: 'off', totals: 'off', goals: 'off', cards: 'off', wishlist: 'off' }
+  for (let i = 0; i < 55; i++) {
+    const fid = `friend${String(i).padStart(3, '0')}`
+    await store.set(`fr:u:${fid}`, { id: fid, name: `F${i}`, visibility: vis, look: {} })
+    await store.set(`fr:shared:${fid}`, { avatar: SVG })
+    await store.sadd(`fr:friends:${me.id}`, fid)
+    await store.set(`fr:since:${me.id}:${fid}`, new Date().toISOString())
+  }
+  const rows = (await call(a, me, 'GET', '/v1/friends')).body.friends
+  assert.equal(rows.length, 55)
+  assert.equal(rows.filter((r) => r.avatar).length, 50) // only the first 50 carry it
+  assert.equal(rows.slice(0, 50).every((r) => r.avatar === SVG), true)
+  assert.equal(rows.slice(50).every((r) => !('avatar' in r)), true)
+})
+
+test('the shared route accepts a body up to 32 KB', async () => {
+  const a = app()
+  const u = await makeUser(a, 'U')
+  await call(a, u, 'PATCH', '/v1/me', { visibility: { avatar: 'friends' } })
+  const avatar = 'data:image/png;base64,' + 'A'.repeat(12000) // ~12 KB avatar, valid base64, under the 12,288 cap
+  const r = await call(a, u, 'PUT', '/v1/me/shared', { avatar })
+  assert.equal(r.status, 200)
+  assert.equal(r.body.avatar, avatar)
 })
 
 test('unknown route is 404 NOT_FOUND', async () => {

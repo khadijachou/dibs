@@ -10,10 +10,11 @@ import {
   verifyWalletSignature, verifyDeviceSignature, addressOf, walletKey, randomId, friendCode, sha256hex, isHex64, CODE_RE,
 } from './crypto.js'
 import {
-  cleanName, cleanVisibility, cleanLook, fullVisibility, applyShared, pruneShared, visibleProfile, sharesNothing,
+  cleanName, cleanVisibility, cleanLook, fullVisibility, applyShared, pruneShared, visibleProfile, sharesNothing, sharedHasError,
 } from './rules.js'
 
-export const VERSION = '1.4.0'
+export const VERSION = '1.4.2'
+const AVATAR_ROW_CAP = 50 // avatars travel on at most the first 50 friend rows (size guard)
 
 const MINUTE = 60_000
 const REGISTER_MESSAGE_WINDOW = 10 * MINUTE
@@ -108,11 +109,13 @@ export function makeApp(store, env = process.env) {
     allowHeaders: ['Content-Type', 'X-Dibs-Id', 'X-Dibs-Ts', 'X-Dibs-Nonce', 'X-Dibs-Sig'],
   }))
 
-  // Read the raw body once (device signatures hash the exact bytes) and cap it at 16 KB.
+  // Read the raw body once (device signatures hash the exact bytes) and cap it: 32 KB for the shared upload (an avatar
+  // plus the rest no longer fits in 16), 16 KB for every other route.
   app.use('/v1/*', async (c, next) => {
     if (c.req.method === 'GET' || c.req.method === 'HEAD') { c.set('rawBody', ''); return next() }
     const text = await c.req.text().catch(() => '')
-    if (text.length > 16 * 1024) return c.json({ error: 'TOO_LARGE' }, 413)
+    const limit = (c.req.method === 'PUT' && new URL(c.req.url).pathname === '/v1/me/shared') ? 32 * 1024 : 16 * 1024
+    if (text.length > limit) return c.json({ error: 'TOO_LARGE' }, 413)
     c.set('rawBody', text)
     await next()
   })
@@ -232,6 +235,8 @@ export function makeApp(store, env = process.env) {
     const u = c.get('user')
     const body = parseJson(c.get('rawBody'))
     if (!body) return c.json({ error: 'BAD_REQUEST' }, 400)
+    // A present-but-malformed strict field (totals, avatar, or a value) is rejected and nothing is stored.
+    if (sharedHasError(body, u.visibility)) return c.json({ error: 'BAD_REQUEST' }, 400)
     const current = await loadShared(u.id)
     const next = applyShared(current, body, u.visibility)
     await store.set(sharedKey(u.id), next)
@@ -344,11 +349,18 @@ export function makeApp(store, env = process.env) {
       if (to) sent.push({ id: inv.id, to: { id: to.id, name: to.name, seed: to.id } })
     }
     const friends = []
+    let i = 0
     for (const fid of await store.smembers(friendsKey(me))) {
       const f = await loadUser(fid)
       if (!f) { await store.srem(friendsKey(me), fid); continue }
+      const vF = fullVisibility(f.visibility)
       const row = { id: f.id, name: f.name, seed: f.id, since: await store.get(sinceKey(me, fid)), look: cleanLook(f.look), sharesNothing: sharesNothing(f.visibility) }
-      if (fullVisibility(f.visibility).level !== 'off') { const sh = await loadShared(fid); if (sh.level) { row.level = sh.level.level; row.rank = sh.level.rank } }
+      // The avatar rides on at most the first 50 rows; the level is unbounded. No totals on rows (it would read as a ranking).
+      const wantAvatar = i < AVATAR_ROW_CAP && vF.avatar !== 'off'
+      const sh = (vF.level !== 'off' || wantAvatar) ? await loadShared(fid) : null
+      if (sh?.level && vF.level !== 'off') { row.level = sh.level.level; row.rank = sh.level.rank }
+      if (sh?.avatar && wantAvatar) row.avatar = sh.avatar
+      i += 1
       friends.push(row)
     }
     return c.json({ invites, sent, friends })

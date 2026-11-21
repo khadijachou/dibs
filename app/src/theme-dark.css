@@ -1866,3 +1866,28 @@ html.is-fullscreen .bstamp-live { top: calc(58px + var(--fs-top)); }
 /* A full-width button styled like a settings row (More > Preferences "Who sees what"). */
 .set-row.row-link { width: 100%; text-align: left; cursor: pointer; }
 .set-row.row-link .chev { color: var(--muted); line-height: 1; flex: 0 0 auto; }
+
+/* ---- v1.4.2: richer profiles (totals tiles, card chips, letter avatars, NEW pill, amount consent) ---- */
+.frd-muted-ttl { color: var(--muted); font-weight: 400; }
+.frd-totals { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.frd-totals.one { grid-template-columns: 1fr; }
+.frd-total-tile { background: var(--card-2); border-radius: 14px; padding: 14px 12px; text-align: center; min-width: 0; }
+.frd-total-tile b { display: block; font-family: var(--font-display); font-size: var(--fs-heading); line-height: var(--lh-heading); font-weight: 700; color: var(--cream); overflow: hidden; text-overflow: ellipsis; }
+.frd-total-tile span { display: block; color: var(--muted); font-size: var(--fs-meta); margin-top: 4px; }
+.frd-total-tile.earned b { color: #2bc48f; }
+
+.frd-card-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.frd-card-chip { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; background: var(--card-2); border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px 4px 4px; color: var(--cream); font-size: var(--fs-meta); }
+.frd-card-chip > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.frd-card-chip .blogo.frd-chip-logo { width: 22px; height: 22px; border-radius: 999px; flex: none; }
+
+/* The Dibs letter avatar for other people who do not share their Nimiq avatar. */
+.frd-letter { background: linear-gradient(140deg, #e8482a, #ffc94d); border-radius: 12px; overflow: hidden; }
+.frd-letter-ch { font-family: var(--font-display); font-weight: 700; font-size: var(--fs-heading); line-height: 1; color: #fff; }
+.frd-letter.big .frd-letter-ch { font-size: var(--fs-display); }
+
+.frd-new-pill { margin-left: 8px; background: var(--gold); color: #fff; border-radius: 999px; padding: 1px 7px; font-size: var(--fs-label); font-weight: 700; letter-spacing: .04em; vertical-align: middle; }
+
+.frd-amt-notice { display: flex; gap: 10px; background: var(--card-2); border-radius: 14px; padding: 12px 14px; margin-bottom: 14px; }
+.frd-amt-notice p { margin: 0; color: var(--cream); font-size: var(--fs-body); line-height: var(--lh-body); }
+.frd-amt-dot { flex: 0 0 auto; width: 10px; height: 10px; border-radius: 999px; background: var(--butter); margin-top: 5px; }

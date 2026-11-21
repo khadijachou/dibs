@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { cleanName, cleanVisibility, cleanLook, fullVisibility, applyShared, pruneShared, visibleProfile, sharesNothing, ITEMS } from './rules.js'
+import { cleanName, cleanVisibility, cleanLook, fullVisibility, applyShared, pruneShared, visibleProfile, sharesNothing, sharedHasError, ITEMS } from './rules.js'
 
 test('cleanName: trims, strips control chars and angle brackets, bounds length', () => {
   assert.equal(cleanName('  Aziz  '), 'Aziz')
@@ -18,8 +18,8 @@ test('cleanVisibility: keeps only known items and values', () => {
   assert.deepEqual(cleanVisibility(null), {})
 })
 
-test('fullVisibility: every item defaults to off', () => {
-  assert.deepEqual(fullVisibility({ level: 'friends' }), { level: 'friends', badges: 'off', cards: 'off', goals: 'off', wishlist: 'off' })
+test('fullVisibility: every item defaults to off (seven items)', () => {
+  assert.deepEqual(fullVisibility({ level: 'friends' }), { avatar: 'off', level: 'friends', badges: 'off', totals: 'off', goals: 'off', cards: 'off', wishlist: 'off' })
 })
 
 test('cleanLook: validates accent and frame, drops the rest', () => {
@@ -92,7 +92,8 @@ test('visibleProfile friend: friends/everyone items shown, off items only named 
   // cards and wishlist are off: absent from the JSON, not just empty
   assert.equal('cards' in p, false)
   assert.equal('wishlist' in p, false)
-  assert.deepEqual(p.hidden.sort(), ['cards', 'wishlist'])
+  assert.deepEqual(p.hidden.sort(), ['cards', 'totals', 'wishlist']) // avatar is off too but is never a hidden line
+  assert.ok(!p.hidden.includes('avatar'))
   assert.equal('visibility' in p, false)
   // hidden data truly absent from the serialized JSON (the off card value never appears)
   const s = JSON.stringify(p)
@@ -110,4 +111,83 @@ test('visibleProfile friend: an on item with no uploaded data is simply absent',
 test('sharesNothing: true only when every item is off', () => {
   assert.equal(sharesNothing(fullVisibility({})), true)
   assert.equal(sharesNothing(fullVisibility({ level: 'friends' })), false)
+})
+
+// ---- v1.4.2: avatar, totals, card/goal values -----------------------------------------------------------------
+const SVG = 'data:image/svg+xml;base64,' + Buffer.from('<svg/>').toString('base64')
+const PNG = 'data:image/png;base64,' + Buffer.from('fakepng').toString('base64')
+
+test('applyShared: avatar stored as-is when on and valid, dropped when off', () => {
+  const vis = fullVisibility({ avatar: 'friends' })
+  assert.equal(applyShared({}, { avatar: SVG }, vis).avatar, SVG)
+  assert.equal(applyShared({}, { avatar: SVG }, fullVisibility({})).avatar, undefined) // off -> dropped
+})
+
+test('applyShared: totals keeps saved and optional earned, drops extras', () => {
+  const vis = fullVisibility({ totals: 'friends' })
+  assert.deepEqual(applyShared({}, { totals: { saved: 100, earned: 7, junk: 9 } }, vis).totals, { saved: 100, earned: 7 })
+  assert.deepEqual(applyShared({}, { totals: { saved: 100 } }, vis).totals, { saved: 100 })
+})
+
+test('applyShared: cards stored as objects, old string shape upgraded, duplicates kept, values kept', () => {
+  const vis = fullVisibility({ cards: 'friends' })
+  const out = applyShared({}, { cards: ['steam', { brandKey: 'steam', value: '20 USD' }, { brandKey: 'steam', value: '20 USD' }, { brandKey: 'netflix' }] }, vis)
+  assert.deepEqual(out.cards, [{ brandKey: 'steam' }, { brandKey: 'steam', value: '20 USD' }, { brandKey: 'steam', value: '20 USD' }, { brandKey: 'netflix' }])
+})
+
+test('applyShared: goals keep an optional value', () => {
+  const vis = fullVisibility({ goals: 'friends' })
+  assert.deepEqual(applyShared({}, { goals: [{ brandKey: 'steam', pct: 40, value: '25 EUR' }, { brandKey: 'netflix', pct: 10 }] }, vis).goals,
+    [{ brandKey: 'steam', pct: 40, value: '25 EUR' }, { brandKey: 'netflix', pct: 10 }])
+})
+
+test('sharedHasError: strict for totals, avatar and a present value; silent for the old shapes', () => {
+  const vis = fullVisibility({ totals: 'friends', avatar: 'friends', cards: 'friends', goals: 'friends', badges: 'friends' })
+  // good
+  assert.equal(sharedHasError({ totals: { saved: 1 }, avatar: SVG, cards: [{ brandKey: 'steam', value: '20 USD' }] }, vis), false)
+  // totals bad
+  assert.equal(sharedHasError({ totals: { saved: -1 } }, vis), true)
+  assert.equal(sharedHasError({ totals: { saved: 1.5 } }, vis), true)
+  assert.equal(sharedHasError({ totals: { earned: 5 } }, vis), true) // saved required
+  assert.equal(sharedHasError({ totals: 'nope' }, vis), true)
+  // avatar bad
+  assert.equal(sharedHasError({ avatar: 'data:image/gif;base64,AAAA' }, vis), true) // wrong type
+  assert.equal(sharedHasError({ avatar: 'data:image/png;base64,***' }, vis), true) // not base64
+  assert.equal(sharedHasError({ avatar: 'data:image/png;base64,' + 'A'.repeat(13000) }, vis), true) // too long
+  // value present but bad -> error; bad brandKey or pct stays silent (no error)
+  assert.equal(sharedHasError({ cards: [{ brandKey: 'steam', value: 'bad<>' }] }, vis), true)
+  assert.equal(sharedHasError({ goals: [{ brandKey: 'steam', pct: 10, value: 'x'.repeat(30) }] }, vis), true)
+  assert.equal(sharedHasError({ cards: ['steam'], badges: ['BAD KEY'], goals: [{ brandKey: 'x', pct: 999 }] }, vis), false)
+  // off item is never a strict error
+  assert.equal(sharedHasError({ totals: 'nope' }, fullVisibility({})), false)
+})
+
+test('pruneShared: removes avatar and totals when turned off', () => {
+  const current = { avatar: SVG, totals: { saved: 5 }, level: { level: 3, rank: 'saver' } }
+  const vis = fullVisibility({ avatar: 'off', totals: 'friends', level: 'friends' })
+  assert.deepEqual(pruneShared(current, vis), { totals: { saved: 5 }, level: { level: 3, rank: 'saver' } })
+})
+
+test('visibleProfile friend: avatar and totals shown when on, avatar never in hidden', () => {
+  const o = { id: 'x', name: 'A', visibility: fullVisibility({ avatar: 'friends', totals: 'friends' }), shared: { avatar: PNG, totals: { saved: 9 } } }
+  const p = visibleProfile(o, 'friend')
+  assert.equal(p.avatar, PNG)
+  assert.deepEqual(p.totals, { saved: 9 })
+  assert.ok(!p.hidden.includes('avatar'))
+  // avatar off: not shown, still not in hidden
+  const o2 = { id: 'x', name: 'A', visibility: fullVisibility({ totals: 'friends' }), shared: { totals: { saved: 9 } } }
+  const p2 = visibleProfile(o2, 'friend')
+  assert.equal('avatar' in p2, false)
+  assert.ok(!p2.hidden.includes('avatar'))
+})
+
+test('visibleProfile stranger: still only id, name, seed (no avatar, no totals)', () => {
+  const o = { id: 'x', name: 'A', visibility: fullVisibility({ avatar: 'everyone', totals: 'everyone' }), shared: { avatar: PNG, totals: { saved: 9 } } }
+  assert.deepEqual(visibleProfile(o, 'stranger'), { id: 'x', name: 'A', seed: 'x' })
+})
+
+test('sharesNothing counts the seven items', () => {
+  assert.equal(sharesNothing(fullVisibility({})), true)
+  assert.equal(sharesNothing(fullVisibility({ avatar: 'friends' })), false)
+  assert.equal(sharesNothing(fullVisibility({ totals: 'everyone' })), false)
 })

@@ -1,7 +1,8 @@
 # Dibs Friends server
 
 A small standalone service (Hono on Node 22) for the Friends feature of Dibs. It holds who is friends with
-whom, friend codes, invites, and each person's choice of what to share (level, badges, cards, goals, wishlist).
+whom, friend codes, invites, and each person's choice of what to share. Seven items, each off by default:
+**avatar, level, badges, totals (saved and earned), goals, cards, wishlist** (v1.4.2 added avatar and totals).
 It is separate from `server/` (the shop/stats server) and from `app/`; it imports nothing from them.
 
 It is built around one privacy rule: **a user is identified by their wallet, but the wallet is never stored
@@ -9,9 +10,12 @@ in a readable form.** At register time the phone proves it holds the wallet with
 derives a Nimiq address from the signing key, then keeps only `walletKey = HMAC-SHA256(address, FRIENDS_SALT)`.
 The address and the wallet public key are never stored or returned.
 
-The service never stores or returns: a wallet address in clear, a wallet public key, a gift card code, a PIN,
-an email, a NIM amount, a transaction hash, or an IP address. Log lines hold a route, a status and a duration
-only. The avatar for another user is drawn from their random user id (the `seed` field), never from their wallet.
+The service never stores or returns: a wallet address in clear, a wallet balance, a wallet public key, a gift card
+code, a PIN, an email, a transaction hash, a deposit, a date, or an IP address. NIM amounts are stored only when the
+user turns on **totals**, **goals** or **cards** (saved/earned, and the face value of goals and cards); they are
+never read from the chain here, the phone sends them. Log lines hold a route, a status and a duration only. For
+another user the avatar is the data URL that user chose to share (v1.4.2, drawn on their phone); if they do not
+share it, none is sent and the app draws a letter avatar from their name.
 
 ## Identity model
 
@@ -48,24 +52,37 @@ Codes are data for the app to translate, never user-facing sentences.
 
 - `POST /v1/register` body: `{ name, devicePub, wallet: { message, publicKey, signature } }`.
   `name` 1–24 chars after trimming (control chars, line breaks, `<` and `>` removed). `devicePub` 64 hex.
-- `PATCH /v1/me` body: `{ name?, visibility?: { level?, badges?, cards?, goals?, wishlist? }, look?: { accent?, frame? } }`.
+- `PATCH /v1/me` body: `{ name?, visibility?: { avatar?, level?, badges?, totals?, goals?, cards?, wishlist? }, look?: { accent?, frame? } }`.
   Each visibility is `off | friends | everyone` (all off by default). `accent`/`frame` match `^[a-z0-9_-]{1,16}$`.
-- `PUT /v1/me/shared` body: `{ level?: { level, rank }, badges?: [id], cards?: [brandKey], goals?: [{ brandKey, pct }], wishlist?: [brandKey] }`.
-  An item is kept only if its visibility is not `off`; anything sent for an `off` item is dropped. `level` 1–999,
-  `rank`/ids/brand keys match `^[a-z0-9_-]{1,32}$`, `pct` an integer 0–100. At most 60 badges, 60 cards, 12 goals,
-  60 wishlist entries. No amounts, no dates, no goal names.
+  Turning an item off deletes its stored data at once.
+- `PUT /v1/me/shared` body (each field stored only when its visibility is not `off`):
+  - `level?: { level, rank }` — `level` 1–999, `rank` matches `^[a-z0-9_-]{1,32}$`.
+  - `badges?`, `wishlist?` — arrays of brand/badge keys (`^[a-z0-9_-]{1,32}$`), at most 60 each.
+  - `goals?: [{ brandKey, pct, value? }]` — `pct` 0–100, at most 12; `value` optional (see below).
+  - `cards?` — at most 60 entries, each a brand-key string (old phones) **or** `{ brandKey, value? }`; stored and
+    returned as objects `{ brandKey, value? }`. Duplicates are allowed (two Steam 20 USD cards are two cards).
+  - `totals?: { saved, earned? }` — whole NIM integers, 0 to 999,999,999,999; `saved` required, `earned` optional;
+    any other key in the object is dropped.
+  - `avatar?` — a string that starts with exactly `data:image/svg+xml;base64,` or `data:image/png;base64,`, whose
+    remainder is valid base64, total length at most 12,288 characters. Stored and returned as-is.
+  - `value` (on a goal or a card) — a string of 1–24 chars matching `^[\p{L}\p{N} .,'-]+$/u` ("20 USD", "25 EUR").
+  - A field that is **present but malformed** returns `400 BAD_REQUEST` and **nothing** from that request is stored,
+    for `totals`, `avatar`, and a `value` when present. The old fields in their old shapes keep dropping bad entries
+    silently. No dates, no goal names, no wallet balance.
 - Visibility of shared items to a viewer: a **friend** sees items set to `friends` or `everyone`, plus
-  `hidden: [names of items kept off]` (names only, never the data). A **stranger** sees only `{ id, name, seed }`
-  (`everyone` is stored for leaderboards later but not served to strangers in v1.4.0). **Self** sees everything
-  plus the `visibility` map.
+  `hidden: [names of items kept off]` (names only, never the data) — **except avatar**, which is never a hidden line.
+  A **stranger** sees only `{ id, name, seed }` (no avatar, no totals). **Self** sees everything plus the
+  `visibility` map.
 - `GET /v1/friends` → `{ invites: [{ id, from: { id, name, seed } }], sent: [{ id, to: { id, name, seed } }],
-  friends: [{ id, name, seed, since, level?, rank?, look?, sharesNothing }] }`.
+  friends: [{ id, name, seed, since, level?, rank?, avatar?, look?, sharesNothing }] }`. A friend row carries the
+  `avatar` data URL when that friend shares it, for at most the first 50 friends; beyond 50 the rows carry no avatar.
+  Invites, sent rows and `GET /v1/lookup` never carry an avatar (they are strangers). No totals on any row.
 
 ### Limits
 
 Lookup 10/min and 100/day per user (to slow code guessing). 200 friends, 50 pending invites received, 50 sent
 (`429 LIMIT` beyond). 120 requests/min per user id; 10 registers/min per IP (the IP is used in memory only and
-never stored). Request body capped at 16 KB.
+never stored). Request body capped at 16 KB, except `PUT /v1/me/shared` at 32 KB (an avatar plus the rest).
 
 ## The two signatures
 
@@ -125,9 +142,12 @@ X-Dibs-Sig= 7e13e7b804b8adaf6dc02cb3b59dba573d3929c86414d59a3f56c6fe279561e85cd4
 ## What is stored / never stored
 
 Stored (keys prefixed `fr:`): the user record (`id`, `code`, `name`, device public keys, visibility map, `look`,
-and `walletKey`), the shared data for on items, friendships with a `since`, invites, the code→id and
-walletKey→id links, and short-lived nonces. **Never stored:** a wallet address in clear, a wallet public key, a
-gift card code, a PIN, an email, a NIM amount, a transaction hash, or an IP address.
+and `walletKey`), the shared data for on items (which from v1.4.2 may include an avatar image the user shared, their
+saved/earned NIM totals, and the face value of goals and cards), friendships with a `since`, invites, the code→id
+and walletKey→id links, and short-lived nonces. **Never stored, whatever the settings:** a wallet address in clear,
+a wallet balance, a wallet public key, a gift card code, a PIN, an email, a transaction hash, a deposit, or an IP
+address. NIM amounts are stored only when the user turns on totals, goals or cards; before v1.4.2 they were never
+stored at all.
 
 ## Environment variables
 

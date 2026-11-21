@@ -3,62 +3,77 @@
 import { useEffect, useState } from 'react'
 import { useApp } from '../App.jsx'
 import { Header, Sheet, BrandLogo } from '../components/ui.jsx'
-import { Avatar } from '../components/Avatar.jsx'
+import { Avatar, FriendAvatar } from '../components/Avatar.jsx'
 import { Medal } from '../components/Badge.jsx'
 import { badgeById } from '../lib/badges.js'
 import { NAME_MAX } from '../lib/name.js'
+import { fmtNim } from '../lib/format.js'
 import { useXp } from '../lib/useXp.js'
 import {
-  ThreeWay, ConfirmSheet, PrivateLine, Skeleton, FriendNotice, brandByKey,
+  ThreeWay, ConfirmSheet, AmountConsentSheet, PrivateLine, Skeleton, FriendNotice, brandByKey,
 } from '../components/FriendsParts.jsx'
 import { getState, getVis, patchMe, syncQuiet, turnOff, loadProfile, loadAsFriend, removeFriend } from '../lib/friends.js'
 
 const fmtSince = (iso, lang) => { try { return new Intl.DateTimeFormat(lang, { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(iso)) } catch { return '' } }
 
-// The cards a friend profile shows: only the items present in the response. Unknown ids or brand keys are skipped.
+// The cards a friend profile shows, in order: Saved and earned, Active goals, Badges, Cards bought, Wishlist.
+// Only the items present in the response. Unknown brand keys are skipped. Amounts are in the viewer's language, NIM only.
 function ProfileCards({ profile }) {
-  const { t } = useApp()
+  const { t, lang } = useApp()
+  const totals = profile.totals && Number.isFinite(profile.totals.saved) ? profile.totals : null
   const badges = (profile.badges || []).filter((id) => badgeById(id))
   const wishlist = (profile.wishlist || []).map(brandByKey).filter(Boolean)
-  const cards = (profile.cards || []).map(brandByKey).filter(Boolean)
+  const cards = (profile.cards || []).map((c) => ({ b: brandByKey(c?.brandKey), value: c?.value })).filter((c) => c.b)
   const goals = (profile.goals || []).filter((g) => brandByKey(g.brandKey))
+  const hasEarned = totals && Number.isFinite(totals.earned)
   return (
     <>
-      {badges.length > 0 && (
+      {totals && (
         <section className="card frd-card">
-          <div className="sec-head"><h3>{t('frd_item_badges')}</h3><span className="small">{badges.length}</span></div>
-          <div className="frd-badge-grid">{badges.map((id) => (
-            <span key={id} className="frd-badge"><Medal id={id} earned size={48} /><small>{t(`badge_${id}`)}</small></span>
-          ))}</div>
-        </section>
-      )}
-      {wishlist.length > 0 && (
-        <section className="card frd-card">
-          <div className="sec-head"><h3>{t('frd_item_wishlist')}</h3></div>
-          {wishlist.map((b) => (
-            <div className="frd-brand-row" key={b.key}><BrandLogo brand={b} className="frd-brand-logo" /><span className="frd-row-mid"><b>{b.name}</b><small>{t('ob_gift')}</small></span></div>
-          ))}
-        </section>
-      )}
-      {cards.length > 0 && (
-        <section className="card frd-card">
-          <div className="sec-head"><h3>{t('frd_item_cards')}</h3><span className="small">{t('frd_brands_only')}</span></div>
-          <div className="frd-logo-wrap">{cards.map((b) => <BrandLogo key={b.key} brand={b} className="frd-brand-logo" />)}</div>
+          <div className="sec-head"><h3>{t('frd_item_totals')} <span className="frd-muted-ttl">{t('frd_in_dibs')}</span></h3></div>
+          <div className={`frd-totals${hasEarned ? '' : ' one'}`}>
+            <div className="frd-total-tile"><b>{fmtNim(totals.saved, lang)}</b><span>{t('frd_saved_label')}</span></div>
+            {hasEarned && <div className="frd-total-tile earned"><b>+{fmtNim(totals.earned, lang)}</b><span>{t('frd_earned_label')}</span></div>}
+          </div>
         </section>
       )}
       {goals.length > 0 && (
         <section className="card frd-card">
-          <div className="sec-head"><h3>{t('frd_item_goals')}</h3></div>
+          <div className="sec-head"><h3>{t('frd_item_goals')} · {goals.length}</h3></div>
           {goals.map((g, i) => {
             const b = brandByKey(g.brandKey)
             return (
               <div className="frd-goal-row" key={g.brandKey + i}>
                 <BrandLogo brand={b} className="frd-brand-logo" />
-                <span className="frd-row-mid"><b>{b.name}</b><span className="frd-goalbar" aria-hidden="true"><i style={{ width: `${g.pct}%` }} /></span></span>
+                <span className="frd-row-mid"><b>{g.value ? `${b.name} · ${g.value}` : b.name}</b><span className="frd-goalbar" aria-hidden="true"><i style={{ width: `${g.pct}%` }} /></span></span>
                 <span className="frd-pct">{g.pct}%</span>
               </div>
             )
           })}
+        </section>
+      )}
+      {badges.length > 0 && (
+        <section className="card frd-card">
+          <div className="sec-head"><h3>{t('frd_item_badges')} · {badges.length}</h3></div>
+          <div className="frd-badge-grid">{badges.map((id) => (
+            <span key={id} className="frd-badge"><Medal id={id} earned size={48} /><small>{t(`badge_${id}`)}</small></span>
+          ))}</div>
+        </section>
+      )}
+      {cards.length > 0 && (
+        <section className="card frd-card">
+          <div className="sec-head"><h3>{t('frd_item_cards')} · {cards.length}</h3></div>
+          <div className="frd-card-chips">{cards.map((c, i) => (
+            <span className="frd-card-chip" key={c.b.key + i}><BrandLogo brand={c.b} className="frd-chip-logo" /><span>{c.value ? `${c.b.name} ${c.value}` : c.b.name}</span></span>
+          ))}</div>
+        </section>
+      )}
+      {wishlist.length > 0 && (
+        <section className="card frd-card">
+          <div className="sec-head"><h3>{t('frd_item_wishlist')} · {wishlist.length}</h3></div>
+          {wishlist.map((b) => (
+            <div className="frd-brand-row" key={b.key}><BrandLogo brand={b} className="frd-brand-logo" /><span className="frd-row-mid"><b>{b.name}</b><small>{t('ob_gift')}</small></span></div>
+          ))}
         </section>
       )}
     </>
@@ -66,6 +81,7 @@ function ProfileCards({ profile }) {
 }
 
 // Avatar, name and the level/since line, shared by a friend's profile and the "see it as a friend" preview.
+// The avatar is the one the friend chose to share (a letter avatar when they do not), never an identicon of a seed.
 function ProfileHead({ profile, since, banner }) {
   const { t, lang } = useApp()
   const parts = []
@@ -73,7 +89,7 @@ function ProfileHead({ profile, since, banner }) {
   if (since) parts.push(t('frd_since', { date: fmtSince(since, lang) }))
   return (
     <div className="frd-prof-head">
-      <Avatar seed={profile.seed || profile.id} size={64} />
+      <FriendAvatar avatar={profile.avatar} name={profile.name} size={64} />
       <h3>{profile.name}</h3>
       {parts.length > 0 && <p className="frd-sub">{parts.join(' · ')}</p>}
       {banner && <p className="frd-asfriend-banner">{banner}</p>}
@@ -137,12 +153,17 @@ function NameSheet({ initial, onClose }) {
 }
 
 const VIS_ITEMS = [
+  { key: 'avatar', label: 'frd_item_avatar', sub: 'frd_item_avatar_sub', isNew: true },
   { key: 'level', label: 'frd_item_level' },
   { key: 'badges', label: 'frd_item_badges' },
-  { key: 'cards', label: 'frd_item_cards', sub: 'frd_brands_only' },
-  { key: 'goals', label: 'frd_item_goals' },
+  { key: 'totals', label: 'frd_item_totals', sub: 'frd_item_totals_sub', isNew: true },
+  { key: 'goals', label: 'frd_item_goals', sub: 'frd_item_goals_sub' },
+  { key: 'cards', label: 'frd_item_cards', sub: 'frd_item_cards_sub' },
   { key: 'wishlist', label: 'frd_item_wishlist' },
 ]
+const AMOUNT_KEYS = new Set(['totals', 'goals', 'cards']) // the first of these shown asks once
+const amountsOk = () => { try { return localStorage.getItem('dibs.frdAmountsOk') === '1' } catch { return false } }
+const markAmountsOk = () => { try { localStorage.setItem('dibs.frdAmountsOk', '1') } catch { /* private mode */ } }
 
 function MyProfileView() {
   const { t, address, walletAddress, back } = useApp()
@@ -153,12 +174,21 @@ function MyProfileView() {
   const [editName, setEditName] = useState(false)
   const [preview, setPreview] = useState(null) // the as-friend profile, or 'loading'/'error'
   const [confirm, setConfirm] = useState(false)
+  const [amountAsk, setAmountAsk] = useState(null) // { key, val } waiting for the one-time amount confirmation
+  // The NEW pills stay visible for the whole first visit; the flag is saved when the page is left.
+  const [showNew] = useState(() => { try { return localStorage.getItem('dibs.frdNew142') !== '1' } catch { return true } })
+  useEffect(() => () => { try { localStorage.setItem('dibs.frdNew142', '1') } catch { /* private mode */ } }, [])
 
-  const changeVis = async (key, val) => {
+  const doChangeVis = async (key, val) => {
     const prev = vis
     setVis({ ...vis, [key]: val }); setSaveErr(false)
-    try { await patchMe({ visibility: { [key]: val } }); syncQuiet(address) }
+    try { await patchMe({ visibility: { [key]: val } }); syncQuiet(address, walletAddress) }
     catch { setVis(prev); setSaveErr(true) }
+  }
+  const changeVis = (key, val) => {
+    // First time an amount (totals, goals or cards) is turned on: ask once, before anything is saved or sent.
+    if (AMOUNT_KEYS.has(key) && val !== 'off' && vis[key] === 'off' && !amountsOk()) { setAmountAsk({ key, val }); return }
+    doChangeVis(key, val)
   }
 
   const openPreview = () => { setPreview('loading'); loadAsFriend().then(setPreview).catch(() => setPreview('error')) }
@@ -178,7 +208,7 @@ function MyProfileView() {
           <h3>{t('frd_who')}</h3>
           {VIS_ITEMS.map((it) => (
             <div className="frd-vis-row" key={it.key}>
-              <div className="frd-vis-head"><b>{t(it.label)}</b>{it.sub && <small>{t(it.sub)}</small>}</div>
+              <div className="frd-vis-head"><b>{t(it.label)}{it.isNew && showNew && <span className="frd-new-pill">{t('frd_new')}</span>}</b>{it.sub && <small>{t(it.sub)}</small>}</div>
               <ThreeWay value={vis[it.key]} onChange={(v) => changeVis(it.key, v)} />
             </div>
           ))}
@@ -190,6 +220,11 @@ function MyProfileView() {
         <button type="button" className="frd-muted-link" onClick={() => setConfirm(true)}>{t('frd_delete_link')}</button>
       </main>
 
+      {amountAsk && (
+        <AmountConsentSheet itemKey={amountAsk.key} value={amountAsk.val}
+          onConfirm={() => { markAmountsOk(); const { key, val } = amountAsk; setAmountAsk(null); doChangeVis(key, val) }}
+          onClose={() => setAmountAsk(null)} />
+      )}
       {editName && <NameSheet initial={st?.name} onClose={() => setEditName(false)} />}
       {preview && (
         <Sheet label={t('frd_as_friend_banner')} onClose={() => setPreview(null)}>

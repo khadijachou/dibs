@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useApp, useBlockBack } from '../App.jsx'
 import { Sheet, Notice } from './ui.jsx'
-import { Avatar } from './Avatar.jsx'
+import { Avatar, FriendAvatar } from './Avatar.jsx'
 import { getName } from '../lib/name.js'
 import { NAME_MAX } from '../lib/name.js'
 import { copyText } from '../lib/clipboard.js'
@@ -26,7 +26,7 @@ export const brandByKey = (key) => (key ? catalogBrands().find((b) => b.key === 
 
 // The item names used in the "keeps some things private" line and the switches. On Friends surfaces badges is "Badges"
 // (frd_item_badges), not the Profile tab's "Your badges" (badges_title).
-export const itemLabel = (t, key) => ({ level: t('frd_item_level'), badges: t('frd_item_badges'), cards: t('frd_item_cards'), goals: t('frd_item_goals'), wishlist: t('frd_item_wishlist') }[key] || key)
+export const itemLabel = (t, key) => ({ avatar: t('frd_item_avatar'), level: t('frd_item_level'), badges: t('frd_item_badges'), totals: t('frd_item_totals'), cards: t('frd_item_cards'), goals: t('frd_item_goals'), wishlist: t('frd_item_wishlist') }[key] || key)
 
 // Live Friends state for the screens that react to turn-on / off and visibility changes.
 export function useFriends() {
@@ -70,11 +70,12 @@ export function FriendNotice({ onRetry }) {
   return <Notice tone="info" title={t('frd_down_title')} sub={t('frd_down_sub')} actions={onRetry ? [{ label: t('retry'), onClick: onRetry }] : []} />
 }
 
-// A person row: avatar from the seed (never a wallet), a name, an optional sub-line, and a right slot.
-export function PersonRow({ seed, name, sub, right, onClick }) {
+// A person row: their shared Nimiq avatar when they share it, otherwise a Dibs letter avatar (never an identicon
+// drawn from someone else's seed), a name, an optional sub-line, and a right slot.
+export function PersonRow({ avatar, name, sub, right, onClick }) {
   const inner = (
     <>
-      <Avatar seed={seed} size={40} className="frd-av" />
+      <FriendAvatar avatar={avatar} name={name} size={40} className="frd-av" />
       <span className="frd-row-mid"><b>{name}</b>{sub && <small>{sub}</small>}</span>
       {right}
     </>
@@ -107,6 +108,24 @@ export function ConfirmSheet({ title, body, confirmLabel, cancelLabel, danger, o
       {err && <p className="frd-quiet">{t('frd_save_fail')}</p>}
       <button type="button" className={`btn${danger ? ' danger' : ''}`} disabled={busy} onClick={go}>{confirmLabel}</button>
       <button type="button" className="btn ghost" disabled={busy} onClick={onClose}>{cancelLabel}</button>
+    </Sheet>
+  )
+}
+
+// Asked once, before the first amount (totals, goals or cards) is shared. onConfirm saves and shares; onClose (the
+// "Keep it off" button, the backdrop or Escape) leaves the row off and sends nothing.
+export function AmountConsentSheet({ itemKey, value, onConfirm, onClose }) {
+  const { t } = useApp()
+  const everyone = value === 'everyone'
+  const who = t(everyone ? 'frd_amt_who_everyone' : 'frd_amt_who_friends')
+  const title = t(itemKey === 'totals' ? 'frd_amt_title_totals' : 'frd_amt_title_amounts')
+  const body = t(itemKey === 'totals' ? 'frd_amt_body_totals' : 'frd_amt_body_amounts', { who })
+  return (
+    <Sheet title={title} onClose={onClose}>
+      <div className="frd-amt-notice"><i className="frd-amt-dot" aria-hidden="true" /><p>{body}</p></div>
+      <button type="button" className="btn" onClick={onConfirm}>{t(everyone ? 'frd_amt_share_everyone' : 'frd_amt_share_friends')}</button>
+      <button type="button" className="btn ghost" onClick={onClose}>{t('frd_amt_keep')}</button>
+      <p className="frd-note">{t('frd_amt_note')}</p>
     </Sheet>
   )
 }
@@ -213,7 +232,7 @@ export function AddByCodeSheet({ prefill, onClose, onSent }) {
         onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="DIBS-" />
       {match && (
         <div className="frd-match">
-          <Avatar seed={match.seed} size={40} className="frd-av" />
+          <FriendAvatar avatar={match.avatar} name={match.name} size={40} className="frd-av" />
           <span className="frd-row-mid"><b>{match.name}</b>{match.level != null && <small>{t('frd_level_rank', { n: match.level, rank: t(`rank_${match.rank}`) })}</small>}</span>
         </div>
       )}
