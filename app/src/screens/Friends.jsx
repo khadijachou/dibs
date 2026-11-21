@@ -6,11 +6,14 @@ import { Header, Icon } from '../components/ui.jsx'
 import {
   useFriends, PersonRow, Skeleton, FriendNotice, AddByCodeSheet, shareInvite, copyCode,
 } from '../components/FriendsParts.jsx'
-import { loadFriends, acceptInvite, declineInvite, getPendingCode, setPendingCode } from '../lib/friends.js'
+import { loadFriends, acceptInvite, declineInvite, getPendingCode, setPendingCode, getVis, visSummary } from '../lib/friends.js'
 
 export default function Friends({ addCode }) {
   const { t, go, back, toast } = useApp()
   const st = useFriends()
+  // "Who sees what" sub line, re-read on every render (useFriends re-renders on a visibility change).
+  const whoN = visSummary(getVis()).n
+  const whoSub = whoN === 0 ? t('frd_vis_none') : t('frd_vis_count', { n: whoN })
   const [data, setData] = useState(null)
   const [err, setErr] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -52,6 +55,12 @@ export default function Friends({ addCode }) {
           </div>
         </section>
 
+        <button type="button" className="frd-prof-row" onClick={() => go('friendProfile', { me: true })}>
+          <span className="frd-prof-ic" aria-hidden="true"><Icon name="eye" size={20} /></span>
+          <span className="frd-row-mid"><b>{t('frd_who')}</b><small>{whoSub}</small></span>
+          <span className="chev" aria-hidden="true">›</span>
+        </button>
+
         {loading && <Skeleton rows={3} />}
         {err && <FriendNotice onRetry={() => { setLoading(true); load() }} />}
 
@@ -72,14 +81,15 @@ export default function Friends({ addCode }) {
               </section>
             )}
 
-            <section className="frd-sec">
-              <h3 className="sec-head-h">{friends.length ? t('frd_friends_n', { n: friends.length }) : t('frd_title')}</h3>
-              <PersonRow seed={st.id} name={t('frd_you')} onClick={() => go('friendProfile', { me: true })} right={<span className="chev" aria-hidden="true">›</span>} />
-              {friends.map((f) => {
-                const sub = f.level != null ? t('frd_level_rank', { n: f.level, rank: t(`rank_${f.rank}`) }) : f.sharesNothing ? t('frd_shares_nothing') : null
-                return <PersonRow key={f.id} seed={f.seed} name={f.name} sub={sub} onClick={() => go('friendProfile', { id: f.id, since: f.since })} right={<span className="chev" aria-hidden="true">›</span>} />
-              })}
-            </section>
+            {friends.length > 0 && (
+              <section className="frd-sec">
+                <h3 className="sec-head-h">{t('frd_friends_n', { n: friends.length })}</h3>
+                {friends.map((f) => {
+                  const sub = f.level != null ? t('frd_level_rank', { n: f.level, rank: t(`rank_${f.rank}`) }) : f.sharesNothing ? t('frd_shares_nothing') : null
+                  return <PersonRow key={f.id} seed={f.seed} name={f.name} sub={sub} onClick={() => go('friendProfile', { id: f.id, since: f.since })} right={<span className="chev" aria-hidden="true">›</span>} />
+                })}
+              </section>
+            )}
 
             {empty && (
               <section className="frd-empty">

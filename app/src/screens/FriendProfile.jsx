@@ -129,7 +129,7 @@ function NameSheet({ initial, onClose }) {
   }
   return (
     <Sheet title={t('name_label')} onClose={busy ? () => {} : onClose}>
-      <input value={name} maxLength={NAME_MAX} onChange={(e) => setName(e.target.value)} placeholder={t('name_label')} />
+      <input className="name-input" value={name} maxLength={NAME_MAX} onChange={(e) => setName(e.target.value)} placeholder={t('name_label')} />
       {err && <p className="frd-quiet">{t('frd_save_fail')}</p>}
       <button type="button" className="btn" disabled={busy || !clean} onClick={save}>{t('redeem_continue')}</button>
     </Sheet>
@@ -145,7 +145,7 @@ const VIS_ITEMS = [
 ]
 
 function MyProfileView() {
-  const { t, address, back } = useApp()
+  const { t, address, walletAddress, back } = useApp()
   const st = getState()
   const xp = useXp(address)
   const [vis, setVis] = useState(() => getVis())
@@ -168,7 +168,8 @@ function MyProfileView() {
       <Header onBack={back} />
       <main className="screen">
         <div className="frd-prof-head">
-          <Avatar seed={st?.id} size={64} />
+          <Avatar address={walletAddress} size={64}
+            fallback={st?.name ? <span className="prof-avatar" aria-hidden="true">{st.name.charAt(0).toUpperCase()}</span> : null} />
           <button type="button" className="frd-name-edit" onClick={() => setEditName(true)}>{st?.name}<span className="frd-pencil" aria-hidden="true">✎</span></button>
           <p className="frd-sub">{t('frd_level_rank', { n: xp.level, rank: t(`rank_${xp.rank.id}`) })} · {st?.code}</p>
         </div>

@@ -5,6 +5,7 @@ import { StatsSetting } from '../components/StatsConsent.jsx'
 import { audioContext, playTing } from '../lib/sound.js'
 import { getThemeChoice, setTheme, THEMES } from '../lib/theme.js'
 import { CURRENCIES, setCurrency } from '../lib/currency.js'
+import { enabled as friendsEnabled, isOn as friendsIsOn, getVis as friendsVis, visSummary } from '../lib/friends.js'
 
 // Sound is on unless the user turned it off: dibs.sound missing (a new user) = on, as in lib/sound.js.
 const soundOn = () => { try { return localStorage.getItem('dibs.sound') !== 'off' } catch { return true } }
@@ -13,7 +14,9 @@ const soundOn = () => { try { return localStorage.getItem('dibs.sound') !== 'off
 // the card version a brand opens on; applies at once, the header above follows), sound (with a test sound button in its row),
 // and Share usage stats. Full screen is the header button only (components/ui.jsx Header).
 export default function Preferences() {
-  const { t, back, canGoBack } = useApp()
+  const { t, go, back, canGoBack } = useApp()
+  const showWho = friendsEnabled() && friendsIsOn()
+  const whoN = visSummary(friendsVis()).n
   const [sound, setSound] = useState(soundOn)
   const [theme, setThemeState] = useState(getThemeChoice) // the stored choice: 'dark', 'light' or 'auto'
   const currency = useCurrencyChoice()
@@ -56,6 +59,12 @@ export default function Preferences() {
             </span>
           </div>
           <StatsSetting />
+          {showWho && (
+            <button type="button" className="set-row stats-row row-link" onClick={() => go('friendProfile', { me: true })}>
+              <span><b>{t('frd_who')}</b><small>{t('pref_who_sub')}</small></span>
+              <span className="chev" aria-hidden="true">›</span>
+            </button>
+          )}
         </section>
       </main>
     </>

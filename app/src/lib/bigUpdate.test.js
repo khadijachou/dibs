@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { releaseOf, cmpRelease, seenOf, bigSheetFor } from './bigUpdate.js'
+import { releaseOf, cmpRelease, seenOf, bigSheetFor, catchUp14 } from './bigUpdate.js'
 
 test('releaseOf keeps the first two numbers as a string', () => {
   assert.equal(releaseOf('1.3.0'), '1.3')
@@ -123,4 +123,43 @@ test('never throws on junk input', () => {
   assert.doesNotThrow(() => bigSheetFor({}))
   assert.doesNotThrow(() => bigSheetFor({ version: '1.3.0', stored: {}, onboarded: true, news: 'nope' }))
   assert.equal(bigSheetFor({ version: '1.3.0', stored: '1.2', onboarded: true, news: null }), null)
+})
+
+// ---- catchUp14 (v1.4.1): show the 1.4 sheet once to phones that missed it --------------------------------------
+const NEWS14 = [{ v: '1.4.1' }, { v: '1.4', sheet: ['a', 'b', 'c'] }, { v: '1.3', sheet: ['x'] }]
+const base14 = { stored: '1.4', seen14b: null, friendsEnabled: true, friendsState: null, onboarded: true, news: NEWS14 }
+
+test('catchUp14 shows the 1.4 sheet when the four conditions hold (and picks the 1.4 entry, not 1.4.1)', () => {
+  const r = catchUp14(base14)
+  assert.ok(r)
+  assert.equal(r.release, '1.4')
+  assert.equal(r.entry.v, '1.4')
+  assert.ok(Array.isArray(r.entry.sheet))
+  assert.equal(r.since, null)
+})
+
+test('catchUp14 does not show when Friends was turned on (friendsState not null)', () => {
+  assert.equal(catchUp14({ ...base14, friendsState: { id: 'u1' } }), null)
+})
+
+test('catchUp14 does not show when seen14b is set', () => {
+  assert.equal(catchUp14({ ...base14, seen14b: '1' }), null)
+})
+
+test('catchUp14 does not show when stored is not 1.4', () => {
+  assert.equal(catchUp14({ ...base14, stored: '1.3' }), null)
+  assert.equal(catchUp14({ ...base14, stored: null }), null)
+})
+
+test('catchUp14 does not show when friendsEnabled is false', () => {
+  assert.equal(catchUp14({ ...base14, friendsEnabled: false }), null)
+})
+
+test('catchUp14 does not show when not onboarded', () => {
+  assert.equal(catchUp14({ ...base14, onboarded: false }), null)
+})
+
+test('catchUp14 never throws on junk input', () => {
+  assert.doesNotThrow(() => catchUp14())
+  assert.equal(catchUp14({ stored: '1.4', friendsEnabled: true, onboarded: true, news: 'nope' }), null)
 })

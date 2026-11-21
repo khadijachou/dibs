@@ -26,6 +26,15 @@ export default function Wishlist() {
     if (friendsIsOn() && (v === 'friends' || v === 'everyone')) syncQuiet(address)
   }
 
+  const footer = (
+    <p className="frd-private frd-wl-foot">
+      {t(shared ? 'frd_wl_foot_shared' : 'frd_wl_foot_only')}
+      {friendsEnabled() && friendsIsOn() && (
+        <>{' '}<button type="button" className="txt-link" onClick={() => go('friendProfile', { me: true })}>{t('frd_wl_change')}</button></>
+      )}
+    </p>
+  )
+
   return (
     <>
       <Header onBack={back} />
@@ -33,12 +42,15 @@ export default function Wishlist() {
         <h2 className="title">{t('frd_item_wishlist')}</h2>
 
         {brands.length === 0 ? (
-          <section className="frd-empty">
-            <span className="frd-empty-ic" aria-hidden="true"><Icon name="heart" size={28} /></span>
-            <b>{t('frd_wl_empty_title')}</b>
-            <p className="small">{t('frd_wl_empty_sub')}</p>
-            <button type="button" className="btn" onClick={() => go('catalog')}>{t('frd_wl_browse')}</button>
-          </section>
+          <>
+            <section className="frd-empty">
+              <span className="frd-empty-ic" aria-hidden="true"><Icon name="heart" size={28} /></span>
+              <b>{t('frd_wl_empty_title')}</b>
+              <p className="small">{t('frd_wl_empty_sub')}</p>
+              <button type="button" className="btn" onClick={() => go('catalog')}>{t('frd_wl_browse')}</button>
+            </section>
+            {footer}
+          </>
         ) : (
           <>
             <section className="frd-sec">
@@ -55,12 +67,7 @@ export default function Wishlist() {
                 </div>
               ))}
             </section>
-            <p className="frd-private frd-wl-foot">
-              {t(shared ? 'frd_wl_foot_shared' : 'frd_wl_foot_only')}
-              {friendsEnabled() && friendsIsOn() && (
-                <>{' '}<button type="button" className="txt-link" onClick={() => go('friendProfile', { me: true })}>{t('frd_wl_change')}</button></>
-              )}
-            </p>
+            {footer}
           </>
         )}
       </main>

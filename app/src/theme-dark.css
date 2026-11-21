@@ -1862,3 +1862,7 @@ html.is-fullscreen .bstamp-live { top: calc(58px + var(--fs-top)); }
 .frd-wl-remove .gtile-heart-ic { background: transparent; color: var(--gold); width: 32px; height: 32px; }
 .frd-wl-remove:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 999px; }
 .frd-wl-foot { margin-top: 16px; }
+
+/* A full-width button styled like a settings row (More > Preferences "Who sees what"). */
+.set-row.row-link { width: 100%; text-align: left; cursor: pointer; }
+.set-row.row-link .chev { color: var(--muted); line-height: 1; flex: 0 0 auto; }

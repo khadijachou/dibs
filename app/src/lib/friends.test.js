@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { ed25519 } from '@noble/curves/ed25519.js'
 import { sha256 } from '@noble/hashes/sha2.js'
 import { config } from './config.js'
-import { registerMessage, canonicalString, request, requestSeq, SEQ_TIMEOUTS, me, getState, isOn, getVis, setPendingCode, getPendingCode } from './friends.js'
+import { registerMessage, canonicalString, request, requestSeq, SEQ_TIMEOUTS, me, getState, isOn, getVis, setPendingCode, getPendingCode, inviteText, visSummary } from './friends.js'
 
 const hex = (u8) => Buffer.from(u8).toString('hex')
 const utf8 = (s) => new TextEncoder().encode(String(s))
@@ -146,4 +146,21 @@ test('the abort timer fires at the given timeout (fake timers)', async (t) => {
   for (let i = 0; i < 20; i++) await Promise.resolve() // let request() load @noble, sign, and arm the abort timer
   t.mock.timers.tick(6000)
   await assertion
+})
+
+// ---- pure helpers: inviteText and visSummary (v1.4.1) --------------------------------------------------------
+test('inviteText: carries the code and no link', () => {
+  const t = (key, vars) => (key === 'frd_share_text' ? `Add me on Dibs. In Dibs go to Profile > Friends > Add by code and type ${vars.code}.` : key)
+  const text = inviteText(t, 'DIBS-WXYZ')
+  assert.ok(text.includes('DIBS-WXYZ'))
+  assert.ok(!text.includes('http'))
+  assert.ok(!text.includes('?friend='))
+})
+
+test('visSummary: counts the five items not off, ignores unknown keys', () => {
+  assert.equal(visSummary({ level: 'off', badges: 'off', cards: 'off', goals: 'off', wishlist: 'off' }).n, 0)
+  assert.equal(visSummary({ level: 'friends', badges: 'off', cards: 'off', goals: 'everyone', wishlist: 'off' }).n, 2)
+  assert.equal(visSummary({ level: 'everyone', nope: 'everyone', junk: 'friends' }).n, 1)
+  assert.equal(visSummary(null).n, 0)
+  assert.equal(visSummary({}).n, 0)
 })

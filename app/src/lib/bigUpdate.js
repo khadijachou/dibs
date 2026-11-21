@@ -38,6 +38,25 @@ export function seenOf(stored, onboarded) {
 //             No such entry -> null (and App.jsx saves nothing, so it is tried again next launch, once the content ships).
 //   since   = when one or more releases sit strictly between the seen release and this one in NEWS, the OLDEST of them
 //             as a string; otherwise null. "And more since {since}" on the sheet.
+// v1.4.1 one-time catch-up for the 1.4 sheet. During ~1 h after the 1.4 release VITE_FRIENDS_URL was missing, so
+// bigSheetFor skipped the sheet for those phones and (in v1.4.0) still saved dibs.bigSeen = '1.4', so it could never
+// return. This shows it once, now, when all four hold: the phone last saw '1.4' (stored), Friends is configured,
+// Friends was never turned on (friendsState is null), and this catch-up has not run (seen14b not set). Pure; returns
+// the same { release, entry, since } shape as bigSheetFor, or null.
+export function catchUp14({ stored, seen14b, friendsEnabled, friendsState, onboarded, news } = {}) {
+  try {
+    if (!onboarded || !friendsEnabled) return null
+    if (seen14b) return null
+    if (friendsState != null) return null
+    if (releaseOf(stored) !== '1.4') return null
+    const entry = (Array.isArray(news) ? news : []).find((e) => e?.v === '1.4')
+    if (!entry) return null
+    return { release: '1.4', entry, since: null }
+  } catch {
+    return null
+  }
+}
+
 export function bigSheetFor({ version, stored, onboarded, news } = {}) {
   try {
     if (!onboarded) return null

@@ -39,7 +39,7 @@ import Friends from './screens/Friends.jsx'
 import FriendProfile from './screens/FriendProfile.jsx'
 import Wishlist from './screens/Wishlist.jsx'
 import { ProfileBackSheet } from './components/FriendsParts.jsx'
-import { isOn as friendsIsOn, enabled as friendsEnabled, syncQuiet, setPendingCode } from './lib/friends.js'
+import { isOn as friendsIsOn, enabled as friendsEnabled, getState as friendsGetState, syncQuiet, setPendingCode } from './lib/friends.js'
 import { Icon, TabBar, TAB_ROUTES } from './components/ui.jsx'
 import { preloadAvatar } from './components/Avatar.jsx'
 import WelcomeBack from './components/WelcomeBack.jsx'
@@ -51,7 +51,7 @@ import { addSharedId, getDailyDays, getQuestsDone, levelOf, rankOf, recordVisit,
 import { checkDaily, checkQuest, weeklyXp } from './lib/quests.js'
 import { shareBadge as sharePoster, shareMonth as sharePosterMonth } from './lib/poster.js'
 import { getName } from './lib/name.js'
-import { bigSheetFor, releaseOf } from './lib/bigUpdate.js'
+import { bigSheetFor, catchUp14, releaseOf } from './lib/bigUpdate.js'
 import { NEWS } from './lib/news.js'
 import { version as appVersion } from '../package.json'
 import WhatsNewSheet from './components/WhatsNewSheet.jsx'
@@ -158,6 +158,7 @@ export default function App() {
   const finishOnboarding = useCallback(() => {
     try { localStorage.setItem('dibs.onboarded', '1') } catch { /* private mode */ }
     try { localStorage.setItem('dibs.bigSeen', releaseOf(appVersion)) } catch { /* private mode */ } // a fresh arrival has seen this release
+    try { localStorage.setItem('dibs.bigSeen14b', '1') } catch { /* private mode */ } // a new user does not need the 1.4 catch-up
     markNewsSeen() // someone who just arrived has nothing unread: no dot on More
     let seen = false
     try { seen = localStorage.getItem('dibs.introSeen') === '1' } catch { /* private mode */ }
@@ -403,7 +404,13 @@ export default function App() {
   const [bigSheet, setBigSheet] = useState(null)
   const bigTried = useRef(false)
   const endBig = useCallback((after) => {
-    setBigSheet((s) => { if (s) { try { localStorage.setItem('dibs.bigSeen', s.release) } catch { /* private mode */ } } return null })
+    setBigSheet((s) => {
+      if (s) {
+        try { localStorage.setItem('dibs.bigSeen', s.release) } catch { /* private mode */ }
+        try { localStorage.setItem('dibs.bigSeen14b', '1') } catch { /* private mode */ } // the 1.4 catch-up is done
+      }
+      return null
+    })
     if (after) after()
   }, [])
   useEffect(() => {
@@ -416,9 +423,15 @@ export default function App() {
     try { stored = localStorage.getItem('dibs.bigSeen') } catch { /* private mode */ }
     const info = bigSheetFor({ version: appVersion, stored, onboarded, news: NEWS })
     // 1.4's sheet describes Friends; with no Friends server configured its first rows point at something the user
-    // cannot find, so skip the sheet for 1.4 (but still save dibs.bigSeen, so it never tries again).
-    if (info && info.release === '1.4' && !friendsEnabled()) { try { localStorage.setItem('dibs.bigSeen', info.release) } catch { /* private mode */ } return }
-    if (info) setBigSheet(info)
+    // cannot find, so skip the sheet for 1.4 and save nothing, so it is tried again at the next launch.
+    if (info && info.release === '1.4' && !friendsEnabled()) return
+    if (info) { setBigSheet(info); return }
+    // One-time 1.4 catch-up: show the 1.4 sheet to a phone that saved dibs.bigSeen='1.4' during the hour the Friends
+    // URL was missing, now that Friends is configured and was never turned on (lib/bigUpdate.js catchUp14).
+    let seen14b = null
+    try { seen14b = localStorage.getItem('dibs.bigSeen14b') } catch { /* private mode */ }
+    const catchUp = catchUp14({ stored, seen14b, friendsEnabled: friendsEnabled(), friendsState: friendsGetState(), onboarded, news: NEWS })
+    if (catchUp) setBigSheet(catchUp)
   }, [ready, splashGone, isLab, intro, howTo, welcome, route.name, shareAsk, stamps, onboarded])
 
   // Android back button. The page keeps at most two browser entries: a base entry, plus a guard entry on top of it

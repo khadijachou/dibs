@@ -18,7 +18,7 @@ import { STREAK_BARS, claimable, streakView } from './profileView.js'
 import { RANKS, XP } from '../lib/xp.js'
 import { useXp } from '../lib/useXp.js'
 import { levelToPlay, markBadges, newBadges, setLevelSeen } from '../lib/seen.js'
-import { enabled as friendsEnabled, getFriends, getVis as friendsVis } from '../lib/friends.js'
+import { enabled as friendsEnabled, getFriends, getVis as friendsVis, visSummary } from '../lib/friends.js'
 import { useFriends, useWishlist, TurnOnSheet } from '../components/FriendsParts.jsx'
 
 const TOTAL = BADGES.length
@@ -108,6 +108,9 @@ export default function Profile({ badge: askedBadge, badgeAt, section, sectionAt
   const wlSub = wished.length === 0
     ? t('frd_wl_empty')
     : `${t(wished.length === 1 ? 'frd_wl_cards_one' : 'frd_wl_cards', { n: wished.length })} · ${t(wlShared ? 'frd_wl_friends' : 'frd_wl_onlyyou')}`
+  // "Who sees what" sub line (only shown when Friends is on).
+  const whoN = visSummary(friendsVis()).n
+  const whoSub = whoN === 0 ? t('frd_vis_none') : t('frd_vis_count', { n: whoN })
 
   return (
     <>
@@ -138,6 +141,13 @@ export default function Profile({ badge: askedBadge, badgeAt, section, sectionAt
             <span className="frd-row-mid"><b>{t('frd_item_wishlist')}</b><small>{wlSub}</small></span>
             <span className="chev" aria-hidden="true">›</span>
           </button>
+          {friendsOn && (
+            <button type="button" className="frd-prof-row" onClick={() => go('friendProfile', { me: true })}>
+              <span className="frd-prof-ic" aria-hidden="true"><Icon name="eye" size={20} /></span>
+              <span className="frd-row-mid"><b>{t('frd_who')}</b><small>{whoSub}</small></span>
+              <span className="chev" aria-hidden="true">›</span>
+            </button>
+          )}
         </section>
 
         {toClaim.map((id) => (

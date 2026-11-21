@@ -10,7 +10,7 @@ import { copyText } from '../lib/clipboard.js'
 import { BRANDS, catalogBrands } from '../lib/brands.js'
 import { getWishlist, subscribe as subscribeWishlist } from '../lib/wishlist.js'
 import {
-  turnOn, getState, getBackSeen, markBackSeen, getFriends, sendInvite, lookup, syncQuiet,
+  turnOn, getState, getBackSeen, markBackSeen, getFriends, sendInvite, lookup, syncQuiet, inviteText,
 } from '../lib/friends.js'
 
 // A friends error code -> a user-facing message. Anything else is the generic save failure.
@@ -145,7 +145,7 @@ export function TurnOnSheet({ onClose }) {
     <Sheet title={t('frd_turn_on')} onClose={busy ? () => {} : onClose}>
       <p className="frd-sheet-lead">{t('frd_turn_lead')}</p>
       <label className="small" htmlFor="frd-name">{t('name_label')}</label>
-      <input id="frd-name" value={name} maxLength={NAME_MAX} onChange={(e) => setName(e.target.value)} placeholder={t('name_label')} />
+      <input id="frd-name" className="name-input" value={name} maxLength={NAME_MAX} onChange={(e) => setName(e.target.value)} placeholder={t('name_label')} />
       <div className="frd-shared-row">
         <span><b>{t('frd_shared')}</b><small>{t('frd_shared_sub')}</small></span>
         <span className="frd-pill">{t('frd_nothing')}</span>
@@ -161,7 +161,7 @@ export function TurnOnSheet({ onClose }) {
 
 // Profile is back (register answered restored: true). Shown once; App.jsx renders it on the dibs:friends:back event.
 export function ProfileBackSheet({ onClose }) {
-  const { t } = useApp()
+  const { t, walletAddress } = useApp()
   const st = getState()
   const [n, setN] = useState(null)
   useEffect(() => { getFriends().then((f) => setN(f.friends?.length ?? 0)).catch(() => setN(null)) }, [])
@@ -169,7 +169,8 @@ export function ProfileBackSheet({ onClose }) {
   return (
     <Sheet label={t('frd_back_title')} onClose={onClose}>
       <div className="frd-back">
-        <Avatar seed={st?.id} size={72} />
+        <Avatar address={walletAddress} size={72}
+          fallback={st?.name ? <span className="prof-avatar" aria-hidden="true">{st.name.charAt(0).toUpperCase()}</span> : null} />
         <h3>{t('frd_back_title')}</h3>
         <p className="frd-back-line">{line}</p>
         <p className="frd-note">{t('frd_back_note')}</p>
@@ -223,11 +224,11 @@ export function AddByCodeSheet({ prefill, onClose, onSent }) {
   )
 }
 
-// Share the invite: the share sheet with the copy fallback the app already uses.
+// Share the invite: the code and where to type it, no link (a link opened the demo outside Nimiq Pay). The copy
+// fallback uses the code-copied wording since there is no link any more.
 export async function shareInvite(t, code, toast) {
-  const url = `${location.origin}${location.pathname}?friend=${encodeURIComponent(code.replace(/^DIBS-/, ''))}`
-  const text = `${t('frd_share_text', { code })} ${url}`
+  const text = inviteText(t, code)
   try { if (navigator.share) { await navigator.share({ text }); return } } catch { /* cancelled or unavailable */ }
-  if (await copyText(text)) toast(t('share_copied'))
+  if (await copyText(text)) toast(t('done_copied'))
 }
 export async function copyCode(t, code, toast) { if (await copyText(code)) toast(t('done_copied')) }

@@ -44,6 +44,14 @@ export const getBackSeen = () => readStr(K.backSeen) === '1'
 export const markBackSeen = () => writeStr(K.backSeen, '1')
 export const getPendingCode = () => readStr(K.pending) || null
 export const setPendingCode = (code) => { if (code) writeStr(K.pending, String(code)); else del(K.pending) }
+
+// The invite message (no link, since a link opened the demo outside Nimiq Pay): the code and where to type it.
+// Pure, so shareInvite and its test share it. Keeps the {code} placeholder in frd_share_text.
+export const inviteText = (t, code) => t('frd_share_text', { code })
+
+// How many of the five shared items are on (not 'off'). Unknown keys are ignored. Used by the "Who sees what" rows.
+const VIS_KEYS = ['level', 'badges', 'cards', 'goals', 'wishlist']
+export const visSummary = (vis) => ({ n: VIS_KEYS.filter((k) => vis && vis[k] && vis[k] !== 'off').length })
 const clearAll = () => { for (const k of Object.values(K)) del(k) }
 
 // ---- crypto (loaded on demand) ------------------------------------------------------------------------------
