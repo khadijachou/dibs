@@ -9,6 +9,7 @@ import { stakeSummary } from '../lib/earned.js'
 import { nextRewardAt } from '../lib/nextReward.js'
 import { stageOf } from '../lib/unlockStage.js'
 import { poolName } from '../lib/pace.js'
+import { checkedPool, currentPool, DEFAULT_POOL, rememberPool, sameAddress } from '../lib/pools.js'
 import { fmtDateYear, fmtEarned, fmtNim } from '../lib/format.js'
 import { fmtFiatValue } from '../lib/fiatValue.js'
 import { goalBrand } from './Home.jsx'
@@ -29,6 +30,7 @@ export default function Stake() {
     setState({ status: 'loading' })
     let st
     try { st = await readStaker(address) } catch { setState({ status: 'down' }); return }
+    if (st?.delegation) rememberPool(st.delegation) // name the user's own pool everywhere (v1.5)
     // The block height, read once per load for the next-reward time. Unreadable: block stays null and Pool keeps
     // "Pays every 12 hours".
     let block = null
@@ -112,6 +114,15 @@ function StakeHero({ st, sum, block }) {
   // Under Pool: the time of the next reward (the next epoch boundary, lib/nextReward.js), in the phone's local time
   // through the app's clock formatter. Block height unknown: keep "Pays every 12 hours".
   const nextReward = nextRewardAt(block, Date.now())
+  // The Pool line names the user's own pool (lib/pools.js currentPool). For Garuda Pool it keeps today's next-reward
+  // line (the 49 minute payout delay was measured on Garuda only); for another checked pool it says "Pays every {n}
+  // hours" with no time; for an unknown pool nothing shows under the name.
+  const userPool = currentPool()
+  const userPoolChecked = checkedPool(userPool)
+  const poolSub = userPoolChecked && sameAddress(userPool, DEFAULT_POOL)
+    ? (nextReward != null ? t('stake_next_reward', { time: timeText(nextReward, lang) }) : t('stake_pool_sub'))
+    : userPoolChecked ? t('pool_pays_hours', { n: userPoolChecked.hours })
+    : null
   const { total, earned, state: earnState, since, gap, gapExact } = sum
   // gap (lib/stakeGap.js): NIM the goals count that is not staked. When there is one, Total saved shows it too
   // (total + the exact gap, which is what the goals count), the split gets a butter "wallet" part, and a band names it.
@@ -194,7 +205,7 @@ function StakeHero({ st, sum, block }) {
         <div>
           <span>{t('stake_pool')}</span>
           <b><i className="dot" aria-hidden="true" />{poolName()}</b>
-          <span>{nextReward != null ? t('stake_next_reward', { time: timeText(nextReward, lang) }) : t('stake_pool_sub')}</span>
+          {poolSub && <span>{poolSub}</span>}
         </div>
       </div>
     </section>

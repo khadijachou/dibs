@@ -10,6 +10,8 @@ export const config = {
   fallbackNimUsd: Number(env.VITE_FALLBACK_NIM_USD || 0.0003),
   // Friends server base URL (part 2). Empty = Friends is off everywhere: no row, no request, no @noble code loaded.
   friendsUrl: (env.VITE_FRIENDS_URL || '').replace(/\/$/, ''),
+  // Nimiq validators service (v1.5): the live pool list, read once per session on a first deposit (lib/poolsApi.js).
+  validatorsUrl: (env.VITE_VALIDATORS_URL || 'https://validators-api-main.je-cf9.workers.dev').replace(/\/$/, ''),
 }
 
 export const LUNA_PER_NIM = 100_000

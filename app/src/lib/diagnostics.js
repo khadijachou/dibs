@@ -4,6 +4,8 @@
 // swapId, code, pin, link), no tx hashes, no stats id, no name, no user text, and never a full address.
 // The output is always English, for support. buildDiagnostics(state) returns the whole text.
 
+import { checkedPool } from './pools.js'
+
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 const pad = (n) => String(n).padStart(2, '0')
 const MINUS = '−' // a minus sign, not a hyphen and not an em dash
@@ -115,9 +117,10 @@ export function buildDiagnostics(state) {
       out.push('  no staker')
     } else {
       const addrs = Array.isArray(st.stakers) && st.stakers.length ? st.stakers.map(short).join(', ') : short(st.address)
+      // The pool is named by the same rule as poolName (lib/pools.js checkedPool): the baked name for a checked
+      // address, a shortened address for any other, "validator unknown" when the delegation is missing.
       const validator = st.delegation == null ? 'validator unknown'
-        : sameAddr(st.delegation, s.validatorAddress) ? 'Garuda Pool'
-          : short(st.delegation)
+        : checkedPool(st.delegation)?.name || short(st.delegation)
       out.push(`  ${addrs}  active ${fmtNum(active)} · inactive ${fmtNum(inactive)} · retired ${fmtNum(retired)} · ${validator}`)
     }
     out.push(`  Total in goals that should be staked: ${fmtNum(total)}`)

@@ -12,6 +12,9 @@ import { planOf, poolName, shortAddress } from '../lib/pace.js'
 import { goalBrand, PaceLine } from './Home.jsx'
 import { MIN_NEW_STAKER_NIM } from '../lib/config.js'
 import { readStaker, stakeNim } from '../lib/nimiq.js'
+import { PoolRow } from '../components/PoolPicker.jsx'
+import { loadPools } from '../lib/poolsApi.js'
+import { DEFAULT_POOL, getChoice, rememberPool, sameAddress, setChoice } from '../lib/pools.js'
 import { confirmPending, expired, pending, stakedLuna, startPending, waitForDeposit } from '../lib/deposit.js'
 import { isRestake } from '../lib/restake.js'
 import { copyText } from '../lib/clipboard.js'
@@ -54,6 +57,9 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
   const { t, lang, address, balance, refreshBalance, back, canGoBack, go, reset, toast } = useApp()
   const [goal, setGoal] = useState(() => getGoal(address, goalId))
   const [hasStaker, setHasStaker] = useState(() => stakerFlag.get(address))
+  const [stakerKnown, setStakerKnown] = useState(false) // true once the readStaker effect has answered (staker or none); stays false while pending or on a failed read
+  const [pools, setPools] = useState(null) // the pickable pool list on a first deposit, null while loading or on failure
+  const [poolChoice, setPoolChoice] = useState(() => getChoice()) // the pool to stake with (a checked address or the default)
   const [busy, setBusy] = useState(false)
   const [problem, setProblem] = useState(null) // ErrorKey shown as a Notice
   const [slowWallet, setSlowWallet] = useState(false)
@@ -96,9 +102,12 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
 
   useEffect(() => {
     // The chain decides whether the next deposit opens a staker (E2 needs 100 NIM) or adds to it.
+    setStakerKnown(false) // re-gate the Pool row and the pool list until this read answers for the current address
     readStaker(address).then((st) => {
+      setStakerKnown(true) // the read answered (staker or none); a failed read leaves this false (catch below)
       if (!st) { setHasStaker(false); return }
       setHasStaker(true); stakerFlag.set(address)
+      if (st.delegation) rememberPool(st.delegation) // name the user's own pool everywhere (v1.5)
       setStakerAddress(st.address || null)
       const sum = stakeSummary(st, address)
       setEarned(sum.earned == null ? 0 : sum.byGoal[goalId] ?? 0) // this goal's share of Savings' figure; hidden when unknown
@@ -106,6 +115,16 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
       setPartly(sum.gap != null) // a gap: the status line says "Partly in your wallet" and opens Savings
     }).catch(() => { /* chain unreadable: keep the last known flag */ })
   }, [address, goalId])
+
+  // The live pool list, loaded once per session and ONLY on the Add screen of a first deposit, and only once the chain
+  // read has confirmed there is no staker (stakerKnown). This keeps an existing staker with no local flag from ever
+  // requesting it. A failure leaves it null: the Pool row then shows the default with no "Change".
+  useEffect(() => {
+    if (!stakerKnown || hasStaker || mode !== 'add') return undefined
+    let alive = true
+    loadPools().then((p) => { if (alive) setPools(p) }).catch(() => { /* service down: default row, no Change */ })
+    return () => { alive = false }
+  }, [stakerKnown, hasStaker, mode])
 
   // Watches the pending deposit until the chain shows it or its deadline passes.
   // Runs on any goal screen, so reopening Dibs mid-deposit resumes here.
@@ -253,7 +272,10 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
     const p = startPending({ address, goalId: goal.id, nim, beforeLuna: stakedLuna(st), newStaker: !exists })
     setPend(p)
     try {
-      const tx = await stakeNim({ nim, hasStaker: exists })
+      // First deposit only: stake with the chosen pool, re-validated here against the five checked addresses (the stored
+      // choice is untrusted). When it is the default, pass nothing, so the call is exactly today's and uses the default.
+      const validator = getChoice()
+      const tx = await stakeNim({ nim, hasStaker: exists, ...(exists || sameAddress(validator, DEFAULT_POOL) ? {} : { validator }) })
       // Nimiq Pay sent it: wait for the chain, up to 10 minutes.
       pending.patch(address, { tx: String(tx?.hash || tx || ''), deadline: p.at + 10 * 60_000 })
     } catch (e) {
@@ -400,6 +422,10 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
               </>
             )}
           </section>
+          {stakerKnown && !hasStaker && !cantOpen && (
+            <PoolRow pools={pools} value={poolChoice} disabled={busy || !!pend}
+              onChange={(a) => { if (setChoice(a)) setPoolChoice(getChoice()) }} />
+          )}
           <p className="add-note"><span className="add-note-ic"><Icon name="info" size={16} /></span>{t('add_stake_note', { pool })}</p>
           {problemNotices}
 

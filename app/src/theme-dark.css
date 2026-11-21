@@ -1749,6 +1749,25 @@ html.is-fullscreen .bstamp-live { top: calc(58px + var(--fs-top)); }
 .add-note { display: flex; align-items: flex-start; gap: 8px; margin: 0; color: var(--muted); font-size: var(--fs-meta); line-height: var(--lh-meta); }
 .add-note-ic { flex: none; display: grid; color: var(--teal); padding-top: 1px; }
 
+/* v1.5 Pool picker (components/PoolPicker.jsx): the "Pool" row on the Add screen of a first deposit, and the
+   "Choose a pool" sheet. Colours use theme variables, so light mode follows with no override. The logo plate is white
+   in both themes. Layout lives here beside .add-note (styles.css being the usual home) to keep the feature together. */
+.pool-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; }
+.pool-logo { flex: none; width: 34px; height: 34px; border-radius: 9px; background: #fff; object-fit: contain; padding: 3px; }
+.pool-fallback { display: grid; place-items: center; padding: 0; background: var(--card-2); color: var(--cream); font-family: var(--font-display); font-weight: 700; font-size: var(--fs-strong); line-height: 1; }
+.pool-tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.pool-over { color: var(--muted); font-size: var(--fs-label); line-height: var(--lh-label); text-transform: uppercase; letter-spacing: .04em; }
+.pool-name { color: var(--cream); font-size: var(--fs-strong); line-height: var(--lh-strong); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pool-sub { color: var(--muted); font-size: var(--fs-meta); line-height: var(--lh-meta); }
+.pool-change { flex: none; border: 0; background: none; color: var(--teal); font-family: var(--font-display); font-weight: 600; font-size: var(--fs-strong); cursor: pointer; padding: 4px 2px; }
+.pool-lead { margin: 0; color: var(--muted); font-size: var(--fs-body); line-height: var(--lh-body); }
+.pool-opts { display: flex; flex-direction: column; gap: 8px; }
+.pool-opt { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; padding: 10px 12px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; color: inherit; cursor: pointer; }
+.pool-opt.on { border-color: var(--gold); }
+.pool-tick { flex: none; width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--line); display: grid; place-items: center; color: #fff; font-size: var(--fs-meta); line-height: 1; }
+.pool-tick.on { background: var(--gold); border-color: var(--gold); }
+.pool-note { margin: 0; color: var(--muted); font-size: var(--fs-meta); line-height: var(--lh-meta); text-align: center; }
+
 /* v1.3.2 Unlock (screens/Unlock.jsx): the goal as a row with its brand logo, and a "What changes" card above the
    steps, three lines with small butter / mint / coral icons. */
 .unl-head { display: flex; align-items: center; gap: 12px; }
