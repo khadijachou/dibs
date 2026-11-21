@@ -64,6 +64,7 @@ const EXCEPTIONS = {
   '.tl-ic': GLYPH, '.tl-badge': GLYPH, '.sheet-row > span.chev:not(.si)': GLYPH, '.name-val .chev': GLYPH, '.name-clear': GLYPH,
   '.prof-avatar': GLYPH, '.wk-next .chev': GLYPH, '.lvl-top .chev': GLYPH, '.lvl-how .chev': GLYPH, '.about-card .price-chip > i': GLYPH,
   '.bs-vals .price-chip > i': GLYPH, '.bs-est > i': GLYPH, '.hiw-ring b': GLYPH, '.lvl-hex b': GLYPH, '.bstamp-lvl b': GLYPH, '.stamp': GLYPH,
+  '.newgoal-disc': GLYPH,
   '.blogo.letter': LOGO, '.ut-logo .blogo.letter': LOGO, '.plan-head .blogo.letter, .codecard .blogo.letter': LOGO, '.gift-face .gift-logo.letter': LOGO,
   '.gtile .blogo.letter': LOGO, '.gtile.big .blogo.letter': LOGO, '.bs-card .blogo.letter': LOGO,
   '.hero .n': 'the Home card saved amount: 24 px (v1.1.10 fix, heading too weak)',

@@ -88,6 +88,10 @@
 :where(:root[data-theme="light"]) .btn.ink { background: #23212b; color: #ffffff; box-shadow: 0 10px 24px rgba(35, 33, 43, .18); }
 :where(:root[data-theme="light"]) .btn.ghost { color: var(--cream); border-color: #d9d0c3; }
 :where(:root[data-theme="light"]) .btn.quiet { color: var(--cream); border-color: #d9d0c3; box-shadow: none; }
+/* v1.5.1: New goal panel on light (and Auto, which resolves to data-theme="light") — light coral wash, dark text, same disc. */
+:where(:root[data-theme="light"]) .btn.newgoal { background: linear-gradient(135deg, #FDE3DC, #FFF6EC 60%, #FFF1CF); border-color: rgba(232, 72, 42, .55); box-shadow: none; }
+:where(:root[data-theme="light"]) .newgoal-title { color: #23212b; }
+:where(:root[data-theme="light"]) .btn.newgoal small { color: #6B6575; }
 /* Home goal card date-line label: the yellow text shade (mint and red already come from --teal and --red). */
 :where(:root[data-theme="light"]) .t2-label.behind { color: #906607; }
 :where(:root[data-theme="light"]) .btn.mint { box-shadow: 0 10px 24px rgba(21, 137, 106, .22); }

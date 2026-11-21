@@ -707,6 +707,18 @@ button.tl-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: -2
 /* New goal on Home with goals: a quiet outline button in the page, under the photos. */
 .btn.quiet { background: transparent; border: 1px solid #3a3744; color: var(--cream); box-shadow: none; }
 .btn.quiet small { color: var(--muted); opacity: 1; }
+/* v1.5.1: New goal on Home (with goals) restyled — a soft coral panel; the disc and title sit on one centred line. */
+.btn.newgoal { width: 100%; min-height: 76px; border-radius: 20px; padding: 14px 16px; position: relative; overflow: hidden;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  background: linear-gradient(135deg, rgba(232, 72, 42, .20), rgba(232, 72, 42, .05) 55%, rgba(255, 201, 77, .08));
+  border: 1.5px solid rgba(232, 72, 42, .55); box-shadow: none; }
+.btn.newgoal::before { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(115deg, rgba(255, 255, 255, .10) 0%, transparent 40%); }
+.newgoal-top { display: inline-flex; align-items: center; justify-content: center; gap: 9px; position: relative; }
+.newgoal-title { font: 700 var(--fs-heading)/1.15 var(--font-display); color: var(--cream); }
+.newgoal-disc { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 24px; width: 24px; height: 24px;
+  border-radius: 50%; background: #E8482A; color: #fff; font: 700 17px var(--font-display); line-height: 1; }
+.btn.newgoal small { position: relative; color: #D9C9C4; opacity: 1; font-size: var(--fs-meta); }
 .btn-sm { height: 32px; padding: 0 14px; border-radius: 999px; border: 1.5px solid currentColor; background: transparent; color: inherit;
   font: 600 13px var(--font-body); cursor: pointer; }
 .btn-sm:disabled { opacity: .45; cursor: default; }

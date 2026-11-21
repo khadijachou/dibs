@@ -127,7 +127,7 @@ function Hub({ goals }) {
         {/* At least one live goal: a quiet outline button right under the photos (v1.0.8). No live goal (all bought or
             withdrawn): the coral button sticky at the bottom, as before v1.0.8 (v1.0.9). */}
         {live.length > 0
-          ? <button type="button" className="btn tall quiet" onClick={() => go('catalog')}>{'+ '}{t('home_new2')}<small>{t('home_new2_sub')}</small></button>
+          ? <button type="button" className="btn tall newgoal" onClick={() => go('catalog')}><span className="newgoal-top"><span className="newgoal-disc" aria-hidden="true">+</span><span className="newgoal-title">{t('home_new2')}</span></span><small>{t('home_new2_sub')}</small></button>
           : (
             <div className="bottom">
               <button type="button" className="btn tall" onClick={() => go('catalog')}>{t('home_new2')}<small>{t('home_new2_sub')}</small></button>
