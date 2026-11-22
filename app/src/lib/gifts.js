@@ -1,8 +1,9 @@
 // Gifting: call dibs on a friend's wish. A gift goal is a NORMAL goal (same deposits, earning, unlock and payment);
 // the only extra is a local "gift tag" kept in its own storage key, keyed by goal id, so the goal object in the
 // ledger never changes shape. The Friends server learns who called dibs on which brand of whose wishlist, whether it
-// was sent, whether thanks were said, and (only at mark-as-sent, both optional) a short message and a banner choice the
-// giver typed: a code, a PIN, a link, a value, an amount, the goal id and the goal's money path never reach it.
+// was sent, whether thanks were said, and (only at mark-as-sent, all optional) a short message, a banner choice and the
+// card's value the giver typed (v1.7.6, shown only to the friend who gets it): a code, a PIN, a link, the NIM amount,
+// the goal id and the goal's money path never reach it.
 import { request } from './friends.js'
 
 const KEY = 'dibs.friends.gifts' // { [goalId]: { friendId, name, brandKey, state: 'claimed' | 'sent', thanked?, message?, banner?, direct?, giftId? } }
@@ -16,6 +17,8 @@ const write = (m) => { try { localStorage.setItem(KEY, JSON.stringify(m)) } catc
 
 export const giftOf = (goalId) => (goalId ? read()[goalId] || null : null)
 export const giftGoalIds = () => Object.keys(read())
+// How many gifts this phone has sent (state 'sent'), wishlist and direct alike: the Profile "Gifts sent" count (v1.7.6).
+export const sentGiftCount = () => Object.values(read()).filter((t) => t && t.state === 'sent').length
 
 // Save or merge a tag. name is the friend's display name at the time (for the pill when offline).
 export function setGift(goalId, tag) {
@@ -63,7 +66,7 @@ export function setGiftIn(gift, redemption) {
 const wish = (friendId, brandKey, tail = '') => `/v1/users/${encodeURIComponent(friendId)}/wishes/${encodeURIComponent(brandKey)}${tail}`
 export const claim = (friendId, brandKey) => request('POST', wish(friendId, brandKey, '/claim'))
 export const releaseClaim = (friendId, brandKey) => request('DELETE', wish(friendId, brandKey, '/claim'))
-export const sendSent = (friendId, brandKey, { message = '', banner = 'none' } = {}) => request('POST', wish(friendId, brandKey, '/sent'), { message, banner })
+export const sendSent = (friendId, brandKey, { message = '', banner = 'none', value = '' } = {}) => request('POST', wish(friendId, brandKey, '/sent'), { message, banner, value })
 export const sayThanks = (brandKey) => request('POST', `/v1/me/gifts/${encodeURIComponent(brandKey)}/thanks`)
 // Gift box relay (v1.7.3): read the receiver's gift-box public keys (giver, needs a claim), deliver the sealed boxes,
 // and mark a received gift opened (owner). The code itself is sealed on the phone (lib/giftBox.js) and never reaches here.
@@ -73,7 +76,7 @@ export const markGiftOpened = (brandKey) => request('POST', `/v1/me/gifts/${enco
 
 // ---- direct gifts (v1.7.4): a gift from the giver's OWN goal to a friend, not tied to any wish --------------------
 const giftsBase = (friendId) => `/v1/users/${encodeURIComponent(friendId)}/gifts`
-export const sendDirectGift = (friendId, { giftId, brandKey, message = '', banner = 'none' }) => request('POST', giftsBase(friendId), { giftId, brandKey, message, banner })
+export const sendDirectGift = (friendId, { giftId, brandKey, message = '', banner = 'none', value = '' }) => request('POST', giftsBase(friendId), { giftId, brandKey, message, banner, value })
 export const deliverDirectGift = (friendId, giftId, boxes) => request('POST', `${giftsBase(friendId)}/${encodeURIComponent(giftId)}/deliver`, { boxes })
 export const sayThanksDirect = (giftId) => request('POST', `/v1/me/gifts/direct/${encodeURIComponent(giftId)}/thanks`)
 export const markGiftOpenedDirect = (giftId) => request('POST', `/v1/me/gifts/direct/${encodeURIComponent(giftId)}/opened`)
@@ -89,6 +92,12 @@ export function giftMessageError(text) {
   if (low.includes('http') || low.includes('www.') || /[a-z0-9]+\.[a-z]{2,24}\//i.test(s)) return 'link'
   return null
 }
+
+// The card value to send with a gift (v1.7.6), shown only to the receiver. A goal's itemDetail, but only when it is an
+// amount in a currency the shop uses (same shape as the Friends server cleanGiftValue, friends/src/rules.js): "20 USD",
+// "2.50 EUR". Plan cards (a duration like "1 Year" for Discord) and anything else send nothing ('').
+const GIFT_VALUE_RE = /^\d{1,7}(\.\d{1,2})? (USD|EUR|GBP|NGN)$/
+export const giftCardValue = (itemDetail) => { const s = String(itemDetail || '').trim(); return GIFT_VALUE_RE.test(s) ? s : '' }
 
 // Reconcile local tags with the goals that still exist. For each tag in state 'claimed' whose goal no longer exists,
 // is withdrawn, or now points at another brand (the card was changed), release the claim on the server (quietly) and

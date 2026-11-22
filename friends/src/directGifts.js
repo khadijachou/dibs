@@ -1,8 +1,9 @@
 // Direct gifts (v1.7.4): a gift a user sends from their OWN goal to a friend, NOT tied to any wish. A record is keyed by
 // a client-generated giftId (32 hex, from crypto.getRandomValues on the phone) so a retried send never creates two. The
-// server learns who sent which brand to whom, the optional message and banner, and relays the sealed code boxes (v1.7.3)
-// which it can never read. It NEVER stores a code, a PIN, a link, a value or an amount. The message and banner are shown
-// only to the receiver (GET /v1/me) and, giver-only, delivered/opened/thanked flags to the giver (GET /v1/users/:id).
+// server learns who sent which brand to whom, the optional message, banner and card value (v1.7.6), and relays the sealed
+// code boxes (v1.7.3) which it can never read. It NEVER stores a code, a PIN, a link or a NIM amount. The message, banner
+// and card value are shown only to the receiver (GET /v1/me) and, giver-only, delivered/opened/thanked flags to the giver
+// (GET /v1/users/:id). The card value is set at sending and never changed after.
 import { applyDeliver, applyOpen, boxFor } from './gifts.js'
 
 export const MAX_PER_DAY = 20 // direct gifts a giver may send per UTC day
@@ -50,7 +51,7 @@ async function sentToday(store, giver, today) {
 // Create a direct gift (sent at once: there is no claimed state). Returns 'created', 'again' (idempotent: the same
 // giftId by the same giver to the same receiver), 'conflict' (the giftId exists with a different giver/receiver), or
 // 'limit' (over MAX_PER_DAY today).
-export async function createDirectGift(store, { giftId, giver, receiver, brandKey, message = '', banner = '' }) {
+export async function createDirectGift(store, { giftId, giver, receiver, brandKey, message = '', banner = '', value = '' }) {
   const existing = await store.get(giftKey(giftId))
   if (existing) return existing.giver === giver && existing.receiver === receiver ? 'again' : 'conflict'
   const sentAt = new Date().toISOString()
@@ -58,6 +59,7 @@ export async function createDirectGift(store, { giftId, giver, receiver, brandKe
   const rec = { giver, receiver, brandKey, sentAt, thanked: false }
   if (message) rec.message = message
   if (banner) rec.banner = banner
+  if (value) rec.value = value
   if (!(await store.setIfAbsent(giftKey(giftId), rec))) {
     const now = await store.get(giftKey(giftId))
     return now && now.giver === giver && now.receiver === receiver ? 'again' : 'conflict'
@@ -105,6 +107,7 @@ export async function directGiftsReceived(store, receiver, encPub) {
     const entry = { giftId: id, brandKey: rec.brandKey, by: rec.giver, thanked: Boolean(rec.thanked), sentAt: rec.sentAt }
     if (rec.message) entry.message = rec.message
     if (rec.banner) entry.banner = rec.banner
+    if (rec.value) entry.value = rec.value
     if (rec.deliveredAt) {
       entry.delivered = true
       const { box, expired } = boxFor(rec, encPub)

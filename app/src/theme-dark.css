@@ -422,14 +422,9 @@ a.sheet-row { text-decoration: none; -webkit-tap-highlight-color: transparent; }
 /* The hero is positioned (its glow and shadow): what follows it on Savings paints above it, never dimmed by it. */
 .stake-hero ~ * { position: relative; z-index: 1; }
 
-/* Numbers about NIM on Savings (v1.6.2): the idle-NIM card and the live NIM converter. Base/dark styles; theme-light.css
-   softens the mint number and the sparkline to the light shades. Both sit on the .card surface. */
-.card.idle-card, .card.conv-card { gap: 10px; }
-.idle-amt { font: 600 var(--fs-title)/var(--lh-title) var(--font-display); font-variant-numeric: tabular-nums; }
-.idle-est { margin: 0; font-size: var(--fs-body); line-height: var(--lh-body); }
-.idle-n { color: var(--teal); font-weight: 700; }
-.idle-note { margin: 0; font-size: var(--fs-meta); line-height: var(--lh-meta); color: var(--muted); }
-.idle-link { align-self: flex-start; background: none; border: 0; padding: 0; font-family: inherit; font-size: var(--fs-strong); line-height: var(--lh-strong); font-weight: 600; color: var(--gold); cursor: pointer; }
+/* The live NIM converter on Savings (v1.6.2). Base/dark styles; theme-light.css softens the sparkline to the light
+   shades. It sits on the .card surface. */
+.card.conv-card { gap: 10px; }
 .conv-fields { display: flex; align-items: center; gap: 8px; }
 .conv-field { flex: 1 1 0; min-width: 0; display: flex; align-items: center; gap: 8px; background: var(--card-2); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
 .conv-in { flex: 1 1 0; min-width: 0; width: 100%; background: none; border: 0; outline: none; color: inherit; font-weight: 600; font-variant-numeric: tabular-nums; }
@@ -1149,6 +1144,8 @@ button.tl-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: -2
 .pstats-total b small { font: 600 var(--fs-strong)/var(--lh-strong) var(--font-body); color: #c9c3d1; }
 .pstats-usd { margin-top: 2px; font-size: var(--fs-meta); line-height: var(--lh-meta); color: #c9c3d1; }
 .pstats-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; border-top: 1px solid #2f2c38; padding-top: 12px; }
+/* Gift totals (v1.7.6), only when Friends is on: a second row under the four tiles, two columns so the longer labels fit at 360 px. */
+.pstats-row.pstats-gifts { grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 0; padding-top: 0; margin-top: 10px; }
 .pstat { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .pstat b { font: 600 var(--fs-heading)/var(--lh-heading) var(--font-display); overflow-wrap: anywhere; }
 .pstat span { font-size: var(--fs-label); line-height: var(--lh-label); color: var(--muted); }

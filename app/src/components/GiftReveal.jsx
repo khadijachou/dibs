@@ -4,6 +4,7 @@ import { useApp } from '../App.jsx'
 import { Icon, BrandLogo } from './ui.jsx'
 import GiftBanner, { PlainGiftCard } from './GiftBanner.jsx'
 import { brandByKey } from './FriendsParts.jsx'
+import { detailText } from '../lib/itemName.js'
 import { sayThanks, markGiftOpened, sayThanksDirect, markGiftOpenedDirect, setGiftIn } from '../lib/gifts.js'
 import { getState as friendsState } from '../lib/friends.js'
 import { open as openBox } from '../lib/giftBox.js'
@@ -51,6 +52,8 @@ export default function GiftReveal({ gift, onClose }) {
   const name = gift?.from?.name || ''
   const brand = brandByKey(gift?.brandKey)
   const brandName = (brand?.name || gift?.brandKey || '').replace(/ gift card$/i, '')
+  // The card value the giver chose to show (v1.7.6), formatted like card values elsewhere ("10 EUR", fr "2,50 EUR").
+  const valText = gift?.value ? detailText(t, { itemDetail: gift.value }) : ''
   const hasBanner = gift?.banner && gift.banner !== 'none'
   const hasBox = Boolean(gift?.box)
   const isDirect = gift?.kind === 'direct' // a direct gift (v1.7.4): no "From your wishlist." line, keyed by giftId
@@ -122,7 +125,7 @@ export default function GiftReveal({ gift, onClose }) {
               {gift.message && <p className="rv-msg">{gift.message}</p>}
               <div className="rv-brand">
                 {brand && <BrandLogo brand={brand} className="frd-brand-logo" />}
-                <span className="frd-row-mid"><b>{t('rv_card', { brand: brandName })}</b><small>{t('rv_from', { name })}</small></span>
+                <span className="frd-row-mid"><b>{t('rv_card', { brand: brandName })}{valText ? ` · ${valText}` : ''}</b><small>{t('rv_from', { name })}</small></span>
               </div>
               {hasBox ? (
                 red ? (

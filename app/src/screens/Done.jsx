@@ -16,7 +16,7 @@ import { fmtFiatValue } from '../lib/fiatValue.js'
 import { brandGrad } from '../lib/brands.js'
 import { playPop, playGoalDone, playTing, playClink } from '../lib/sound.js'
 import DidYouKnow from '../components/DidYouKnow.jsx'
-import { giftOf, markSent as markGiftSent, sendSent, giftMessageError, getEncKeys, deliverGift, markDelivered, sendDirectGift, deliverDirectGift, newGiftId, setGift, clearGift } from '../lib/gifts.js'
+import { giftOf, markSent as markGiftSent, sendSent, giftMessageError, giftCardValue, getEncKeys, deliverGift, markDelivered, sendDirectGift, deliverDirectGift, newGiftId, setGift, clearGift } from '../lib/gifts.js'
 import { getState as friendsState, userProfile } from '../lib/friends.js'
 import { seal } from '../lib/giftBox.js'
 import GiftBanner from '../components/GiftBanner.jsx'
@@ -225,10 +225,13 @@ export default function Done({ goalId, mode }) {
   }
   // A direct gift keeps one giftId on its tag, so a retried send is idempotent (the server keys the record by it).
   const ensureGiftId = () => { const g = giftOf(goalId); if (g?.giftId) return g.giftId; const id = newGiftId(); setGift(goalId, { giftId: id }); return id }
-  // Create the server record for the gift (direct: a new record keyed by giftId; wishlist: the claim's "sent" route).
+  // Create the server record for the gift (direct: a new record keyed by giftId; wishlist: the claim's "sent" route). The
+  // card's value (v1.7.6) rides along when the goal's itemDetail is an amount (plan cards like Discord send nothing); it is
+  // shown only to the friend who gets it.
+  const giftVal = giftCardValue(goal.itemDetail)
   const recordSent = async (msg) => {
-    if (isDirect) await sendDirectGift(giftTag.friendId, { giftId: ensureGiftId(), brandKey: giftTag.brandKey, message: msg, banner })
-    else await sendSent(giftTag.friendId, giftTag.brandKey, { message: msg, banner })
+    if (isDirect) await sendDirectGift(giftTag.friendId, { giftId: ensureGiftId(), brandKey: giftTag.brandKey, message: msg, banner, value: giftVal })
+    else await sendSent(giftTag.friendId, giftTag.brandKey, { message: msg, banner, value: giftVal })
     markGiftSent(goalId, { message: msg, banner })
   }
 

@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { cleanName, cleanVisibility, cleanLook, fullVisibility, applyShared, pruneShared, visibleProfile, sharesNothing, sharedHasError, ITEMS, cleanGiftMessage, cleanGiftBanner, cleanEncPub, validBox, wishesFor } from './rules.js'
+import { cleanName, cleanVisibility, cleanLook, fullVisibility, applyShared, pruneShared, visibleProfile, sharesNothing, sharedHasError, ITEMS, cleanGiftMessage, cleanGiftBanner, cleanGiftValue, cleanEncPub, validBox, wishesFor } from './rules.js'
 
 test('cleanEncPub: accepts base64url and hex (normalised to base64url), rejects the rest', () => {
   const b64 = 'A'.repeat(43) // 32 bytes in base64url
@@ -72,6 +72,16 @@ test('cleanGiftBanner: one of the eleven, or empty for none/absent, null otherwi
   assert.equal(cleanGiftBanner('party'), null)
   assert.equal(cleanGiftBanner('hero'), null)
   assert.equal(cleanGiftBanner(42), null)
+})
+
+test('cleanGiftValue: an amount and a currency the shop uses, empty for absent, null otherwise', () => {
+  for (const ok of ['10 EUR', '2.50 EUR', '5000 NGN', '20 USD', '9.99 GBP', '1234567 USD']) assert.equal(cleanGiftValue(ok), ok)
+  assert.equal(cleanGiftValue(''), '') // empty = no value
+  assert.equal(cleanGiftValue(undefined), '')
+  assert.equal(cleanGiftValue(null), '')
+  for (const bad of ['10', 'ten EUR', '10 CAD', '10 EUR<script>', '10EUR', '10 eur', '10.1 EUR ', ' 10 EUR', '10.123 EUR', '12345678 USD', '10 USD GBP', 42, {}]) {
+    assert.equal(cleanGiftValue(bad), null, String(bad))
+  }
 })
 
 test('cleanName: trims, strips control chars and angle brackets, bounds length', () => {

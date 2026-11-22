@@ -58,6 +58,17 @@ export function cleanGiftBanner(raw) {
   return GIFT_BANNERS.includes(raw) ? raw : null
 }
 
+// A gift card's value the giver chooses to show the receiver (v1.7.6): an amount, one space, a currency the shop uses
+// ("20 USD", "2.50 EUR", "5000 NGN"). Up to 7 digits and at most 2 decimals. It is the ONLY money figure the server
+// keeps about a gift, and it is shown only to the receiver (giftsReceived). Absent (old phones, plan cards like Discord)
+// is fine: returns '' for undefined/null/empty. Anything that is not exactly this shape is refused (null -> 400 BAD_VALUE).
+const GIFT_VALUE_RE = /^\d{1,7}(\.\d{1,2})? (USD|EUR|GBP|NGN)$/
+export function cleanGiftValue(raw) {
+  if (raw === undefined || raw === null || raw === '') return ''
+  if (typeof raw !== 'string') return null
+  return GIFT_VALUE_RE.test(raw) ? raw : null
+}
+
 // An encryption public key (X25519, 32 bytes) a device registers so a giver can seal a gift box for it (v1.7.3).
 // Accepts hex (64 chars) or base64url (43 chars) and normalises to base64url, so the stored key and a box's `to` field
 // (always base64url from the app) compare as equal strings. Returns null when it is not a valid 32-byte key.

@@ -18,7 +18,8 @@ import { STREAK_BARS, streakView } from './profileView.js'
 import { RANKS, XP } from '../lib/xp.js'
 import { useXp } from '../lib/useXp.js'
 import { levelToPlay, markBadges, newBadges, setLevelSeen } from '../lib/seen.js'
-import { enabled as friendsEnabled, getFriends, getVis as friendsVis, visSummary } from '../lib/friends.js'
+import { enabled as friendsEnabled, getFriends, getVis as friendsVis, visSummary, me as loadMe } from '../lib/friends.js'
+import { sentGiftCount } from '../lib/gifts.js'
 import { useFriends, useWishlist, TurnOnSheet, JoinBoardsSheet } from '../components/FriendsParts.jsx'
 import { enabled as boardsEnabled, onAnyBoard as onBoards, cardHidden as boardsCardHidden, hideCard as hideBoardsCard, BOARDS_EVENT } from '../lib/boards.js'
 import { useLook, accentClass } from '../components/LookParts.jsx'
@@ -115,6 +116,22 @@ export default function Profile({ badge: askedBadge, badgeAt, section, sectionAt
     getFriends().then((f) => { if (live) setFriendCount(f.friends?.length ?? 0) }).catch(() => { /* no error on Profile */ })
     return () => { live = false }
   }, [friendsOn])
+  // Gift totals (v1.7.6), only when Friends is on. Received: the count in the GET /v1/me gifts array (wishlist and direct);
+  // null until it answers and left null on any failure, so a guessed number never shows. Sent: the local gift tags in
+  // state 'sent', counted on this phone.
+  const [giftsRecv, setGiftsRecv] = useState(null)
+  useEffect(() => {
+    if (!friendsOn || !friendsEnabled()) { setGiftsRecv(null); return undefined }
+    let live = true
+    loadMe().then((r) => { if (live) setGiftsRecv(Array.isArray(r?.gifts) ? r.gifts.length : 0) }).catch(() => { /* hidden on failure */ })
+    return () => { live = false }
+  }, [friendsOn])
+  const giftStats = friendsOn
+    ? [
+      ...(giftsRecv != null ? [{ tone: 'mint', label: t('prof_gifts_recv_s'), value: giftsRecv }] : []),
+      { tone: 'coral', label: t('prof_gifts_sent_s'), value: sentGiftCount() },
+    ]
+    : []
   // Wishlist row: count on this phone; "friends see it" only when Friends is on and Wishlist is shared.
   const wished = useWishlist()
   const wlShared = friendsOn && ['friends', 'everyone'].includes(friendsVis().wishlist)
@@ -146,6 +163,13 @@ export default function Profile({ badge: askedBadge, badgeAt, section, sectionAt
               <div className={`pstat ${x.tone}`} key={x.tone}><b>{x.value}</b><span>{x.label}</span></div>
             ))}
           </div>
+          {giftStats.length > 0 && (
+            <div className="pstats-row pstats-gifts">
+              {giftStats.map((x) => (
+                <div className={`pstat ${x.tone}`} key={x.label}><b>{x.value}</b><span>{x.label}</span></div>
+              ))}
+            </div>
+          )}
         </section>
 
         {empty && (

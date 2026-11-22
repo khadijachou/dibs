@@ -38,6 +38,8 @@ Accepted limit: the Friends server hands out the public keys, so a server that w
 
 Direct gifts (v1.7.4): a gift you send from your own goal. The Friends server keeps who sent it to whom, the card's brand, your message and banner, and the locked code if you send it in Dibs (deleted once opened or after 30 days). Never the code in readable form. The same end-to-end encryption and the same limits apply as above.
 
+Card value (v1.7.6): a sent gift, wishlist or direct, may carry the card's value (an amount in a currency the shop uses, like "20 USD"). It is stored with the gift and shown only to the receiver (the `/v1/me` gifts list); no other response ever carries it, and removing the wish or deleting the account drops it with the rest. It is the only money figure the Friends server keeps about a gift: never a NIM amount, never a code.
+
 ## Open items before submission
 
 - [ ] Login challenge (signed nonce) once goals move to the server

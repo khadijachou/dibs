@@ -10,6 +10,7 @@ import { Header, Icon, BrandLogo } from '../components/ui.jsx'
 import BrandSheet from '../components/BrandSheet.jsx'
 import GiftBanner from '../components/GiftBanner.jsx'
 import { brandByKey, useWishlist } from '../components/FriendsParts.jsx'
+import { detailText } from '../lib/itemName.js'
 import { toggle as toggleWish } from '../lib/wishlist.js'
 import { enabled as friendsEnabled, isOn as friendsIsOn, getVis as friendsVis, syncQuiet, me as loadMe } from '../lib/friends.js'
 import { sayThanks, sayThanksDirect, getGiftIn } from '../lib/gifts.js'
@@ -68,6 +69,8 @@ function ReceivedGiftCard({ gift }) {
   const { t } = useApp()
   const name = gift.from?.name || ''
   const b = brandByKey(gift.brandKey)
+  // The card value the giver chose to show (v1.7.6), next to the brand name, formatted like card values elsewhere.
+  const valText = gift.value ? detailText(t, { itemDetail: gift.value }) : ''
   const [thanked, setThanked] = useState(Boolean(gift.thanked))
   const [busy, setBusy] = useState(false)
   const say = async () => {
@@ -80,7 +83,7 @@ function ReceivedGiftCard({ gift }) {
       {gift.message && <p className="gift-card-msg">{gift.message}</p>}
       <div className="gift-card-row">
         {b && <BrandLogo brand={b} className="frd-brand-logo" />}
-        <span className="frd-row-mid"><b>{b?.name || gift.brandKey}</b><small>{t('frd_gift_from', { name })}</small></span>
+        <span className="frd-row-mid"><b>{b?.name || gift.brandKey}{valText ? ` · ${valText}` : ''}</b><small>{t('frd_gift_from', { name })}</small></span>
         <span className="frd-pill frd-pill-mint">{t('frd_gift_gifted')}</span>
       </div>
       {thanked

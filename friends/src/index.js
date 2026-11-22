@@ -11,7 +11,7 @@ import {
 } from './crypto.js'
 import {
   cleanName, cleanVisibility, cleanLook, fullVisibility, applyShared, pruneShared, visibleProfile, sharesNothing, sharedHasError, wishesFor,
-  cleanGiftMessage, cleanGiftBanner, cleanEncPub, validBox,
+  cleanGiftMessage, cleanGiftBanner, cleanGiftValue, cleanEncPub, validBox,
 } from './rules.js'
 import {
   MAX_OPEN_CLAIMS, claim, release, markSent, thank, ownerClaims, receivedGifts, dropClaimedBetween, dropAllFor, openClaimCount, stripGiftExtra,
@@ -227,12 +227,12 @@ export function makeApp(store, env = process.env, opts = {}) {
   // ---- me -----------------------------------------------------------------------------------------------------
 
   // The gifts the owner has received: state 'sent' only (never a claim in state 'claimed', so the surprise holds), each
-  // with the giver's identity and, when the giver added them, the message and banner. This is the ONLY route that carries
-  // the message and banner. v1.7.3: for a gift delivered in Dibs, `delivered: true` and the ONE sealed box addressed to
-  // the calling device's encryption key (`encPub`) - never another device's box, never after the owner opens it.
-  // v1.7.4: direct gifts (a friend gifting from their own goal, directGifts.js) join the same list with kind 'direct' and
-  // a giftId; wishlist gifts carry kind 'wish'. Sorted by sentAt (wishlist claims have none: they sort first, oldest).
-  // [{ kind, brandKey, from: { id, name, seed }, thanked, message?, banner?, delivered?, box?, giftId? }].
+  // with the giver's identity and, when the giver added them, the message, banner and card value (v1.7.6). This is the
+  // ONLY route that carries the message, banner and value. v1.7.3: for a gift delivered in Dibs, `delivered: true` and the
+  // ONE sealed box addressed to the calling device's encryption key (`encPub`) - never another device's box, never after
+  // the owner opens it. v1.7.4: direct gifts (a friend gifting from their own goal, directGifts.js) join the same list with
+  // kind 'direct' and a giftId; wishlist gifts carry kind 'wish'. Sorted by sentAt (wishlist claims have none: they sort
+  // first, oldest). [{ kind, brandKey, from: { id, name, seed }, thanked, message?, banner?, value?, delivered?, box?, giftId? }].
   async function giftsReceived(ownerId, encPub) {
     const out = []
     for (const g of await receivedGifts(store, ownerId, encPub)) {
@@ -241,6 +241,7 @@ export function makeApp(store, env = process.env, opts = {}) {
         kind: 'wish', brandKey: g.brandKey, from: { id: from.id, name: from.name, seed: from.id }, thanked: g.thanked,
         ...(g.message ? { message: g.message } : {}),
         ...(g.banner ? { banner: g.banner } : {}),
+        ...(g.value ? { value: g.value } : {}),
         ...(g.delivered ? { delivered: true } : {}),
         ...(g.box ? { box: g.box } : {}),
         __sort: '',
@@ -252,6 +253,7 @@ export function makeApp(store, env = process.env, opts = {}) {
         kind: 'direct', giftId: g.giftId, brandKey: g.brandKey, from: { id: from.id, name: from.name, seed: from.id }, thanked: g.thanked,
         ...(g.message ? { message: g.message } : {}),
         ...(g.banner ? { banner: g.banner } : {}),
+        ...(g.value ? { value: g.value } : {}),
         ...(g.delivered ? { delivered: true } : {}),
         ...(g.box ? { box: g.box } : {}),
         __sort: g.sentAt,
@@ -623,20 +625,23 @@ export function makeApp(store, env = process.env, opts = {}) {
     return c.json({ ok: true })
   })
 
-  // Mark a claim as sent. An optional body { message?, banner? } carries the gift text the giver typed; a request with no
-  // body (old phones) works exactly as before. The code, PIN or link never reach here (unchanged rule): only the message
-  // and the banner choice. The message and banner are stored only on the transition to sent (see markSent).
+  // Mark a claim as sent. An optional body { message?, banner?, value? } carries the gift text, banner and card value
+  // (v1.7.6) the giver typed; a request with no body (old phones) works exactly as before. The code, PIN or link never
+  // reach here (unchanged rule): only the message, the banner choice and the card value. All are stored only on the
+  // transition to sent (see markSent); the value is shown only to the receiver.
   app.post('/v1/users/:id/wishes/:brandKey/sent', async (c) => {
     const me = c.get('me')
     const body = parseJson(c.get('rawBody'))
-    let message = ''; let banner = ''
+    let message = ''; let banner = ''; let value = ''
     if (body && typeof body === 'object') {
       message = cleanGiftMessage(body.message)
       if (message === null) return c.json({ error: 'BAD_MESSAGE' }, 400)
       banner = cleanGiftBanner(body.banner)
       if (banner === null) return c.json({ error: 'BAD_BANNER' }, 400)
+      value = cleanGiftValue(body.value)
+      if (value === null) return c.json({ error: 'BAD_VALUE' }, 400)
     }
-    const r = await markSent(store, c.req.param('id'), c.req.param('brandKey'), me, { message, banner })
+    const r = await markSent(store, c.req.param('id'), c.req.param('brandKey'), me, { message, banner, value })
     if (r === 'not_found') return c.json({ error: 'NOT_FOUND' }, 404)
     return c.json({ ok: true, state: 'sent' })
   })
@@ -697,7 +702,7 @@ export function makeApp(store, env = process.env, opts = {}) {
 
   // ---- direct gifts: a gift from the caller's OWN goal to a friend (v1.7.4) -----------------------------------
   // Not tied to any wish. The record is keyed by a client-generated giftId so a retried send is idempotent. The caller
-  // and the receiver must be friends; the message and banner are validated exactly like the wishlist "sent" route.
+  // and the receiver must be friends; the message, banner and card value are validated exactly like the wishlist "sent" route.
 
   app.post('/v1/users/:id/gifts', async (c) => {
     const me = c.get('me')
@@ -712,7 +717,9 @@ export function makeApp(store, env = process.env, opts = {}) {
     if (message === null) return c.json({ error: 'BAD_MESSAGE' }, 400)
     const banner = cleanGiftBanner(body.banner)
     if (banner === null) return c.json({ error: 'BAD_BANNER' }, 400)
-    const r = await createDirectGift(store, { giftId, giver: me, receiver, brandKey: body.brandKey, message, banner })
+    const value = cleanGiftValue(body.value)
+    if (value === null) return c.json({ error: 'BAD_VALUE' }, 400)
+    const r = await createDirectGift(store, { giftId, giver: me, receiver, brandKey: body.brandKey, message, banner, value })
     if (r === 'conflict') return c.json({ error: 'CONFLICT' }, 409)
     if (r === 'limit') return c.json({ error: 'LIMIT' }, 429)
     return c.json({ ok: true }) // 'created' and 'again' (idempotent) both answer ok

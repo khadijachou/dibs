@@ -82,7 +82,34 @@ test('create: a bad message, a link, and an unknown banner are each refused and 
   assert.equal(badId.status, 400)
   const badBrand = await call(a, A, 'POST', giftsUrl(B), { giftId: giftId(), brandKey: 'Not A Brand' })
   assert.equal(badBrand.status, 400)
+  const badValue = await call(a, A, 'POST', giftsUrl(B), { giftId: giftId(), brandKey: 'steam', value: '10 CAD' })
+  assert.equal(badValue.status, 400); assert.equal(badValue.body.error, 'BAD_VALUE')
   assert.deepEqual((await call(a, B, 'GET', '/v1/me')).body.gifts, [])
+})
+
+test('create with a value: the receiver sees it, the giver never does', async () => {
+  const store = createMemoryStore()
+  const a = makeApp(store, {})
+  const A = await user(a, 'Ann'); const B = await user(a, 'Bob')
+  await befriend(a, A, B)
+  const gid = giftId()
+  assert.equal((await call(a, A, 'POST', giftsUrl(B), { giftId: gid, brandKey: 'steam', message: 'Enjoy', value: '2.50 EUR' })).status, 200)
+  const me = await call(a, B, 'GET', '/v1/me')
+  assert.deepEqual(me.body.gifts, [{ kind: 'direct', giftId: gid, brandKey: 'steam', from: { id: A.id, name: 'Ann', seed: A.id }, thanked: false, message: 'Enjoy', value: '2.50 EUR' }])
+  // The giver's directSent view never carries the value (nor a message or banner).
+  const sent = (await call(a, A, 'GET', `/v1/users/${B.id}`)).body.directSent
+  assert.deepEqual(sent, [{ giftId: gid }])
+})
+
+test('create with no value (old phone) is read fine', async () => {
+  const store = createMemoryStore()
+  const a = makeApp(store, {})
+  const A = await user(a, 'Ann'); const B = await user(a, 'Bob')
+  await befriend(a, A, B)
+  const gid = giftId()
+  await call(a, A, 'POST', giftsUrl(B), { giftId: gid, brandKey: 'steam' })
+  const gift = (await call(a, B, 'GET', '/v1/me')).body.gifts.find((g) => g.giftId === gid)
+  assert.ok(gift && !('value' in gift))
 })
 
 test('idempotent: the same giftId by the same giver is ok; a different giver/receiver is a 409', async () => {

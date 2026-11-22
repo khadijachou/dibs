@@ -1,9 +1,9 @@
 // Gift claims: who called dibs on which brand of whose wishlist, whether it was marked as sent, whether thanks
 // were said. A claim is keyed by (owner id, brand key) and holds { by: giver id, state: 'claimed' | 'sent',
-// thanked: boolean }, plus (only once sent, both optional) message: a short text the giver typed, and banner: one of
-// four banner names. NOTHING else is stored here: never a code, a PIN, a link, a card value, a NIM amount, a goal id,
-// an email or a wallet address. The message and the banner are shown only to the owner who received the gift
-// (giftsReceived on GET /v1/me); no other route ever carries them.
+// thanked: boolean }, plus (only once sent, all optional) message: a short text the giver typed, banner: one of the
+// banner names, and value: the card's value the giver chose to show ("20 USD", v1.7.6). NOTHING else is stored here:
+// never a code, a PIN, a link, a NIM amount, a goal id, an email or a wallet address. The message, the banner and the
+// value are shown only to the owner who received the gift (giftsReceived on GET /v1/me); no other route ever carries them.
 //
 // The surprise rule: the owner of a wish must never learn, from any response, that someone called dibs on it while
 // the claim is still in state 'claimed'. So the owner's own views (GET /v1/me, /v1/me/as-friend) carry nothing about
@@ -63,10 +63,11 @@ export async function release(store, owner, brand, giver) {
   return 'released'
 }
 
-// Writes the optional gift message and banner onto a record (only non-empty values; the first write wins).
+// Writes the optional gift message, banner and card value onto a record (only non-empty values; the first write wins).
 function applyGiftExtra(rec, extra) {
   if (extra?.message) rec.message = extra.message
   if (extra?.banner) rec.banner = extra.banner
+  if (extra?.value) rec.value = extra.value
 }
 
 // The giver marks a claim as sent (only from state 'claimed'). Idempotent: already sent by the same giver is 'sent'.
@@ -77,7 +78,7 @@ export async function markSent(store, owner, brand, giver, extra = {}) {
   const rec = await store.get(claimKey(owner, brand))
   if (!rec || rec.by !== giver) return 'not_found'
   if (rec.state === 'sent') {
-    if (!rec.message && !rec.banner && (extra.message || extra.banner)) { applyGiftExtra(rec, extra); await store.set(claimKey(owner, brand), rec) }
+    if (!rec.message && !rec.banner && !rec.value && (extra.message || extra.banner || extra.value)) { applyGiftExtra(rec, extra); await store.set(claimKey(owner, brand), rec) }
     return 'sent'
   }
   if (rec.state !== 'claimed') return 'not_found'
@@ -87,13 +88,14 @@ export async function markSent(store, owner, brand, giver, extra = {}) {
   return 'sent'
 }
 
-// The owner removed a wish (a brand left shared.wishlist): drop the message, banner and any sealed boxes from its sent
-// claim, keeping the claim itself (the gift is still on its way). Quiet no-op when there is nothing to drop.
+// The owner removed a wish (a brand left shared.wishlist): drop the message, banner, card value and any sealed boxes from
+// its sent claim, keeping the claim itself (the gift is still on its way). Quiet no-op when there is nothing to drop.
 export async function stripGiftExtra(store, owner, brand) {
   const rec = await store.get(claimKey(owner, brand))
-  if (!rec || (rec.message === undefined && rec.banner === undefined && rec.boxes === undefined)) return
+  if (!rec || (rec.message === undefined && rec.banner === undefined && rec.value === undefined && rec.boxes === undefined)) return
   delete rec.message
   delete rec.banner
+  delete rec.value
   delete rec.boxes
   await store.set(claimKey(owner, brand), rec)
 }
@@ -158,8 +160,8 @@ export async function ownerBox(store, owner, brand, rec, encPub) {
 }
 
 // The owner's received gifts (state 'sent' only), with delivery for this device: [{ brandKey, by, thanked, message?,
-// banner?, delivered?, box? }]. `box` is the single box for `encPub` (this device), never any other device's box. The
-// giver's name/seed is added by the route (it loads the user). Never any claim in state 'claimed'.
+// banner?, value?, delivered?, box? }]. `box` is the single box for `encPub` (this device), never any other device's box.
+// The giver's name/seed is added by the route (it loads the user). Never any claim in state 'claimed'.
 export async function receivedGifts(store, owner, encPub) {
   const claims = await ownerClaims(store, owner)
   const out = []
@@ -168,6 +170,7 @@ export async function receivedGifts(store, owner, encPub) {
     const entry = { brandKey, by: r.by, thanked: Boolean(r.thanked) }
     if (r.message) entry.message = r.message
     if (r.banner) entry.banner = r.banner
+    if (r.value) entry.value = r.value
     if (r.deliveredAt) {
       entry.delivered = true
       const box = await ownerBox(store, owner, brandKey, r, encPub)

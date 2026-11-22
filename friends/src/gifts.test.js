@@ -333,19 +333,75 @@ test('deleting the account removes the gift, message and banner with it', async 
   assert.deepEqual(me.body.gifts, [])
 })
 
-test('no gift response ever carries a value, an amount or a code field', async () => {
+test('no gift response carries a code or NIM amount; the giver side never carries the card value', async () => {
   const a = app()
   const A = await makeUser(a, 'Ann'); const B = await makeUser(a, 'Bob')
   await befriend(a, A, B)
   await shareWishlist(a, B, ['steam'])
   await call(a, A, 'POST', wishUrl(B, 'steam', '/claim'))
-  await call(a, A, 'POST', wishUrl(B, 'steam', '/sent'))
-  // Only the gift-specific structures: the wishes map a giver sees, and the owner's gifts array. (The owner's own
-  // friend code lives elsewhere on /v1/me and is not a gift card code.)
+  await call(a, A, 'POST', wishUrl(B, 'steam', '/sent'), { value: '20 USD' })
+  // The giver's wishesFor map must never carry the card value, an amount or a code.
   const wishes = (await call(a, A, 'GET', `/v1/users/${B.id}`)).body.wishes
-  const gifts = (await call(a, B, 'GET', '/v1/me')).body.gifts
-  const blobs = `${JSON.stringify(wishes)} ${JSON.stringify(gifts)}`
+  const wishesBlob = JSON.stringify(wishes)
   for (const bad of ['value', 'amount', 'code', 'pin', 'nim', 'usd', 'eur']) {
-    assert.ok(!new RegExp(`"[^"]*${bad}[^"]*"\\s*:`, 'i').test(blobs), `no "${bad}" field in gift responses`)
+    assert.ok(!new RegExp(`"[^"]*${bad}[^"]*"\\s*:`, 'i').test(wishesBlob), `no "${bad}" field in the giver's wishes`)
   }
+  // The receiver's gifts carry the card value (receiver only), but never a code, a PIN or a NIM amount.
+  const gifts = (await call(a, B, 'GET', '/v1/me')).body.gifts
+  assert.equal(gifts[0].value, '20 USD')
+  const giftsBlob = JSON.stringify(gifts)
+  for (const bad of ['amount', 'code', 'pin', 'nim']) {
+    assert.ok(!new RegExp(`"[^"]*${bad}[^"]*"\\s*:`, 'i').test(giftsBlob), `no "${bad}" field in the receiver's gifts`)
+  }
+})
+
+test('sent with a value: stored, shown only to the receiver', async () => {
+  const a = app()
+  const A = await makeUser(a, 'Ann'); const B = await makeUser(a, 'Bob'); const C = await makeUser(a, 'Cy')
+  await befriend(a, A, B); await befriend(a, C, B)
+  await shareWishlist(a, B, ['steam'])
+  await call(a, A, 'POST', wishUrl(B, 'steam', '/claim'))
+  assert.equal((await call(a, A, 'POST', wishUrl(B, 'steam', '/sent'), { message: 'Enjoy Bob', value: '10 EUR' })).status, 200)
+  // The receiver sees the value on their own /v1/me only.
+  const me = await call(a, B, 'GET', '/v1/me')
+  assert.deepEqual(me.body.gifts, [{ kind: 'wish', brandKey: 'steam', from: { id: A.id, name: 'Ann', seed: A.id }, thanked: false, message: 'Enjoy Bob', value: '10 EUR' }])
+  // The giver and the other friend never see it.
+  assert.deepEqual((await call(a, A, 'GET', `/v1/users/${B.id}`)).body.wishes.steam, { status: 'mine_sent' })
+  assert.deepEqual((await call(a, C, 'GET', `/v1/users/${B.id}`)).body.wishes.steam, { status: 'gifted' })
+})
+
+test('sent with a value: various amounts and currencies are accepted, others refused', async () => {
+  const a = app()
+  const A = await makeUser(a, 'Ann'); const B = await makeUser(a, 'Bob')
+  await befriend(a, A, B)
+  await shareWishlist(a, B, ['steam'])
+  await call(a, A, 'POST', wishUrl(B, 'steam', '/claim'))
+  for (const bad of ['10', 'ten EUR', '10 CAD', '10 EUR<script>']) {
+    const r = await call(a, A, 'POST', wishUrl(B, 'steam', '/sent'), { value: bad })
+    assert.equal(r.status, 400, bad); assert.deepEqual(r.body, { error: 'BAD_VALUE' }, bad)
+  }
+  // None of the refusals moved the claim to sent.
+  assert.deepEqual((await call(a, A, 'GET', `/v1/users/${B.id}`)).body.wishes.steam, { status: 'mine' })
+  // A good value goes through and is kept exactly.
+  assert.equal((await call(a, A, 'POST', wishUrl(B, 'steam', '/sent'), { value: '5000 NGN' })).status, 200)
+  assert.equal((await call(a, B, 'GET', '/v1/me')).body.gifts[0].value, '5000 NGN')
+})
+
+test('a sent gift with no value (old phone) is read fine; removing the wish strips the value', async () => {
+  const a = app()
+  const A = await makeUser(a, 'Ann'); const B = await makeUser(a, 'Bob')
+  await befriend(a, A, B)
+  await shareWishlist(a, B, ['steam', 'netflix'])
+  // netflix: an old-style sent with no value at all.
+  await call(a, A, 'POST', wishUrl(B, 'netflix', '/claim'))
+  await call(a, A, 'POST', wishUrl(B, 'netflix', '/sent'))
+  // steam: sent with a value, then B removes steam from the shared wishlist.
+  await call(a, A, 'POST', wishUrl(B, 'steam', '/claim'))
+  await call(a, A, 'POST', wishUrl(B, 'steam', '/sent'), { message: 'enjoy', banner: 'congrats', value: '25 EUR' })
+  await call(a, B, 'PUT', '/v1/me/shared', { wishlist: ['netflix'] })
+  const gifts = (await call(a, B, 'GET', '/v1/me')).body.gifts
+  const steam = gifts.find((g) => g.brandKey === 'steam')
+  const netflix = gifts.find((g) => g.brandKey === 'netflix')
+  assert.ok(netflix && !('value' in netflix), 'the old gift reads fine with no value')
+  assert.ok(steam && !('value' in steam) && !('message' in steam) && !('banner' in steam), 'the value, message and banner were stripped')
 })

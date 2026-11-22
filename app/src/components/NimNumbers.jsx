@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useApp } from '../App.jsx'
-import { fmtAmount, fmtNim, fmtSig2, fmtSigned1 } from '../lib/format.js'
-import { idleNim, monthlyEstimate, showIdleCard } from '../lib/idleEarn.js'
+import { fmtAmount, fmtSigned1 } from '../lib/format.js'
 import { getConv7d, pct7d, sparkPoints } from '../lib/conv7d.js'
 import { getLastRates } from '../lib/price.js'
 import { effectiveCurrency } from '../lib/currency.js'
@@ -9,41 +8,8 @@ import { host } from '../lib/nimiq.js'
 import { caretAfterDigits, cleanDigits, digitsBefore, formatAmount } from '../lib/addPreview.js'
 import { timeText } from './ReleaseClock.jsx'
 
-// Two Savings cards about NIM (v1.6.2, display only): the idle-NIM estimate and the live NIM converter.
-// No money moves here: both read the chain figures Savings already has, the live price, and the last price kept on the
-// phone. No buy or sell wording, no percent on the estimate, no "price is low".
-
-// A U+0000 sentinel to split the estimate string so the number can be coloured mint without a second i18n key.
-const SENT = '\u0000'
-
-// "Not staked yet · in your wallet": the wallet's idle NIM and what it could earn a month if staked. Hidden when idle
-// NIM is 0, or under 100 NIM when the wallet has no staker yet (lib/idleEarn.js showIdleCard).
-export function IdleCard({ sum, balance, hasStaker, goals }) {
-  const { t, lang, go } = useApp()
-  const gap = sum?.gap ?? 0
-  const idle = idleNim(balance, gap)
-  if (!showIdleCard({ idle, hasStaker })) return null
-  const n = monthlyEstimate({ earned: sum?.earned, inGoals: sum?.inGoals, since: sum?.since, idle })
-  const est = n != null ? t('stake_idle_est', { n: SENT }).split(SENT) : null
-  // "Put it in a goal": one goal still saving -> its Add NIM; several -> Goals; none -> the catalog. No goal picker exists.
-  const saving = (goals || []).filter((g) => g.status === 'saving')
-  const putIn = () => {
-    if (saving.length === 1) go('goal', { goalId: saving[0].id, mode: 'add' })
-    else if (saving.length > 1) go('home')
-    else go('catalog')
-  }
-  return (
-    <section className="card idle-card">
-      <span className="stake-label">{t('stake_idle_title')}</span>
-      <div className="idle-amt">{fmtNim(idle, lang)} NIM</div>
-      <p className="idle-est">
-        {est ? <>{est[0]}<b className="idle-n">{fmtSig2(n, lang)}</b>{est[1]}</> : t('stake_idle_est_none')}
-      </p>
-      <p className="idle-note">{t('stake_idle_note')}</p>
-      <button type="button" className="idle-link" onClick={putIn}>{t('stake_idle_link')}</button>
-    </section>
-  )
-}
+// The Savings NIM converter (v1.6.2, display only): an editable NIM amount and its value at the live rate, with a 7-day
+// sparkline. No money moves here: it reads the live price and the last price kept on the phone. No buy or sell wording.
 
 const CONV_CUR_KEY = 'dibs.convCur'
 const CONV_OPTS = ['auto', 'USD', 'EUR', 'GBP', 'NGN']
