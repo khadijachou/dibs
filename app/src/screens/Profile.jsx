@@ -24,6 +24,7 @@ import { useFriends, useWishlist, TurnOnSheet, JoinBoardsSheet } from '../compon
 import { enabled as boardsEnabled, onAnyBoard as onBoards, cardHidden as boardsCardHidden, hideCard as hideBoardsCard, BOARDS_EVENT } from '../lib/boards.js'
 import { useLook, accentClass } from '../components/LookParts.jsx'
 import { accentChoice } from '../lib/looks.js'
+import { AsFriendPreview } from './FriendProfile.jsx'
 
 const TOTAL = BADGES.length
 const longDate = (d, lang) => new Intl.DateTimeFormat(lang, { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(d)).replace(/ /g, ' ')
@@ -55,6 +56,7 @@ export default function Profile({ badge: askedBadge, badgeAt, section, sectionAt
   const fiat = useFiat()
   const badges = useBadges()
   const [expanded, setExpanded] = useState(false)
+  const [previewOpen, setPreviewOpen] = useState(false) // the friend's-eye preview (View as pill)
   const [sheet, setSheet] = useState(null) // badge id
   useEffect(() => { if (askedBadge && BADGES.some((b) => b.id === askedBadge)) setSheet(askedBadge) }, [askedBadge, badgeAt])
   useEffect(() => {
@@ -146,7 +148,14 @@ export default function Profile({ badge: askedBadge, badgeAt, section, sectionAt
     <>
       <Header />
       <main className="screen">
-        <h2 className="title">{t('tab_profile')}</h2>
+        <div className="prof-title-row">
+          <h2 className="title">{t('tab_profile')}</h2>
+          {friendsOn && (
+            <button type="button" className="prof-viewas" onClick={() => setPreviewOpen(true)}>
+              <Icon name="eye" size={14} />{t('prof_view_as')}
+            </button>
+          )}
+        </div>
 
         <IdentityCard x={xp} name={name} walletAddress={walletAddress} look={look} accent={accentChoice(xp.level)} onRanks={() => setXpSheet('ranks')} />
 
@@ -266,6 +275,7 @@ export default function Profile({ badge: askedBadge, badgeAt, section, sectionAt
       {xpSheet === 'ranks' && <RanksSheet x={xp} onHow={() => setXpSheet('xp')} onClose={() => setXpSheet(null)} />}
       {xpSheet === 'xp' && <XpSheet x={xp} onClose={() => setXpSheet(null)} />}
       {sheet && <BadgeSheet id={sheet} badges={badges} goals={goals} onClose={() => setSheet(null)} />}
+      {previewOpen && <AsFriendPreview onClose={() => setPreviewOpen(false)} />}
       {turnOnOpen && <TurnOnSheet onClose={() => setTurnOnOpen(false)} />}
       {joinOpen && <JoinBoardsSheet onClose={() => setJoinOpen(false)} onJoined={() => { setJoinOpen(false); go('boards') }} />}
     </>

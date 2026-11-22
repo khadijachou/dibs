@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { useApp } from '../App.jsx'
 import { BrandLogo, Sheet } from './ui.jsx'
 import { SINGLE_COUNTRY, brandGrad, brandRegion, defaultRegion } from '../lib/brands.js'
-import { fullPhoto } from '../lib/promoPhotos.js'
 import { getPref } from '../lib/prefs.js'
 import { copyText } from '../lib/clipboard.js'
 import { HELP_EMAIL } from './LegalText.jsx'
@@ -51,21 +50,10 @@ export default function BrandSheet({ brand, onClose, onPick, pref = false, onSav
   const valuesTitle = t(items.length > 1 ? 'bs_values_title' : 'bs_value_title')
   const single = SINGLE_COUNTRY.includes(version?.key)
   const instore = brand.delivers === 'instore'
-  // The brand's full slide photo covers the card (lib/promoPhotos.js), with a shade for the text and no sheen; the
-  // brand colour (brandGrad) stays underneath for loading and for a photo that fails to load (onError).
-  const photo = fullPhoto(brand.key)
-  const [photoOk, setPhotoOk] = useState(true)
   return (
     <Sheet label={brand.name} onClose={onClose}>
-      <div className={`bs-card${photo ? ' photo' : ''}`} style={{ background: brandGrad(brand.key) }}>
-        {photo ? (
-          <>
-            {photoOk && <img className="bs-card-photo" src={photo} alt="" decoding="async" onError={() => setPhotoOk(false)} />}
-            <i className="bs-card-shade" aria-hidden="true" />
-          </>
-        ) : (
-          <i className="gift-sheen" aria-hidden="true" />
-        )}
+      <div className="bs-card" style={{ background: brandGrad(brand.key) }}>
+        <i className="gift-sheen" aria-hidden="true" />
         <div className="bs-card-top">
           <BrandLogo brand={brand} />
           <span className="bs-card-kind">{t('bs_gift')}</span>

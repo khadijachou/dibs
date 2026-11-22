@@ -443,8 +443,13 @@ html.is-fullscreen:where([data-theme="light"]) body::before { background: linear
 :where(:root[data-theme="light"]) .lk-acc.lk-acc-mint { color: #137b5f; }
 :where(:root[data-theme="light"]) .lk-acc.lk-acc-butter { color: #A87400; }
 :where(:root[data-theme="light"]) .lk-acc.lk-acc-cream { color: #23212b; }
+:where(:root[data-theme="light"]) .lk-acc.lk-acc-citrus { background: linear-gradient(90deg, #A87400, #137b5f); -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; }
 :where(:root[data-theme="light"]) .lk-acc.lk-acc-gold { color: #A87400; }
 :where(:root[data-theme="light"]) .lk-acc.lk-acc-sunset { background: linear-gradient(90deg, #cc3316, #A87400); -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; }
+/* v1.7.7: the Collector frame's cream dots vanish on white cards, so give them a muted tan in light mode (dark unchanged). */
+:where(:root[data-theme="light"]) .lk-frame .lk-frame-dots { stroke: #B39B78; }
+/* The "View as" pill on a white Profile: a solid white fill reads better than the dark theme's translucent white. */
+:where(:root[data-theme="light"]) .prof-viewas { background: #fff; }
 /* The My look tiles sit on --card-2; the frame swatch hexagon needs a visible muted fill on light. */
 :where(:root[data-theme="light"]) .lk-sw-frame .avatar-ph { background: #9c9284; }
 :where(:root[data-theme="light"]) .lk-sw-acc { border-color: rgba(0, 0, 0, .14); }

@@ -131,6 +131,28 @@ function ProfileHead({ profile, since, banner }) {
   )
 }
 
+// The friend's-eye preview: my profile exactly as a friend sees it (the shared fields only), behind the "This is what
+// friends see" banner. Opened from My profile's button and from the "View as" pill on Profile, one implementation.
+export function AsFriendPreview({ onClose }) {
+  const { t } = useApp()
+  const [preview, setPreview] = useState('loading') // 'loading' | 'error' | the profile object
+  const load = () => { setPreview('loading'); loadAsFriend().then(setPreview).catch(() => setPreview('error')) }
+  useEffect(load, []) // eslint-disable-line react-hooks/exhaustive-deps
+  return (
+    <Sheet label={t('frd_as_friend_banner')} onClose={onClose}>
+      {preview === 'loading' && <Skeleton rows={3} />}
+      {preview === 'error' && <FriendNotice onRetry={load} />}
+      {preview !== 'loading' && preview !== 'error' && (
+        <>
+          <ProfileHead profile={preview} banner={t('frd_as_friend_banner')} />
+          <ProfileCards profile={preview} />
+          <PrivateLine name={preview.name} hidden={preview.hidden} />
+        </>
+      )}
+    </Sheet>
+  )
+}
+
 // ---- a friend's profile -------------------------------------------------------------------------------------
 function FriendProfileView({ id, since }) {
   const { t, back, address } = useApp()
@@ -216,7 +238,7 @@ function MyProfileView() {
   const [vis, setVis] = useState(() => getVis())
   const [saveErr, setSaveErr] = useState(false)
   const [editName, setEditName] = useState(false)
-  const [preview, setPreview] = useState(null) // the as-friend profile, or 'loading'/'error'
+  const [previewOpen, setPreviewOpen] = useState(false) // the as-friend preview sheet
   const [confirm, setConfirm] = useState(false)
   const [amountAsk, setAmountAsk] = useState(null) // { key, val } waiting for the one-time amount confirmation
   // The NEW pills stay visible for the whole first visit; the flag is saved when the page is left.
@@ -234,8 +256,6 @@ function MyProfileView() {
     if (AMOUNT_KEYS.has(key) && val !== 'off' && vis[key] === 'off' && !amountsOk()) { setAmountAsk({ key, val }); return }
     doChangeVis(key, val)
   }
-
-  const openPreview = () => { setPreview('loading'); loadAsFriend().then(setPreview).catch(() => setPreview('error')) }
 
   return (
     <>
@@ -260,7 +280,7 @@ function MyProfileView() {
           <p className="frd-note">{t('frd_who_note')}</p>
         </section>
 
-        <button type="button" className="btn ghost" onClick={openPreview}>{t('frd_see_as_friend')}</button>
+        <button type="button" className="btn ghost" onClick={() => setPreviewOpen(true)}>{t('frd_see_as_friend')}</button>
         <button type="button" className="frd-muted-link" onClick={() => setConfirm(true)}>{t('frd_delete_link')}</button>
       </main>
 
@@ -270,19 +290,7 @@ function MyProfileView() {
           onClose={() => setAmountAsk(null)} />
       )}
       {editName && <NameSheet initial={st?.name} onClose={() => setEditName(false)} />}
-      {preview && (
-        <Sheet label={t('frd_as_friend_banner')} onClose={() => setPreview(null)}>
-          {preview === 'loading' && <Skeleton rows={3} />}
-          {preview === 'error' && <FriendNotice onRetry={openPreview} />}
-          {preview && preview !== 'loading' && preview !== 'error' && (
-            <>
-              <ProfileHead profile={preview} banner={t('frd_as_friend_banner')} />
-              <ProfileCards profile={preview} />
-              <PrivateLine name={preview.name} hidden={preview.hidden} />
-            </>
-          )}
-        </Sheet>
-      )}
+      {previewOpen && <AsFriendPreview onClose={() => setPreviewOpen(false)} />}
       {confirm && (
         <ConfirmSheet title={t('frd_delete_title')} body={t('frd_delete_note')} danger
           confirmLabel={t('frd_delete_btn')} cancelLabel={t('frd_keep')}

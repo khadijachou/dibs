@@ -2,7 +2,6 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useApp } from '../App.jsx'
 import { BrandLogo, Header, Icon } from '../components/ui.jsx'
 import { CHIPS, brandGrad, catalogBrands, filterBrands } from '../lib/brands.js'
-import { smallPhoto } from '../lib/promoPhotos.js'
 import { listGoals } from '../lib/goals.js'
 import { markDailyOpen } from '../lib/quests.js'
 import { fromText } from '../lib/itemName.js'
@@ -97,25 +96,13 @@ export function BrandChips({ brands, chip, onChip }) {
 
 // A brand as a gift card: logo and delivery pill on top, name and lowest price at the bottom. A tap opens the sheet.
 // The heart (bottom right) toggles the wishlist; it is a sibling button, not nested in the tile, and never navigates.
-// A brand's photo (lib/promoPhotos.js smallPhoto) sits over the brand colour as a faint grayscale texture, with a
-// shade for the text; no gift-sheen then. The card is usable before the photo arrives and if it fails (onError hides
-// the img, the brand colour is underneath). A brand with no photo keeps the plain coloured card with its sheen.
 export function GiftTile({ brand, big = false, style, onOpen, hearted = false, onHeart }) {
   const { t } = useApp()
-  const photo = smallPhoto(brand.key)
-  const [photoOk, setPhotoOk] = useState(true)
   return (
     <div className={`gtile-wrap${big ? ' big' : ''}`} style={style}>
-      <button type="button" className={`gtile${big ? ' big' : ''}${photo ? ' photo' : ''}`} aria-haspopup="dialog"
+      <button type="button" className={`gtile${big ? ' big' : ''}`} aria-haspopup="dialog"
         style={{ background: brandGrad(brand.key) }} onClick={() => onOpen(brand)}>
-        {photo ? (
-          <>
-            {photoOk && <img className="gtile-photo" src={photo} alt="" loading="lazy" decoding="async" onError={() => setPhotoOk(false)} />}
-            <i className="gtile-shade" aria-hidden="true" />
-          </>
-        ) : (
-          <i className="gift-sheen" aria-hidden="true" />
-        )}
+        <i className="gift-sheen" aria-hidden="true" />
         <span className="gtile-top">
           <BrandLogo brand={brand} />
           {brand.delivers && <span className="gtile-pill">{t(`dlv_short_${brand.delivers}`)}</span>}

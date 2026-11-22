@@ -11,6 +11,7 @@ export const ACCENTS = [
   { id: 'mint', rank: 'saver' },
   { id: 'butter', rank: 'planner' },
   { id: 'cream', rank: 'collector' },
+  { id: 'citrus', rank: 'collector' }, // a second Collector accent (v1.7.7): a gradient #FFC94D to #2BC48F
   { id: 'gold', rank: 'treasurer' },
   { id: 'sunset', rank: 'legend' }, // a gradient #E8482A to #FFC94D
 ]

@@ -21,17 +21,18 @@ test('every look id is short and matches the server rule', () => {
   for (const kind of KIND_IDS) for (const e of KINDS[kind]) assert.ok(ID_RE.test(e.id), `${kind} ${e.id}`)
 })
 
-test('each kind has six entries, the first is the default, each rank used once', () => {
-  for (const kind of KIND_IDS) {
-    const list = KINDS[kind]
-    assert.equal(list.length, 6, kind)
-    assert.equal(list[0].id, DEFAULTS[kind], `${kind} default`)
-    assert.deepEqual(list.map((e) => e.rank), ['starter', 'saver', 'planner', 'collector', 'treasurer', 'legend'], kind)
+test('frame and ring have six entries one per rank; accent has seven (Collector unlocks Cream and Citrus)', () => {
+  for (const kind of KIND_IDS) assert.equal(KINDS[kind][0].id, DEFAULTS[kind], `${kind} default`)
+  for (const kind of ['frame', 'ring']) {
+    assert.equal(KINDS[kind].length, 6, kind)
+    assert.deepEqual(KINDS[kind].map((e) => e.rank), ['starter', 'saver', 'planner', 'collector', 'treasurer', 'legend'], kind)
   }
+  assert.equal(KINDS.accent.length, 7)
+  assert.deepEqual(KINDS.accent.map((e) => e.rank), ['starter', 'saver', 'planner', 'collector', 'collector', 'treasurer', 'legend'])
 })
 
 test('the accent, frame and ring ids are the ones the spec names', () => {
-  assert.deepEqual(ACCENTS.map((e) => e.id), ['coral', 'mint', 'butter', 'cream', 'gold', 'sunset'])
+  assert.deepEqual(ACCENTS.map((e) => e.id), ['coral', 'mint', 'butter', 'cream', 'citrus', 'gold', 'sunset'])
   assert.deepEqual(FRAMES.map((e) => e.id), ['none', 'saver', 'planner', 'collector', 'treasurer', 'legend'])
   assert.deepEqual(RINGS.map((e) => e.id), ['solid', 'steps', 'glow', 'dots', 'gold', 'sunset'])
 })
@@ -53,8 +54,11 @@ test('what each rank level unlocks', () => {
   assert.deepEqual(unlocked(5).ring, ['solid', 'steps'])
   // Level 12 (Planner, three ranks reached).
   assert.deepEqual(unlocked(12).frame, ['none', 'saver', 'planner'])
-  // Level 50 (Legend): all six of each.
-  for (const kind of KIND_IDS) assert.equal(unlocked(50)[kind].length, 6, kind)
+  // Level 20 (Collector): the accent list gains both Cream and Citrus.
+  assert.deepEqual(unlocked(20).accent, ['coral', 'mint', 'butter', 'cream', 'citrus'])
+  // Level 50 (Legend): all six frames and rings, and all seven accents.
+  for (const kind of ['frame', 'ring']) assert.equal(unlocked(50)[kind].length, 6, kind)
+  assert.equal(unlocked(50).accent.length, 7)
 })
 
 test('isUnlocked respects the level, rejects unknown kinds and ids', () => {

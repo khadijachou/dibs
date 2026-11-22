@@ -8,12 +8,15 @@ import { letterFor, isImageDataUrl } from '../lib/friendAvatar.js'
 // so the default avatar is pixel-identical). shape 'hex' follows the Nimiq identicon hexagon; 'rect' a letter avatar.
 const HEX = [[0.25, 0.06], [0.75, 0.06], [1, 0.5], [0.75, 0.94], [0.25, 0.94], [0, 0.5]]
 const hexPoints = (inset) => HEX.map(([x, y]) => `${(inset + x * (100 - 2 * inset)).toFixed(1)},${(inset + y * (100 - 2 * inset)).toFixed(1)}`).join(' ')
+// hl (v1.7.7): a light sweep. The frame's own shape is drawn once more as a short lit dash (pathLength 100, the dash
+// leaves one short segment; legend's 13/37 leaves two) that travels the ring. No sweep on the planner's inner ring, on
+// 'none' or on an unknown frame. The animation and reduced-motion opt-out live in CSS (.lk-frame .lk-hl).
 const FRAME = {
-  saver: { color: '#2BC48F' }, // a mint hexagon ring
-  planner: { color: '#FFC94D', double: true }, // a butter double ring
-  collector: { color: '#FFF6EC', dash: '2 5' }, // a cream dotted ring
-  treasurer: { color: '#E9B213', width: 4 }, // a gold ring
-  legend: { grad: ['#E8482A', '#FFC94D'] }, // a gradient ring
+  saver: { color: '#2BC48F', hl: { color: '#B8F5DF', dash: '9 91', op: 0.7 } }, // a mint hexagon ring
+  planner: { color: '#FFC94D', double: true, hl: { color: '#FFF1C9', dash: '10 90', op: 0.7 } }, // a butter double ring
+  collector: { color: '#FFF6EC', dash: '2 5', hl: { color: '#FFFFFF', dash: '11 89', op: 0.9 } }, // a cream dotted ring
+  treasurer: { color: '#E9B213', width: 4, hl: { color: '#FFE9A6', dash: '12 88', op: 0.9 } }, // a gold ring
+  legend: { grad: ['#E8482A', '#FFC94D'], hl: { color: '#FFF6EC', dash: '13 37', op: 0.9 } }, // a gradient ring (two lit segments)
 }
 export function FrameRing({ frame, shape = 'hex' }) {
   const uid = useId().replace(/[^a-z0-9]/gi, '')
@@ -22,15 +25,18 @@ export function FrameRing({ frame, shape = 'hex' }) {
   const gradId = `lkf-${uid}`
   const stroke = cfg.grad ? `url(#${gradId})` : cfg.color
   const w = cfg.width || 3.5
-  const shapeEl = (inset, sw) => (shape === 'hex'
-    ? <polygon points={hexPoints(inset)} fill="none" stroke={stroke} strokeWidth={sw} strokeLinejoin="round" strokeDasharray={cfg.dash || undefined} strokeLinecap={cfg.dash ? 'round' : undefined} />
-    : <rect x={inset} y={inset} width={100 - 2 * inset} height={100 - 2 * inset} rx={18} fill="none" stroke={stroke} strokeWidth={sw} strokeDasharray={cfg.dash || undefined} strokeLinecap={cfg.dash ? 'round' : undefined} />)
+  // One ring (hexagon or rounded square) at the given inset, with any extra SVG props merged in.
+  const shapeEl = (inset, props) => (shape === 'hex'
+    ? <polygon points={hexPoints(inset)} fill="none" strokeLinejoin="round" {...props} />
+    : <rect x={inset} y={inset} width={100 - 2 * inset} height={100 - 2 * inset} rx={18} fill="none" {...props} />)
   const base = 2 // the grown box (CSS: 120%, centred) already holds the gap; draw near its edge, inner double +4 stays outside
+  const hl = cfg.hl
   return (
     <svg className="lk-frame" aria-hidden="true" viewBox="0 0 100 100">
       {cfg.grad && <defs><linearGradient id={gradId} x1="0" y1="100" x2="100" y2="0" gradientUnits="userSpaceOnUse"><stop offset="0" stopColor={cfg.grad[0]} /><stop offset="1" stopColor={cfg.grad[1]} /></linearGradient></defs>}
-      {shapeEl(base, w)}
-      {cfg.double && shapeEl(base + 4, w * 0.8)}
+      {shapeEl(base, { stroke, strokeWidth: w, strokeDasharray: cfg.dash || undefined, strokeLinecap: cfg.dash ? 'round' : undefined, className: cfg.dash ? 'lk-frame-dots' : undefined })}
+      {hl && shapeEl(base, { className: 'lk-hl', stroke: hl.color, strokeWidth: w + 0.4, strokeLinecap: 'round', strokeDasharray: hl.dash, pathLength: 100, opacity: hl.op, style: { color: hl.color } })}
+      {cfg.double && shapeEl(base + 4, { stroke, strokeWidth: w * 0.8 })}
     </svg>
   )
 }

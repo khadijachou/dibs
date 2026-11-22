@@ -26,12 +26,14 @@ export function useLook(level = 1) {
 }
 
 // ---- names and swatches -------------------------------------------------------------------------------------
-const NAME_KEY = { coral: 'look_coral', mint: 'look_mint', butter: 'look_butter', cream: 'look_cream', gold: 'look_gold', sunset: 'look_sunset', solid: 'look_solid', steps: 'look_steps', glow: 'look_glow', dots: 'look_dots' }
+const NAME_KEY = { coral: 'look_coral', mint: 'look_mint', butter: 'look_butter', cream: 'look_cream', citrus: 'look_citrus', gold: 'look_gold', sunset: 'look_sunset', solid: 'look_solid', steps: 'look_steps', glow: 'look_glow', dots: 'look_dots' }
 // Frames reuse the rank names the app already has; 'none' is its own word.
 export const lookName = (t, kind, id) => (kind === 'frame' ? (id === 'none' ? t('look_none') : t(`rank_${id}`)) : t(NAME_KEY[id] || id))
 
-const ACC_BG = { coral: '#E8482A', mint: '#2BC48F', butter: '#FFC94D', cream: '#FFF6EC', gold: '#E9B213', sunset: 'linear-gradient(135deg,#E8482A,#FFC94D)' }
+const ACC_BG = { coral: '#E8482A', mint: '#2BC48F', butter: '#FFC94D', cream: '#FFF6EC', citrus: 'linear-gradient(135deg,#FFC94D,#2BC48F)', gold: '#E9B213', sunset: 'linear-gradient(135deg,#E8482A,#FFC94D)' }
 export const idForRank = (kind, rank) => (KINDS[kind].find((e) => e.rank === rank) || KINDS[kind][0]).id
+// Every id a rank unlocks (a rank can now unlock two accents: Cream and Citrus at Collector), in list order.
+export const idsForRank = (kind, rank) => { const ids = KINDS[kind].filter((e) => e.rank === rank).map((e) => e.id); return ids.length ? ids : [KINDS[kind][0].id] }
 
 function Swatch({ kind, id, size = 46 }) {
   if (kind === 'accent') return <span className="lk-sw lk-sw-acc" style={{ background: ACC_BG[id] }} />
@@ -101,7 +103,7 @@ export function RankSheet({ level, rank, onChoose, onClose }) {
       <ul className="lk-rank-rows">
         {rows.map(([kind, sub]) => (
           <li key={kind}>
-            <span className="lk-rank-ic"><Swatch kind={kind} id={idForRank(kind, rank)} size={38} /></span>
+            <span className="lk-rank-ic">{idsForRank(kind, rank).map((id) => <Swatch key={id} kind={kind} id={id} size={38} />)}</span>
             <span className="lk-rank-tx"><b>{t(`look_${kind}`)}</b><small>{t(sub)}</small></span>
           </li>
         ))}
