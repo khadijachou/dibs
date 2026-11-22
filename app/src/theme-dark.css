@@ -295,9 +295,10 @@ svg circle:first-child[stroke="#e6dccf"], svg circle:first-child[stroke="#35323f
 .sheet-label { margin-top: 2px; }
 .sheet-list { display: flex; flex-direction: column; gap: 8px; }
 .sheet-row { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; background: var(--card); border: 1.5px solid #2b2834; border-radius: 14px; padding: 12px; color: var(--cream); font: inherit; cursor: pointer; }
-/* The content span fills the row, but not an avatar (.avatar, photo or letter): it keeps its fixed 40 px box.
-   Without :not(.avatar) the gift picker's FriendAvatar span stretches to half the row (its .frd-av flex:none loses here). */
-.sheet-row > span:not(.si):not(.radio):not(.avatar) { flex: 1; min-width: 0; }
+.sheet-row > span:not(.si):not(.radio) { flex: 1; min-width: 0; }
+/* An avatar (photo or letter) keeps its fixed 40 px box: a higher-specificity rule than the one above, so the gift
+   picker's FriendAvatar span does not stretch, while the chevron and arrow spans still sit at the row's right edge. */
+.sheet-row > span.avatar:not(.si):not(.radio) { flex: none; }
 .sheet-row b { display: block; font-size: var(--fs-strong); line-height: var(--lh-strong); font-weight: 600; }
 .sheet-row small { display: block; color: var(--muted); font-size: var(--fs-label); line-height: var(--lh-label); margin-top: 2px; }
 .sheet-row:disabled { opacity: .5; cursor: default; }
