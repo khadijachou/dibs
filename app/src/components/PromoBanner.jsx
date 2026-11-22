@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useApp } from '../App.jsx'
 import { CHIPS, catalogBrands } from '../lib/brands.js'
+import { fullPhoto } from '../lib/promoPhotos.js'
 
 // Home: a swipeable banner of things you can call dibs on. Each slide is a finished picture from src/assets/promo/
 // (photo, faded film look and brand logo baked in, 1200x675), with one line, "Call dibs on {brand}" and a
-// "Saved in NIM" badge as live text on top (3 languages). Tap opens the brand sheet.
+// "Saved in NIM" badge as live text on top (3 languages). Tap opens the brand sheet. The slide photos come from the
+// one source (lib/promoPhotos.js fullPhoto), shared with the catalogue cards.
 // Pool = every catalogue brand with a picture <brand key>.jpg (or .webp) AND a promo_<key> line below.
 // Each launch shows one slide per category, picked at random. Auto-advances every 5 s, pauses while touched;
 // reduced motion: no auto-advance.
-const PHOTOS = Object.fromEntries(Object.entries(import.meta.glob('../assets/promo/*.{jpg,jpeg,webp}', { eager: true, import: 'default' }))
-  .map(([path, url]) => [path.split('/').pop().replace(/\.(jpe?g|webp)$/i, ''), url]))
 // Brands that have a promo_<key> line in every language.
 const LINES = ['steam', 'playstation', 'xbox', 'airbnb', 'hotels', 'flightgift', 'uber', 'netflix', 'disney', 'ubereats', 'doordash', 'starbucks', 'amazon', 'apple', 'bestbuy', 'nintendo', 'googleplay', 'roblox', 'fortnite', 'valorant', 'riot', 'discord', 'handm', 'nike', 'twitch', 'burgerking', 'currys', 'mediamarkt', 'fnacdarty', 'electrodepot', 'slot', 'samsung', 'bolt']
 
@@ -21,7 +21,7 @@ const NimiqHex = () => (
 
 // One slide per category (lib/brands.js chip), at random, in the CHIPS order so the slides always mix.
 function pickSlides(brands) {
-  const pool = brands.filter((b) => PHOTOS[b.key] && LINES.includes(b.key))
+  const pool = brands.filter((b) => fullPhoto(b.key) && LINES.includes(b.key))
   return CHIPS.map((c) => {
     const opts = pool.filter((b) => b.chip === c)
     return opts.length ? opts[Math.floor(Math.random() * opts.length)] : null
@@ -55,7 +55,7 @@ export default function PromoBanner({ onOpen }) {
         onPointerDown={() => { hold.current = true }} onPointerUp={() => { hold.current = false }} onPointerLeave={() => { hold.current = false }}>
         {slides.map((b, i) => (
           <button type="button" key={b.key} className="promo-slide" aria-haspopup="dialog" onClick={() => onOpen?.(b.key)}>
-            <img className="promo-photo" src={PHOTOS[b.key]} alt="" loading={i === 0 ? 'eager' : 'lazy'} decoding="async" />
+            <img className="promo-photo" src={fullPhoto(b.key)} alt="" loading={i === 0 ? 'eager' : 'lazy'} decoding="async" />
             <span className="promo-shade" aria-hidden="true" />
             <span className="promo-nq"><NimiqHex />{t('promo_badge')}</span>
             <span className="promo-txt">
