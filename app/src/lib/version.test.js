@@ -10,7 +10,7 @@ globalThis.localStorage = {
   clear: () => store.clear(),
 }
 
-const { catalogBrands, defaultRegion, worksLine } = await import('./brands.js')
+const { catalogBrands, defaultRegion, worksLine, worksText } = await import('./brands.js')
 const { setPref } = await import('./prefs.js')
 const { goalVersion } = await import('./version.js')
 const { cardChangePatch } = await import('./availability.js')
@@ -82,6 +82,18 @@ test('an old goal (steam-20, no region) still resolves its item, USA and the Ste
   assert.equal(worksLine(makeT('en'), v.worksWith), 'For Steam accounts with a USD wallet. Check your account before you call dibs.')
   // An old Netflix Europe goal that the catalogue no longer lists still reads Europe from its EUR value.
   assert.equal(goalVersion({ itemId: 'gone', itemDetail: '25 EUR' }).region, 'Europe')
+})
+
+// v1.7.4 fix: the gift picker's version box renders the works-with line through worksText, so the {en,fr,es} object the
+// catalogue carries (e.g. Valorant Europe) is turned into a plain string. Rendering the object itself crashed the screen.
+test('the gift picker renders works-with as a string, never the {en,fr,es} object', () => {
+  const goal = { worksWith: { en: 'For Riot accounts in Europe', fr: 'Pour les comptes Riot en Europe', es: 'Para cuentas Riot en Europa' }, itemDetail: '20 EUR', region: 'Europe', currency: 'EUR' }
+  const w = goalVersion(goal).worksWith
+  assert.equal(typeof w, 'object') // the catalogue value is a localized object, not a string
+  assert.equal(typeof worksText(makeT('en'), w), 'string') // what the picker now passes to React
+  assert.equal(worksText(makeT('en'), w), 'For Riot accounts in Europe')
+  assert.equal(worksText(makeT('fr'), w), 'Pour les comptes Riot en Europe')
+  assert.equal(worksText(makeT('en'), null), '') // no line: renders nothing
 })
 
 test('cardChangePatch on a ready goal: deposits and status kept, new item and version set, old card kept', () => {

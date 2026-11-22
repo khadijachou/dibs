@@ -6,6 +6,7 @@ import { FriendAvatar } from '../components/Avatar.jsx'
 import { accentClass } from '../components/LookParts.jsx'
 import { listGoals, moveNim, progress, removeGoal, savedNim } from '../lib/goals.js'
 import { goalBrand } from './Home.jsx'
+import { worksText } from '../lib/brands.js'
 import { fmtNim } from '../lib/format.js'
 import { track } from '../lib/stats.js'
 import { manageRows } from '../lib/manage.js'
@@ -258,7 +259,7 @@ export function GiftPickerSheet({ goal, onClose, onTagged }) {
         <BrandLogo brand={brand} className="frd-brand-logo" />
         <span className="frd-row-mid">
           <b>{itemLabel(t, goal, { title: true })}</b>
-          {version.worksWith && <small>{version.worksWith}</small>}
+          {worksText(t, version.worksWith) && <small>{worksText(t, version.worksWith)}</small>}
           {selFriend && <small className="og-version-check">{t('og_check', { name: selFriend.name })}</small>}
         </span>
       </div>

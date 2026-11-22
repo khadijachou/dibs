@@ -1986,6 +1986,13 @@ html.is-fullscreen .bstamp-live { top: calc(58px + var(--fs-top)); }
 /* The Send card header holds the title and the "Keep it for me" undo link side by side. */
 .gift-send-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
 .gift-keep-link { flex: none; }
+
+/* Top-level error boundary fallback (v1.7.4): a centred card instead of a blank screen. */
+.eb-screen { min-height: 100vh; display: grid; place-items: center; padding: 24px; box-sizing: border-box; }
+.eb-card { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 10px; text-align: center; }
+.eb-card h2 { font-size: var(--fs-heading); line-height: var(--lh-heading); }
+.eb-card .btn { margin-top: 6px; }
+.eb-copy { align-self: center; margin-top: 2px; }
 .gift-lock-ic { flex: none; }
 /* My look > Gift banners list (components/LookParts.jsx GiftBannerSheet). */
 .gb-sheet-sub { margin: 0 0 12px; }
