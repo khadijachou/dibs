@@ -1,7 +1,7 @@
 import { CardIssue } from '../components/CardIssue.jsx'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useApp } from '../App.jsx'
-import { detailText, itemLabel } from '../lib/itemName.js'
+import { detailText, itemLabel, keepTail } from '../lib/itemName.js'
 import { BrandLogo, CREAM, Header, DibsMark, useFiat } from '../components/ui.jsx'
 import { fmtFiatValue } from '../lib/fiatValue.js'
 import { listGoals, progress, savedNim } from '../lib/goals.js'
@@ -331,7 +331,7 @@ function GoalHero({ goal, earned }) {
         <GoalDot goal={goal} />
         <div className="top">
           <BrandLogo brand={brand} />
-          <div className="tx"><div className="t1">{itemLabel(t, goal)}</div><DateLine goal={goal} date={fmtDate(goal.deadline, lang)} days={t(p.daysLeft === 1 ? 'days_left_one' : 'days_left_other', { count: p.daysLeft })} /></div>
+          <div className="tx"><div className="t1">{keepTail(itemLabel(t, goal))}</div><DateLine goal={goal} date={fmtDate(goal.deadline, lang)} days={t(p.daysLeft === 1 ? 'days_left_one' : 'days_left_other', { count: p.daysLeft })} /></div>
         </div>
         <div className="mid">
           {/* The ring opens this goal's Details, exactly like the Details button (same handler); the milestone and ready

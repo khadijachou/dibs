@@ -1517,6 +1517,7 @@ const en = {
   bigup_177_1b: 'See your profile the way friends do.',
   bigup_177_2: 'Citrus, and frames that shine',
   bigup_177_2b: 'A new accent at level 20. Rank frames catch the light.',
+  news_64: 'The Week by week chart on a goal shows its bars again.\nLong goal names wrap more neatly.\nA cleaner line under the loading screen.',
   news_63: 'Profile has a View as button to see what friends see.\nAvatar frames catch the light.\nNew accent at level 20: Citrus.\nThe catalog cards are back to their brand colours.',
 
   privacy_8h: 'Friends, only if you turn it on',
@@ -3067,6 +3068,7 @@ const fr = {
   bigup_177_1b: 'Voyez votre profil comme vos amis le voient.',
   bigup_177_2: 'Agrume, et des cadres qui brillent',
   bigup_177_2b: 'Un nouvel accent au niveau 20. Les cadres de rang captent la lumière.',
+  news_64: "Le graphique Semaine par semaine d'un objectif affiche de nouveau ses barres.\nLes noms d'objectifs longs passent mieux à la ligne.\nUne ligne plus nette sous l'écran de chargement.",
   news_63: "Le profil a un bouton Voir comme pour voir ce que voient vos amis.\nLes cadres d'avatar captent la lumière.\nNouvel accent au niveau 20 : Agrume.\nLes cartes du catalogue retrouvent les couleurs des marques.",
 
   privacy_8h: 'Les amis, seulement si vous les activez',
@@ -4617,6 +4619,7 @@ const es = {
   bigup_177_1b: 'Mira tu perfil como lo ven tus amigos.',
   bigup_177_2: 'Cítrico y marcos que brillan',
   bigup_177_2b: 'Un nuevo acento en el nivel 20. Los marcos de rango captan la luz.',
+  news_64: 'El gráfico Semana a semana de una meta vuelve a mostrar sus barras.\nLos nombres de metas largos se cortan mejor.\nUna línea más limpia bajo la pantalla de carga.',
   news_63: 'El perfil tiene un botón Ver como para ver lo que ven tus amigos.\nLos marcos de avatar captan la luz.\nNuevo acento en el nivel 20: Cítrico.\nLas tarjetas del catálogo vuelven a los colores de las marcas.',
 
   privacy_8h: 'Amigos, solo si lo activas',

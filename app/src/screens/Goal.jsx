@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useApp, useBlockBack } from '../App.jsx'
-import { detailText, itemLabel, itemName, localName } from '../lib/itemName.js'
+import { detailText, itemLabel, itemName, keepTail, localName } from '../lib/itemName.js'
 import { BrandLogo, FieldError, Header, Icon, Notice, Stamp, useFiat, WeekDots } from '../components/ui.jsx'
 import { fmtFiatValue } from '../lib/fiatValue.js'
 import { classify, lastLogText } from '../lib/errors.js'
@@ -461,7 +461,7 @@ export default function Goal({ goalId, created, amount: preset, moveFrom = null,
         <section className="hero">
           <div className="top">
             <BrandLogo brand={brand} />
-            <div className="grow"><div className="t1">{itemLabel(t, goal)}</div><div className="t2">{giftTag && <span className="gift-pill">{t('frd_gift_for', { name: giftTag.name })}</span>}{fmtDate(goal.deadline, lang)} · {t(p.daysLeft === 1 ? 'days_left_one' : 'days_left_other', { count: p.daysLeft })}</div></div>
+            <div className="grow"><div className="t1">{keepTail(itemLabel(t, goal))}</div><div className="t2">{giftTag && <span className="gift-pill">{t('frd_gift_for', { name: giftTag.name })}</span>}{fmtDate(goal.deadline, lang)} · {t(p.daysLeft === 1 ? 'days_left_one' : 'days_left_other', { count: p.daysLeft })}</div></div>
             {canManage && <button type="button" className="more-btn" aria-label={t('manage_btn')} aria-haspopup="dialog" onClick={() => setSheet('manage')}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" /></svg>
             </button>}

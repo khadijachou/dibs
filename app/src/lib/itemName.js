@@ -54,3 +54,24 @@ export function fromText(t, brand) {
 
 // "Carte-cadeau Steam · 20 USD", "Discord Nitro · 1 an · 101,99 USD"
 export const itemLabel = (t, g, { title = true } = {}) => `${itemName(t, g, { title })} · ${detailText(t, g)}`
+
+// Card-type phrases, exactly as cat_item builds them (en suffix, fr/es prefix).
+const CARD_TYPES = ['gift card', 'carte-cadeau', 'tarjeta de regalo']
+
+// keepTail: make the end of a goal label unbreakable so a long title wraps earlier and never leaves a lone
+// "·" at the end of a line. Display only (never the stored name). "Nintendo eShop gift card · 20 USD" shows
+// as "Nintendo eShop" / "gift card · 20 USD": the "· value" tail and the card-type words stay on one piece,
+// only the name's own spaces still break. A label with no card-type words just glues its last word, the dot
+// and the value (durations, top-ups). v1.7.8.
+export function keepTail(label) {
+  const str = String(label ?? '')
+  const glue = (s) => s.replace(/ /g, NBSP)
+  // The "· value" tail: the space before the first "·", around it and inside the value never break.
+  let out = str.replace(/ (· .*)$/s, (_, tail) => NBSP + glue(tail))
+  // Keep the card-type phrase itself on one piece ("gift card", "tarjeta de regalo").
+  for (const ct of CARD_TYPES) {
+    const i = out.toLowerCase().indexOf(ct)
+    if (i >= 0) { out = out.slice(0, i) + glue(out.slice(i, i + ct.length)) + out.slice(i + ct.length); break }
+  }
+  return out
+}

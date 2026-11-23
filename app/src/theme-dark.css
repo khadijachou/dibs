@@ -191,7 +191,7 @@ svg circle:first-child[stroke="#e6dccf"], svg circle:first-child[stroke="#35323f
 .splash-tag .last { color: #FFC94D; } /* "It's yours." in butter (dark butter in light mode) */
 .splash-line { position: absolute; left: 20px; right: 20px; bottom: calc(28px + env(safe-area-inset-bottom, 0px)); margin: 0; display: flex; align-items: center; justify-content: center; font-size: var(--fs-meta); line-height: var(--lh-meta); color: var(--muted); }
 .splash-nq { flex-shrink: 0; width: 14px; height: 14px; margin-right: 6px; }
-.splash-dot { color: #8F8A9C; } /* the muted middle dot between "Built on Nimiq Pay" and the version */
+.splash-dot { color: #8F8A9C; margin: 0 7px; opacity: .55; } /* the muted middle dot between "Built on Nimiq Pay" and the version; margin gives the spacing the flex row drops (v1.7.8) */
 .splash-ver { color: #8F8A9C; } /* the app version */
 @keyframes splash-in { from { opacity: 0; transform: translateY(12px) scale(.97); } }
 /* Short screens: shrink each card in place (--s folds into the drift transform, so the rotation and drift are kept),

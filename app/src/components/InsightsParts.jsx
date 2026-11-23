@@ -24,25 +24,29 @@ const shortDate = (ms, lang) =>
 function Bars({ weekly, weekStarts = null, amounts = false, ends = false }) {
   const { t, lang } = useApp()
   const max = Math.max(1, ...weekly)
+  // .ins-ends sits after .ins-bars (a sibling), never inside it: a full-width child in the flex row would
+  // squeeze the flex:1 bars down to zero width (v1.7.8 fix for the empty week-by-week chart).
   return (
-    <div className={`ins-bars${amounts ? ' with-n' : ''}`}>
-      {weekly.map((n, i) => {
-        const now = i === weekly.length - 1
-        const h = n > 0 ? Math.max(8, Math.round((n / max) * 100)) : 0
-        const date = weekStarts ? shortDate(weekStarts[i], lang) : ''
-        const label = weekStarts ? t('ins_bar_label', { date, n: fmtNim(n, lang) }) : undefined
-        return (
-          <div className="ins-bar" key={i} aria-label={label}>
-            {amounts && <span className="ins-bar-n" aria-hidden="true">{n > 0 ? compactNim(n, lang) : ''}</span>}
-            <span className="ins-bar-track" aria-hidden="true">
-              <i className={`ins-bar-fill${now ? ' now' : ''}${n === 0 ? ' empty' : ''}`} style={n > 0 ? { height: `${h}%` } : undefined} />
-            </span>
-            {amounts && <span className="ins-bar-d" aria-hidden="true">{now ? t('ins_now') : date}</span>}
-          </div>
-        )
-      })}
+    <>
+      <div className={`ins-bars${amounts ? ' with-n' : ''}`}>
+        {weekly.map((n, i) => {
+          const now = i === weekly.length - 1
+          const h = n > 0 ? Math.max(8, Math.round((n / max) * 100)) : 0
+          const date = weekStarts ? shortDate(weekStarts[i], lang) : ''
+          const label = weekStarts ? t('ins_bar_label', { date, n: fmtNim(n, lang) }) : undefined
+          return (
+            <div className="ins-bar" key={i} aria-label={label}>
+              {amounts && <span className="ins-bar-n" aria-hidden="true">{n > 0 ? compactNim(n, lang) : ''}</span>}
+              <span className="ins-bar-track" aria-hidden="true">
+                <i className={`ins-bar-fill${now ? ' now' : ''}${n === 0 ? ' empty' : ''}`} style={n > 0 ? { height: `${h}%` } : undefined} />
+              </span>
+              {amounts && <span className="ins-bar-d" aria-hidden="true">{now ? t('ins_now') : date}</span>}
+            </div>
+          )
+        })}
+      </div>
       {ends && <div className="ins-ends" aria-hidden="true"><span>{t('gw_ago')}</span><span>{t('ins_now')}</span></div>}
-    </div>
+    </>
   )
 }
 
