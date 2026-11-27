@@ -2212,6 +2212,7 @@ html.is-fullscreen .bstamp-live { top: calc(58px + var(--fs-top)); }
 .brd-tabs button { border: 0; background: transparent; color: var(--muted); font-weight: 600; font-size: var(--fs-strong); line-height: var(--lh-strong); padding: 8px 4px; border-radius: 8px; cursor: pointer; }
 .brd-tabs button.on { background: var(--gold); color: #fff; }
 .brd-meta { margin: 0 0 10px; font-size: var(--fs-meta); line-height: var(--lh-meta); color: var(--muted); }
+.brd-allzero { margin: 0 0 10px; font-size: var(--fs-meta); line-height: var(--lh-meta); color: var(--muted); }
 .brd-list { display: flex; flex-direction: column; gap: 8px; }
 .brd-row { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; }
 .brd-row.me { border-color: var(--gold); border-width: 1.5px; }

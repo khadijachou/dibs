@@ -54,6 +54,23 @@ function limiter() {
 
 const ipOf = (c) => c.req.header('x-forwarded-for')?.split(',')[0]?.trim() || c.env?.incoming?.socket?.remoteAddress || 'unknown'
 
+// Order board rows by checked XP, high to low, breaking ties by level (higher first, when the row carries it), then name
+// (locale compare), then id, so the order is stable. Then standard competition ranking: equal XP shares a place and the
+// next place skips the tie (1, 1, 3). The pinned "my row" on the Global board reads its place from here too, so a tie
+// always shows the same number. Returns a new array; never mutates the input.
+export const rankRows = (rows) => {
+  const sorted = [...rows].sort((a, b) =>
+    b.xp - a.xp ||
+    (b.level || 0) - (a.level || 0) ||
+    String(a.name || '').localeCompare(String(b.name || '')) ||
+    (a.id < b.id ? -1 : 1))
+  let place = 0
+  return sorted.map((r, i) => {
+    if (i === 0 || sorted[i - 1].xp !== r.xp) place = i + 1
+    return { place, ...r }
+  })
+}
+
 export function makeApp(store, env = process.env, opts = {}) {
   const app = new Hono()
 
@@ -392,8 +409,6 @@ export function makeApp(store, env = process.env, opts = {}) {
     if (relation !== 'stranger') row.look = cleanLook(u.look)
     return row
   }
-  const byXp = (a, b) => b.xp - a.xp || (a.id < b.id ? -1 : 1)
-  const placed = (rows) => rows.map((r, i) => ({ place: i + 1, ...r }))
 
   // The Friends board: me plus my friends who joined it, this month. Returned only when I have at least 3 friends.
   app.get('/v1/boards/friends', async (c) => {
@@ -407,8 +422,7 @@ export function makeApp(store, env = process.env, opts = {}) {
     const mine = await boardRow(me, 'self', month)
     if (mine) rows.push(mine)
     for (const fid of onBoard) { const r = await boardRow(fid, 'friend', month); if (r) rows.push(r) }
-    rows.sort(byXp)
-    return c.json({ board: 'friends', month, count: onBoard.length, rows: placed(rows) })
+    return c.json({ board: 'friends', month, count: onBoard.length, rows: rankRows(rows) })
   })
 
   // The Global board (cached 60 s): the top 5 and my own row with my place, plus the total number of members. Global
@@ -419,8 +433,7 @@ export function makeApp(store, env = process.env, opts = {}) {
     const ids = await boardMembers(store, 'global')
     const scored = []
     for (const id of ids) { const r = await boardRow(id, 'stranger', month); if (r) scored.push(r) }
-    scored.sort(byXp)
-    globalCache = { at: Date.now(), month, rows: placed(scored) }
+    globalCache = { at: Date.now(), month, rows: rankRows(scored) }
     return globalCache
   }
   app.get('/v1/boards/global', async (c) => {

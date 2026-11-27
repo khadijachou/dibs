@@ -28,13 +28,13 @@ function useBoardsState() {
 
 // One row: place, avatar (identicon from the id; the rank frame on Friends), name (its accent on Friends), the level
 // line when present, and the XP. isMe gives it the coral "(you)" treatment.
-function Row({ r, isMe, tab }) {
+function Row({ r, isMe, tab, hidePlace }) {
   const { t, lang } = useApp()
   const isFriends = tab === 'friends'
   const sub = r.level != null ? t('frd_level_rank', { n: r.level, rank: t(`rank_${rankOf(r.level).id}`) }) : null
   return (
     <div className={`brd-row${isMe ? ' me' : ''}`}>
-      <span className="brd-place">{r.place}</span>
+      {!hidePlace && <span className="brd-place">{r.place}</span>}
       <Avatar seed={r.id} size={40} className="frd-av" frame={isFriends ? r.look?.frame : null} />
       <span className="frd-row-mid">
         <b className={isFriends ? accentClass(r.look?.accent) : undefined}>{r.name}{isMe && <span className="brd-you"> {t('board_you')}</span>}</b>
@@ -89,6 +89,8 @@ export default function Boards() {
   // Global: my row is pinned under the top 5 with a gap, unless I am already in the top 5.
   const meInTop = tab === 'global' && data?.me && rows.some((r) => r.id === data.me.id)
   const meRow = tab === 'global' && data?.me && !meInTop ? data.me : null
+  // Everyone on the board still at 0 checked XP: the place numbers (all 1) say nothing, so hide them and show one line.
+  const allZero = (() => { const all = meRow ? [...rows, meRow] : rows; return all.length > 0 && all.every((r) => !r.xp) })()
   const countStr = count != null
     ? (tab === 'global'
       ? t(count === 1 ? 'board_count_global_one' : 'board_count_global', { n: fmtN(count, lang) })
@@ -129,12 +131,13 @@ export default function Boards() {
 
         {!loading && !err && !needFriends && (
           <>
+            {allZero && <p className="brd-allzero">{t('board_all_zero')}</p>}
             <section className="brd-list">
-              {rows.map((r) => <Row key={r.id} r={r} isMe={r.id === myId} tab={tab} />)}
+              {rows.map((r) => <Row key={r.id} r={r} isMe={r.id === myId} tab={tab} hidePlace={allZero} />)}
               {meRow && (
                 <>
                   <div className="brd-gap" aria-hidden="true">· · ·</div>
-                  <Row r={meRow} isMe tab={tab} />
+                  <Row r={meRow} isMe tab={tab} hidePlace={allZero} />
                 </>
               )}
             </section>

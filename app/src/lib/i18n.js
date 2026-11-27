@@ -1473,6 +1473,7 @@ const en = {
   board_xp: '{xp} XP',
   board_you: '(you)',
   board_note: "Resets on the 1st. XP from before you joined isn't counted here.",
+  board_all_zero: 'No checked XP yet this month. Your next deposit counts.',
   board_need_title: 'A board needs 3 friends',
   board_need_sub: 'You have {n} so far. Global is open now.',
   board_need_sub_one: 'You have 1 so far. Global is open now.',
@@ -1517,6 +1518,7 @@ const en = {
   bigup_177_1b: 'See your profile the way friends do.',
   bigup_177_2: 'Citrus, and frames that shine',
   bigup_177_2b: 'A new accent at level 20. Rank frames catch the light.',
+  news_65: 'Leaderboards: equal XP now shares the same place.',
   news_64: 'The Week by week chart on a goal shows its bars again.\nLong goal names wrap more neatly.\nA cleaner line under the loading screen.',
   news_63: 'Profile has a View as button to see what friends see.\nAvatar frames catch the light.\nNew accent at level 20: Citrus.\nThe catalog cards are back to their brand colours.',
 
@@ -3024,6 +3026,7 @@ const fr = {
   board_xp: '{xp} XP',
   board_you: '(vous)',
   board_note: "Remise à zéro le 1er. Les XP d'avant votre arrivée ne comptent pas ici.",
+  board_all_zero: 'Pas encore d\'XP vérifiée ce mois-ci. Votre prochain dépôt compte.',
   board_need_title: 'Un classement demande 3 amis',
   board_need_sub: 'Vous en avez {n} pour l’instant. Le général est ouvert.',
   board_need_sub_one: 'Vous en avez 1 pour l’instant. Le général est ouvert.',
@@ -3068,6 +3071,7 @@ const fr = {
   bigup_177_1b: 'Voyez votre profil comme vos amis le voient.',
   bigup_177_2: 'Agrume, et des cadres qui brillent',
   bigup_177_2b: 'Un nouvel accent au niveau 20. Les cadres de rang captent la lumière.',
+  news_65: 'Classements : une même XP partage maintenant la même place.',
   news_64: "Le graphique Semaine par semaine d'un objectif affiche de nouveau ses barres.\nLes noms d'objectifs longs passent mieux à la ligne.\nUne ligne plus nette sous l'écran de chargement.",
   news_63: "Le profil a un bouton Voir comme pour voir ce que voient vos amis.\nLes cadres d'avatar captent la lumière.\nNouvel accent au niveau 20 : Agrume.\nLes cartes du catalogue retrouvent les couleurs des marques.",
 
@@ -4575,6 +4579,7 @@ const es = {
   board_xp: '{xp} XP',
   board_you: '(tú)',
   board_note: 'Se reinicia el día 1. Los XP de antes de unirte no cuentan aquí.',
+  board_all_zero: 'Aún no hay XP verificada este mes. Tu próximo depósito cuenta.',
   board_need_title: 'Una clasificación necesita 3 amigos',
   board_need_sub: 'Tienes {n} por ahora. La global ya está abierta.',
   board_need_sub_one: 'Tienes 1 por ahora. La global ya está abierta.',
@@ -4619,6 +4624,7 @@ const es = {
   bigup_177_1b: 'Mira tu perfil como lo ven tus amigos.',
   bigup_177_2: 'Cítrico y marcos que brillan',
   bigup_177_2b: 'Un nuevo acento en el nivel 20. Los marcos de rango captan la luz.',
+  news_65: 'Clasificaciones: la misma XP comparte ahora el mismo puesto.',
   news_64: 'El gráfico Semana a semana de una meta vuelve a mostrar sus barras.\nLos nombres de metas largos se cortan mejor.\nUna línea más limpia bajo la pantalla de carga.',
   news_63: 'El perfil tiene un botón Ver como para ver lo que ven tus amigos.\nLos marcos de avatar captan la luz.\nNuevo acento en el nivel 20: Cítrico.\nLas tarjetas del catálogo vuelven a los colores de las marcas.',
 

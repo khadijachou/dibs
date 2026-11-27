@@ -5,7 +5,7 @@ import { randomBytes } from 'node:crypto'
 import { ed25519 } from '@noble/curves/ed25519.js'
 import { sha256 } from '@noble/hashes/sha2.js'
 import { createMemoryStore } from './store.js'
-import { makeApp } from './index.js'
+import { makeApp, rankRows } from './index.js'
 import { walletKey, addressOf } from './crypto.js'
 import { countDeposit, setBoards, boardsChoice, joinedAtMs, makeChecker, monthOf } from './boards.js'
 
@@ -146,6 +146,34 @@ test('joining sets joinedAt once; leaving removes it, rejoining sets a new one',
   await setBoards(s, u, { friends: true, global: true }, ms('2026-11-10T00:00:00Z'))
   assert.equal(u.boards.friends, '2026-11-10T00:00:00.000Z')
   assert.equal(joinedAtMs(u), ms('2026-11-05T00:00:00Z')) // earliest active join (global)
+})
+
+// ---- rankRows: standard competition ranking, ties share a place ---------------------------------------------
+
+test('two rows at 0 XP share place 1', () => {
+  const out = rankRows([{ id: 'b', xp: 0 }, { id: 'a', xp: 0 }])
+  assert.deepEqual(out.map((r) => r.place), [1, 1])
+})
+
+test('three rows, two tied: places are 1, 1, 3 (the next place skips the tie)', () => {
+  const out = rankRows([{ id: 'x', xp: 10 }, { id: 'y', xp: 10 }, { id: 'z', xp: 0 }])
+  assert.deepEqual(out.map((r) => r.place), [1, 1, 3])
+})
+
+test('a tie is ordered by level first (higher level ahead), both still sharing the place', () => {
+  const out = rankRows([{ id: 'a', xp: 50, level: 2 }, { id: 'b', xp: 50, level: 7 }])
+  assert.deepEqual(out.map((r) => r.id), ['b', 'a']) // level 7 ahead of level 2
+  assert.deepEqual(out.map((r) => r.place), [1, 1]) // same XP, same place
+})
+
+test('my pinned row reads its shared place from the ranking when tied', () => {
+  // Three at the top on 100 XP, then me on 40. Finding my row gives the place the ranking assigned.
+  const ranked = rankRows([{ id: 'a', xp: 100 }, { id: 'me', xp: 40 }, { id: 'b', xp: 100 }, { id: 'c', xp: 100 }])
+  const mine = ranked.find((r) => r.id === 'me')
+  assert.equal(mine.place, 4) // three tied at place 1, so I am 4th, not 2nd
+  // And when I tie for the top, my pinned place is the shared 1.
+  const tied = rankRows([{ id: 'a', xp: 40 }, { id: 'me', xp: 40 }, { id: 'b', xp: 10 }])
+  assert.equal(tied.find((r) => r.id === 'me').place, 1)
 })
 
 // ---- routes, end to end with a mocked RPC -------------------------------------------------------------------
