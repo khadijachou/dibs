@@ -4110,5 +4110,341 @@
       "fr": "Pour les magasins Samsung MGS au Nigéria. En magasin seulement.",
       "es": "Para las tiendas Samsung MGS en Nigeria. Solo en tienda."
     }
+  },
+  {
+    "id": "openai-usa-20",
+    "slug": "openai-usa",
+    "packageValue": "20",
+    "name": "ChatGPT gift card",
+    "detail": "20 USD",
+    "icon": "gift",
+    "fallbackUsd": 20,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For ChatGPT users based in the USA.",
+      "fr": "Pour les utilisateurs de ChatGPT aux États-Unis.",
+      "es": "Para usuarios de ChatGPT en Estados Unidos."
+    }
+  },
+  {
+    "id": "openai-usa-40",
+    "slug": "openai-usa",
+    "packageValue": "40",
+    "name": "ChatGPT gift card",
+    "detail": "40 USD",
+    "icon": "gift",
+    "fallbackUsd": 40.01,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For ChatGPT users based in the USA.",
+      "fr": "Pour les utilisateurs de ChatGPT aux États-Unis.",
+      "es": "Para usuarios de ChatGPT en Estados Unidos."
+    }
+  },
+  {
+    "id": "openai-usa-60",
+    "slug": "openai-usa",
+    "packageValue": "60",
+    "name": "ChatGPT gift card",
+    "detail": "60 USD",
+    "icon": "gift",
+    "fallbackUsd": 60,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For ChatGPT users based in the USA.",
+      "fr": "Pour les utilisateurs de ChatGPT aux États-Unis.",
+      "es": "Para usuarios de ChatGPT en Estados Unidos."
+    }
+  },
+  {
+    "id": "openai-usa-80",
+    "slug": "openai-usa",
+    "packageValue": "80",
+    "name": "ChatGPT gift card",
+    "detail": "80 USD",
+    "icon": "gift",
+    "fallbackUsd": 80,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For ChatGPT users based in the USA.",
+      "fr": "Pour les utilisateurs de ChatGPT aux États-Unis.",
+      "es": "Para usuarios de ChatGPT en Estados Unidos."
+    }
+  },
+  {
+    "id": "openai-usa-100",
+    "slug": "openai-usa",
+    "packageValue": "100",
+    "name": "ChatGPT gift card",
+    "detail": "100 USD",
+    "icon": "gift",
+    "fallbackUsd": 100,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For ChatGPT users based in the USA.",
+      "fr": "Pour les utilisateurs de ChatGPT aux États-Unis.",
+      "es": "Para usuarios de ChatGPT en Estados Unidos."
+    }
+  },
+  {
+    "id": "nordpass-international-1-year-subscription",
+    "slug": "nordpass-international",
+    "packageValue": "1 Year Subscription",
+    "name": "NordPass",
+    "detail": "1 Year Subscription",
+    "icon": "gift",
+    "fallbackUsd": 29.99,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For personal NordPass accounts, not business ones.",
+      "fr": "Pour les comptes NordPass personnels, pas les comptes professionnels.",
+      "es": "Para cuentas personales de NordPass, no para cuentas de empresa."
+    }
+  },
+  {
+    "id": "nordpass-international-2-years-subscription",
+    "slug": "nordpass-international",
+    "packageValue": "2 Years Subscription",
+    "name": "NordPass",
+    "detail": "2 Years Subscription",
+    "icon": "gift",
+    "fallbackUsd": 49.98,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For personal NordPass accounts, not business ones.",
+      "fr": "Pour les comptes NordPass personnels, pas les comptes professionnels.",
+      "es": "Para cuentas personales de NordPass, no para cuentas de empresa."
+    }
+  },
+  {
+    "id": "exitlag-international-semiannual",
+    "slug": "exitlag-international",
+    "packageValue": "Semiannual",
+    "name": "ExitLag",
+    "detail": "Semiannual",
+    "icon": "gift",
+    "fallbackUsd": 32.99,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For an ExitLag account.",
+      "fr": "Pour un compte ExitLag.",
+      "es": "Para una cuenta de ExitLag."
+    }
+  },
+  {
+    "id": "exitlag-international-annual",
+    "slug": "exitlag-international",
+    "packageValue": "Annual",
+    "name": "ExitLag",
+    "detail": "Annual",
+    "icon": "gift",
+    "fallbackUsd": 59.99,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For an ExitLag account.",
+      "fr": "Pour un compte ExitLag.",
+      "es": "Para una cuenta de ExitLag."
+    }
+  },
+  {
+    "id": "surfshark-vpn-international-surfshark-1m",
+    "slug": "surfshark-vpn-international",
+    "packageValue": "Surfshark 1M",
+    "name": "Surfshark VPN",
+    "detail": "Surfshark 1M",
+    "icon": "gift",
+    "fallbackUsd": 15.45,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For a Surfshark VPN account.",
+      "fr": "Pour un compte Surfshark VPN.",
+      "es": "Para una cuenta de Surfshark VPN."
+    }
+  },
+  {
+    "id": "surfshark-vpn-international-surfshark-1y",
+    "slug": "surfshark-vpn-international",
+    "packageValue": "Surfshark 1Y",
+    "name": "Surfshark VPN",
+    "detail": "Surfshark 1Y",
+    "icon": "gift",
+    "fallbackUsd": 48,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For a Surfshark VPN account.",
+      "fr": "Pour un compte Surfshark VPN.",
+      "es": "Para una cuenta de Surfshark VPN."
+    }
+  },
+  {
+    "id": "surfshark-vpn-international-surfshark-2y",
+    "slug": "surfshark-vpn-international",
+    "packageValue": "Surfshark 2Y",
+    "name": "Surfshark VPN",
+    "detail": "Surfshark 2Y",
+    "icon": "gift",
+    "fallbackUsd": 59.99,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For a Surfshark VPN account.",
+      "fr": "Pour un compte Surfshark VPN.",
+      "es": "Para una cuenta de Surfshark VPN."
+    }
+  },
+  {
+    "id": "google-workspace-usa-50",
+    "slug": "google-workspace-usa",
+    "packageValue": "50",
+    "name": "Google Workspace credit",
+    "detail": "50 USD",
+    "icon": "gift",
+    "fallbackUsd": 50,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For a Google Workspace account billed in USD.",
+      "fr": "Pour un compte Google Workspace facturé en USD.",
+      "es": "Para una cuenta de Google Workspace facturada en USD."
+    }
+  },
+  {
+    "id": "google-workspace-usa-100",
+    "slug": "google-workspace-usa",
+    "packageValue": "100",
+    "name": "Google Workspace credit",
+    "detail": "100 USD",
+    "icon": "gift",
+    "fallbackUsd": 100,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For a Google Workspace account billed in USD.",
+      "fr": "Pour un compte Google Workspace facturé en USD.",
+      "es": "Para una cuenta de Google Workspace facturada en USD."
+    }
+  },
+  {
+    "id": "ppq-ai-international-1",
+    "slug": "ppq-ai-international",
+    "packageValue": "1",
+    "name": "PPQ.ai credit",
+    "detail": "1 USD",
+    "icon": "gift",
+    "fallbackUsd": 1,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "PPQ.ai credit for 400+ AI models, from any country. Not a subscription to any AI brand.",
+      "fr": "Crédit PPQ.ai pour plus de 400 modèles d'IA, depuis n'importe quel pays. Ce n'est pas un abonnement à une marque d'IA.",
+      "es": "Crédito de PPQ.ai para más de 400 modelos de IA, desde cualquier país. No es una suscripción a ninguna marca de IA."
+    }
+  },
+  {
+    "id": "ppq-ai-international-5",
+    "slug": "ppq-ai-international",
+    "packageValue": "5",
+    "name": "PPQ.ai credit",
+    "detail": "5 USD",
+    "icon": "gift",
+    "fallbackUsd": 5,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "PPQ.ai credit for 400+ AI models, from any country. Not a subscription to any AI brand.",
+      "fr": "Crédit PPQ.ai pour plus de 400 modèles d'IA, depuis n'importe quel pays. Ce n'est pas un abonnement à une marque d'IA.",
+      "es": "Crédito de PPQ.ai para más de 400 modelos de IA, desde cualquier país. No es una suscripción a ninguna marca de IA."
+    }
+  },
+  {
+    "id": "ppq-ai-international-10",
+    "slug": "ppq-ai-international",
+    "packageValue": "10",
+    "name": "PPQ.ai credit",
+    "detail": "10 USD",
+    "icon": "gift",
+    "fallbackUsd": 10,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "PPQ.ai credit for 400+ AI models, from any country. Not a subscription to any AI brand.",
+      "fr": "Crédit PPQ.ai pour plus de 400 modèles d'IA, depuis n'importe quel pays. Ce n'est pas un abonnement à une marque d'IA.",
+      "es": "Crédito de PPQ.ai para más de 400 modelos de IA, desde cualquier país. No es una suscripción a ninguna marca de IA."
+    }
+  },
+  {
+    "id": "ppq-ai-international-20",
+    "slug": "ppq-ai-international",
+    "packageValue": "20",
+    "name": "PPQ.ai credit",
+    "detail": "20 USD",
+    "icon": "gift",
+    "fallbackUsd": 20,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "PPQ.ai credit for 400+ AI models, from any country. Not a subscription to any AI brand.",
+      "fr": "Crédit PPQ.ai pour plus de 400 modèles d'IA, depuis n'importe quel pays. Ce n'est pas un abonnement à une marque d'IA.",
+      "es": "Crédito de PPQ.ai para más de 400 modelos de IA, desde cualquier país. No es una suscripción a ninguna marca de IA."
+    }
+  },
+  {
+    "id": "ppq-ai-international-50",
+    "slug": "ppq-ai-international",
+    "packageValue": "50",
+    "name": "PPQ.ai credit",
+    "detail": "50 USD",
+    "icon": "gift",
+    "fallbackUsd": 50,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "PPQ.ai credit for 400+ AI models, from any country. Not a subscription to any AI brand.",
+      "fr": "Crédit PPQ.ai pour plus de 400 modèles d'IA, depuis n'importe quel pays. Ce n'est pas un abonnement à une marque d'IA.",
+      "es": "Crédito de PPQ.ai para más de 400 modelos de IA, desde cualquier país. No es una suscripción a ninguna marca de IA."
+    }
+  },
+  {
+    "id": "ppq-ai-international-100",
+    "slug": "ppq-ai-international",
+    "packageValue": "100",
+    "name": "PPQ.ai credit",
+    "detail": "100 USD",
+    "icon": "gift",
+    "fallbackUsd": 100,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "PPQ.ai credit for 400+ AI models, from any country. Not a subscription to any AI brand.",
+      "fr": "Crédit PPQ.ai pour plus de 400 modèles d'IA, depuis n'importe quel pays. Ce n'est pas un abonnement à une marque d'IA.",
+      "es": "Crédito de PPQ.ai para más de 400 modelos de IA, desde cualquier país. No es una suscripción a ninguna marca de IA."
+    }
+  },
+  {
+    "id": "office-usa-365-personal",
+    "slug": "office-usa",
+    "packageValue": "365 Personal",
+    "name": "Microsoft Office",
+    "detail": "365 Personal",
+    "icon": "gift",
+    "fallbackUsd": 99.99,
+    "region": "USA",
+    "currency": "USD",
+    "worksWith": {
+      "en": "For Microsoft 365 Personal.",
+      "fr": "Pour Microsoft 365 Personnel.",
+      "es": "Para Microsoft 365 Personal."
+    }
   }
 ]

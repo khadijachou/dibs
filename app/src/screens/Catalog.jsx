@@ -62,10 +62,11 @@ export function BrandSearch({ brands, q, onQ }) {
   )
 }
 
-// v1.6.0: a butter "new" dot on the Electronics chip until it is first opened (dibs.chipNew160). The chip itself only
-// shows once a visible brand uses it (usedChips), so the dot never shows while every Electronics brand is pending.
-const NEW_CHIP = 'electronics'
-const NEW_CHIP_KEY = 'dibs.chipNew160'
+// v1.8.0: a butter "new" dot on the AI & Tools chip until it is first opened (dibs.chipNew180). The chip itself only
+// shows once a visible brand uses it (usedChips), so the dot never shows while every AI & Tools brand is pending.
+// (v1.6.0 did the same for the Electronics chip, dibs.chipNew160.)
+const NEW_CHIP = 'tools'
+const NEW_CHIP_KEY = 'dibs.chipNew180'
 const newChipSeen = () => { try { return localStorage.getItem(NEW_CHIP_KEY) === '1' } catch { return false } }
 
 export function BrandChips({ brands, chip, onChip }) {

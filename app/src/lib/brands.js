@@ -61,6 +61,17 @@ export const BRANDS = [
   { key: 'starbucks',   name: 'Starbucks',         color: ['#00845a', '#002e20'], chip: 'food',      logo: null, tile: { bg: '#00704a', fg: '#fff', letter: 'S' }, slugs: ['starbucks-usa', 'starbucks-uk'], delivers: 'pin', region: ['USA', 'UK'], about: 'brand_about_starbucks' },           // confirm
   { key: 'doordash',    name: 'DoorDash',          color: ['#ff3008', '#6b1403'], chip: 'food',      logo: null, tile: { bg: '#ff3008', fg: '#fff', letter: 'D' }, slugs: ['doordash-usa'], delivers: 'code', region: ['USA'], about: 'brand_about_doordash' },            // confirm
   { key: 'burgerking',  name: 'Burger King',       color: ['#d62300', '#502314'], chip: 'food',      logo: null, tile: { bg: '#D62300', fg: '#fff', letter: 'B' }, slugs: ['burger-king-usa'], delivers: 'code', region: ['USA'], about: 'brand_about_burgerking' },
+  // v1.8.0 AI & Tools: one USA (USD) version each (XI "international" USD cards count as USA). Surfshark draws its
+  // simple-icons glyph (lib/brandIcons.js siSurfshark). The others have no simple-icons entry and no logo file, so they
+  // use a neutral letter tile (#3a3744, the fallback gradient colour), never a guessed brand colour or a redrawn logo.
+  // PPQ.ai is never shown as Claude, Gemini or ChatGPT: its lead line is the only place the models are named.
+  { key: 'chatgpt',     name: 'ChatGPT',           color: ['#3a3744', '#1b1a20'], chip: 'tools',     logo: null, tile: { bg: '#3a3744', fg: '#fff', letter: 'C' }, slugs: ['openai-usa'], delivers: 'code', region: ['USA'], about: 'brand_about_chatgpt' },
+  { key: 'ppq',         name: 'PPQ.ai',            color: ['#3a3744', '#1b1a20'], chip: 'tools',     logo: null, tile: { bg: '#3a3744', fg: '#fff', letter: 'P' }, slugs: ['ppq-ai-international'], delivers: 'code', region: ['USA'], about: 'brand_about_ppq' },
+  { key: 'surfshark',   name: 'Surfshark',         color: ['#3a3744', '#1b1a20'], chip: 'tools',     logo: null, tile: { bg: '#3a3744', fg: '#fff', letter: 'S' }, slugs: ['surfshark-vpn-international'], delivers: 'code', region: ['USA'], about: 'brand_about_surfshark' },
+  { key: 'nordpass',    name: 'NordPass',          color: ['#3a3744', '#1b1a20'], chip: 'tools',     logo: null, tile: { bg: '#3a3744', fg: '#fff', letter: 'N' }, slugs: ['nordpass-international'], delivers: 'code', region: ['USA'], about: 'brand_about_nordpass' },
+  { key: 'exitlag',     name: 'ExitLag',           color: ['#3a3744', '#1b1a20'], chip: 'tools',     logo: null, tile: { bg: '#3a3744', fg: '#fff', letter: 'E' }, slugs: ['exitlag-international'], delivers: 'code', region: ['USA'], about: 'brand_about_exitlag' },
+  { key: 'gworkspace',  name: 'Google Workspace',  color: ['#3a3744', '#1b1a20'], chip: 'tools',     logo: null, tile: { bg: '#3a3744', fg: '#fff', letter: 'G' }, slugs: ['google-workspace-usa'], delivers: 'code', region: ['USA'], about: 'brand_about_gworkspace' },
+  { key: 'msoffice',    name: 'Microsoft Office',  color: ['#3a3744', '#1b1a20'], chip: 'tools',     logo: null, tile: { bg: '#3a3744', fg: '#fff', letter: 'M' }, slugs: ['office-usa'], delivers: 'code', region: ['USA'], about: 'brand_about_msoffice' },
 ]
 
 // About this card (Goal Details): about = i18n key of the one-line description; delivers = what the shop sends
@@ -69,7 +80,7 @@ export const BRANDS = [
 // decides what shows: catalogBrands().regions). Airbnb, Discord, Flightgift and
 // Disney: the shop's product data does not state the delivery form, so these follow the brand sheet (9 Nov).
 // Chip order on the Catalog screen, after All. A chip shows only when a visible brand uses it (Catalog usedChips).
-export const CHIPS = ['electronics', 'games', 'travel', 'shopping', 'streaming', 'food']
+export const CHIPS = ['electronics', 'tools', 'games', 'travel', 'shopping', 'streaming', 'food']
 // The five categories before v1.6.0. The Full set badge stays on these (nobody needs an Electronics card for a badge
 // they were close to), and quests use them while the live catalogue is not loaded (it says nothing about what is sold).
 export const CLASSIC_CHIPS = ['games', 'travel', 'shopping', 'streaming', 'food']

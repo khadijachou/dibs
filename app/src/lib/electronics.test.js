@@ -26,7 +26,7 @@ const SIX = {
 }
 
 test('chips: Electronics first; the Full set badge keeps the five older categories', () => {
-  assert.deepEqual(CHIPS, ['electronics', 'games', 'travel', 'shopping', 'streaming', 'food'])
+  assert.deepEqual(CHIPS, ['electronics', 'tools', 'games', 'travel', 'shopping', 'streaming', 'food'])
   assert.deepEqual(CLASSIC_CHIPS, ['games', 'travel', 'shopping', 'streaming', 'food'])
   const r = (brandKey) => ({ id: brandKey, brandKey, status: 'redeemed', targetNim: 1000, deposits: [], unlockSteps: [], createdAt: '2026-11-01T00:00:00Z', deadline: '2027-01-01T00:00:00Z' })
   const has = (goals, id) => evaluate({ goals, now: Date.parse('2026-12-02T00:00:00Z') }).some((x) => x.id === id)
