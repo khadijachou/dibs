@@ -65,16 +65,17 @@ export const BRANDS = [
   // simple-icons glyph (lib/brandIcons.js siSurfshark). v1.8.1: the others got their own logo files (app/public/logos).
   // All are square marks, so no logoFit 'wide'. chatgpt, ppq, exitlag, gworkspace and msoffice are coloured marks on a
   // transparent background, so they sit on the default white plate; nordpass is a white mountain on its own teal square,
-  // so it gets a plate in that teal (#00cfb6) and the picture blends into it. Each tile stays as the fallback, letter
-  // unchanged. PayPerQ (key still ppq, slug ppq-ai-international) is never shown as Claude, Gemini or ChatGPT: its lead
+  // so it gets a plate in that teal (#00cfb6) and the picture blends into it. v1.8.2: each card and letter tile now
+  // carries the brand's own colour (the gradient's first stop is the tile.bg, the second a dark shade of it), with the
+  // letter kept white. PayPerQ (key still ppq, slug ppq-ai-international) is never shown as Claude, Gemini or ChatGPT: its lead
   // line is the only place the models are named. Typing "ppq" still finds PayPerQ through aliases.
-  { key: 'chatgpt',     name: 'ChatGPT',           color: ['#3a3744', '#1b1a20'], chip: 'tools',     logo: '/logos/chatgpt.png', tile: { bg: '#3a3744', fg: '#fff', letter: 'C' }, slugs: ['openai-usa'], delivers: 'code', region: ['USA'], about: 'brand_about_chatgpt' },
-  { key: 'ppq',         name: 'PayPerQ',           color: ['#3a3744', '#1b1a20'], chip: 'tools',     logo: '/logos/ppq.png', tile: { bg: '#3a3744', fg: '#fff', letter: 'P' }, aliases: ['ppq'], slugs: ['ppq-ai-international'], delivers: 'code', region: ['USA'], about: 'brand_about_ppq' },
-  { key: 'surfshark',   name: 'Surfshark',         color: ['#3a3744', '#1b1a20'], chip: 'tools',     logo: null, tile: { bg: '#3a3744', fg: '#fff', letter: 'S' }, slugs: ['surfshark-vpn-international'], delivers: 'code', region: ['USA'], about: 'brand_about_surfshark' },
-  { key: 'nordpass',    name: 'NordPass',          color: ['#3a3744', '#1b1a20'], chip: 'tools',     logo: '/logos/nordpass.png', logoPlate: '#00cfb6', tile: { bg: '#3a3744', fg: '#fff', letter: 'N' }, slugs: ['nordpass-international'], delivers: 'code', region: ['USA'], about: 'brand_about_nordpass' },
-  { key: 'exitlag',     name: 'ExitLag',           color: ['#3a3744', '#1b1a20'], chip: 'tools',     logo: '/logos/exitlag.png', tile: { bg: '#3a3744', fg: '#fff', letter: 'E' }, slugs: ['exitlag-international'], delivers: 'code', region: ['USA'], about: 'brand_about_exitlag' },
-  { key: 'gworkspace',  name: 'Google Workspace',  color: ['#3a3744', '#1b1a20'], chip: 'tools',     logo: '/logos/gworkspace.png', tile: { bg: '#3a3744', fg: '#fff', letter: 'G' }, slugs: ['google-workspace-usa'], delivers: 'code', region: ['USA'], about: 'brand_about_gworkspace' },
-  { key: 'msoffice',    name: 'Microsoft Office',  color: ['#3a3744', '#1b1a20'], chip: 'tools',     logo: '/logos/msoffice.png', tile: { bg: '#3a3744', fg: '#fff', letter: 'M' }, slugs: ['office-usa'], delivers: 'code', region: ['USA'], about: 'brand_about_msoffice' },
+  { key: 'chatgpt',     name: 'ChatGPT',           color: ['#10a37f', '#063d30'], chip: 'tools',     logo: '/logos/chatgpt.png', tile: { bg: '#10A37F', fg: '#fff', letter: 'C' }, slugs: ['openai-usa'], delivers: 'code', region: ['USA'], about: 'brand_about_chatgpt' },
+  { key: 'ppq',         name: 'PayPerQ',           color: ['#f2420d', '#5c1805'], chip: 'tools',     logo: '/logos/ppq.png', tile: { bg: '#F2420D', fg: '#fff', letter: 'P' }, aliases: ['ppq'], slugs: ['ppq-ai-international'], delivers: 'code', region: ['USA'], about: 'brand_about_ppq' },
+  { key: 'surfshark',   name: 'Surfshark',         color: ['#1ebfbf', '#0a4747'], chip: 'tools',     logo: null, tile: { bg: '#1EBFBF', fg: '#fff', letter: 'S' }, slugs: ['surfshark-vpn-international'], delivers: 'code', region: ['USA'], about: 'brand_about_surfshark' },
+  { key: 'nordpass',    name: 'NordPass',          color: ['#00c8b4', '#004a43'], chip: 'tools',     logo: '/logos/nordpass.png', logoPlate: '#00cfb6', tile: { bg: '#00C8B4', fg: '#fff', letter: 'N' }, slugs: ['nordpass-international'], delivers: 'code', region: ['USA'], about: 'brand_about_nordpass' },
+  { key: 'exitlag',     name: 'ExitLag',           color: ['#c41414', '#4a0707'], chip: 'tools',     logo: '/logos/exitlag.png', tile: { bg: '#C41414', fg: '#fff', letter: 'E' }, slugs: ['exitlag-international'], delivers: 'code', region: ['USA'], about: 'brand_about_exitlag' },
+  { key: 'gworkspace',  name: 'Google Workspace',  color: ['#4285f4', '#173a78'], chip: 'tools',     logo: '/logos/gworkspace.png', tile: { bg: '#4285F4', fg: '#fff', letter: 'G' }, slugs: ['google-workspace-usa'], delivers: 'code', region: ['USA'], about: 'brand_about_gworkspace' },
+  { key: 'msoffice',    name: 'Microsoft Office',  color: ['#eb3c00', '#5a1700'], chip: 'tools',     logo: '/logos/msoffice.png', tile: { bg: '#EB3C00', fg: '#fff', letter: 'M' }, slugs: ['office-usa'], delivers: 'code', region: ['USA'], about: 'brand_about_msoffice' },
 ]
 
 // About this card (Goal Details): about = i18n key of the one-line description; delivers = what the shop sends
