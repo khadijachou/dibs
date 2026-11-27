@@ -22,7 +22,7 @@ import {
   directGiftsReceived, directSentTo, dropDirectGiftsFor, stripDirectBoxesBetween,
 } from './directGifts.js'
 import {
-  BOARDS, boardsChoice, boardMembers, setBoards, xpOf, dropBoardsFor, countDeposit, makeFetchTx, monthOf, walletKeys,
+  BOARDS, boardsChoice, boardMembers, setBoards, dropBoardsFor, countDeposit, makeFetchTx, walletKeys,
 } from './boards.js'
 
 export const VERSION = '1.7.4'
@@ -70,6 +70,21 @@ export const rankRows = (rows) => {
     if (i === 0 || sorted[i - 1].xp !== r.xp) place = i + 1
     return { place, ...r }
   })
+}
+
+// Order Global-board rows by level, high to low, ties sharing a place (1, 1, 3), then by name (locale compare), then id
+// (v1.7.9 rule). A member with no stored level goes at the end, in name order, with no place (shown as "Level hidden").
+// Returns a new array; never mutates the input.
+export const rankByLevel = (rows) => {
+  const byName = (a, b) => String(a.name || '').localeCompare(String(b.name || '')) || (a.id < b.id ? -1 : 1)
+  const withLevel = rows.filter((r) => typeof r.level === 'number').sort((a, b) => (b.level - a.level) || byName(a, b))
+  const noLevel = rows.filter((r) => typeof r.level !== 'number').sort(byName)
+  let place = 0
+  const placed = withLevel.map((r, i) => {
+    if (i === 0 || withLevel[i - 1].level !== r.level) place = i + 1
+    return { place, ...r }
+  })
+  return [...placed, ...noLevel.map((r) => ({ ...r }))] // no-level rows carry no place
 }
 
 export function makeApp(store, env = process.env, opts = {}) {
@@ -438,13 +453,16 @@ export function makeApp(store, env = process.env, opts = {}) {
     const v = fullVisibility(member.visibility).level
     return v === 'everyone' || (v === 'friends' && relation === 'friend')
   }
-  // Build one Global-board row for a member id. relation: 'self' | 'friend' | 'stranger'. Carries only id (the avatar
-  // seed), name, the month's checked XP, and level when visible. Never an avatar picture, a wallet or anything else.
-  async function boardRow(id, relation, month) {
+  // Build one Global-board row for a member id (v1.7.12): id (the avatar seed), name, and the stored level and rank.
+  // Joining Global says "Your name and level, nothing else", so the stored level is used here even when the member's
+  // level visibility for friends is off. A member with no stored level has no level/rank (ranked last, "Level hidden").
+  // No XP on Global rows any more. Never an avatar picture, a wallet or anything else from the profile.
+  async function globalRow(id) {
     const u = await loadUser(id)
     if (!u) return null
-    const row = { id: u.id, name: u.name, xp: await xpOf(store, id, month) }
-    if (levelVisible(u, relation)) { const sh = await loadShared(id); if (sh.level) row.level = sh.level.level }
+    const row = { id: u.id, name: u.name }
+    const sh = await loadShared(id)
+    if (sh.level && typeof sh.level.level === 'number') { row.level = sh.level.level; row.rank = sh.level.rank }
     return row
   }
 
@@ -485,30 +503,23 @@ export function makeApp(store, env = process.env, opts = {}) {
     return c.json({ board: 'friends', count, hidden, rows: rankRows(rows) })
   })
 
-  // The Global board (cached 60 s): the top 5 and my own row with my place, plus the total number of members. Global
-  // rows carry only name, level (everyone-visible, or my own) and xp, with the id for the identicon.
+  // The Global board (cached 60 s, v1.7.12): the top 5 and my own row with my place, plus the member count. Ranked by
+  // level, ties sharing a place; a member with no stored level is last with no place. Rows carry place, id, name, level,
+  // rank. No XP, no monthly reset.
   async function globalRanking() {
     if (globalCache && Date.now() - globalCache.at < 60_000) return globalCache
-    const month = monthOf(Date.now())
     const ids = await boardMembers(store, 'global')
-    const scored = []
-    for (const id of ids) { const r = await boardRow(id, 'stranger', month); if (r) scored.push(r) }
-    globalCache = { at: Date.now(), month, rows: rankRows(scored) }
+    const rows = []
+    for (const id of ids) { const r = await globalRow(id); if (r) rows.push(r) }
+    globalCache = { at: Date.now(), rows: rankByLevel(rows) }
     return globalCache
   }
   app.get('/v1/boards/global', async (c) => {
     const me = c.get('me')
-    const u = c.get('user')
-    const { month, rows } = await globalRanking()
+    const { rows } = await globalRanking()
     const top = rows.slice(0, 5)
-    const mineRanked = rows.find((r) => r.id === me) || null
-    let mine = null
-    if (mineRanked) {
-      // My own row: show my level to myself even when my level is not set to everyone.
-      mine = { ...mineRanked }
-      if (mine.level === undefined) { const sh = await loadShared(me); if (fullVisibility(u.visibility).level !== 'off' && sh.level) mine.level = sh.level.level }
-    }
-    return c.json({ board: 'global', month, count: rows.length, top, me: mine })
+    const mine = rows.find((r) => r.id === me) || null // my own row, with my place (or no place when my level is hidden)
+    return c.json({ board: 'global', count: rows.length, top, me: mine })
   })
 
   // ---- lookup -------------------------------------------------------------------------------------------------

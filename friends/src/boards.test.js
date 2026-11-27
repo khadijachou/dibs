@@ -5,9 +5,9 @@ import { randomBytes } from 'node:crypto'
 import { ed25519 } from '@noble/curves/ed25519.js'
 import { sha256 } from '@noble/hashes/sha2.js'
 import { createMemoryStore } from './store.js'
-import { makeApp, rankRows } from './index.js'
+import { makeApp, rankRows, rankByLevel } from './index.js'
 import { walletKey, addressOf } from './crypto.js'
-import { countDeposit, setBoards, boardsChoice, joinedAtMs, monthOf } from './boards.js'
+import { countDeposit, setBoards, boardsChoice, joinedAtMs } from './boards.js'
 
 const STAKING = 'NQ77 0000 0000 0000 0000 0000 0000 0000 0001'
 const toHex = (u8) => Buffer.from(u8).toString('hex')
@@ -198,6 +198,31 @@ test('my pinned row reads its shared place from the ranking when tied', () => {
   assert.equal(tied.find((r) => r.id === 'me').place, 1)
 })
 
+// ---- rankByLevel: the Global board order (v1.7.12) ----------------------------------------------------------
+
+test('rankByLevel orders by level, ties share a place, then by name', () => {
+  const out = rankByLevel([
+    { id: 'a', name: 'Bea', level: 7 },
+    { id: 'b', name: 'Ada', level: 7 },
+    { id: 'c', name: 'Cy', level: 3 },
+  ])
+  assert.deepEqual(out.map((r) => r.name), ['Ada', 'Bea', 'Cy']) // level 7 first, tie broken by name
+  assert.deepEqual(out.map((r) => r.place), [1, 1, 3]) // the tie shares place 1, the next skips to 3
+})
+
+test('rankByLevel puts members with no level last, with no place', () => {
+  const out = rankByLevel([
+    { id: 'a', name: 'Ada' }, // no level
+    { id: 'b', name: 'Bea', level: 4 },
+    { id: 'c', name: 'Cy' }, // no level
+  ])
+  assert.equal(out[0].id, 'b')
+  assert.equal(out[0].place, 1)
+  assert.equal(out[1].place, undefined) // no-level rows carry no place
+  assert.equal(out[2].place, undefined)
+  assert.deepEqual([out[1].name, out[2].name], ['Ada', 'Cy']) // no-level members in name order, at the end
+})
+
 // ---- routes, end to end with a mocked RPC -------------------------------------------------------------------
 
 let ipN = 0
@@ -269,7 +294,8 @@ test('reporting a deposit requires a board, rejects a bad hash, and is checked a
   assert.equal(pending.body.reason, 'not_found_yet')
 })
 
-test('a deposit is checked during the request and counted; a restart cannot lose it (no in-memory queue)', async () => {
+test('the deposit route still records during the request; a restart cannot lose it (the record is deduped)', async () => {
+  // The route and its XP record are kept but no longer feed the board; the app no longer reports deposits (v1.7.12).
   const store = createMemoryStore()
   const hash = 'b'.repeat(64)
   const txByHash = {}
@@ -279,14 +305,11 @@ test('a deposit is checked during the request and counted; a restart cannot lose
   txByHash[hash] = depFrom(u, 500, new Date().toISOString()) // timestamped after the join, so it counts
   const r = await call(a, u, 'POST', '/v1/me/xp/deposit', { tx: hash })
   assert.equal(r.body.ok, true)
-  assert.equal(r.body.reason, 'ok') // 500 NIM -> 10 XP, counted during this request
-  // A fresh app over the same store (a server restart): the XP is already in the store, nothing waited in memory.
+  assert.equal(r.body.reason, 'ok')
+  // A fresh app over the same store (a server restart): the record persisted, nothing waited in memory.
   a = makeApp(store, {}, { fetchTx: async (h) => txByHash[h] || null })
-  const gb = await call(a, u, 'GET', '/v1/boards/global')
-  assert.equal(gb.body.me.xp, 10)
-  // Reporting the same hash again answers duplicate (the server dedupes), so a launch re-queue counts it only once.
   const again = await call(a, u, 'POST', '/v1/me/xp/deposit', { tx: hash })
-  assert.equal(again.body.reason, 'duplicate')
+  assert.equal(again.body.reason, 'duplicate') // deduped from the stored record
 })
 
 test('Friends board ranks by shared Profile XP with ties; a friend who hides their level is left out and counted', async () => {
@@ -318,52 +341,43 @@ test('Friends board ranks by shared Profile XP with ties; a friend who hides the
   assert.equal(fb.body.rows[2].xp, 100)
 })
 
-test('Global board uses deposit XP (not the shared Profile XP); leaving and deleting take effect', async () => {
-  const txByHash = {}
-  const store = createMemoryStore()
-  const a = makeApp(store, {}, { fetchTx: async (h) => txByHash[h] || null })
-
+test('Global board ranks by level: ties share a place, the stored level is used even when only shared with friends, no-level members are last with no place, and rows carry no xp', async () => {
+  const { a } = appWithRpc({})
   const [me, f1, f2, f3] = await Promise.all([register(a), register(a), register(a), register(a)])
-  await befriend(a, me, f1)
-  await befriend(a, me, f2)
-  await befriend(a, me, f3)
-  for (const u of [me, f1, f2]) await call(a, u, 'PUT', '/v1/me/boards', { friends: true, global: true })
-  // A large shared Profile XP must not leak into the Global board (which only counts checked deposits).
-  await shareLevel(a, me, { level: 9, xp: 9999 })
+  for (const u of [me, f1, f2, f3]) await call(a, u, 'PUT', '/v1/me/boards', { friends: false, global: true })
+  // Levels shared only with friends (visibility 'friends', not 'everyone'): still used on the Global board.
+  await shareLevel(a, me, { level: 3 })
+  await shareLevel(a, f1, { level: 7 })
+  await shareLevel(a, f2, { level: 7 })
+  // f3 joined but never shared a level: it has no stored level at all.
 
-  const now = new Date().toISOString()
-  for (const [u, nim, c] of [[me, 300, 'a'], [f1, 2000, 'b'], [f2, 50, 'c']]) {
-    const hash = c.repeat(64)
-    txByHash[hash] = depFrom(u, nim, now)
-    const r = await call(a, u, 'POST', '/v1/me/xp/deposit', { tx: hash })
-    assert.equal(r.body.ok, true) // counted during the request
-  }
-  // f3 is on no board: a report is refused outright.
-  assert.equal((await call(a, f3, 'POST', '/v1/me/xp/deposit', { tx: 'd'.repeat(64) })).status, 409)
+  const gb = await call(a, me, 'GET', '/v1/boards/global')
+  assert.equal(gb.status, 200)
+  assert.equal(gb.body.count, 4)
+  const rows = gb.body.top
+  for (const r of rows) assert.equal('xp' in r, false) // no XP on Global rows
+  const byId = Object.fromEntries(rows.map((r) => [r.id, r]))
+  assert.equal(byId[f1.id].level, 7)
+  assert.equal(byId[f1.id].place, 1)
+  assert.equal(byId[f2.id].place, 1) // tie on level 7 shares place 1
+  assert.equal(byId[me.id].level, 3)
+  assert.equal(byId[me.id].place, 3) // the tie skips place 2
+  assert.equal(byId[f3.id].level, undefined) // no stored level
+  assert.equal(byId[f3.id].place, undefined) // last, no place ("Level hidden" on the app)
+  assert.equal(rows[rows.length - 1].id, f3.id)
+  assert.equal(gb.body.me.id, me.id)
+  assert.equal(gb.body.me.place, 3) // my own row carries my place
 
-  const gb = await call(a, f2, 'GET', '/v1/boards/global')
-  assert.equal(gb.body.count, 3)
-  assert.equal(gb.body.top[0].id, f1.id) // 2000 NIM -> 15 XP, highest
-  assert.equal(gb.body.top.find((r) => r.id === me.id).xp, 10) // deposit XP, not the 9999 shared Profile XP
-  assert.equal(gb.body.me.id, f2.id)
-
-  // A viewer with fewer than 3 friends gets needFriends on the Friends board.
-  const lonely = await register(a)
-  await call(a, lonely, 'PUT', '/v1/me/boards', { friends: true, global: false })
-  const nf = await call(a, lonely, 'GET', '/v1/boards/friends')
-  assert.equal(nf.body.needFriends, true)
-  assert.equal(nf.body.friends, 0)
-
-  // f1 leaves the global board: gone from it at once.
-  await call(a, f1, 'PUT', '/v1/me/boards', { friends: true, global: false })
+  // f1 leaves the Global board: gone from it at once (cache invalidated on the membership change).
+  await call(a, f1, 'PUT', '/v1/me/boards', { friends: false, global: false })
   const gb2 = await call(a, me, 'GET', '/v1/boards/global')
   assert.ok(!gb2.body.top.some((r) => r.id === f1.id))
-  assert.equal(gb2.body.count, 2)
+  assert.equal(gb2.body.count, 3)
 
-  // me deletes the profile: off every board, XP record gone.
+  // me deletes the profile: off the Global board.
   await call(a, me, 'DELETE', '/v1/me')
-  assert.ok(!(await store.sismember('fr:board:global', me.id)))
-  assert.equal(await store.get(`fr:xp:${me.id}:${monthOf(Date.now())}`), null)
+  const gb3 = await call(a, f2, 'GET', '/v1/boards/global')
+  assert.ok(!gb3.body.top.some((r) => r.id === me.id))
 })
 
 // ---- linking a second wallet address (v1.7.11) --------------------------------------------------------------

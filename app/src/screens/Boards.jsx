@@ -1,6 +1,6 @@
-// Leaderboards (v1.7): two tabs, Friends and Global, ranked by the XP the server has checked (deposits), this month.
-// Reached from Profile. Opt-in: a phone that has not joined sees a quiet join prompt here. Any server failure shows the
-// one Friends notice, never a toast elsewhere. No arrows, no "you're behind", no countdown.
+// Leaderboards (v1.7): two tabs. Friends ranks by Profile XP; Global ranks by level (v1.7.12). Reached from Profile.
+// Opt-in: a phone that has not joined sees a quiet join prompt here. Any server failure shows the one Friends notice,
+// never a toast elsewhere. No arrows, no "you're behind", no countdown.
 import { useCallback, useEffect, useState } from 'react'
 import { useApp } from '../App.jsx'
 import { Header } from '../components/ui.jsx'
@@ -10,10 +10,8 @@ import { Skeleton, FriendNotice, JoinBoardsSheet } from '../components/FriendsPa
 import { rankOf } from '../lib/xp.js'
 import {
   getBoardsState, onAnyBoard, friendsBoard, globalBoard, setBoards, refreshBoards, BOARDS_EVENT,
-  lastReason, linkDepositAddress,
 } from '../lib/boards.js'
 import { getState as friendsState } from '../lib/friends.js'
-import { listGoals } from '../lib/goals.js'
 
 const fmtN = (n, lang) => { try { return Number(n || 0).toLocaleString(lang) } catch { return String(n || 0) } }
 
@@ -28,27 +26,29 @@ function useBoardsState() {
   return s
 }
 
-// One row: place, avatar (identicon from the id; the rank frame on Friends), name (its accent on Friends), the level
-// line when present, and the XP. isMe gives it the coral "(you)" treatment.
-function Row({ r, isMe, tab, hidePlace }) {
+// One row: place, avatar (identicon from the id; the rank frame on Friends), name (its accent on Friends), and the level
+// line. Friends also shows the XP column; Global shows no XP and reads "Level hidden" when the member shares no level.
+function Row({ r, isMe, tab }) {
   const { t, lang } = useApp()
   const isFriends = tab === 'friends'
-  const sub = r.level != null ? t('frd_level_rank', { n: r.level, rank: t(`rank_${rankOf(r.level).id}`) }) : null
+  const levelLine = r.level != null
+    ? t('frd_level_rank', { n: r.level, rank: t(`rank_${rankOf(r.level).id}`) })
+    : (isFriends ? null : t('board_level_hidden'))
   return (
     <div className={`brd-row${isMe ? ' me' : ''}`}>
-      {!hidePlace && <span className="brd-place">{r.place}</span>}
+      <span className="brd-place">{r.place ?? ''}</span>
       <Avatar seed={r.id} size={40} className="frd-av" frame={isFriends ? r.look?.frame : null} />
       <span className="frd-row-mid">
         <b className={isFriends ? accentClass(r.look?.accent) : undefined}>{r.name}{isMe && <span className="brd-you"> {t('board_you')}</span>}</b>
-        {sub && <small>{sub}</small>}
+        {levelLine && <small>{levelLine}</small>}
       </span>
-      <span className="brd-xp">{t('board_xp', { xp: fmtN(r.xp, lang) })}</span>
+      {isFriends && <span className="brd-xp">{t('board_xp', { xp: fmtN(r.xp, lang) })}</span>}
     </div>
   )
 }
 
 export default function Boards() {
-  const { t, lang, go, back, address } = useApp()
+  const { t, lang, go, back } = useApp()
   const st = useBoardsState()
   const joined = onAnyBoard()
   const [tab, setTab] = useState('friends')
@@ -56,26 +56,14 @@ export default function Boards() {
   const [err, setErr] = useState(false)
   const [loading, setLoading] = useState(true)
   const [joinOpen, setJoinOpen] = useState(false)
-  const [linking, setLinking] = useState(false)
-  // The Global board answers wrong_from when deposits come from an address of the wallet that is not linked yet.
-  const [wrongFrom, setWrongFrom] = useState(() => lastReason() === 'wrong_from')
 
   useEffect(() => { refreshBoards() }, [])
 
   const load = useCallback((which) => {
     setLoading(true); setErr(false); setData(null)
     const call = which === 'global' ? globalBoard : friendsBoard
-    return call().then((d) => { setData(d); setLoading(false); setWrongFrom(lastReason() === 'wrong_from') }).catch(() => { setErr(true); setLoading(false) })
+    return call().then((d) => { setData(d); setLoading(false) }).catch(() => { setErr(true); setLoading(false) })
   }, [])
-
-  // Link the address deposits come from, then reload. A refusal in Nimiq Pay changes nothing.
-  const onLink = async () => {
-    setLinking(true)
-    try { await linkDepositAddress(listGoals(address)) } catch { /* refusal or failure: quiet */ }
-    setLinking(false)
-    setWrongFrom(lastReason() === 'wrong_from')
-    load(tab)
-  }
   useEffect(() => { if (joined) load(tab) }, [tab, joined, load])
 
   // Not joined: a quiet join prompt (the row still brings people here).
@@ -104,12 +92,9 @@ export default function Boards() {
   const meInTop = tab === 'global' && data?.me && rows.some((r) => r.id === data.me.id)
   const meRow = tab === 'global' && data?.me && !meInTop ? data.me : null
   const hidden = tab === 'friends' ? (data?.hidden || 0) : 0 // friends who joined but hide their level (Friends tab only)
-  // Global only: everyone still at 0 checked XP, so the place numbers (all 1) say nothing. Hide them and show one line.
-  // The Friends board ranks by Profile XP and keeps its place numbers.
-  const allZero = tab === 'global' && (() => { const all = meRow ? [...rows, meRow] : rows; return all.length > 0 && all.every((r) => !r.xp) })()
-  // Meta line: Friends = all-time Profile XP (or "just you" when no friend is shown); Global = this month's checked XP.
+  // Meta line: Friends = all-time Profile XP (or "just you" when no friend is shown); Global = all-time, by level.
   const meta = tab === 'global'
-    ? (count != null ? `${t('board_meta_month')} · ${t(count === 1 ? 'board_count_global_one' : 'board_count_global', { n: fmtN(count, lang) })}` : t('board_meta_month'))
+    ? t('board_meta_global_level', { n: fmtN(count || 0, lang) })
     : (count > 0 ? t('board_meta_friends', { n: fmtN(count, lang) }) : t('board_meta_friends_alone'))
 
   const leave = async (which, on) => {
@@ -145,24 +130,16 @@ export default function Boards() {
 
         {!loading && !err && !needFriends && (
           <>
-            {allZero && <p className="brd-allzero">{t('board_all_zero')}</p>}
             <section className="brd-list">
-              {rows.map((r) => <Row key={r.id} r={r} isMe={r.id === myId} tab={tab} hidePlace={allZero} />)}
+              {rows.map((r) => <Row key={r.id} r={r} isMe={r.id === myId} tab={tab} />)}
               {meRow && (
                 <>
                   <div className="brd-gap" aria-hidden="true">· · ·</div>
-                  <Row r={meRow} isMe tab={tab} hidePlace={allZero} />
+                  <Row r={meRow} isMe tab={tab} />
                 </>
               )}
             </section>
             {hidden > 0 && <p className="brd-hidden">{hidden === 1 ? t('board_hidden_level_one') : t('board_hidden_level', { n: fmtN(hidden, lang) })}</p>}
-            {tab === 'global' && wrongFrom && (
-              <div className="brd-link">
-                <p>{t('board_link_wrong_from')}</p>
-                <button type="button" className="btn" disabled={linking} onClick={onLink}>{linking ? t('restake_waiting') : t('board_link_btn')}</button>
-              </div>
-            )}
-            {tab === 'global' && <p className="brd-note">{t('board_note')}</p>}
           </>
         )}
 

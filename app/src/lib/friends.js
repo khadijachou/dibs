@@ -171,31 +171,6 @@ export async function turnOn(name) {
   return out
 }
 
-// The "add this wallet" message, the same three-line shape as registration; the Device line binds it to this device.
-export const addWalletMessage = (devicePub, iso) => `Dibs Friends: add this wallet\nDevice: ${devicePub}\nTime: ${iso}`
-
-// Link another of the wallet's addresses (v1.7.11): ask Nimiq Pay to sign "add this wallet" with the address deposits
-// are paid from (the staking address Dibs saves from), then POST it. Returns the server's { wallets } count. Throws on a
-// refusal or failure; the caller stays quiet, since a refusal changes nothing. In demo mode the one demo wallet signs.
-export async function addWallet() {
-  if (!config.friendsUrl) throw fail('NOT_CONFIGURED')
-  const st = getState()
-  if (!isOn() || !st?.devicePub) throw fail('NOT_ON')
-  const { ed25519, sha256 } = await lib()
-  const message = addWalletMessage(st.devicePub, new Date().toISOString())
-  let wallet
-  if (isDemo()) {
-    const dwSk = fromHex(readStr(K.demo) || toHex(ed25519.utils.randomSecretKey()))
-    wallet = { message, publicKey: toHex(ed25519.getPublicKey(dwSk)), signature: toHex(ed25519.sign(nimiqHash(sha256, message), dwSk)) }
-  } else {
-    let res
-    try { res = await signMessage(message) } catch (e) { throw describeError(e).type === 'PERMISSION_DENIED' ? fail('SIGN_REFUSED') : fail('SIGN_FAILED') }
-    if (!res?.publicKey || !res?.signature) throw fail('SIGN_FAILED')
-    wallet = { message, publicKey: String(res.publicKey), signature: String(res.signature) }
-  }
-  return request('POST', '/v1/me/wallets', { wallet })
-}
-
 // deleteProfile true calls DELETE /v1/me first; a failed call throws and keeps everything.
 export async function turnOff({ deleteProfile } = {}) {
   if (deleteProfile) await request('DELETE', '/v1/me')

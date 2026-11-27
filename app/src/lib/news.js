@@ -11,6 +11,7 @@
 //     go    optional route name ('catalog', 'stake', ...) that adds a "Show me" link opening that screen
 //   Write only things that are in the same release's What's new block. No `sheet` on a release = no sheet for it.
 export const NEWS = [
+  { date: '2026-11-27', key: 'news_68', v: '1.7.12' },
   { date: '2026-11-27', key: 'news_67', v: '1.7.11' },
   { date: '2026-11-27', key: 'news_66', v: '1.7.10' },
   { date: '2026-11-27', key: 'news_65', v: '1.7.9' },

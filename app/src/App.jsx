@@ -48,7 +48,7 @@ import { isOn as friendsIsOn, enabled as friendsEnabled, getState as friendsGetS
 import { nextReveal, markRevealSeen } from './lib/reveal.js'
 import { gbToAnnounce, lineKey } from './lib/giftBanners.js'
 import GiftReveal from './components/GiftReveal.jsx'
-import { refreshBoards, flushQueue as flushBoardsQueue, queueMonthDeposits } from './lib/boards.js'
+import { refreshBoards, clearQueue as clearBoardsQueue } from './lib/boards.js'
 import { Icon, TabBar, TAB_ROUTES } from './components/ui.jsx'
 import { preloadAvatar } from './components/Avatar.jsx'
 import WelcomeBack from './components/WelcomeBack.jsx'
@@ -309,10 +309,9 @@ export default function App() {
     if (friendsEnabled() && friendsIsOn()) {
       friendsSynced.current = true
       recordVisit() // make sure today's visit is in the ledger before the shared Profile XP is computed and uploaded
-      syncQuiet(address) // uploads the shared level with the Profile XP (0 earlier, when it ran before the XP was ready)
+      syncQuiet(address) // uploads the shared level with the Profile XP (feeds both boards; Global ranks by level)
       refreshBoards() // keep the local board choice in step with the server
-      queueMonthDeposits(listGoals(address)) // re-report this month's deposits (recovers any lost before the at-once fix)
-      flushBoardsQueue() // report any deposit hashes that could not be sent before
+      clearBoardsQueue() // drop any deposit hashes left over from before v1.7.12 (deposits are no longer reported)
     }
   }, [ready, address])
   useEffect(() => {
