@@ -32,6 +32,25 @@ const AMOUNT = /^(\d+(?:\.\d+)?)\s+([A-Z]{3})$/
 const DURATION = /^(\d+)\s+(year|month)s?$/i
 export const isAmountDetail = (x) => AMOUNT.test(String(x?.detail ?? x?.itemDetail ?? '').trim())
 
+// Read some shop plan labels as a duration so they go through the dur_* keys (translated). Display only:
+// the stored value, the catalogue and what is sent to the shop never change. Rules, all on the whole text:
+//   drop a trailing " Subscription" / " Plan"  → "1 Year Subscription" is "1 Year", "2 Years Subscription" "2 Years"
+//   short forms "1M" / "1Y" / "2Y" (Surfshark) → n months / n years
+//   "Semiannual" = 6 months, "Annual" = 1 year  (ExitLag)
+// What this returns is handed to the DURATION regex. Anything it does not turn into "<n> year(s)/month(s)"
+// ("365 Personal", Discord's "Basic", "1 Year" already a duration) is returned unchanged, so detailText then
+// falls back to the raw text exactly as today.
+function planDuration(raw) {
+  const s = raw.replace(/\s+(?:subscription|plan)$/i, '')
+  let m = /^(\d+)\s*M$/i.exec(s)
+  if (m) return `${m[1]} Month`
+  m = /^(\d+)\s*Y$/i.exec(s)
+  if (m) return `${m[1]} Year`
+  if (/^semiannual$/i.test(s)) return '6 Month'
+  if (/^annual$/i.test(s)) return '1 Year'
+  return s
+}
+
 // Some shop plan values repeat the brand ("Surfshark 1M", "Surfshark 1Y"): the tile and sheet already show the brand,
 // so for display we drop a leading brand-name prefix (case-insensitive, followed by a space) and keep just "1M". The
 // stored value, the catalogue and what is sent to the shop never change. The brand name is the goal's stored brandName,
@@ -49,7 +68,7 @@ export function detailText(t, x, { short = false } = {}) {
   const raw = dropBrandPrefix(String(x?.detail ?? x?.itemDetail ?? '').trim(), brandNameOf(x))
   let m = AMOUNT.exec(raw)
   if (m) return `${fmtAmount(m[1], lang)}${NBSP}${m[2]}`
-  m = DURATION.exec(raw)
+  m = DURATION.exec(planDuration(raw))
   if (!m) return raw
   const n = Number(m[1])
   const dur = t(`dur_${m[2].toLowerCase()}_${n === 1 ? 'one' : 'other'}`, { count: n })

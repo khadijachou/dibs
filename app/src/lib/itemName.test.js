@@ -29,20 +29,40 @@ test('tile price line and goal label', () => {
   assert.equal(plain(itemLabel(t, { itemName: 'Steam gift card', itemDetail: '20 USD', usd: 22.48 })), 'Carte-cadeau Steam · 20 USD')
 })
 
-test('a plan value that repeats the brand drops the brand prefix for display', () => {
-  // Surfshark values are "Surfshark 1M" etc.; the tile already shows the brand, so only "1M" is shown.
+test('a plan value that repeats the brand drops the brand prefix, then reads as a duration', () => {
+  // Surfshark values are "Surfshark 1M" etc.; the tile already shows the brand, so only "1M" is kept, and
+  // "1M" / "1Y" / "2Y" are read as durations (translated).
   const t = makeT('en')
   // Goal path: the stored brandName is used.
-  assert.equal(detailText(t, { brandName: 'Surfshark', itemDetail: 'Surfshark 1M' }), '1M')
-  assert.equal(detailText(t, { brandName: 'Surfshark', detail: 'Surfshark 1Y' }), '1Y')
+  assert.equal(detailText(t, { brandName: 'Surfshark', itemDetail: 'Surfshark 1M' }), '1 Month')
+  assert.equal(detailText(t, { brandName: 'Surfshark', detail: 'Surfshark 1Y' }), '1 Year')
   // Catalogue-item path: the brand is resolved from the item's shopUrl (brandOf).
-  assert.equal(detailText(t, { shopUrl: 'https://www.bitrefill.com/surfshark-vpn-international/', detail: 'Surfshark 2Y' }), '2Y')
-  // fromText (tile "From ...") shows "From 1M" when the brand has several durations.
-  assert.equal(fromText(t, { name: 'Surfshark VPN', items: [{ brandName: 'Surfshark', detail: 'Surfshark 1M' }, { brandName: 'Surfshark', detail: 'Surfshark 1Y' }] }), 'From 1M')
-  // A brand whose plan does not start with its name is untouched (NordPass "1 Year Subscription").
-  assert.equal(detailText(t, { brandName: 'NordPass', detail: '1 Year Subscription' }), '1 Year Subscription')
+  assert.equal(detailText(t, { shopUrl: 'https://www.bitrefill.com/surfshark-vpn-international/', detail: 'Surfshark 2Y' }), '2 Years')
+  // fromText (tile "From ...") shows "From 1 Month" when the brand has several durations.
+  assert.equal(fromText(t, { name: 'Surfshark VPN', items: [{ brandName: 'Surfshark', detail: 'Surfshark 1M' }, { brandName: 'Surfshark', detail: 'Surfshark 1Y' }] }), 'From 1 Month')
   // An amount value is unaffected either way.
   assert.equal(plain(detailText(t, { brandName: 'ChatGPT', detail: '20 USD' })), '20 USD')
+})
+
+test('shop plan labels are read as durations and translated (NordPass, Surfshark, ExitLag); other text is left as is', () => {
+  const en = makeT('en')
+  const fr = makeT('fr')
+  // NordPass "1 Year Subscription" / "2 Years Subscription": drop the " Subscription" suffix, then the duration.
+  assert.equal(plain(detailText(en, { brandName: 'NordPass', detail: '1 Year Subscription' })), '1 Year')
+  assert.equal(plain(detailText(fr, { brandName: 'NordPass', detail: '1 Year Subscription' })), '1 an')
+  assert.equal(plain(detailText(en, { brandName: 'NordPass', detail: '2 Years Subscription' })), '2 Years')
+  assert.equal(plain(detailText(fr, { brandName: 'NordPass', detail: '2 Years Subscription' })), '2 ans')
+  // Surfshark short forms, in fr.
+  assert.equal(plain(detailText(fr, { brandName: 'Surfshark', detail: 'Surfshark 1M' })), '1 mois')
+  assert.equal(plain(detailText(fr, { brandName: 'Surfshark', detail: 'Surfshark 2Y' })), '2 ans')
+  // ExitLag "Semiannual" = 6 months, "Annual" = 1 year.
+  assert.equal(plain(detailText(en, { brandName: 'ExitLag', detail: 'Semiannual' })), '6 Months')
+  assert.equal(plain(detailText(fr, { brandName: 'ExitLag', detail: 'Semiannual' })), '6 mois')
+  assert.equal(plain(detailText(en, { brandName: 'ExitLag', detail: 'Annual' })), '1 Year')
+  assert.equal(plain(detailText(fr, { brandName: 'ExitLag', detail: 'Annual' })), '1 an')
+  // An unmatched plan is shown exactly as the shop wrote it (Office "365 Personal").
+  assert.equal(detailText(en, { brandName: 'Microsoft Office', detail: '365 Personal' }), '365 Personal')
+  assert.equal(detailText(fr, { brandName: 'Microsoft Office', detail: '365 Personal' }), '365 Personal')
 })
 
 test('stored labels keep number and currency together', () => {
