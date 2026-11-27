@@ -135,6 +135,18 @@ test('applyShared: validation bounds (level, counts, pct)', () => {
   assert.equal(applyShared({}, { goals: Array.from({ length: 20 }, () => ({ brandKey: 'steam', pct: 10 })) }, vis).goals.length, 12)
 })
 
+test('applyShared: the level item carries the Profile XP (xp) when valid, drops the item when xp is bad (v1.7.10)', () => {
+  const vis = fullVisibility({ level: 'friends' })
+  assert.deepEqual(applyShared({}, { level: { level: 5, rank: 'saver', xp: 1234 } }, vis).level, { level: 5, rank: 'saver', xp: 1234 })
+  assert.deepEqual(applyShared({}, { level: { level: 5, rank: 'saver', xp: 0 } }, vis).level, { level: 5, rank: 'saver', xp: 0 })
+  // Older phones omit xp: the item is still stored, without an xp.
+  assert.deepEqual(applyShared({}, { level: { level: 5, rank: 'saver' } }, vis).level, { level: 5, rank: 'saver' })
+  // A present-but-bad xp (out of range, or not an integer) drops the whole item, like a bad level or rank.
+  assert.equal(applyShared({}, { level: { level: 5, rank: 'saver', xp: -1 } }, vis).level, undefined)
+  assert.equal(applyShared({}, { level: { level: 5, rank: 'saver', xp: 10_000_001 } }, vis).level, undefined)
+  assert.equal(applyShared({}, { level: { level: 5, rank: 'saver', xp: 1.5 } }, vis).level, undefined)
+})
+
 test('pruneShared: removes items turned off', () => {
   const current = { level: { level: 3, rank: 'saver' }, badges: ['first'], cards: ['steam'] }
   const vis = fullVisibility({ level: 'friends', badges: 'off', cards: 'everyone' })

@@ -68,6 +68,13 @@ test('level needs a valid level and rank', () => {
   assert.deepEqual(sharedPayload({ visibility: { level: 'friends' }, xp: { level: 5, rank: 'saver' } }).level, { level: 5, rank: 'saver' })
 })
 
+test('level carries the Profile XP total when given, rounded and clamped; omitted when unknown (v1.7.10)', () => {
+  assert.deepEqual(sharedPayload({ visibility: { level: 'friends' }, xp: { level: 5, rank: 'saver', total: 1234 } }).level, { level: 5, rank: 'saver', xp: 1234 })
+  // Clamped to the server range and rounded; a non-finite total is simply left out.
+  assert.equal(sharedPayload({ visibility: { level: 'friends' }, xp: { level: 5, rank: 'saver', total: 99_999_999 } }).level.xp, 10_000_000)
+  assert.equal('xp' in sharedPayload({ visibility: { level: 'friends' }, xp: { level: 5, rank: 'saver' } }).level, false)
+})
+
 // ---- v1.4.2: totals, avatar, card/goal values -----------------------------------------------------------------
 const AVATAR = 'data:image/svg+xml;base64,PHN2Zy8+'
 const giftGoal = (o) => ({ status: 'saving', brandKey: 'steam', faceValue: '20', currency: 'USD', targetNim: 100, deposits: [{ nim: 50 }], ...o })

@@ -7,7 +7,7 @@ import { sha256 } from '@noble/hashes/sha2.js'
 import { createMemoryStore } from './store.js'
 import { makeApp, rankRows } from './index.js'
 import { walletKey, addressOf } from './crypto.js'
-import { countDeposit, setBoards, boardsChoice, joinedAtMs, makeChecker, monthOf } from './boards.js'
+import { countDeposit, setBoards, boardsChoice, joinedAtMs, monthOf } from './boards.js'
 
 const STAKING = 'NQ77 0000 0000 0000 0000 0000 0000 0000 0001'
 const toHex = (u8) => Buffer.from(u8).toString('hex')
@@ -207,21 +207,24 @@ async function befriend(a, x, y) { // x invites y, y accepts
   await call(a, y, 'POST', `/v1/invites/${inv.body.invite.id}/accept`)
 }
 
-// Build an app whose checker reads this store and resolves hashes from a fixed map (mocked RPC).
-function appWithChecker(txByHash) {
+// Build an app that resolves a deposit hash from a fixed map (mocked RPC), checked during the request (no queue).
+function appWithRpc(txByHash) {
   const store = createMemoryStore()
-  const loadUser = (id) => store.get(`fr:u:${id}`)
-  const checker = makeChecker(store, { loadUser, fetchTx: async (h) => txByHash[h] || null })
-  const a = makeApp(store, {}, { checker })
-  return { a, store, checker }
+  const a = makeApp(store, {}, { fetchTx: async (h) => txByHash[h] || null })
+  return { a, store }
 }
 
 // A deposit tx from a registered user's own wallet (its address derived from the wallet public key, spaced like the RPC).
 const depFrom = (who, nim, iso) => depTx(nim, iso, { from: space4(addressOf(who.wallet.pub)) })
+// Share this user's level (and Profile XP) with friends: turn the level item on, then upload { level, rank, xp }.
+async function shareLevel(a, who, { level = 1, xp = 0, rank = 'starter' } = {}) {
+  await call(a, who, 'PATCH', '/v1/me', { visibility: { level: 'friends' } })
+  await call(a, who, 'PUT', '/v1/me/shared', { level: { level, rank, xp } })
+}
 
-test('reporting a deposit requires being on a board, then queues', async () => {
+test('reporting a deposit requires a board, rejects a bad hash, and is checked at once', async () => {
   const hash = 'a'.repeat(64)
-  const { a, checker } = appWithChecker({})
+  const { a } = appWithRpc({ [hash]: null }) // the chain does not show this hash yet
   const u = await register(a)
   // Not on a board yet: the report is refused.
   const refused = await call(a, u, 'POST', '/v1/me/xp/deposit', { tx: hash })
@@ -230,59 +233,92 @@ test('reporting a deposit requires being on a board, then queues', async () => {
   await call(a, u, 'PUT', '/v1/me/boards', { friends: false, global: true })
   const bad = await call(a, u, 'POST', '/v1/me/xp/deposit', { tx: 'nope' })
   assert.equal(bad.status, 400)
-  // A valid hash queues.
-  const ok = await call(a, u, 'POST', '/v1/me/xp/deposit', { tx: hash })
-  assert.equal(ok.status, 200)
-  assert.equal(ok.body.queued, true)
-  assert.equal(checker.pending, 1)
+  // A valid hash the chain does not show yet: answered not_found_yet (the phone keeps it and retries), ok false.
+  const pending = await call(a, u, 'POST', '/v1/me/xp/deposit', { tx: hash })
+  assert.equal(pending.status, 200)
+  assert.equal(pending.body.ok, false)
+  assert.equal(pending.body.reason, 'not_found_yet')
 })
 
-test('two users report deposits; both boards read correctly, leaving and deleting take effect', async () => {
-  // Four users; the first befriends the other three. Hashes are per user.
+test('a deposit is checked during the request and counted; a restart cannot lose it (no in-memory queue)', async () => {
   const store = createMemoryStore()
-  const loadUser = (id) => store.get(`fr:u:${id}`)
+  const hash = 'b'.repeat(64)
   const txByHash = {}
-  const checker = makeChecker(store, { loadUser, fetchTx: async (h) => txByHash[h] || null })
-  const a = makeApp(store, {}, { checker })
+  let a = makeApp(store, {}, { fetchTx: async (h) => txByHash[h] || null })
+  const u = await register(a)
+  await call(a, u, 'PUT', '/v1/me/boards', { friends: false, global: true })
+  txByHash[hash] = depFrom(u, 500, new Date().toISOString()) // timestamped after the join, so it counts
+  const r = await call(a, u, 'POST', '/v1/me/xp/deposit', { tx: hash })
+  assert.equal(r.body.ok, true)
+  assert.equal(r.body.reason, 'ok') // 500 NIM -> 10 XP, counted during this request
+  // A fresh app over the same store (a server restart): the XP is already in the store, nothing waited in memory.
+  a = makeApp(store, {}, { fetchTx: async (h) => txByHash[h] || null })
+  const gb = await call(a, u, 'GET', '/v1/boards/global')
+  assert.equal(gb.body.me.xp, 10)
+  // Reporting the same hash again answers duplicate (the server dedupes), so a launch re-queue counts it only once.
+  const again = await call(a, u, 'POST', '/v1/me/xp/deposit', { tx: hash })
+  assert.equal(again.body.reason, 'duplicate')
+})
+
+test('Friends board ranks by shared Profile XP with ties; a friend who hides their level is left out and counted', async () => {
+  const { a } = appWithRpc({})
+  const [me, f1, f2, f3] = await Promise.all([register(a), register(a), register(a), register(a)])
+  await befriend(a, me, f1)
+  await befriend(a, me, f2)
+  await befriend(a, me, f3)
+  for (const u of [me, f1, f2, f3]) await call(a, u, 'PUT', '/v1/me/boards', { friends: true, global: false })
+  // Profile XP, shared as the level item: f1 and f2 tie on 500 (f1 the higher level, so first); me on 100. f3 hides level.
+  await shareLevel(a, me, { level: 2, xp: 100 })
+  await shareLevel(a, f1, { level: 5, xp: 500 })
+  await shareLevel(a, f2, { level: 2, xp: 500 })
+  // f3 joined but never turns its level on: it stays hidden.
+
+  const fb = await call(a, me, 'GET', '/v1/boards/friends')
+  assert.equal(fb.status, 200)
+  assert.equal(fb.body.count, 2) // friends shown: f1, f2
+  assert.equal(fb.body.hidden, 1) // f3 joined but hides its level
+  const ids = fb.body.rows.map((r) => r.id)
+  assert.ok(ids.includes(me.id) && ids.includes(f1.id) && ids.includes(f2.id) && !ids.includes(f3.id))
+  assert.equal(fb.body.rows[0].id, f1.id) // 500 XP, higher level first
+  assert.equal(fb.body.rows[1].id, f2.id) // 500 XP, tie
+  assert.equal(fb.body.rows[0].place, 1)
+  assert.equal(fb.body.rows[1].place, 1) // the tie shares the place
+  assert.equal(fb.body.rows[0].xp, 500)
+  assert.equal(fb.body.rows[2].id, me.id)
+  assert.equal(fb.body.rows[2].place, 3) // the tie skips place 2
+  assert.equal(fb.body.rows[2].xp, 100)
+})
+
+test('Global board uses deposit XP (not the shared Profile XP); leaving and deleting take effect', async () => {
+  const txByHash = {}
+  const store = createMemoryStore()
+  const a = makeApp(store, {}, { fetchTx: async (h) => txByHash[h] || null })
 
   const [me, f1, f2, f3] = await Promise.all([register(a), register(a), register(a), register(a)])
   await befriend(a, me, f1)
   await befriend(a, me, f2)
   await befriend(a, me, f3)
-
-  // me + f1 + f2 join both boards; f3 joins nothing.
   for (const u of [me, f1, f2]) await call(a, u, 'PUT', '/v1/me/boards', { friends: true, global: true })
+  // A large shared Profile XP must not leak into the Global board (which only counts checked deposits).
+  await shareLevel(a, me, { level: 9, xp: 9999 })
 
-  // Each reports one deposit of a different size, so the ranking is clear. Timestamped after joining (XP from before a
-  // join does not count).
   const now = new Date().toISOString()
-  const deposits = [[me, 300, 'm'], [f1, 2000, '1'], [f2, 50, '2'], [f3, 9000, '3']]
-  for (const [u, nim, c] of deposits) {
+  for (const [u, nim, c] of [[me, 300, 'a'], [f1, 2000, 'b'], [f2, 50, 'c']]) {
     const hash = c.repeat(64)
     txByHash[hash] = depFrom(u, nim, now)
-    await call(a, u, 'POST', '/v1/me/xp/deposit', { tx: hash })
+    const r = await call(a, u, 'POST', '/v1/me/xp/deposit', { tx: hash })
+    assert.equal(r.body.ok, true) // counted during the request
   }
-  for (let i = 0; i < 10; i++) await checker.tick() // drain the queue
+  // f3 is on no board: a report is refused outright.
+  assert.equal((await call(a, f3, 'POST', '/v1/me/xp/deposit', { tx: 'd'.repeat(64) })).status, 409)
 
-  // Friends board, read by me (I have 3 friends): me, f1, f2 on it (not f3). f1 highest (2000 -> 10 + 5), me (300 -> 10).
-  const fb = await call(a, me, 'GET', '/v1/boards/friends')
-  assert.equal(fb.status, 200)
-  assert.equal(fb.body.count, 2) // two friends on the board (f1, f2); f3 is not
-  const fbIds = fb.body.rows.map((r) => r.id)
-  assert.ok(fbIds.includes(me.id) && fbIds.includes(f1.id) && fbIds.includes(f2.id))
-  assert.ok(!fbIds.includes(f3.id))
-  assert.equal(fb.body.rows[0].id, f1.id) // highest XP first
-  assert.equal(fb.body.rows[0].place, 1)
-
-  // Global board, read by f2: top carries f3? No, f3 never joined. me, f1, f2 only. f1 highest.
   const gb = await call(a, f2, 'GET', '/v1/boards/global')
-  assert.equal(gb.status, 200)
   assert.equal(gb.body.count, 3)
-  assert.equal(gb.body.top[0].id, f1.id)
+  assert.equal(gb.body.top[0].id, f1.id) // 2000 NIM -> 15 XP, highest
+  assert.equal(gb.body.top.find((r) => r.id === me.id).xp, 10) // deposit XP, not the 9999 shared Profile XP
   assert.equal(gb.body.me.id, f2.id)
-  assert.ok(gb.body.me.place >= 1)
 
-  // A viewer with fewer than 3 friends gets needFriends.
+  // A viewer with fewer than 3 friends gets needFriends on the Friends board.
   const lonely = await register(a)
   await call(a, lonely, 'PUT', '/v1/me/boards', { friends: true, global: false })
   const nf = await call(a, lonely, 'GET', '/v1/boards/friends')

@@ -48,7 +48,7 @@ import { isOn as friendsIsOn, enabled as friendsEnabled, getState as friendsGetS
 import { nextReveal, markRevealSeen } from './lib/reveal.js'
 import { gbToAnnounce, lineKey } from './lib/giftBanners.js'
 import GiftReveal from './components/GiftReveal.jsx'
-import { refreshBoards, flushQueue as flushBoardsQueue } from './lib/boards.js'
+import { refreshBoards, flushQueue as flushBoardsQueue, queueMonthDeposits } from './lib/boards.js'
 import { Icon, TabBar, TAB_ROUTES } from './components/ui.jsx'
 import { preloadAvatar } from './components/Avatar.jsx'
 import WelcomeBack from './components/WelcomeBack.jsx'
@@ -310,6 +310,7 @@ export default function App() {
       friendsSynced.current = true
       syncQuiet(address)
       refreshBoards() // keep the local board choice in step with the server
+      queueMonthDeposits(listGoals(address)) // re-report this month's deposits (recovers any lost before the at-once fix)
       flushBoardsQueue() // report any deposit hashes that could not be sent before
     }
   }, [ready, address])

@@ -172,6 +172,11 @@ export function buildDiagnostics(state) {
     : '  NIM put back in staking: never')
   // Whether Friends is on. Never the device secret or the demo wallet key (gather does not read them).
   out.push(`  Friends: ${s.friendsOn ? 'on' : 'off'}`)
+  // Leaderboards: which boards are joined, how many deposit hashes are still waiting to be reported, and the last
+  // server answer (its reason word only). Never a hash, never an address.
+  const b = s.boards
+  const joined = b && (b.friends || b.global) ? (b.friends && b.global ? 'both' : b.friends ? 'friends' : 'global') : 'no'
+  out.push(`  Leaderboards: joined ${joined}, ${Number(s.depositsWaiting) || 0} deposits waiting, last answer: ${s.lastBoardReason || 'none'}`)
 
   return out.join('\n')
 }
@@ -232,6 +237,12 @@ export async function gather({ storage, now, tzOffsetMin, version, lang, demo, u
   const lastR = restakeArr.length ? restakeArr[restakeArr.length - 1] : null
   // Only whether Friends is on (dibs.friends.on). The device secret key and the demo wallet key are never read.
   const friends = readJSON(storage, 'dibs.friends')
+  // Leaderboards: the board choice, the deposit queue length and the last answer word. Never a hash (the queue entries
+  // carry hashes; only their count is read), never an address.
+  const boards = readJSON(storage, 'dibs.boards')
+  const boardsQueue = readJSON(storage, 'dibs.boardsQueue')
+  let lastBoardReason = null
+  try { lastBoardReason = storage.getItem('dibs.boardsLastReason') } catch { lastBoardReason = null }
   return {
     version, now, tzOffsetMin, lang, demo,
     accounts, usedAddress, staker, validatorAddress,
@@ -240,5 +251,8 @@ export async function gather({ storage, now, tzOffsetMin, version, lang, demo, u
     deletedCount: Array.isArray(del) ? del.length : 0,
     restakes: { count: restakeArr.length, last: lastR ? { at: lastR.at, nim: lastR.nim } : null }, // never the tx hash
     friendsOn: Boolean(friends?.on),
+    boards: boards && typeof boards === 'object' ? { friends: Boolean(boards.friends), global: Boolean(boards.global) } : null,
+    depositsWaiting: Array.isArray(boardsQueue) ? boardsQueue.length : 0,
+    lastBoardReason: lastBoardReason || null,
   }
 }

@@ -82,6 +82,16 @@ test('two-digit minor is newer: 1.10 over 1.9', () => {
   assert.equal(r?.release, '1.10')
 })
 
+test('two-digit patch is newer: 1.7.10 over 1.7.9 (numeric, not string compare)', () => {
+  assert.ok(cmpVer('1.7.10', '1.7.9') > 0)
+  assert.ok(cmpVer('1.7.9', '1.7.10') < 0)
+  assert.deepEqual(verParts('1.7.10'), [1, 7, 10])
+  // A phone that saw the 1.7.9 sheet still gets a 1.7.10 sheet (string compare would wrongly call "1.7.9" newer).
+  const news = [{ v: '1.7.10', sheet: SHEET }, { v: '1.7.9' }]
+  const r = bigSheetFor({ version: '1.7.10', stored: '1.7.9', onboarded: true, news })
+  assert.equal(r?.version, '1.7.10')
+})
+
 test('missing stored on an onboarded phone counts as 1.2', () => {
   // app 1.2.7: release 1.2 is not newer than the assumed 1.2 -> null.
   assert.equal(bigSheetFor({ version: '1.2.7', stored: null, onboarded: true, news: NEWS }), null)

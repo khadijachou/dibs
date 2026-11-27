@@ -89,14 +89,14 @@ export default function Boards() {
   // Global: my row is pinned under the top 5 with a gap, unless I am already in the top 5.
   const meInTop = tab === 'global' && data?.me && rows.some((r) => r.id === data.me.id)
   const meRow = tab === 'global' && data?.me && !meInTop ? data.me : null
-  // Everyone on the board still at 0 checked XP: the place numbers (all 1) say nothing, so hide them and show one line.
-  const allZero = (() => { const all = meRow ? [...rows, meRow] : rows; return all.length > 0 && all.every((r) => !r.xp) })()
-  const countStr = count != null
-    ? (tab === 'global'
-      ? t(count === 1 ? 'board_count_global_one' : 'board_count_global', { n: fmtN(count, lang) })
-      : t(count === 1 ? 'board_count_friends_one' : 'board_count_friends', { n: fmtN(count, lang) }))
-    : null
-  const meta = countStr ? `${t('board_meta_month')} · ${countStr}` : t('board_meta_month')
+  const hidden = tab === 'friends' ? (data?.hidden || 0) : 0 // friends who joined but hide their level (Friends tab only)
+  // Global only: everyone still at 0 checked XP, so the place numbers (all 1) say nothing. Hide them and show one line.
+  // The Friends board ranks by Profile XP and keeps its place numbers.
+  const allZero = tab === 'global' && (() => { const all = meRow ? [...rows, meRow] : rows; return all.length > 0 && all.every((r) => !r.xp) })()
+  // Meta line: Friends = all-time Profile XP; Global = this month's checked XP.
+  const meta = tab === 'global'
+    ? (count != null ? `${t('board_meta_month')} · ${t(count === 1 ? 'board_count_global_one' : 'board_count_global', { n: fmtN(count, lang) })}` : t('board_meta_month'))
+    : t('board_meta_friends', { n: fmtN(count || 0, lang) })
 
   const leave = async (which, on) => {
     const next = { friends: st?.friends || false, global: st?.global || false, [which]: on }
@@ -113,7 +113,7 @@ export default function Boards() {
           <button type="button" role="tab" aria-selected={tab === 'global'} className={tab === 'global' ? 'on' : ''} onClick={() => setTab('global')}>{t('board_tab_global')}</button>
         </div>
 
-        {!needFriends && <p className="brd-meta">{meta}</p>}
+        {!needFriends && !loading && <p className="brd-meta">{meta}</p>}
 
         {loading && <Skeleton rows={4} />}
         {err && <FriendNotice onRetry={() => load(tab)} />}
@@ -141,7 +141,8 @@ export default function Boards() {
                 </>
               )}
             </section>
-            <p className="brd-note">{t('board_note')}</p>
+            {hidden > 0 && <p className="brd-hidden">{t('board_hidden_level', { n: fmtN(hidden, lang) })}</p>}
+            {tab === 'global' && <p className="brd-note">{t('board_note')}</p>}
           </>
         )}
 

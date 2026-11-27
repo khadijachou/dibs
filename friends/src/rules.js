@@ -133,7 +133,11 @@ function cleanItem(key, v) {
       if (!v || typeof v !== 'object') return undefined
       if (!isInt(v.level, 1, 999)) return undefined
       if (typeof v.rank !== 'string' || !KEY_RE.test(v.rank)) return undefined
-      return { level: v.level, rank: v.rank }
+      const out = { level: v.level, rank: v.rank }
+      // xp is the Profile XP total (v1.7.10), used to rank the Friends board. Integer 0 to 10,000,000. Older phones do
+      // not send it; a present-but-malformed xp drops the whole item, like a bad level or rank.
+      if (v.xp !== undefined) { if (!isInt(v.xp, 0, 10_000_000)) return undefined; out.xp = v.xp }
+      return out
     }
     case 'badges':
     case 'wishlist': {

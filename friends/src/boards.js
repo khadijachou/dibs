@@ -115,22 +115,16 @@ export async function countDeposit(store, u, hash, tx, now = Date.now()) {
   return { counted: true, reason: 'ok', xp: add }
 }
 
-// ---- the chain-check queue ----------------------------------------------------------------------------------
-// In memory only (like the orders server's stats check): { id, hash, first, next, tries }. A reported hash waits here
-// until the chain shows it; counted (or definitively rejected) it is dropped. Not found yet: retried with backoff,
-// given up (dropped) after 24 h. The user is re-read at check time, so a user who left or was deleted stops counting.
+// ---- reading a transaction from the chain -------------------------------------------------------------------
+// A reported deposit is checked during its own request (POST /v1/me/xp/deposit), never queued in memory: a server
+// restart can no longer lose it, and the phone keeps the hash until it gets a final answer (lib/boards.js). makeFetchTx
+// returns getTx(hash) -> the transaction data object, or null (not found yet, or the RPC timed out / failed).
 
-const MINUTE = 60_000
-const DAY = 24 * 60 * MINUTE
-const MAX_QUEUE = 5000
 const DEFAULT_RPC = 'https://rpc.nimiqwatch.com'
 
-// makeChecker(store, { loadUser, rpcUrl, fetchTx, now }). loadUser(id) -> the user record (or null). fetchTx(hash) ->
-// the transaction data object (or null); the default calls getTransactionByHash on the RPC. now() is injectable.
-export function makeChecker(store, { loadUser, rpcUrl, fetchTx, now = () => Date.now() } = {}) {
-  const queue = []
-  const url = (rpcUrl || process.env.NIMIQ_RPC_URL || DEFAULT_RPC)
-  const getTx = fetchTx || (async (hash) => {
+export function makeFetchTx(rpcUrl) {
+  const url = rpcUrl || process.env.NIMIQ_RPC_URL || DEFAULT_RPC
+  return async (hash) => {
     try {
       const r = await fetch(url, {
         method: 'POST',
@@ -141,27 +135,5 @@ export function makeChecker(store, { loadUser, rpcUrl, fetchTx, now = () => Date
       const out = await r.json()
       return out?.result?.data || null
     } catch { return null }
-  })
-
-  function enqueue(id, hash) {
-    if (queue.length >= MAX_QUEUE) return
-    const t = now()
-    queue.push({ id, hash, first: t, next: t, tries: 0 })
   }
-
-  async function tick() {
-    const item = queue.find((q) => q.next <= now())
-    if (!item) return
-    item.next = Infinity // not picked twice while this runs
-    item.tries += 1
-    const user = await loadUser(item.id)
-    if (!user || !onAnyBoard(user)) { drop(item); return } // left or deleted: stop, drop the hash
-    const tx = await getTx(item.hash)
-    if (tx) { await countDeposit(store, user, item.hash, tx, now()); drop(item); return } // decided either way
-    if (now() - item.first > DAY) { drop(item); return } // not found in 24 h: give up
-    item.next = now() + Math.min(60 * MINUTE, MINUTE * 2 ** Math.min(item.tries - 1, 6)) // backoff
-  }
-
-  const drop = (item) => { const i = queue.indexOf(item); if (i >= 0) queue.splice(i, 1) }
-  return { enqueue, tick, get pending() { return queue.length } }
 }

@@ -285,7 +285,7 @@ export async function syncShared(address, walletAddress) {
   const { saved, earned } = on('totals') ? await gatherTotals(address) : {}
   const avatar = on('avatar') ? await gatherAvatar(walletAddress) : undefined
   const body = sharedPayload({
-    visibility: vis, xp: { level: s.level, rank: s.rank.id }, badges: earnedBadges,
+    visibility: vis, xp: { level: s.level, rank: s.rank.id, total: s.xp }, badges: earnedBadges,
     goals: listGoals(address), wishlist: getWishlist(), saved, earned, avatar, giftGoalIds: giftGoalIds(),
   })
   return request('PUT', '/v1/me/shared', body)

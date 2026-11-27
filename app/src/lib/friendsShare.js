@@ -18,7 +18,8 @@ export function cardValue(goal) {
 }
 const withValue = (brandKey, value) => (value ? { brandKey, value } : { brandKey })
 
-// visibility: the owner's map. xp: { level, rank }. badges: earned ids. goals: the ledger. wishlist: brand keys.
+// visibility: the owner's map. xp: { level, rank, total } (total = the Profile XP total, for the Friends board, v1.7.10).
+// badges: earned ids. goals: the ledger. wishlist: brand keys.
 // saved/earned: whole-NIM numbers for totals (earned may be null = unknown, then it is omitted). avatar: a data URL.
 // giftGoalIds: ids of goals a friend called dibs on; they are a surprise for someone else, so they never appear in my
 // shared active goals or bought cards (the friend must not see "Steam 20 USD" turn up in my profile).
@@ -35,6 +36,7 @@ export function sharedPayload({ visibility = {}, xp = null, badges = [], goals =
   }
   if (on('level') && xp && Number.isFinite(xp.level) && xp.level >= 1 && typeof xp.rank === 'string' && KEY_RE.test(xp.rank)) {
     body.level = { level: Math.min(999, Math.round(xp.level)), rank: xp.rank }
+    if (Number.isFinite(xp.total)) body.level.xp = Math.max(0, Math.min(10_000_000, Math.round(xp.total)))
   }
   if (on('badges')) body.badges = keys(badges, 60)
   if (on('cards')) {

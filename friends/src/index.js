@@ -22,7 +22,7 @@ import {
   directGiftsReceived, directSentTo, dropDirectGiftsFor, stripDirectBoxesBetween,
 } from './directGifts.js'
 import {
-  BOARDS, boardsChoice, boardMembers, setBoards, xpOf, dropBoardsFor, makeChecker, monthOf,
+  BOARDS, boardsChoice, boardMembers, setBoards, xpOf, dropBoardsFor, countDeposit, makeFetchTx, monthOf,
 } from './boards.js'
 
 export const VERSION = '1.7.4'
@@ -88,9 +88,9 @@ export function makeApp(store, env = process.env, opts = {}) {
 
   const loadUser = (id) => store.get(uKey(id))
   const saveUser = (u) => store.set(uKey(u.id), u)
-  // The chain-check queue for board deposit XP (in memory). Tests pass their own; otherwise one is built from the env.
-  const checker = opts.checker || makeChecker(store, { loadUser, rpcUrl: env.NIMIQ_RPC_URL })
-  app.__checker = checker // exposed so the run-directly block (and tests) can drive checker.tick()
+  // Board deposit XP is checked during the request (POST /v1/me/xp/deposit): read the tx from the chain, count it, and
+  // answer with the result. No in-memory queue, so a server restart never loses a report. Tests inject their own fetchTx.
+  const fetchTx = opts.fetchTx || makeFetchTx(env.NIMIQ_RPC_URL)
   const loadShared = async (id) => (await store.get(sharedKey(id))) || {}
   // Public identity only: never the walletKey, never the stored user object as-is.
   const meObject = (u) => ({ id: u.id, code: u.code, name: u.name, visibility: fullVisibility(u.visibility), look: cleanLook(u.look) })
@@ -375,9 +375,11 @@ export function makeApp(store, env = process.env, opts = {}) {
     return c.json({ boards: boardsChoice(u) })
   })
 
-  // Report a deposit to be checked on the chain and counted (background, like the orders server). Accepted only while
-  // the user is on at least one board. The hash is a 64-hex transaction id; it is never stored, only checked and
-  // fingerprinted for dedupe. A valid report always answers { queued: true }; the counting happens later.
+  // Report a deposit: check it on the chain during this request and answer with the result. Accepted only while the
+  // user is on at least one board. The hash is a 64-hex transaction id; it is never stored, only read and fingerprinted
+  // for dedupe. Answers { ok, reason }: ok true when counted; otherwise the reason (not_found_yet when the chain does not
+  // show it yet, or a rule: wrong_from, wrong_to, before_join, not_this_month, duplicate, day_cap, ...). The phone keeps
+  // the hash and retries on not_found_yet (lib/boards.js); a restart cannot lose it because nothing waits in memory.
   app.post('/v1/me/xp/deposit', async (c) => {
     const me = c.get('me')
     const u = c.get('user')
@@ -386,8 +388,10 @@ export function makeApp(store, env = process.env, opts = {}) {
     const body = parseJson(c.get('rawBody'))
     const tx = typeof body?.tx === 'string' ? body.tx.toLowerCase() : ''
     if (!isHex64(tx)) return c.json({ error: 'BAD_REQUEST' }, 400)
-    checker.enqueue(u.id, tx)
-    return c.json({ queued: true })
+    const data = await fetchTx(tx)
+    const reason = data ? (await countDeposit(store, u, tx, data)).reason : 'not_found_yet'
+    console.log(`leaderboard deposit: ${reason}`) // one line, the reason only (never the hash, never an address)
+    return c.json({ ok: reason === 'ok', reason })
   })
 
   // Is a member's level visible to this viewer? Their level visibility (friends / everyone / off) decides it, with self
@@ -397,32 +401,51 @@ export function makeApp(store, env = process.env, opts = {}) {
     const v = fullVisibility(member.visibility).level
     return v === 'everyone' || (v === 'friends' && relation === 'friend')
   }
-  // Build one board row for a member id. relation: 'self' | 'friend' | 'stranger'. Carries only id (the avatar seed),
-  // name, xp, and level when visible. Never an avatar picture, a wallet or anything else from the profile.
+  // Build one Global-board row for a member id. relation: 'self' | 'friend' | 'stranger'. Carries only id (the avatar
+  // seed), name, the month's checked XP, and level when visible. Never an avatar picture, a wallet or anything else.
   async function boardRow(id, relation, month) {
     const u = await loadUser(id)
     if (!u) return null
     const row = { id: u.id, name: u.name, xp: await xpOf(store, id, month) }
     if (levelVisible(u, relation)) { const sh = await loadShared(id); if (sh.level) row.level = sh.level.level }
-    // The Friends board shows a friend's name in their accent and their avatar in their rank frame (their stored look,
-    // which the client only ever sends while they share level and rank). The Global board carries no look at all.
-    if (relation !== 'stranger') row.look = cleanLook(u.look)
     return row
   }
 
-  // The Friends board: me plus my friends who joined it, this month. Returned only when I have at least 3 friends.
+  // Build one Friends-board row. The Friends board ranks by the member's Profile XP (shared.level.xp), all time, so it
+  // only carries a member who shares their level with this viewer. Returns 'hidden' for a joined friend who does not
+  // share their level (counted in a muted line, never shown), or null when the user is gone. Self is always shown.
+  async function friendRow(id, relation) {
+    const u = await loadUser(id)
+    if (!u) return null
+    if (!levelVisible(u, relation)) return 'hidden'
+    const sh = await loadShared(id)
+    const row = { id: u.id, name: u.name, xp: sh.level?.xp || 0 }
+    if (sh.level) row.level = sh.level.level
+    // The name in their accent and the avatar in their rank frame (their stored look).
+    row.look = cleanLook(u.look)
+    return row
+  }
+
+  // The Friends board: me plus my friends who joined it and share their level, ranked by Profile XP (all time, no monthly
+  // reset). Returned only when I have at least 3 friends. `count` = friends shown; `hidden` = friends who joined but hide
+  // their level (shown as a muted line, never ranked).
   app.get('/v1/boards/friends', async (c) => {
     const me = c.get('me')
     const friendIds = await store.smembers(friendsKey(me))
     if (friendIds.length < 3) return c.json({ needFriends: true, friends: friendIds.length })
-    const month = monthOf(Date.now())
     const onBoard = []
     for (const fid of friendIds) if (await store.sismember(`fr:board:friends`, fid)) onBoard.push(fid)
     const rows = []
-    const mine = await boardRow(me, 'self', month)
-    if (mine) rows.push(mine)
-    for (const fid of onBoard) { const r = await boardRow(fid, 'friend', month); if (r) rows.push(r) }
-    return c.json({ board: 'friends', month, count: onBoard.length, rows: rankRows(rows) })
+    let hidden = 0
+    const mine = await friendRow(me, 'self')
+    if (mine && mine !== 'hidden') rows.push(mine)
+    for (const fid of onBoard) {
+      const r = await friendRow(fid, 'friend')
+      if (r === 'hidden') { hidden += 1; continue }
+      if (r) rows.push(r)
+    }
+    const count = rows.filter((r) => r.id !== me).length
+    return c.json({ board: 'friends', count, hidden, rows: rankRows(rows) })
   })
 
   // The Global board (cached 60 s): the top 5 and my own row with my place, plus the total number of members. Global
@@ -785,8 +808,6 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   }
   const store = createStore()
   const app = makeApp(store)
-  // Drain the board deposit-check queue twice a second (two RPC calls a second at most), like the orders server.
-  setInterval(() => { app.__checker.tick().catch(() => { /* a hiccup: retried on the next tick */ }) }, 500).unref()
   const port = Number(process.env.PORT || 8788)
   serve({ fetch: app.fetch, port }, () => console.log(`friends server on http://localhost:${port} (store: ${store.kind}, version ${VERSION})`))
 }
