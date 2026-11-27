@@ -308,7 +308,8 @@ export default function App() {
     if (!ready || !address || friendsSynced.current) return
     if (friendsEnabled() && friendsIsOn()) {
       friendsSynced.current = true
-      syncQuiet(address)
+      recordVisit() // make sure today's visit is in the ledger before the shared Profile XP is computed and uploaded
+      syncQuiet(address) // uploads the shared level with the Profile XP (0 earlier, when it ran before the XP was ready)
       refreshBoards() // keep the local board choice in step with the server
       queueMonthDeposits(listGoals(address)) // re-report this month's deposits (recovers any lost before the at-once fix)
       flushBoardsQueue() // report any deposit hashes that could not be sent before

@@ -176,7 +176,8 @@ export function buildDiagnostics(state) {
   // server answer (its reason word only). Never a hash, never an address.
   const b = s.boards
   const joined = b && (b.friends || b.global) ? (b.friends && b.global ? 'both' : b.friends ? 'friends' : 'global') : 'no'
-  out.push(`  Leaderboards: joined ${joined}, ${Number(s.depositsWaiting) || 0} deposits waiting, last answer: ${s.lastBoardReason || 'none'}`)
+  const wallets = s.walletsLinked != null ? s.walletsLinked : (s.friendsOn ? 1 : 0)
+  out.push(`  Leaderboards: joined ${joined}, ${Number(s.depositsWaiting) || 0} deposits waiting, last answer: ${s.lastBoardReason || 'none'}, ${wallets} wallets linked`)
 
   return out.join('\n')
 }
@@ -242,7 +243,9 @@ export async function gather({ storage, now, tzOffsetMin, version, lang, demo, u
   const boards = readJSON(storage, 'dibs.boards')
   const boardsQueue = readJSON(storage, 'dibs.boardsQueue')
   let lastBoardReason = null
+  let walletsRaw = null
   try { lastBoardReason = storage.getItem('dibs.boardsLastReason') } catch { lastBoardReason = null }
+  try { walletsRaw = storage.getItem('dibs.boardsWallets') } catch { walletsRaw = null }
   return {
     version, now, tzOffsetMin, lang, demo,
     accounts, usedAddress, staker, validatorAddress,
@@ -254,5 +257,6 @@ export async function gather({ storage, now, tzOffsetMin, version, lang, demo, u
     boards: boards && typeof boards === 'object' ? { friends: Boolean(boards.friends), global: Boolean(boards.global) } : null,
     depositsWaiting: Array.isArray(boardsQueue) ? boardsQueue.length : 0,
     lastBoardReason: lastBoardReason || null,
+    walletsLinked: walletsRaw == null || walletsRaw === '' ? null : Number(walletsRaw),
   }
 }

@@ -22,7 +22,7 @@ import {
   directGiftsReceived, directSentTo, dropDirectGiftsFor, stripDirectBoxesBetween,
 } from './directGifts.js'
 import {
-  BOARDS, boardsChoice, boardMembers, setBoards, xpOf, dropBoardsFor, countDeposit, makeFetchTx, monthOf,
+  BOARDS, boardsChoice, boardMembers, setBoards, xpOf, dropBoardsFor, countDeposit, makeFetchTx, monthOf, walletKeys,
 } from './boards.js'
 
 export const VERSION = '1.7.4'
@@ -34,6 +34,7 @@ const DEVICE_TS_WINDOW = 5 * MINUTE
 const NONCE_TTL = 10 * 60 // seconds
 const DECLINE_TTL = 7 * 24 * 60 * 60 // seconds a declined invite stays visible to its sender
 const MAX_DEVICES = 5
+const MAX_WALLETS = 5
 const MAX_FRIENDS = 200
 const MAX_INVITES = 50
 
@@ -236,7 +237,7 @@ export function makeApp(store, env = process.env, opts = {}) {
       if (other) return restore(other)
     }
     const code = await uniqueCode(id)
-    const user = { id, wk, code, name: cleanedName, devices: [devicePub], createdAt: new Date().toISOString(), visibility: fullVisibility({}), look: {} }
+    const user = { id, wk, wks: [wk], code, name: cleanedName, devices: [devicePub], createdAt: new Date().toISOString(), visibility: fullVisibility({}), look: {} }
     await saveUser(user)
     return c.json({ restored: false, ...meObject(user) })
   })
@@ -286,7 +287,42 @@ export function makeApp(store, env = process.env, opts = {}) {
     const encPub = (u.encKeys || {})[c.get('devicePub')] || null
     const shared = await loadShared(u.id)
     const prof = visibleProfile({ id: u.id, name: u.name, visibility: u.visibility, shared, look: u.look }, 'self')
-    return c.json({ ...prof, code: u.code, gifts: await giftsReceived(u.id, encPub), boards: boardsChoice(u) })
+    return c.json({ ...prof, code: u.code, gifts: await giftsReceived(u.id, encPub), boards: boardsChoice(u), wallets: walletKeys(u).length })
+  })
+
+  // Link another of the wallet's addresses (v1.7.11): on Nimiq Pay the address Friends was registered with and the one
+  // deposits are paid from can differ, so the Global board answered wrong_from. This adds the signing address's walletKey
+  // to the user's keys (up to 5), with the same wallet-signature check as registration ("add this wallet"). Refuses
+  // WALLET_TAKEN when the key already belongs to another user; idempotent for an already linked key. Never stores an
+  // address, only its key. countDeposit then accepts a deposit from any linked key.
+  app.post('/v1/me/wallets', async (c) => {
+    const u = c.get('user')
+    const devicePub = c.get('devicePub')
+    const body = parseJson(c.get('rawBody'))
+    const wallet = body?.wallet
+    if (!wallet || typeof wallet !== 'object') return c.json({ error: 'BAD_WALLET' }, 400)
+    const { message, publicKey, signature } = wallet
+    if (typeof message !== 'string') return c.json({ error: 'BAD_WALLET' }, 400)
+    const lines = message.split('\n')
+    if (lines.length !== 3
+      || lines[0] !== 'Dibs Friends: add this wallet'
+      || lines[1] !== `Device: ${devicePub}`
+      || !lines[2].startsWith('Time: ')) return c.json({ error: 'BAD_WALLET' }, 400)
+    const t = Date.parse(lines[2].slice('Time: '.length))
+    if (!Number.isFinite(t) || Math.abs(Date.now() - t) > REGISTER_MESSAGE_WINDOW) return c.json({ error: 'BAD_WALLET' }, 400)
+    if (!verifyWalletSignature({ message, publicKey, signature })) return c.json({ error: 'BAD_WALLET' }, 400)
+
+    const wk = walletKey(addressOf(publicKey))
+    const keys = walletKeys(u)
+    if (keys.includes(wk)) return c.json({ wallets: keys.length }) // already linked: idempotent
+    if (keys.length >= MAX_WALLETS) return c.json({ error: 'TOO_MANY_WALLETS' }, 409)
+    // Claim the key for this user; refuse if it already belongs to someone else.
+    if (!(await store.setIfAbsent(wkKey(wk), u.id)) && (await store.get(wkKey(wk))) !== u.id) {
+      return c.json({ error: 'WALLET_TAKEN' }, 409)
+    }
+    u.wks = [...keys, wk]
+    await saveUser(u)
+    return c.json({ wallets: u.wks.length })
   })
 
   app.get('/v1/me/as-friend', async (c) => {
@@ -353,7 +389,8 @@ export function makeApp(store, env = process.env, opts = {}) {
     await dropDirectGiftsFor(store, id) // every direct gift where this user is giver or receiver (v1.7.4)
     await dropBoardsFor(store, id) // off every board, and every monthly XP record gone
     invalidateGlobal()
-    await store.del(friendsKey(id), inboxKey(id), sentKey(id), wkKey(u.wk), codeKey(u.code), sharedKey(id), uKey(id))
+    for (const wk of walletKeys(u)) await store.del(wkKey(wk)) // every linked wallet key (v1.7.11)
+    await store.del(friendsKey(id), inboxKey(id), sentKey(id), codeKey(u.code), sharedKey(id), uKey(id))
     return c.json({ ok: true })
   })
 

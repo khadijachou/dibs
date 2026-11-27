@@ -37,6 +37,10 @@ function txTimestampMs(tx) {
 
 // ---- membership ---------------------------------------------------------------------------------------------
 
+// The wallet keys a user has linked, the registration one first. Old users (before v1.7.11) carry only `wk`; new users
+// carry `wks` (an array). A deposit counts when its from-address hashes to any of these. Never an address, only keys.
+export const walletKeys = (u) => (Array.isArray(u?.wks) && u.wks.length ? u.wks : (u?.wk ? [u.wk] : []))
+
 // The boards a user is on, as booleans, from the user record's `boards` map ({ friends?: iso, global?: iso }).
 export const boardsChoice = (u) => ({ friends: Boolean(u?.boards?.friends), global: Boolean(u?.boards?.global) })
 export const onAnyBoard = (u) => BOARDS.some((b) => u?.boards?.[b])
@@ -87,7 +91,7 @@ export async function countDeposit(store, u, hash, tx, now = Date.now()) {
   if (!onAnyBoard(u)) return { counted: false, reason: 'not_on_board' }
   if (!tx || tx.executionResult !== true) return { counted: false, reason: 'not_executed' }
   if (tx.to !== STAKING_CONTRACT) return { counted: false, reason: 'wrong_to' }
-  if (walletKey(stripSpaces(tx.from)) !== u.wk) return { counted: false, reason: 'wrong_from' }
+  if (!walletKeys(u).includes(walletKey(stripSpaces(tx.from)))) return { counted: false, reason: 'wrong_from' }
   const ts = txTimestampMs(tx)
   if (ts == null) return { counted: false, reason: 'no_timestamp' }
   const joined = joinedAtMs(u)

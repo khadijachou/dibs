@@ -61,7 +61,7 @@ test('the brief sample renders exactly, line by line', () => {
     '  Deleted goals on this phone: 0',
     '  NIM put back in staking: never',
     '  Friends: off',
-    '  Leaderboards: joined no, 0 deposits waiting, last answer: none',
+    '  Leaderboards: joined no, 0 deposits waiting, last answer: none, 0 wallets linked',
   ].join('\n')
   assert.equal(buildDiagnostics(sample), expected)
 })
@@ -70,13 +70,14 @@ test('Friends: on when the state says so', () => {
   assert.ok(buildDiagnostics({ ...sample, friendsOn: true }).includes('Friends: on'))
 })
 
-test('Leaderboards line: joined label, deposits waiting and last answer; never a hash', () => {
-  const t = buildDiagnostics({ ...sample, boards: { friends: true, global: true }, depositsWaiting: 2, lastBoardReason: 'duplicate' })
-  assert.ok(t.includes('Leaderboards: joined both, 2 deposits waiting, last answer: duplicate'))
-  const g = buildDiagnostics({ ...sample, boards: { friends: false, global: true }, depositsWaiting: 0, lastBoardReason: null })
-  assert.ok(g.includes('Leaderboards: joined global, 0 deposits waiting, last answer: none'))
-  const none = buildDiagnostics({ ...sample, boards: null })
-  assert.ok(none.includes('Leaderboards: joined no, 0 deposits waiting, last answer: none'))
+test('Leaderboards line: joined label, deposits waiting, last answer and wallets linked; never a hash', () => {
+  const t = buildDiagnostics({ ...sample, boards: { friends: true, global: true }, depositsWaiting: 2, lastBoardReason: 'duplicate', walletsLinked: 2 })
+  assert.ok(t.includes('Leaderboards: joined both, 2 deposits waiting, last answer: duplicate, 2 wallets linked'))
+  const g = buildDiagnostics({ ...sample, boards: { friends: false, global: true }, depositsWaiting: 0, lastBoardReason: null, walletsLinked: 1 })
+  assert.ok(g.includes('Leaderboards: joined global, 0 deposits waiting, last answer: none, 1 wallets linked'))
+  // Unknown wallet count falls back to 1 when Friends is on, 0 when off.
+  assert.ok(buildDiagnostics({ ...sample, friendsOn: true, walletsLinked: null }).includes('last answer: none, 1 wallets linked'))
+  assert.ok(buildDiagnostics({ ...sample, boards: null }).includes('Leaderboards: joined no, 0 deposits waiting, last answer: none, 0 wallets linked'))
 })
 
 test('gather never copies the device secret key or the demo wallet key', async () => {

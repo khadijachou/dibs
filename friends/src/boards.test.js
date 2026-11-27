@@ -20,6 +20,9 @@ const space4 = (a) => a.replace(/(.{4})(?=.)/g, '$1 ') // the RPC returns addres
 // A wallet address with no spaces, and the matching walletKey the server stores.
 const ADDR = 'NQ11AAAABBBBCCCCDDDDEEEEFFFFGGGGHHHH'
 const WK = walletKey(ADDR)
+// A second address of the same wallet (the one deposits are paid from), and its key (v1.7.11).
+const ADDR2 = 'NQ22BBBBCCCCDDDDEEEEFFFFGGGGHHHHJJJJ'
+const WK2 = walletKey(ADDR2)
 const ms = (iso) => Date.parse(iso)
 
 // A deposit tx data object as getTransactionByHash returns it (from with spaces, to the staking contract).
@@ -62,6 +65,25 @@ test('a deposit from another wallet does not count', async () => {
   const r = await countDeposit(s, user(), 'a'.repeat(64), depTx(50, '2026-11-10T09:00:00Z', { from: space4('NQ99ZZZZ') }), NOW)
   assert.equal(r.counted, false)
   assert.equal(r.reason, 'wrong_from')
+})
+
+test('a deposit from a second linked wallet (wks) counts; an unlinked address still does not', async () => {
+  const s = createMemoryStore()
+  const u = user({ wks: [WK, WK2] }) // registration key plus the linked staking-address key
+  const ok = await countDeposit(s, u, 'a'.repeat(64), depTx(50, '2026-11-10T09:00:00Z', { from: space4(ADDR2) }), NOW)
+  assert.equal(ok.counted, true)
+  assert.equal(ok.xp, 10)
+  const no = await countDeposit(s, user({ wks: [WK] }), 'b'.repeat(64), depTx(50, '2026-11-10T09:00:00Z', { from: space4(ADDR2) }), NOW)
+  assert.equal(no.counted, false)
+  assert.equal(no.reason, 'wrong_from')
+})
+
+test('an old user with only `wk` (no wks) still counts a deposit from it', async () => {
+  const s = createMemoryStore()
+  const u = { id: 'old', wk: WK, boards: { global: '2026-11-01T00:00:00.000Z' } } // pre-v1.7.11 record, no wks
+  const r = await countDeposit(s, u, 'c'.repeat(64), depTx(50, '2026-11-10T09:00:00Z'), NOW)
+  assert.equal(r.counted, true)
+  assert.equal(r.xp, 10)
 })
 
 test('a deposit to another address does not count', async () => {
@@ -216,6 +238,13 @@ function appWithRpc(txByHash) {
 
 // A deposit tx from a registered user's own wallet (its address derived from the wallet public key, spaced like the RPC).
 const depFrom = (who, nim, iso) => depTx(nim, iso, { from: space4(addressOf(who.wallet.pub)) })
+const depFromPub = (pub, nim, iso) => depTx(nim, iso, { from: space4(addressOf(pub)) })
+// Link another of the wallet's addresses: sign "add this wallet" with that address's key (keyPair = { sk, pub }).
+async function addWallet(a, who, keyPair) {
+  const message = `Dibs Friends: add this wallet\nDevice: ${who.dev.pub}\nTime: ${new Date().toISOString()}`
+  const signature = toHex(ed25519.sign(nimiqHash(message), keyPair.sk))
+  return call(a, who, 'POST', '/v1/me/wallets', { wallet: { message, publicKey: keyPair.pub, signature } })
+}
 // Share this user's level (and Profile XP) with friends: turn the level item on, then upload { level, rank, xp }.
 async function shareLevel(a, who, { level = 1, xp = 0, rank = 'starter' } = {}) {
   await call(a, who, 'PATCH', '/v1/me', { visibility: { level: 'friends' } })
@@ -335,4 +364,68 @@ test('Global board uses deposit XP (not the shared Profile XP); leaving and dele
   await call(a, me, 'DELETE', '/v1/me')
   assert.ok(!(await store.sismember('fr:board:global', me.id)))
   assert.equal(await store.get(`fr:xp:${me.id}:${monthOf(Date.now())}`), null)
+})
+
+// ---- linking a second wallet address (v1.7.11) --------------------------------------------------------------
+
+test('a second wallet is linked, then a deposit from it counts on the Global board', async () => {
+  const txByHash = {}
+  const store = createMemoryStore()
+  const a = makeApp(store, {}, { fetchTx: async (h) => txByHash[h] || null })
+  const u = await register(a)
+  await call(a, u, 'PUT', '/v1/me/boards', { friends: false, global: true })
+  assert.equal((await call(a, u, 'GET', '/v1/me')).body.wallets, 1) // just the registration address
+
+  const other = newKey() // the staking address's key, different from the registration one
+  // Before linking, a deposit from `other` is refused.
+  txByHash['a'.repeat(64)] = depFromPub(other.pub, 500, new Date().toISOString())
+  assert.equal((await call(a, u, 'POST', '/v1/me/xp/deposit', { tx: 'a'.repeat(64) })).body.reason, 'wrong_from')
+  // Link it: wallets becomes 2.
+  const link = await addWallet(a, u, other)
+  assert.equal(link.status, 200)
+  assert.equal(link.body.wallets, 2)
+  assert.equal((await call(a, u, 'GET', '/v1/me')).body.wallets, 2)
+  // Now the same deposit (fresh hash) counts.
+  txByHash['b'.repeat(64)] = depFromPub(other.pub, 500, new Date().toISOString())
+  const after = await call(a, u, 'POST', '/v1/me/xp/deposit', { tx: 'b'.repeat(64) })
+  assert.equal(after.body.ok, true)
+  assert.equal(after.body.reason, 'ok')
+})
+
+test('linking is idempotent for an already linked key', async () => {
+  const { a } = appWithRpc({})
+  const u = await register(a)
+  const w = newKey()
+  assert.equal((await addWallet(a, u, w)).body.wallets, 2)
+  assert.equal((await addWallet(a, u, w)).body.wallets, 2) // same key again: no change
+})
+
+test('a wallet key that belongs to another user is refused (WALLET_TAKEN)', async () => {
+  const { a } = appWithRpc({})
+  const a1 = await register(a)
+  const a2 = await register(a)
+  const taken = await addWallet(a, a2, a1.wallet) // a1's registration wallet
+  assert.equal(taken.status, 409)
+  assert.equal(taken.body.error, 'WALLET_TAKEN')
+})
+
+test('a sixth wallet is refused (max 5)', async () => {
+  const { a } = appWithRpc({})
+  const u = await register(a) // wallet #1 (registration)
+  for (let i = 0; i < 4; i++) assert.equal((await addWallet(a, u, newKey())).body.wallets, i + 2) // #2..#5
+  const sixth = await addWallet(a, u, newKey())
+  assert.equal(sixth.status, 409)
+  assert.equal(sixth.body.error, 'TOO_MANY_WALLETS')
+})
+
+test('deleting the profile frees every linked wallet key', async () => {
+  const { a, store } = appWithRpc({})
+  const u = await register(a)
+  const w = newKey()
+  await addWallet(a, u, w)
+  await call(a, u, 'DELETE', '/v1/me')
+  // The linked key is free again: registering with it makes a brand-new user, not a restore of the deleted one.
+  const reuse = await register(a, { wallet: w })
+  assert.equal(reuse.restored, false)
+  assert.ok(typeof reuse.id === 'string' && reuse.id !== u.id)
 })

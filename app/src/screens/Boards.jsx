@@ -10,8 +10,10 @@ import { Skeleton, FriendNotice, JoinBoardsSheet } from '../components/FriendsPa
 import { rankOf } from '../lib/xp.js'
 import {
   getBoardsState, onAnyBoard, friendsBoard, globalBoard, setBoards, refreshBoards, BOARDS_EVENT,
+  lastReason, linkDepositAddress,
 } from '../lib/boards.js'
 import { getState as friendsState } from '../lib/friends.js'
+import { listGoals } from '../lib/goals.js'
 
 const fmtN = (n, lang) => { try { return Number(n || 0).toLocaleString(lang) } catch { return String(n || 0) } }
 
@@ -46,7 +48,7 @@ function Row({ r, isMe, tab, hidePlace }) {
 }
 
 export default function Boards() {
-  const { t, lang, go, back } = useApp()
+  const { t, lang, go, back, address } = useApp()
   const st = useBoardsState()
   const joined = onAnyBoard()
   const [tab, setTab] = useState('friends')
@@ -54,14 +56,26 @@ export default function Boards() {
   const [err, setErr] = useState(false)
   const [loading, setLoading] = useState(true)
   const [joinOpen, setJoinOpen] = useState(false)
+  const [linking, setLinking] = useState(false)
+  // The Global board answers wrong_from when deposits come from an address of the wallet that is not linked yet.
+  const [wrongFrom, setWrongFrom] = useState(() => lastReason() === 'wrong_from')
 
   useEffect(() => { refreshBoards() }, [])
 
   const load = useCallback((which) => {
     setLoading(true); setErr(false); setData(null)
     const call = which === 'global' ? globalBoard : friendsBoard
-    return call().then((d) => { setData(d); setLoading(false) }).catch(() => { setErr(true); setLoading(false) })
+    return call().then((d) => { setData(d); setLoading(false); setWrongFrom(lastReason() === 'wrong_from') }).catch(() => { setErr(true); setLoading(false) })
   }, [])
+
+  // Link the address deposits come from, then reload. A refusal in Nimiq Pay changes nothing.
+  const onLink = async () => {
+    setLinking(true)
+    try { await linkDepositAddress(listGoals(address)) } catch { /* refusal or failure: quiet */ }
+    setLinking(false)
+    setWrongFrom(lastReason() === 'wrong_from')
+    load(tab)
+  }
   useEffect(() => { if (joined) load(tab) }, [tab, joined, load])
 
   // Not joined: a quiet join prompt (the row still brings people here).
@@ -93,10 +107,10 @@ export default function Boards() {
   // Global only: everyone still at 0 checked XP, so the place numbers (all 1) say nothing. Hide them and show one line.
   // The Friends board ranks by Profile XP and keeps its place numbers.
   const allZero = tab === 'global' && (() => { const all = meRow ? [...rows, meRow] : rows; return all.length > 0 && all.every((r) => !r.xp) })()
-  // Meta line: Friends = all-time Profile XP; Global = this month's checked XP.
+  // Meta line: Friends = all-time Profile XP (or "just you" when no friend is shown); Global = this month's checked XP.
   const meta = tab === 'global'
     ? (count != null ? `${t('board_meta_month')} · ${t(count === 1 ? 'board_count_global_one' : 'board_count_global', { n: fmtN(count, lang) })}` : t('board_meta_month'))
-    : t('board_meta_friends', { n: fmtN(count || 0, lang) })
+    : (count > 0 ? t('board_meta_friends', { n: fmtN(count, lang) }) : t('board_meta_friends_alone'))
 
   const leave = async (which, on) => {
     const next = { friends: st?.friends || false, global: st?.global || false, [which]: on }
@@ -141,7 +155,13 @@ export default function Boards() {
                 </>
               )}
             </section>
-            {hidden > 0 && <p className="brd-hidden">{t('board_hidden_level', { n: fmtN(hidden, lang) })}</p>}
+            {hidden > 0 && <p className="brd-hidden">{hidden === 1 ? t('board_hidden_level_one') : t('board_hidden_level', { n: fmtN(hidden, lang) })}</p>}
+            {tab === 'global' && wrongFrom && (
+              <div className="brd-link">
+                <p>{t('board_link_wrong_from')}</p>
+                <button type="button" className="btn" disabled={linking} onClick={onLink}>{linking ? t('restake_waiting') : t('board_link_btn')}</button>
+              </div>
+            )}
             {tab === 'global' && <p className="brd-note">{t('board_note')}</p>}
           </>
         )}

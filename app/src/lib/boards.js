@@ -5,7 +5,7 @@
 // the phone, retries them on the next launch, and drops them after 3 days. With Friends off or the server down, nothing
 // breaks and nothing is shown.
 import { config } from './config.js'
-import { request, requestSeq, isOn } from './friends.js'
+import { request, requestSeq, isOn, addWallet } from './friends.js'
 import { txHash } from './history.js'
 
 const K = {
@@ -13,6 +13,7 @@ const K = {
   queue: 'dibs.boardsQueue', // [{ tx, at }] deposit hashes waiting to be reported
   cardHidden: 'dibs.boardsCardHidden', // '1' once the Profile card's "Not now" was tapped
   lastReason: 'dibs.boardsLastReason', // the last server answer for a reported deposit (diagnostics only, never a hash)
+  wallets: 'dibs.boardsWallets', // how many wallet addresses are linked (diagnostics only, never an address)
 }
 const HEX64 = /^[0-9a-f]{64}$/i
 export const BOARDS_EVENT = 'dibs:boards'
@@ -35,7 +36,9 @@ export const onGlobal = () => Boolean(getBoardsState()?.global)
 export const cardHidden = () => readStr(K.cardHidden) === '1'
 export const hideCard = () => { writeStr(K.cardHidden, '1'); notify() }
 // Called when Friends is turned off / deleted: forget the local board state (the server already dropped it).
-export const clearBoards = () => { try { for (const k of [K.state, K.queue, K.cardHidden, K.lastReason]) localStorage.removeItem(k) } catch { /* ignore */ } }
+export const clearBoards = () => { try { for (const k of [K.state, K.queue, K.cardHidden, K.lastReason, K.wallets]) localStorage.removeItem(k) } catch { /* ignore */ } }
+// How many wallet addresses are linked, for diagnostics (null when never read from the server).
+export const walletsLinked = () => { const v = readStr(K.wallets); return v == null ? null : Number(v) }
 
 // ---- join / leave -------------------------------------------------------------------------------------------
 
@@ -55,6 +58,7 @@ export async function refreshBoards() {
   try {
     const me = await request('GET', '/v1/me')
     if (me?.boards) { writeJSON(K.state, me.boards); notify() }
+    if (typeof me?.wallets === 'number') writeStr(K.wallets, String(me.wallets))
     return me?.boards || null
   } catch { return null }
 }
@@ -106,6 +110,18 @@ export function queueMonthDeposits(goals, now = Date.now()) {
     }
   }
   if (added) return flushQueue()
+}
+
+// Link the address deposits are paid from (v1.7.11): when the Global board answers wrong_from, the deposits come from
+// another address of the same wallet than the one Friends was registered with. Ask Nimiq Pay to sign, add the key on the
+// server, remember the new wallet count, then re-report this month's deposits so they count. A refusal throws (the caller
+// stays quiet and nothing changes). Only meaningful while the Global board is joined.
+export async function linkDepositAddress(goals, now = Date.now()) {
+  if (!config.friendsUrl || !isOn() || !onGlobal()) return null
+  const out = await addWallet() // signs in Nimiq Pay; throws on a refusal
+  if (out && typeof out.wallets === 'number') writeStr(K.wallets, String(out.wallets))
+  await queueMonthDeposits(goals, now) // the newly linked address's deposits now count
+  return out
 }
 
 // Report the queued hashes. Dropped: older than 3 days, counted, duplicate, or refused for good (wrong wallet, wrong

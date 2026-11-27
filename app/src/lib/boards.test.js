@@ -5,7 +5,7 @@ import { test, beforeEach } from 'node:test'
 import assert from 'node:assert/strict'
 import { ed25519 } from '@noble/curves/ed25519.js'
 import { config } from './config.js'
-import { queueMonthDeposits, flushQueue, onGlobal, lastReason } from './boards.js'
+import { queueMonthDeposits, flushQueue, onGlobal, lastReason, refreshBoards, walletsLinked } from './boards.js'
 
 const hex = (u8) => Buffer.from(u8).toString('hex')
 const H = (c) => c.repeat(64) // a 64-hex transaction hash from one character
@@ -39,6 +39,13 @@ test('onGlobal reflects the stored board choice', () => {
   assert.equal(onGlobal(), true)
   localStorage.setItem('dibs.boards', JSON.stringify({ friends: true, global: false }))
   assert.equal(onGlobal(), false)
+})
+
+test('refreshBoards stores the linked wallet count for diagnostics', async () => {
+  assert.equal(walletsLinked(), null) // nothing read yet
+  responses = [{ boards: { friends: false, global: true }, wallets: 3 }] // the GET /v1/me answer
+  await refreshBoards()
+  assert.equal(walletsLinked(), 3)
 })
 
 test('not_found_yet keeps the hash queued and records the reason', async () => {
