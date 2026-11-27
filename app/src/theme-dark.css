@@ -901,7 +901,7 @@ button.tl-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: -2
 .gtile .blogo { width: 34px; height: 34px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0, 0, 0, .25); }
 .gtile .blogo.letter { font-size: 16px; }
 .gtile-pill { font: 600 var(--fs-label) var(--font-body); letter-spacing: .04em; padding: 4px 8px; border-radius: 999px; background: rgba(0, 0, 0, .28); color: #fff; white-space: nowrap; }
-.gtile-bot { position: relative; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.gtile-bot { position: relative; display: flex; flex-direction: column; gap: 2px; min-width: 0; padding-right: 38px; }
 .gtile-bot b { font: 600 var(--fs-strong)/1.2 var(--font-body); color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, .3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .gtile-bot span { font: 500 var(--fs-label) var(--font-body); color: rgba(255, 255, 255, .82); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .gtile.big { flex: 0 0 236px; border-radius: 20px; padding: 14px; scroll-snap-align: start; }
@@ -918,7 +918,8 @@ button.tl-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: -2
 .gtile-wrap.big { flex: 0 0 236px; scroll-snap-align: start; }
 .gtile-wrap > .gtile { width: 100%; }
 .gtile-heart { position: absolute; right: 4px; bottom: 4px; width: 44px; height: 44px; display: grid; place-items: center; background: transparent; border: 0; cursor: pointer; z-index: 2; }
-.gtile-heart-ic { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 999px; background: rgba(255, 255, 255, .25); color: #fff; transition: transform 120ms ease, background 120ms ease; }
+.gtile-heart-ic { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 999px; background: rgba(255, 255, 255, .25); color: #fff; transition: transform 120ms ease, background 120ms ease; }
+.gtile-heart .gtile-heart-ic svg { width: 16px; height: 16px; }
 .gtile-heart[aria-pressed="true"] .gtile-heart-ic { background: #fff; color: var(--gold); }
 .gtile-heart:active .gtile-heart-ic { transform: scale(.88); }
 .gtile-heart:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 999px; }

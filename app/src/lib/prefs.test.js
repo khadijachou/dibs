@@ -108,6 +108,17 @@ test('Add a preference: search and category filter over that list', () => {
   assert.deepEqual(filterBrands(list, { q: 'zzz' }), [])
 })
 
+test('search matches a brand alias: "ppq" still finds PayPerQ (name alone would not)', async () => {
+  const { BRANDS } = await import('./brands.js')
+  const ppq = BRANDS.find((b) => b.key === 'ppq')
+  assert.equal(ppq.name, 'PayPerQ')
+  assert.deepEqual(ppq.aliases, ['ppq'])
+  const list = [{ key: 'ppq', name: 'PayPerQ', chip: 'tools', aliases: ['ppq'] }, { key: 'steam', name: 'Steam', chip: 'games' }]
+  assert.deepEqual(filterBrands(list, { q: 'ppq' }).map((b) => b.key), ['ppq'], 'alias match')
+  assert.deepEqual(filterBrands(list, { q: 'pay' }).map((b) => b.key), ['ppq'], 'name still matches')
+  assert.deepEqual(filterBrands(list, { q: 'st' }).map((b) => b.key), ['steam'], 'a brand with no alias is unaffected')
+})
+
 test('the static brand list has 20 brands with more than one version (v1.1.0: Bolt, Twitch, H&M, Nike)', async () => {
   const { BRANDS } = await import('./brands.js')
   assert.equal(BRANDS.filter((b) => b.region.length > 1).length, 20)

@@ -11,7 +11,7 @@ import { fullPhoto } from '../lib/promoPhotos.js'
 // Each launch shows one slide per category, picked at random. Auto-advances every 5 s, pauses while touched;
 // reduced motion: no auto-advance.
 // Brands that have a promo_<key> line in every language.
-const LINES = ['steam', 'playstation', 'xbox', 'airbnb', 'hotels', 'flightgift', 'uber', 'netflix', 'disney', 'ubereats', 'doordash', 'starbucks', 'amazon', 'apple', 'bestbuy', 'nintendo', 'googleplay', 'roblox', 'fortnite', 'valorant', 'riot', 'discord', 'handm', 'nike', 'twitch', 'burgerking', 'currys', 'mediamarkt', 'fnacdarty', 'electrodepot', 'slot', 'samsung', 'bolt']
+const LINES = ['steam', 'playstation', 'xbox', 'airbnb', 'hotels', 'flightgift', 'uber', 'netflix', 'disney', 'ubereats', 'doordash', 'starbucks', 'amazon', 'apple', 'bestbuy', 'nintendo', 'googleplay', 'roblox', 'fortnite', 'valorant', 'riot', 'discord', 'handm', 'nike', 'twitch', 'burgerking', 'currys', 'mediamarkt', 'fnacdarty', 'electrodepot', 'slot', 'samsung', 'bolt', 'chatgpt', 'surfshark', 'exitlag', 'gworkspace', 'msoffice']
 
 const NimiqHex = () => (
   <svg viewBox="0 0 27 24" width="11" height="11" aria-hidden="true">

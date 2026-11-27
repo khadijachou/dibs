@@ -1,4 +1,5 @@
 import { fmtAmount, fmtUsd } from './format.js'
+import { brandOf } from './brands.js'
 
 // Display names in the user's language. The shop names cards "Steam gift card"; we show them through the
 // cat_item key ("carte-cadeau Steam", "tarjeta de regalo Steam"). Display only: goals keep their stored
@@ -31,9 +32,21 @@ const AMOUNT = /^(\d+(?:\.\d+)?)\s+([A-Z]{3})$/
 const DURATION = /^(\d+)\s+(year|month)s?$/i
 export const isAmountDetail = (x) => AMOUNT.test(String(x?.detail ?? x?.itemDetail ?? '').trim())
 
+// Some shop plan values repeat the brand ("Surfshark 1M", "Surfshark 1Y"): the tile and sheet already show the brand,
+// so for display we drop a leading brand-name prefix (case-insensitive, followed by a space) and keep just "1M". The
+// stored value, the catalogue and what is sent to the shop never change. The brand name is the goal's stored brandName,
+// else the brand the item belongs to (brandOf needs the item's shopUrl; synthetic objects have neither and are left as
+// is). A value that does not start with the brand name (NordPass "1 Year Subscription") is untouched.
+const brandNameOf = (x) => x?.brandName || (x?.shopUrl ? brandOf(x)?.name : null)
+function dropBrandPrefix(raw, name) {
+  if (!name) return raw
+  const re = new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s+`, 'i')
+  return raw.replace(re, '')
+}
+
 export function detailText(t, x, { short = false } = {}) {
   const lang = t.lang || 'en'
-  const raw = String(x?.detail ?? x?.itemDetail ?? '').trim()
+  const raw = dropBrandPrefix(String(x?.detail ?? x?.itemDetail ?? '').trim(), brandNameOf(x))
   let m = AMOUNT.exec(raw)
   if (m) return `${fmtAmount(m[1], lang)}${NBSP}${m[2]}`
   m = DURATION.exec(raw)

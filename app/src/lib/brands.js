@@ -62,16 +62,19 @@ export const BRANDS = [
   { key: 'doordash',    name: 'DoorDash',          color: ['#ff3008', '#6b1403'], chip: 'food',      logo: null, tile: { bg: '#ff3008', fg: '#fff', letter: 'D' }, slugs: ['doordash-usa'], delivers: 'code', region: ['USA'], about: 'brand_about_doordash' },            // confirm
   { key: 'burgerking',  name: 'Burger King',       color: ['#d62300', '#502314'], chip: 'food',      logo: null, tile: { bg: '#D62300', fg: '#fff', letter: 'B' }, slugs: ['burger-king-usa'], delivers: 'code', region: ['USA'], about: 'brand_about_burgerking' },
   // v1.8.0 AI & Tools: one USA (USD) version each (XI "international" USD cards count as USA). Surfshark draws its
-  // simple-icons glyph (lib/brandIcons.js siSurfshark). The others have no simple-icons entry and no logo file, so they
-  // use a neutral letter tile (#3a3744, the fallback gradient colour), never a guessed brand colour or a redrawn logo.
-  // PPQ.ai is never shown as Claude, Gemini or ChatGPT: its lead line is the only place the models are named.
-  { key: 'chatgpt',     name: 'ChatGPT',           color: ['#3a3744', '#1b1a20'], chip: 'tools',     logo: null, tile: { bg: '#3a3744', fg: '#fff', letter: 'C' }, slugs: ['openai-usa'], delivers: 'code', region: ['USA'], about: 'brand_about_chatgpt' },
-  { key: 'ppq',         name: 'PPQ.ai',            color: ['#3a3744', '#1b1a20'], chip: 'tools',     logo: null, tile: { bg: '#3a3744', fg: '#fff', letter: 'P' }, slugs: ['ppq-ai-international'], delivers: 'code', region: ['USA'], about: 'brand_about_ppq' },
+  // simple-icons glyph (lib/brandIcons.js siSurfshark). v1.8.1: the others got their own logo files (app/public/logos).
+  // All are square marks, so no logoFit 'wide'. chatgpt, ppq, exitlag, gworkspace and msoffice are coloured marks on a
+  // transparent background, so they sit on the default white plate; nordpass is a white mountain on its own teal square,
+  // so it gets a plate in that teal (#00cfb6) and the picture blends into it. Each tile stays as the fallback, letter
+  // unchanged. PayPerQ (key still ppq, slug ppq-ai-international) is never shown as Claude, Gemini or ChatGPT: its lead
+  // line is the only place the models are named. Typing "ppq" still finds PayPerQ through aliases.
+  { key: 'chatgpt',     name: 'ChatGPT',           color: ['#3a3744', '#1b1a20'], chip: 'tools',     logo: '/logos/chatgpt.png', tile: { bg: '#3a3744', fg: '#fff', letter: 'C' }, slugs: ['openai-usa'], delivers: 'code', region: ['USA'], about: 'brand_about_chatgpt' },
+  { key: 'ppq',         name: 'PayPerQ',           color: ['#3a3744', '#1b1a20'], chip: 'tools',     logo: '/logos/ppq.png', tile: { bg: '#3a3744', fg: '#fff', letter: 'P' }, aliases: ['ppq'], slugs: ['ppq-ai-international'], delivers: 'code', region: ['USA'], about: 'brand_about_ppq' },
   { key: 'surfshark',   name: 'Surfshark',         color: ['#3a3744', '#1b1a20'], chip: 'tools',     logo: null, tile: { bg: '#3a3744', fg: '#fff', letter: 'S' }, slugs: ['surfshark-vpn-international'], delivers: 'code', region: ['USA'], about: 'brand_about_surfshark' },
-  { key: 'nordpass',    name: 'NordPass',          color: ['#3a3744', '#1b1a20'], chip: 'tools',     logo: null, tile: { bg: '#3a3744', fg: '#fff', letter: 'N' }, slugs: ['nordpass-international'], delivers: 'code', region: ['USA'], about: 'brand_about_nordpass' },
-  { key: 'exitlag',     name: 'ExitLag',           color: ['#3a3744', '#1b1a20'], chip: 'tools',     logo: null, tile: { bg: '#3a3744', fg: '#fff', letter: 'E' }, slugs: ['exitlag-international'], delivers: 'code', region: ['USA'], about: 'brand_about_exitlag' },
-  { key: 'gworkspace',  name: 'Google Workspace',  color: ['#3a3744', '#1b1a20'], chip: 'tools',     logo: null, tile: { bg: '#3a3744', fg: '#fff', letter: 'G' }, slugs: ['google-workspace-usa'], delivers: 'code', region: ['USA'], about: 'brand_about_gworkspace' },
-  { key: 'msoffice',    name: 'Microsoft Office',  color: ['#3a3744', '#1b1a20'], chip: 'tools',     logo: null, tile: { bg: '#3a3744', fg: '#fff', letter: 'M' }, slugs: ['office-usa'], delivers: 'code', region: ['USA'], about: 'brand_about_msoffice' },
+  { key: 'nordpass',    name: 'NordPass',          color: ['#3a3744', '#1b1a20'], chip: 'tools',     logo: '/logos/nordpass.png', logoPlate: '#00cfb6', tile: { bg: '#3a3744', fg: '#fff', letter: 'N' }, slugs: ['nordpass-international'], delivers: 'code', region: ['USA'], about: 'brand_about_nordpass' },
+  { key: 'exitlag',     name: 'ExitLag',           color: ['#3a3744', '#1b1a20'], chip: 'tools',     logo: '/logos/exitlag.png', tile: { bg: '#3a3744', fg: '#fff', letter: 'E' }, slugs: ['exitlag-international'], delivers: 'code', region: ['USA'], about: 'brand_about_exitlag' },
+  { key: 'gworkspace',  name: 'Google Workspace',  color: ['#3a3744', '#1b1a20'], chip: 'tools',     logo: '/logos/gworkspace.png', tile: { bg: '#3a3744', fg: '#fff', letter: 'G' }, slugs: ['google-workspace-usa'], delivers: 'code', region: ['USA'], about: 'brand_about_gworkspace' },
+  { key: 'msoffice',    name: 'Microsoft Office',  color: ['#3a3744', '#1b1a20'], chip: 'tools',     logo: '/logos/msoffice.png', tile: { bg: '#3a3744', fg: '#fff', letter: 'M' }, slugs: ['office-usa'], delivers: 'code', region: ['USA'], about: 'brand_about_msoffice' },
 ]
 
 // About this card (Goal Details): about = i18n key of the one-line description; delivers = what the shop sends
@@ -176,11 +179,13 @@ export const worksText = (t, w) => (w ? w[t.lang] || w.en || '' : '')
 export const worksLine = (t, w) => (w ? t('works_line', { worksWith: worksText(t, w).replace(/\.\s*$/, '') }) : '')
 
 // Catalogue search: the start of any word in the brand name, any case ("st": Steam, PlayStation Store, Starbucks;
-// not Best Buy). chip: a category or 'all'.
+// not Best Buy). A brand may also carry aliases (old or short names), matched the same way, so "ppq" still finds
+// PayPerQ. chip: a category or 'all'.
 export function filterBrands(brands, { q = '', chip = 'all' } = {}) {
   const query = String(q).trim()
   const match = query ? new RegExp(`(^|[^\\p{L}\\p{N}])${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'iu') : null
-  return brands.filter((b) => (chip === 'all' || b.chip === chip) && (!match || match.test(b.name)))
+  const hits = (b) => match.test(b.name) || (b.aliases || []).some((a) => match.test(a))
+  return brands.filter((b) => (chip === 'all' || b.chip === chip) && (!match || hits(b)))
 }
 
 // Add a preference: brands sold in more than one version (one version: nothing to choose), with their versions and

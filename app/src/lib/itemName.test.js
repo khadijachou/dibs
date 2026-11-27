@@ -29,6 +29,22 @@ test('tile price line and goal label', () => {
   assert.equal(plain(itemLabel(t, { itemName: 'Steam gift card', itemDetail: '20 USD', usd: 22.48 })), 'Carte-cadeau Steam · 20 USD')
 })
 
+test('a plan value that repeats the brand drops the brand prefix for display', () => {
+  // Surfshark values are "Surfshark 1M" etc.; the tile already shows the brand, so only "1M" is shown.
+  const t = makeT('en')
+  // Goal path: the stored brandName is used.
+  assert.equal(detailText(t, { brandName: 'Surfshark', itemDetail: 'Surfshark 1M' }), '1M')
+  assert.equal(detailText(t, { brandName: 'Surfshark', detail: 'Surfshark 1Y' }), '1Y')
+  // Catalogue-item path: the brand is resolved from the item's shopUrl (brandOf).
+  assert.equal(detailText(t, { shopUrl: 'https://www.bitrefill.com/surfshark-vpn-international/', detail: 'Surfshark 2Y' }), '2Y')
+  // fromText (tile "From ...") shows "From 1M" when the brand has several durations.
+  assert.equal(fromText(t, { name: 'Surfshark VPN', items: [{ brandName: 'Surfshark', detail: 'Surfshark 1M' }, { brandName: 'Surfshark', detail: 'Surfshark 1Y' }] }), 'From 1M')
+  // A brand whose plan does not start with its name is untouched (NordPass "1 Year Subscription").
+  assert.equal(detailText(t, { brandName: 'NordPass', detail: '1 Year Subscription' }), '1 Year Subscription')
+  // An amount value is unaffected either way.
+  assert.equal(plain(detailText(t, { brandName: 'ChatGPT', detail: '20 USD' })), '20 USD')
+})
+
 test('stored labels keep number and currency together', () => {
   const s = localName(makeT('fr'), 'Netflix · 25 EUR')
   assert.equal(s, `Netflix · 25${NBSP}EUR`)
